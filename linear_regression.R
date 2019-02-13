@@ -15,7 +15,7 @@ library(transport)
 
 ### Helper  Functions ###
 
-# Wasserstein distance d_W betwen two (univariate) normals, N(mu1, var1) and N(mu2, var2)
+# Wasserstein distance betwen two (univariate) normals, N(mu1, var1) and N(mu2, var2)
 Wasserstein_distance = function(x, beta0, beta1, var_e){
   mu1 = x * beta0
   mu2 = x * beta1
@@ -42,8 +42,8 @@ f_min <- Vectorize(function(candidate, D, k, beta0, beta1, var_e) {
 # since these determine both f0 and f1's normal parameters 
 SMED_ms = function(f0, beta0, f1, beta1, var_e, n = 10, numCandidates = 1000, k = 4, xmin = 0, xmax = 1, 
                    randomCandidates = T, initialization = 0){
-  #  f0, beta0 : regression line of null model and slope of null model
-  #  f1, beta1 : regression line of alternative model and slope of alternvative model
+  #  f0, beta0 : regression line and slope of null model
+  #  f1, beta1 : regression line and slope of alternative model
   #  n : number of design points to select (for set of design points, D)
   #  numCandidates : # of points to use as candidates (set from which design points are selected)
   #  k : power to use for MED. k = 4p is default
@@ -56,7 +56,7 @@ SMED_ms = function(f0, beta0, f1, beta1, var_e, n = 10, numCandidates = 1000, k 
   
   # -- Generate Candidate Points -- #
   if(randomCandidates == T){
-    candidates = runif(numCandidates,xmin,xmax)
+    candidates = runif(numCandidates, xmin, xmax)
   } else if(randomCandidates == F){
     candidates = seq(xmin, xmax, length.out = numCandidates)
   } else {
@@ -76,9 +76,9 @@ SMED_ms = function(f0, beta0, f1, beta1, var_e, n = 10, numCandidates = 1000, k 
     xmostdifferentind = which.max(abs(f0(candidates) - f1(candidates)))
   }
   
-  D <- candidates[xinitind] # x1, first element of set of design points, D
+  D = candidates[xinitind] # x1, first element of set of design points, D
   # also D is used to initialize greedy algorithm
-  candidates <- candidates[-xinitind] # candidate set, for choosing next design point x_{n+1}
+  candidates = candidates[-xinitind] # candidate set, for choosing next design point x_{n+1}
   
   # Plot density and (highest lik) points
   curve(f0, from = xmin, to = xmax)
@@ -118,8 +118,7 @@ k = 4
 xmin = 0
 xmax = 1
 
-X_test = SMED_ms(f0, beta0, f1, beta1, var_e, n, numCandidates, k, xmin, xmax, )
-
+X_test = SMED_ms(f0, beta0, f1, beta1, var_e, n, numCandidates, k, xmin, xmax)
 
 # testing wasserstein function from "transport" library
 x = 0.3

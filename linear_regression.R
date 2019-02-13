@@ -15,7 +15,7 @@ library(transport)
 
 ### Helper  Functions ###
 
-# Wasserstein distance d_W betwen two (univariate) normals
+# Wasserstein distance d_W betwen two (univariate) normals, N(mu1, var1) and N(mu2, var2)
 Wasserstein_distance = function(x, beta0, beta1, var_e){
   mu1 = x * beta0
   mu2 = x * beta1
@@ -31,28 +31,54 @@ q = function(x, beta0, beta1, var_e) 1.0 / Wasserstein_distance(x, beta0, beta1,
 # select the one with the smallest value of f_min to add to current design set D
 f_min <- Vectorize(function(candidate, D, k, beta0, beta1, var_e) {
   # xnew = an x from candidate set, xall = D, design points
-  q(candidate, beta0, beta1, var_e)^k * sum(sapply(D,function(x){(q(x, beta0, beta1, var_e)/abs(x-candidate))^k}))
+  q(candidate, beta0, beta1, var_e)^k * 
+    sum(sapply(D, function(x) (q(x, beta0, beta1, var_e) / abs(x - candidate))^k))
 }, vectorize.args='candidate')
 
 ### Iterative Algorithm for SMED for Model Selection ###
+# Function that implements SMED-inspired model selection of Joseph, Dasgupta, Tuo, Wu
 
 # f is normal, so need to specify f0 = {beta0}, f1 = {beta1}, var_e
 # since these determine both f0 and f1's normal parameters 
-SMED_ms = function(f0, beta0, f1, beta1, var_e, n = 10, numCandidates = 1000, k = 4, xmin = 0, xmax = 1, include.histogram = F){
-  # Function that implements SMED-inspired model selection
-  #  f: parameters of the two models, in the same density family (for now - in future, change Wasserstein)
-  #  n: # of pts to select
-  #  numCandidates: # of pts to use as candidates
-  #  k: power to use for MED. k=4p is default
-  #  xmin, xmax: limits on inputs
+SMED_ms = function(f0, beta0, f1, beta1, var_e, n = 10, numCandidates = 1000, k = 4, xmin = 0, xmax = 1, 
+                   randomCandidates = T, initialization = 0){
+  #  f0, beta0 : regression line of null model and slope of null model
+  #  f1, beta1 : regression line of alternative model and slope of alternvative model
+  #  n : number of design points to select (for set of design points, D)
+  #  numCandidates : # of points to use as candidates (set from which design points are selected)
+  #  k : power to use for MED. k = 4p is default
+  #  xmin, xmax : limits on inputs
+  # randomCandidates : generate candidate points using uniform distribution by default.
+  #                    if FALSE, choose equally-spaced out sequence of candidates
+  # initialization : method of initializing first design point of D
+  #                  0 = candidate that outputs the largest absolute difference between f0 and f1
+  #                  1 = candidate that has the largest ratio of likelihoods
   
-  # -- Initialize with mode -- # candidates
-  candidates <- runif(numCandidates,xmin,xmax) # or seq(xmin, xmax, length.out = numCandidates)
-  # get the point at which f1 and f2 are most different
-  xmostdifferentind <- which.max(abs(f0(candidates) - f1(candidates))) # (has largest ratio of likelihoods, instead, for more middle value?)
-  D <- candidates[xmostdifferentind] # this is the "good" design point, x1, first element of set of design points, D
-  # also X is used to initialize greedy algorithm
-  candidates <- candidates[-xmostdifferentind] # candidate set, for choosing next design point x_{n+1}
+  # -- Generate Candidate Points -- #
+  if(randomCandidates == T){
+    candidates = runif(numCandidates,xmin,xmax)
+  } else if(randomCandidates == F){
+    candidates = seq(xmin, xmax, length.out = numCandidates)
+  } else {
+    warning("the randomCandidates argument is not an option; default candidate generation is used.")
+  }
+  
+  # -- Initialize 1st Design Point in D -- #
+  if(initialization == 0){
+    # initialization == 0: get the point at which f1 and f2 are most different
+    xinitind = which.max(abs(f0(candidates) - f1(candidates)))
+  } else if(initialization == 1){
+    # initialization == 1: get the point at which f1 and f2 are most different
+    xinitind = which.max(dnorm(x = candidates, mean = x * beta0, sd = sqrt(var_e)) / 
+                                 dnorm(x = candidates, mean = x * beta1, sd = sqrt(var_e)))
+  } else{
+    warning("the initialization argument is not an option; default initialization is used.")
+    xmostdifferentind = which.max(abs(f0(candidates) - f1(candidates)))
+  }
+  
+  D <- candidates[xinitind] # x1, first element of set of design points, D
+  # also D is used to initialize greedy algorithm
+  candidates <- candidates[-xinitind] # candidate set, for choosing next design point x_{n+1}
   
   # Plot density and (highest lik) points
   curve(f0, from = xmin, to = xmax)
@@ -61,19 +87,17 @@ SMED_ms = function(f0, beta0, f1, beta1, var_e, n = 10, numCandidates = 1000, k 
   text(D, f1(D), 1, col=4)
   points(D, 0, col=2)
   
-#  points(X,0,col=2)
-  
   # Sequentially pick rest
-  for(i in 2:n) {
+  for(i in 2:n){
     # Find f_opt: minimum of f_min
-    f_opt <- which.min(f_min(candidates, D, k, beta0, beta1, var_e))
-    xnew <- candidates[f_opt]
+    f_opt = which.min(f_min(candidates, D, k, beta0, beta1, var_e))
+    xnew = candidates[f_opt]
     # Update set of design points (D) and plot new point
-    D <- c(D,xnew) # add the new point to the set
-    candidates <- candidates[-f_opt]
-    text(xnew,f0(xnew),i,col=4)
-    text(xnew,f1(xnew),i,col=4)
-    points(xnew,0,col=2)
+    D = c(D,xnew) # add the new point to the set
+    candidates = candidates[-f_opt]
+    text(xnew, f0(xnew), i, col = 4)
+    text(xnew, f1(xnew), i, col = 4)
+    points(xnew, 0, col = 2)
   }
   return(D)
 }
@@ -82,7 +106,7 @@ SMED_ms = function(f0, beta0, f1, beta1, var_e, n = 10, numCandidates = 1000, k 
 # here, we assume f's are normal, so we specify the mean and variance of each
 
 beta0 = 1 # slope of null model
-beta1 = 1/2 # slope of alternative model
+beta1 = 1 / 2 # slope of alternative model
 var_e = 1 # same variance
 
 f0 = function(x) beta0 * x # null regression model
@@ -94,7 +118,7 @@ k = 4
 xmin = 0
 xmax = 1
 
-X_test = SMED_ms(f0, beta0, f1, beta1, var_e, n, numCandidates, k, xmin, xmax)
+X_test = SMED_ms(f0, beta0, f1, beta1, var_e, n, numCandidates, k, xmin, xmax, )
 
 
 # testing wasserstein function from "transport" library

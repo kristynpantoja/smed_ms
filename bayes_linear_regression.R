@@ -35,9 +35,9 @@ Wasserstein_distance = function(mu1, mu2, var_1, var_2){
 }
 
 # charge function at design point x
-q = function(x, beta0, beta1, var_e, var_mean){
-  mu1 = beta0 * x # mean of marginal dist of y | H0
-  mu2 = beta1 * x # mean of marginal dist of y | H1
+q = function(x, mean_beta0, mean_beta1, var_e, var_mean){
+  mu1 = mean_beta0 * x # mean of marginal dist of y | H0
+  mu2 = mean_beta1 * x # mean of marginal dist of y | H1
   var = var_e + x^2 * var_mean # variance of marginal dist of y | H1
   Wass_dist = Wasserstein_distance(mu1, mu2, var, var)
   return(1.0 / Wass_dist)
@@ -47,7 +47,7 @@ q = function(x, beta0, beta1, var_e, var_mean){
 # select the one with the smallest value of f_min to add to current design set D
 f_min <- Vectorize(function(candidate, D, k, mean_beta0, mean_beta1, var_e, var_mean) {
   # xnew = an x from candidate set, xall = D, design points
-  q(candidate, mean_beta0, mean_beta0, var_e, var_mean)^k * 
+  q(candidate, mean_beta0, mean_beta1, var_e, var_mean)^k * 
     sum(sapply(D, function(x) (q(x, mean_beta0, mean_beta1, var_e, var_mean) / abs(x - candidate))^k))
 }, vectorize.args='candidate')
 
@@ -140,10 +140,10 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10, numCandidate
 
 mean_beta0 = 1 # slope of null model
 mean_beta1 = 1 / 2 # slope of alternative model
-var_mean = 0.01
+var_mean = 0.00001
 var_e = 1 # same variance
 
-n = 10
+n = 5
 numCandidates = 1000
 k = 4
 xmin = 0

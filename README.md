@@ -1,2 +1,4 @@
 # smed_ms
-SMED Model Selection
+
+Model Selection using sequential minimum energy design of Joseph, Dasgupta, Tuo, Wu
+

@@ -30,7 +30,7 @@ q = function(x, beta0, beta1, var0, var1) 1.0 / Wasserstein_distance(x, beta0, b
 f_min <- Vectorize(function(candidate, D, k, beta0, beta1, var0, var1) { # DOESN"T WORK. WILL FIX SOON.
   # xnew = an x from candidate set, xall = D, design points
   q(candidate, beta0, beta1, var0, var1)^k * 
-    sum(sapply(D, function(x) (q(x, beta0, beta1, var0, var1) / abs(x - candidate))^k))
+    sum(sapply(D, function(x) (q(x, beta0, beta1, var0, var1) / sqrt(as.numeric(crossprod(x - candidate))))^k))
 }, vectorize.args='candidate')
 
 ### Iterative Algorithm for SMED for Model Selection ###

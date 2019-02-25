@@ -37,8 +37,12 @@ isprime <- function(num) {
 # minimizing criterion for greedy algorithm - calculate this for each x_i in candidate set,
 # select the one with the smallest value of f_min to add to current design set D
 f_min = function(candidate_jk, D_k, gamma_k, mean_beta0, mean_beta1, var_e, var_mean){
+  
   q(candidate_jk, mean_beta0, mean_beta1, var_e, var_mean)^gamma_k * 
     sum(sapply(D_k, function(x_i) (q(x_i, mean_beta0, mean_beta1, var_e, var_mean)^gamma_k / abs(x_i - candidate_jk))))
+}
+criterion = function(candidate_jk, D, gamma, mean_beta0, mean_beta1, var_e, var_mean, Wass_cand, Wass_D){
+  ###
 }
 
 ### Iterative Algorithm for SMED for Model Selection ###
@@ -73,40 +77,70 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10, numCandidate
   if(n < 3) stop("not enough samples - need at least 3.")
   # check that numCandidates is a prime number
   if(!isprime(numCandidates)) stop("numCandidates is not prime!")
+  
   candidates = mined::Lattice(numCandidates, p = 1)
   
   # -- Initialize Design D = {x_1, ..., x_n} -- #
-  D = sort(candidates)
-  # calculat logf for candidates
-  logf0 = sapply(D, logf0)
-  logf1 = sapply(D, logf1)
-  
-  # Plot initial design
-  curve(f0, from = xmin, to = xmax)
-  curve(f1, col = 2, add = TRUE)
-  points(D, rep(0, numCandidates), col=3)
+  D_init = sort(candidates)
+  # calculate logf for candidates
+  logf0 = sapply(D_init, logf0)
+  logf1 = sapply(D_init, logf1)
+  # calculate Wassersteins for each design point
+  Wasser_init = sapply(D_init, function(x) Wasserstein_distance(mean_beta0 * x, mean_beta1 * x, 
+                                                                var_e + x^2 * var_mean, var_e + x^2 * var_mean))
   
   # -- If K > 1, choose new design -- #
   if(K == 1) return(D)
-  D = matrix(rep(D, K), nrow = K, ncol = n, byrow = T)
-  gammas = (c(1:K) - 1) / K
+  D = matrix(rep(D_init, K), nrow = n, ncol = K)
+  Wass_D = matrix(rep(Wasser_init, K), nrow = n, ncol = K)
+  gammas = (c(1:K) - 1) / (K - 1)
   for(k in 2:K){
-    for(j in 2:(n - 1)){
+    # for j = 1
+    # get candidates
+    R_1k = D[2, k] - D[1, k]
+    lower = max(D[1, k] - R_1k, 0) # is this necessary, to max with 0? ################################
+    upper = min(D[1, k] + R_1k, 1)
+    candidates_1k = Lattice(n, p = 1) * (upper - lower) + lower
+    # criterion to choose candidate from candidate set - for now, choose like in older paper:
+    # get the point at which f1 and f2 are most different
+    xinitind = which.max(abs(f0(candidates_1k) - f1(candidates_1k)))
+    D[1, k] = candidates_1k[xinitind] # x1, first element of set of design points, D
+    Wass_D[1, k] = Wasserstein_distance(mean_beta0 * xinitind, mean_beta1 * xinitind, 
+                                        var_e + xinitind^2 * var_mean, var_e + xinitind^2 * var_mean)
+    # at some point... see their code for initializing kth design. ##################################
+    
+    # for j = 2:n
+    for(j in 2:n){
       # get candidates in neighborhood L_jk = (lower, upper)
-      R_jk = which.min(D[j, k] - D[j - 1, k], D[j + 1, k] - D[j, k])
-      lower = D[j, k] - R_jk
-      upper = D[j, k] + R_jk
-      candidates_jk = Lattice(n, p = 1) * (upper - lower) + lower
+      if(j == n){
+        R_jk = D[j, k] - D[j - 1, k]
+        lower = D[j, k] - R_jk
+        upper = D[j, k] + R_jk
+        candidates_jk = Lattice(n, p = 1) * (upper - lower) + lower
+      } else{
+        R_jk = which.min(c(D[j, k] - D[j - 1, k], D[j + 1, k] - D[j, k]))
+        lower = max(D[j, k] - R_jk, 0) # is this necessary, to max with 0? ################################
+        upper = min(D[j, k] + R_jk, 1)
+        candidates_jk = Lattice(n, p = 1) * (upper - lower) + lower
+      }
       # calculate log f-hat of candidates_jk (!!!!!! for now, f-hat = f)
-      cand_logf0 = sapply(candidates_jk, logf0)
-      cand_logf1 = sapply(candidates_jk, logf1)
-      # pick from candidates
-      # calculate criterion for each point
-      f_min_candidates = sapply(candidates_jk, 
-                                function(x) f_min(x, D[1:(j - 1), k], gammas[k], 
-                                                  mean_beta0, mean_beta1, 
-                                                  var_e, var_mean))
-      D[j, k] = which.min(f_min_candidates)
+      # cand_logf0 = sapply(candidates_jk, logf0)
+      # cand_logf1 = sapply(candidates_jk, logf1)
+      
+      # calculate Wassersteins for each candidate
+      Wass_cand = sapply(candidates_jk, function(x) Wasserstein_distance(mean_beta0 * x, mean_beta1 * x, 
+                                                                         var_e + x^2 * var_mean, var_e + x^2 * var_mean))
+      # pick from candidates:
+      # first, calculate criterion for each candidate
+      criterion_cand = rep(NA, n)
+      for(m in 1:n){
+        criterion_cand[m] = Wass_cand[m]^(gammas[k] / 2) * sum((Wass_D[1:(j - 1), k]^(gammas[k] / 2)) * abs(D[1:(j - 1), k] - candidates_jk[m])^(2))
+      }
+      #choose that which has largest evaluation of criterion
+      chosen_cand = which.max(criterion_cand)
+      D[j, k] = candidates_jk[chosen_cand]
+      Wass_D[j, k] = Wasserstein_distance(mean_beta0 * chosen_cand, mean_beta1 * chosen_cand, 
+                                          var_e + chosen_cand^2 * var_mean, var_e + chosen_cand^2 * var_mean)
     }
   }
   return(D)
@@ -122,8 +156,20 @@ var_e = 1 # same variance
 
 n = 7 # in paper, n = numCandidates
 numCandidates = 7 # largest prime number less than 100 + 5p = 103
-k = 4
+K = 4
+p = 1
 xmin = 0
 xmax = 1
 
-X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, numCandidates, k, xmin, xmax)
+X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, numCandidates, xmin, xmax, K, p)
+
+
+
+
+
+test_k = 4
+curve(f0, from = xmin, to = xmax)
+curve(f1, col = 2, add = TRUE)
+text(X_test[ ,test_k], f0(X_test[ ,test_k]), c(1:n), col=4)
+text(X_test[ ,test_k], f1(X_test[ ,test_k]), c(1:n), col=4)
+points(X_test[ ,test_k], rep(0, n), col=2)

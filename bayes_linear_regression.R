@@ -46,11 +46,10 @@ q = function(x, mean_beta0, mean_beta1, var_e, var_mean){
 
 # minimizing criterion for greedy algorithm - calculate this for each x_i in candidate set,
 # select the one with the smallest value of f_min to add to current design set D
-f_min <- Vectorize(function(candidate, D, k, mean_beta0, mean_beta1, var_e, var_mean) {
-  # xnew = an x from candidate set, xall = D, design points
+f_min = function(candidate, D, k, mean_beta0, mean_beta1, var_e, var_mean){
   q(candidate, mean_beta0, mean_beta1, var_e, var_mean)^k * 
-    sum(sapply(D, function(x) (q(x, mean_beta0, mean_beta1, var_e, var_mean) / abs(x - candidate))^k))
-}, vectorize.args='candidate')
+    sum(sapply(D, function(x_i) (q(x_i, mean_beta0, mean_beta1, var_e, var_mean) / abs(x_i - candidate))^k))
+}
 
 ### Iterative Algorithm for SMED for Model Selection ###
 # Function that implements SMED-inspired model selection of Joseph, Dasgupta, Tuo, Wu
@@ -104,7 +103,9 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10, numCandidate
   for(i in 2:n){
     # Find f_opt: minimum of f_min
     
-    f_opt = which.min(f_min(candidates, D, k, mean_beta0, mean_beta1, var_e, var_mean))
+    #f_opt = which.min(f_min(candidates, D, k, mean_beta0, mean_beta1, var_e, var_mean))
+    f_min_candidates = sapply(candidates, function(x) f_min(x, D, k, mean_beta0, mean_beta1, var_e, var_mean))
+    f_opt = which.min(f_min_candidates)
     xnew = candidates[f_opt]
     # Update set of design points (D) and plot new point
     D = c(D,xnew) # add the new point to the set
@@ -121,7 +122,7 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10, numCandidate
 
 mean_beta0 = 1 # slope of null model
 mean_beta1 = 1 / 2 # slope of alternative model
-var_mean = 0.01
+var_mean = 0.00001
 var_e = 1 # same variance
 
 n = 5

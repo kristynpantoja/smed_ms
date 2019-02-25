@@ -37,7 +37,6 @@ isprime <- function(num) {
 # minimizing criterion for greedy algorithm - calculate this for each x_i in candidate set,
 # select the one with the smallest value of f_min to add to current design set D
 f_min = function(candidate_jk, D_k, gamma_k, mean_beta0, mean_beta1, var_e, var_mean){
-  
   q(candidate_jk, mean_beta0, mean_beta1, var_e, var_mean)^gamma_k * 
     sum(sapply(D_k, function(x_i) (q(x_i, mean_beta0, mean_beta1, var_e, var_mean)^gamma_k / abs(x_i - candidate_jk))))
 }
@@ -113,7 +112,8 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10, numCandidate
     for(j in 2:n){
       # get candidates in neighborhood L_jk = (lower, upper)
       if(j == n){
-        R_jk = D[j, k] - D[j - 1, k]
+        #R_jk = D[j, k] - D[j - 1, k]
+        R_jk = min(abs(D[-j, k] - D[j, k]))
         lower = D[j, k] - R_jk
         upper = D[j, k] + R_jk
         candidates_jk = Lattice(n, p = 1) * (upper - lower) + lower
@@ -143,7 +143,7 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10, numCandidate
                                           var_e + chosen_cand^2 * var_mean, var_e + chosen_cand^2 * var_mean)
     }
   }
-  return(D)
+  return(list("beta0" = beta0, "beta1" = beta1, "D" = D))
 }
 
 # criterion (1 / d_W(f0, f1; x_i) * 1 / d_W(f0, f1; x_j)) / d(x_i, x_j)
@@ -151,7 +151,7 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10, numCandidate
 
 mean_beta0 = 1 # slope of null model
 mean_beta1 = 1 / 2 # slope of alternative model
-var_mean = 0.00001
+var_mean = 0.001
 var_e = 1 # same variance
 
 n = 7 # in paper, n = numCandidates
@@ -163,13 +163,12 @@ xmax = 1
 
 X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, numCandidates, xmin, xmax, K, p)
 
-
-
-
+f0 = function(x) X_test$beta0 * x # null regression model
+f1 = function(x) X_test$beta1 * x # alternative regression model
 
 test_k = 4
 curve(f0, from = xmin, to = xmax)
 curve(f1, col = 2, add = TRUE)
-text(X_test[ ,test_k], f0(X_test[ ,test_k]), c(1:n), col=4)
-text(X_test[ ,test_k], f1(X_test[ ,test_k]), c(1:n), col=4)
-points(X_test[ ,test_k], rep(0, n), col=2)
+text(X_test$D[ ,test_k], f0(X_test$D[ ,test_k]), c(1:n), col=4)
+text(X_test$D[ ,test_k], f1(X_test$D[ ,test_k]), c(1:n), col=4)
+points(X_test$D[ ,test_k], rep(0, n), col=2)

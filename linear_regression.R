@@ -25,7 +25,7 @@ Wasserstein_distance = function(x, beta0, beta1, var_e){
 }
 
 # charge function at design point x
-q = function(x, beta0, beta1, var_e) 1.0 / Wasserstein_distance(x, beta0, beta1, var_e)
+q = function(x, beta0, beta1, var_e) 1.0 / Wasserstein_distance(x, beta0, beta1, var_e)^(1/2)
 
 # minimizing criterion for greedy algorithm - calculate this for each x_i in candidate set,
 # select the one with the smallest value of f_min to add to current design set D
@@ -115,21 +115,25 @@ f1 = function(x) beta1 * x # alternative regression model
 
 n = 5
 numCandidates = 1000
-k = 4
+k = 4 # optimal k was k = 4p
 xmin = 0
 xmax = 1
 
 X_test = SMED_ms(f0, beta0, f1, beta1, var_e, n, numCandidates, k, xmin, xmax)
+
+
+
+
+
+
+
+
 
 # testing wasserstein function from "transport" library
 x = 0.3
 Wasserstein_distance(x, beta0, beta1, var_e)
 wasserstein1d(f0(x), f1(x))
 # it works!
-
-
-
-
 
 library(OptimalDesign)
 ?od.m1

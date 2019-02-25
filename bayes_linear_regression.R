@@ -27,6 +27,7 @@
 
 library(transport)
 
+
 ### Helper  Functions ###
 
 # Wasserstein distance betwen two (univariate) normals, N(mu1, var1) and N(mu2, var2)
@@ -40,7 +41,7 @@ q = function(x, mean_beta0, mean_beta1, var_e, var_mean){
   mu2 = mean_beta1 * x # mean of marginal dist of y | H1
   var = var_e + x^2 * var_mean # variance of marginal dist of y | H1
   Wass_dist = Wasserstein_distance(mu1, mu2, var, var)
-  return(1.0 / Wass_dist)
+  return(1.0 / Wass_dist^(1/2))
 }
 
 # minimizing criterion for greedy algorithm - calculate this for each x_i in candidate set,
@@ -57,19 +58,13 @@ f_min <- Vectorize(function(candidate, D, k, mean_beta0, mean_beta1, var_e, var_
 # f is normal, so need to specify f0 = {beta0}, f1 = {beta1}, var_e
 # since these determine both f0 and f1's normal parameters 
 SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10, numCandidates = 1000, 
-                   k = 4, xmin = 0, xmax = 1, 
-                   randomCandidates = T, initialization = 0){
+                   k = 4, xmin = 0, xmax = 1){
   #  f0, mean_beta0 : regression line and mean slope of null model
   #  f1, mean_beta1 : regression line and mean slope of alternative model
   #  n : number of design points to select (for set of design points, D)
   #  numCandidates : # of points to use as candidates (set from which design points are selected)
   #  k : power to use for MED. k = 4p is default
   #  xmin, xmax : limits on inputs
-  # randomCandidates : generate candidate points using uniform distribution by default.
-  #                    if FALSE, choose equally-spaced out sequence of candidates
-  # initialization : method of initializing first design point of D
-  #                  0 = candidate that outputs the largest absolute difference between f0 and f1
-  #                  1 = candidate that has the largest ratio of likelihoods
   
   # Draw a slope for each model
   beta0 = rnorm(n = 1, mean = mean_beta0, sd = sqrt(var_mean))
@@ -87,29 +82,15 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10, numCandidate
   # post_var = ((1 / sigma_e^2) + (1 / var_mean^2))^(-1)
   
   # -- Generate Candidate Points -- #
-  if(randomCandidates == T){
-    candidates = runif(numCandidates, xmin, xmax)
-  } else if(randomCandidates == F){
-    candidates = seq(xmin, xmax, length.out = numCandidates)
-  } else {
-    warning("the randomCandidates argument is not an option; default candidate generation is used.")
-  }
+  candidates = runif(numCandidates, xmin, xmax)
   
   # -- Initialize 1st Design Point in D -- #
-  if(initialization == 0){
-    # initialization == 0: get the point at which f1 and f2 are most different
-    xinitind = which.max(abs(f0(candidates) - f1(candidates)))
-  } else if(initialization == 1){
-    # initialization == 1: get the point at which f1 and f2 are most different
-    xinitind = which.max(dnorm(x = candidates, mean = x * beta0, sd = sqrt(var_e)) / 
-                           dnorm(x = candidates, mean = x * beta1, sd = sqrt(var_e)))
-  } else{
-    warning("the initialization argument is not an option; default initialization is used.")
-    xmostdifferentind = which.max(abs(f0(candidates) - f1(candidates)))
-  }
-  
+  # get the point at which f1 and f2 are most different
+  xinitind = which.max(abs(f0(candidates) - f1(candidates)))
   D = candidates[xinitind] # x1, first element of set of design points, D
   # also D is used to initialize greedy algorithm
+  
+  # candidates that are leftover (options to choose from for next 2:n design points)
   candidates = candidates[-xinitind] # candidate set, for choosing next design point x_{n+1}
   
   # Plot density and (highest lik) points
@@ -140,7 +121,7 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10, numCandidate
 
 mean_beta0 = 1 # slope of null model
 mean_beta1 = 1 / 2 # slope of alternative model
-var_mean = 0.00001
+var_mean = 0.01
 var_e = 1 # same variance
 
 n = 5
@@ -151,12 +132,6 @@ xmax = 1
 
 X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, numCandidates, k, xmin, xmax)
 
-# testing wasserstein function from "transport" library
-x = 0.3
-Wasserstein_distance(x, beta0, beta1, var_e)
-wasserstein1d(f0(x), f1(x))
-# it works!
-
 
 
 
@@ -166,3 +141,7 @@ library(OptimalDesign)
 candidates = runif(numCandidates, xmin, xmax)
 od.m1(candidates, b, A=NULL, w0=NULL, type="exact", kappa=1e-9,
       tab=NULL, graph=NULL, t.max=120)
+
+library(mined)
+?Lattice
+mined::Lattice(7, 1)

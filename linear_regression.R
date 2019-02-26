@@ -16,14 +16,15 @@ library(transport)
 ### Helper  Functions ###
 
 # Wasserstein distance betwen two (univariate) normals, N(mu1, var1) and N(mu2, var2)
-Wasserstein_distance = function(mu1, mu2, var_1, var_2){
-  return(mu1 - mu2)^2 + var1 + var2 - 2 * sqrt(var1 * var2)
+Wasserstein_distance = function(mu1, mu2, var1, var2){
+  return(sqrt(mu1 - mu2)^2 + var1 + var2 - 2 * sqrt(var1 * var2))
 }
 
 # charge function at design point x
 q = function(x, beta0, beta1, var_e){
   mu1 = beta0 * x # mean of marginal dist of y | H0
   mu2 = beta1 * x # mean of marginal dist of y | H1
+  var = var_e
   Wass_dist = Wasserstein_distance(mu1, mu2, var, var)
   return(1.0 / Wass_dist^(1/2))
 }

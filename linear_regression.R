@@ -16,24 +16,27 @@ library(transport)
 ### Helper  Functions ###
 
 # Wasserstein distance betwen two (univariate) normals, N(mu1, var1) and N(mu2, var2)
-Wasserstein_distance = function(x, beta0, beta1, var_e){
-  mu1 = x * beta0
-  mu2 = x * beta1
-  var1 = var_e
-  var2 = var_e
-  return (mu1 - mu2)^2 + var1 + var2 - 2 * sqrt(var1 * var2)
+Wasserstein_distance = function(mu1, mu2, var_1, var_2){
+  return(mu1 - mu2)^2 + var1 + var2 - 2 * sqrt(var1 * var2)
 }
 
 # charge function at design point x
-q = function(x, beta0, beta1, var_e) 1.0 / Wasserstein_distance(x, beta0, beta1, var_e)^(1/2)
+q = function(x, beta0, beta1, var_e){
+  mu1 = beta0 * x # mean of marginal dist of y | H0
+  mu2 = beta1 * x # mean of marginal dist of y | H1
+  Wass_dist = Wasserstein_distance(mu1, mu2, var, var)
+  return(1.0 / Wass_dist^(1/2))
+}
 
 # minimizing criterion for greedy algorithm - calculate this for each x_i in candidate set,
 # select the one with the smallest value of f_min to add to current design set D
-f_min <- Vectorize(function(candidate, D, k, beta0, beta1, var_e) {
-  # xnew = an x from candidate set, xall = D, design points
+f_min = function(candidate, D, k, beta0, beta1, var_e){
   q(candidate, beta0, beta1, var_e)^k * 
-    sum(sapply(D, function(x) (q(x, beta0, beta1, var_e) / abs(x - candidate))^k))
-}, vectorize.args='candidate')
+    sum(sapply(D, function(x_i) (q(x_i, beta0, beta1, var_e) / abs(x_i - candidate))^k))
+}
+
+
+
 
 ### Iterative Algorithm for SMED for Model Selection ###
 # Function that implements SMED-inspired model selection of Joseph, Dasgupta, Tuo, Wu
@@ -91,8 +94,14 @@ SMED_ms = function(f0, beta0, f1, beta1, var_e, n = 10, numCandidates = 1000, k 
   # Sequentially pick rest
   for(i in 2:n){
     # Find f_opt: minimum of f_min
-    f_opt = which.min(f_min(candidates, D, k, beta0, beta1, var_e))
+    # f_opt = which.min(f_min(candidates, D, k, beta0, beta1, var_e))
+    # xnew = candidates[f_opt]
+    
+    #f_opt = which.min(f_min(candidates, D, k, mean_beta0, mean_beta1, var_e, var_mean))
+    f_min_candidates = sapply(candidates, function(x) f_min(x, D, k, beta0, beta1, var_e))
+    f_opt = which.min(f_min_candidates)
     xnew = candidates[f_opt]
+    
     # Update set of design points (D) and plot new point
     D = c(D,xnew) # add the new point to the set
     candidates = candidates[-f_opt]

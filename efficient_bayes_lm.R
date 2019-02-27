@@ -172,3 +172,5 @@ curve(f1, col = 2, add = TRUE)
 text(X_test$D[ ,test_k], f0(X_test$D[ ,test_k]), c(1:n), col=4)
 text(X_test$D[ ,test_k], f1(X_test$D[ ,test_k]), c(1:n), col=4)
 points(X_test$D[ ,test_k], rep(0, n), col=2)
+
+

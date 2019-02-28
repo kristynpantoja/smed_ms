@@ -123,7 +123,7 @@ var_e = 1 # same variance
 f0 = function(x) beta0 * x # null regression model
 f1 = function(x) beta1 * x # alternative regression model
 
-n = 5
+n = 11
 numCandidates = 1000
 k = 4 # optimal k was k = 4p
 xmin = 0

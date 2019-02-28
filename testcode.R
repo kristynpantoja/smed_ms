@@ -38,7 +38,7 @@ isprime <- function(x) {
 # select the one with the smallest value of f_min to add to current design set D
 f_min = function(candidate_jk, D_k, gamma_k, mean_beta0, mean_beta1, var_e, var_mean){
   q(candidate_jk, mean_beta0, mean_beta1, var_e, var_mean)^gamma_k * 
-    sum(sapply(D_k, function(x_i) (q(x_i, mean_beta0, mean_beta1, var_e, var_mean)^gamma_k / abs(x_i - candidate_jk))))
+    max(sapply(D_k, function(x_i) (q(x_i, mean_beta0, mean_beta1, var_e, var_mean)^gamma_k / abs(x_i - candidate_jk))))
 }
 
 ### Iterative Algorithm for SMED for Model Selection ###
@@ -96,7 +96,6 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10,
     candidates_1k = Lattice(numCandidatesinit, p = 1) * (upper - lower) + lower
     # save the candidates to be used in future designs
     candidates_1k = c(candidates_1k, candidates)
-    candidates = candidates_1k
     # criterion to choose candidate from candidate set - for now, choose like in older paper:
     # get the point at which f1 and f2 are most different
     xinitind = which.max(abs(f0(candidates_1k) - f1(candidates_1k)))
@@ -114,15 +113,13 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10,
         lower = D[j, k] - R_jk
         upper = D[j, k] + R_jk
         candidates_jk = Lattice(numCandidatesinit, p = 1) * (upper - lower) + lower
-        candidates_jk = c(candidates_jk, candidates)
-        candidates = candidates_jk
+        candidates_jk = c(candidates_jk, candidates_1k)
       } else{
         R_jk = which.min(c(D[j, k] - D[j - 1, k], D[j + 1, k] - D[j, k]))
         lower = max(D[j, k] - R_jk, 0) # is this necessary, to max with 0? ################################
         upper = min(D[j, k] + R_jk, 1)
         candidates_jk = Lattice(numCandidatesinit, p = 1) * (upper - lower) + lower
-        candidates_jk = c(candidates_jk, candidates)
-        candidates = candidates_jk
+        candidates_jk = c(candidates_jk, candidates_1k)
       }
       numCandidates = length(candidates_jk)
       # calculate log f-hat of candidates_jk (!!!!!! for now, f-hat = f)
@@ -147,7 +144,6 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10,
       D[j, k] = candidates_jk[chosen_cand]
       Wass_D[j, k] = Wasserstein_distance(mean_beta0 * D[j, k], mean_beta1 * D[j, k], 
                                           var_e + D[j, k]^2 * var_mean, var_e + D[j, k]^2 * var_mean)
-      candidates = candidates_jk[-chosen_cand]
     }
   }
   return(list("beta0" = beta0, "beta1" = beta1, "D" = D, "candidates" = candidates))

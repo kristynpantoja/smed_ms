@@ -70,8 +70,8 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10, numCandidate
   beta1 = rnorm(n = 1, mean = mean_beta1, sd = sqrt(var_mean))
   
   # Create linear model
-  f0 = function(x) beta0 * x # null regression model
-  f1 = function(x) beta1 * x # alternative regression model
+  f0 = function(x) mean_beta0 * x # null regression model
+  f1 = function(x) mean_beta1 * x # alternative regression model
   
   # Calculate posterior means and variance for the mean beta_i given the data y - DON'T NEED THESE.
   # where m = ((1 / sigma_e^2) * y + (1 / var_mean^2) * mean_beta_i) / ((1 / sigma_e^2) + (1 / var_mean^2))
@@ -109,7 +109,7 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10, numCandidate
     xnew = candidates[f_opt]
     # Update set of design points (D) and plot new point
     D = c(D,xnew) # add the new point to the set
-    candidates = candidates[-f_opt]
+    #candidates = candidates[-f_opt]
     text(xnew, f0(xnew), i, col = 4)
     text(xnew, f1(xnew), i, col = 4)
     points(xnew, 0, col = 2)
@@ -122,16 +122,16 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10, numCandidate
 
 mean_beta0 = 1 # slope of null model
 mean_beta1 = 1 / 2 # slope of alternative model
-var_mean = 0.00001
+var_mean = 0.01
 var_e = 1 # same variance
 
-n = 5
+n = 11
 numCandidates = 1000
 k = 4
 xmin = 0
 xmax = 1
 
-X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, numCandidates, k, xmin, xmax)
+X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, numCandidates, 10000, xmin, xmax)
 
 
 

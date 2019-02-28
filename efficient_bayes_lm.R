@@ -76,7 +76,7 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10,
   if(K == 1){
     D = D1
     C = C1
-    return(list("beta0" = beta0, "beta1" = beta1, "D" = D, "candidates" = C))
+    return(list("beta0" = mean_beta0, "beta1" = mean_beta1, "D" = D, "candidates" = C))
   }
   
   # -- If K > 1, choose new design -- #
@@ -137,7 +137,7 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10,
       #Wass_D[j, k] = Wasserstein_distance(mean_beta0 * D[j, k], mean_beta1 * D[j, k], var_e + D[j, k]^2 * var_mean, var_e + D[j, k]^2 * var_mean)
     }
   }
-  return(list("beta0" = beta0, "beta1" = beta1, "D" = D, "candidates" = C))
+  return(list("beta0" = mean_beta0, "beta1" = mean_beta1, "D" = D, "candidates" = C))
 }
 
 # criterion (1 / d_W(f0, f1; x_i) * 1 / d_W(f0, f1; x_j)) / d(x_i, x_j)

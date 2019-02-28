@@ -10,8 +10,8 @@ library(mined)
 ### Helper  Functions ###
 
 # Wasserstein distance betwen two (univariate) normals, N(mu1, var1) and N(mu2, var2)
-Wasserstein_distance = function(mu1, mu2, var_1, var_2){
-  return(mu1 - mu2)^2 + var1 + var2 - 2 * sqrt(var1 * var2)
+Wasserstein_distance = function(mu1, mu2, var1, var2){
+  return(sqrt(mu1 - mu2)^2 + var1 + var2 - 2 * sqrt(var1 * var2))
 }
 
 # charge function at design point x
@@ -36,9 +36,9 @@ isprime <- function(x) {
 
 # minimizing criterion for greedy algorithm - calculate this for each x_i in candidate set,
 # select the one with the smallest value of f_min to add to current design set D
-f_min = function(candidate, D, k, mean_beta0, mean_beta1, var_e, var_mean){
-  q(candidate, mean_beta0, mean_beta1, var_e, var_mean)^k * 
-    sum(sapply(D, function(x_i) (q(x_i, mean_beta0, mean_beta1, var_e, var_mean) / abs(x_i - candidate))^k))
+f_min = function(candidate_jk, D_k, gamma_k, mean_beta0, mean_beta1, var_e, var_mean){
+  q(candidate_jk, mean_beta0, mean_beta1, var_e, var_mean)^gamma_k * 
+    sum(sapply(D_k, function(x_i) (q(x_i, mean_beta0, mean_beta1, var_e, var_mean)^gamma_k / abs(x_i - candidate_jk))))
 }
 
 ### Iterative Algorithm for SMED for Model Selection ###
@@ -134,20 +134,20 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10,
                                                                          var_e + x^2 * var_mean, var_e + x^2 * var_mean))
       # pick from candidates:
       # first, calculate criterion for each candidate
-      f_min_candidates = rep(NA, numCandidates)
-      for(m in 1:numCandidates){
-        f_min_candidates[m] = Wass_cand[m]^(gammas[k] / 2) * sum((Wass_D[1:(j - 1), k]^(gammas[k] / 2)) * abs(D[1:(j - 1), k] - candidates_jk[m])^(2))
-      }
       
+      #criterion_cand = rep(NA, numCandidates)
+      #for(m in 1:numCandidates){
+      #  criterion_cand[m] = Wass_cand[m]^(gammas[k] / 2) * sum((Wass_D[1:(j - 1), k]^(gammas[k] / 2)) * abs(D[1:(j - 1), k] - candidates_jk[m])^(2))
+      #}
       
-      #f_opt = which.min(f_min(candidates, D, k, mean_beta0, mean_beta1, var_e, var_mean))
-      f_min_candidates = sapply(candidates, function(x) f_min(x, D[1:(j - 1), k], 4, mean_beta0, mean_beta1, var_e, var_mean))
+      f_min_candidates = sapply(candidates, function(x) f_min(x, D[1:(j - 1), k], gammas[k], mean_beta0, mean_beta1, var_e, var_mean))
       
       #choose that which has largest evaluation of criterion
       chosen_cand = which.min(f_min_candidates)
       D[j, k] = candidates_jk[chosen_cand]
       Wass_D[j, k] = Wasserstein_distance(mean_beta0 * D[j, k], mean_beta1 * D[j, k], 
                                           var_e + D[j, k]^2 * var_mean, var_e + D[j, k]^2 * var_mean)
+      candidates = candidates_jk[-chosen_cand]
     }
   }
   return(list("beta0" = beta0, "beta1" = beta1, "D" = D, "candidates" = candidates))
@@ -173,7 +173,7 @@ X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, xmin, xmax, K, p)
 f0 = function(x) X_test$beta0 * x # null regression model
 f1 = function(x) X_test$beta1 * x # alternative regression model
 
-test_k = 2
+test_k = 4
 curve(f0, from = xmin, to = xmax)
 curve(f1, col = 2, add = TRUE)
 text(X_test$D[ ,test_k], f0(X_test$D[ ,test_k]), c(1:n), col=4)

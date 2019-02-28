@@ -36,9 +36,9 @@ isprime <- function(x) {
 
 # minimizing criterion for greedy algorithm - calculate this for each x_i in candidate set,
 # select the one with the smallest value of f_min to add to current design set D
-f_min = function(candidate_jk, D_k, gamma_k, mean_beta0, mean_beta1, var_e, var_mean){
-  q(candidate_jk, mean_beta0, mean_beta1, var_e, var_mean)^gamma_k * 
-    sum(sapply(D_k, function(x_i) (q(x_i, mean_beta0, mean_beta1, var_e, var_mean)^gamma_k / abs(x_i - candidate_jk))))
+f_min = function(candidate, D, k, mean_beta0, mean_beta1, var_e, var_mean){
+  q(candidate, mean_beta0, mean_beta1, var_e, var_mean)^k * 
+    sum(sapply(D, function(x_i) (q(x_i, mean_beta0, mean_beta1, var_e, var_mean) / abs(x_i - candidate))^k))
 }
 
 ### Iterative Algorithm for SMED for Model Selection ###
@@ -134,13 +134,14 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10,
                                                                          var_e + x^2 * var_mean, var_e + x^2 * var_mean))
       # pick from candidates:
       # first, calculate criterion for each candidate
+      f_min_candidates = rep(NA, numCandidates)
+      for(m in 1:numCandidates){
+        f_min_candidates[m] = Wass_cand[m]^(gammas[k] / 2) * sum((Wass_D[1:(j - 1), k]^(gammas[k] / 2)) * abs(D[1:(j - 1), k] - candidates_jk[m])^(2))
+      }
       
-      #criterion_cand = rep(NA, numCandidates)
-      #for(m in 1:numCandidates){
-      #  criterion_cand[m] = Wass_cand[m]^(gammas[k] / 2) * sum((Wass_D[1:(j - 1), k]^(gammas[k] / 2)) * abs(D[1:(j - 1), k] - candidates_jk[m])^(2))
-      #}
       
-      f_min_candidates = sapply(candidates, function(x) f_min(x, D[1:(j - 1), k], gammas[k], mean_beta0, mean_beta1, var_e, var_mean))
+      #f_opt = which.min(f_min(candidates, D, k, mean_beta0, mean_beta1, var_e, var_mean))
+      f_min_candidates = sapply(candidates, function(x) f_min(x, D[1:(j - 1), k], 4, mean_beta0, mean_beta1, var_e, var_mean))
       
       #choose that which has largest evaluation of criterion
       chosen_cand = which.min(f_min_candidates)

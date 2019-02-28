@@ -148,9 +148,9 @@ mean_beta1 = 1 / 2 # slope of alternative model
 var_mean = 0.001
 var_e = 1 # same variance
 
-n = 7 # in paper, n = numCandidates - not true, it's numCandidates generated for each x_i^k at each step
+n = 11 # in paper, n = numCandidates - not true, it's numCandidates generated for each x_i^k at each step
 numCandidates = 7 # largest prime number less than 100 + 5p = 103
-K = 8
+K = 16
 p = 1
 xmin = 0
 xmax = 1
@@ -160,15 +160,51 @@ X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, xmin, xmax, K, p)
 f0 = function(x) mean_beta0 * x # null regression model
 f1 = function(x) mean_beta1 * x # alternative regression model
 
-test_k = 8
-curve(f0, from = xmin, to = xmax)
-curve(f1, col = 2, add = TRUE)
+
+# pictures
+
+test_k = 1
+curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f2")
+curve(f1, col = 1, add = TRUE)
 text(X_test$D[ ,test_k], f0(X_test$D[ ,test_k]), c(1:n), col=4)
 text(X_test$D[ ,test_k], f1(X_test$D[ ,test_k]), c(1:n), col=4)
 points(X_test$D[ ,test_k], rep(0, n), col=2)
 
-#sort(X_test$candidates)
-length(X_test$candidates)
+#dev.copy(png,'efficient_bayes_lm_1.png')
+#dev.off()
+
+test_k = 4
+curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f2")
+curve(f1, col = 1, add = TRUE)
+text(X_test$D[ ,test_k], f0(X_test$D[ ,test_k]), c(1:n), col=4)
+text(X_test$D[ ,test_k], f1(X_test$D[ ,test_k]), c(1:n), col=4)
+points(X_test$D[ ,test_k], rep(0, n), col=2)
+
+#dev.copy(png,'efficient_bayes_lm_4.png')
+#dev.off()
+
+test_k = 8
+curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f2")
+curve(f1, col = 1, add = TRUE)
+text(X_test$D[ ,test_k], f0(X_test$D[ ,test_k]), c(1:n), col=4)
+text(X_test$D[ ,test_k], f1(X_test$D[ ,test_k]), c(1:n), col=4)
+points(X_test$D[ ,test_k], rep(0, n), col=2)
+
+#dev.copy(png,'efficient_bayes_lm_8.png')
+#dev.off()
+
+test_k = 16
+curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f2")
+curve(f1, col = 1, add = TRUE)
+text(X_test$D[ ,test_k], f0(X_test$D[ ,test_k]), c(1:n), col=4)
+text(X_test$D[ ,test_k], f1(X_test$D[ ,test_k]), c(1:n), col=4)
+points(X_test$D[ ,test_k], rep(0, n), col=2)
+
+#dev.copy(png,'efficient_bayes_lm_16.png')
+#dev.off()
+
+
+length(X_test$candidates[[3]]) # why is it 132?
 
 
 

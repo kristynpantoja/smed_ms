@@ -93,8 +93,8 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10, numCandidate
   candidates = candidates[-xinitind] # candidate set, for choosing next design point x_{n+1}
   
   # Plot density and (highest lik) points
-  curve(f0, from = xmin, to = xmax)
-  curve(f1, col = 2, add = TRUE)
+  curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f2")
+  curve(f1, col = 1, add = TRUE)
   text(D, f0(D), 1, col=4)
   text(D, f1(D), 1, col=4)
   points(D, 0, col=2)
@@ -131,9 +131,10 @@ k = 4
 xmin = 0
 xmax = 1
 
-X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, numCandidates, 10000, xmin, xmax)
+X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, numCandidates, k, xmin, xmax)
 
-
+#dev.copy(png,'bayes_linear_regression.png')
+#dev.off()
 
 
 

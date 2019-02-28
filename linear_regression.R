@@ -86,8 +86,8 @@ SMED_ms = function(f0, beta0, f1, beta1, var_e, n = 10, numCandidates = 1000, k 
   candidates = candidates[-xinitind] # candidate set, for choosing next design point x_{n+1}
   
   # Plot density and (highest lik) points
-  curve(f0, from = xmin, to = xmax)
-  curve(f1, col = 2, add = TRUE)
+  curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f2")
+  curve(f1, col = 1, add = TRUE)
   text(D, f0(D), 1, col=4)
   text(D, f1(D), 1, col=4)
   points(D, 0, col=2)
@@ -132,6 +132,10 @@ xmax = 1
 X_test = SMED_ms(f0, beta0, f1, beta1, var_e, n, numCandidates, k, xmin, xmax)
 
 
+
+
+#dev.copy(png,'linear_regression.png')
+#dev.off()
 
 
 

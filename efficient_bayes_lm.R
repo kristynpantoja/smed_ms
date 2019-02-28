@@ -88,7 +88,6 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10,
   for (k in 1:K){
     C[[k]] = C1
   }
-  print(C)
   
   for(k in 2:K){
     # for j = 1
@@ -109,7 +108,6 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10,
     # at some point... see their code for initializing kth design. ##################################
     
     # for j = 2:n
-    print(C)
     for(j in 2:n){
       # get candidates in neighborhood L_jk = (lower, upper)
       if(j == n){
@@ -119,7 +117,6 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10,
         upper = D[j, k] + R_jk
         tildeDjk = Lattice(numCandidatesinit, p = 1) * (upper - lower) + lower
         C[[k]] = c(C[[k]], tildeDjk)
-        print(C)
       } else{
         R_jk = min(abs(D[-j, k] - D[j, k])) #which.min(c(D[j, k] - D[j - 1, k], D[j + 1, k] - D[j, k]))
         lower = max(D[j, k] - R_jk, 0) # is this necessary, to max with 0? ################################
@@ -153,7 +150,7 @@ var_e = 1 # same variance
 
 n = 7 # in paper, n = numCandidates - not true, it's numCandidates generated for each x_i^k at each step
 numCandidates = 7 # largest prime number less than 100 + 5p = 103
-K = 4
+K = 8
 p = 1
 xmin = 0
 xmax = 1
@@ -163,7 +160,7 @@ X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, xmin, xmax, K, p)
 f0 = function(x) mean_beta0 * x # null regression model
 f1 = function(x) mean_beta1 * x # alternative regression model
 
-test_k = 4
+test_k = 8
 curve(f0, from = xmin, to = xmax)
 curve(f1, col = 2, add = TRUE)
 text(X_test$D[ ,test_k], f0(X_test$D[ ,test_k]), c(1:n), col=4)

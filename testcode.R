@@ -115,7 +115,7 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10,
         candidates_jk = Lattice(numCandidatesinit, p = 1) * (upper - lower) + lower
         candidates_jk = c(candidates_jk, candidates_1k)
       } else{
-        R_jk = which.min(c(D[j, k] - D[j - 1, k], D[j + 1, k] - D[j, k]))
+        R_jk = min(abs(D[-j, k] - D[j, k]))  #which.min(c(D[j, k] - D[j - 1, k], D[j + 1, k] - D[j, k]))
         lower = max(D[j, k] - R_jk, 0) # is this necessary, to max with 0? ################################
         upper = min(D[j, k] + R_jk, 1)
         candidates_jk = Lattice(numCandidatesinit, p = 1) * (upper - lower) + lower

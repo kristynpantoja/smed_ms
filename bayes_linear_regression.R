@@ -125,7 +125,7 @@ mean_beta1 = 1 / 2 # slope of alternative model
 var_mean = 0.01
 var_e = 1 # same variance
 
-n = 11
+n = 50
 numCandidates = 1000
 k = 4
 xmin = 0
@@ -138,6 +138,92 @@ X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, numCandidates, k, x
 
 
 
+
+# pictures
+
+n = 50
+numCandidates = 1000
+k = 4
+xmin = 0
+xmax = 1
+
+X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, numCandidates, k, xmin, xmax)
+
+#dev.copy(png,'bayes_lr_k4.png')
+#dev.off()
+
+
+
+n = 50
+numCandidates = 1000
+k = 100
+xmin = 0
+xmax = 1
+
+X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, numCandidates, k, xmin, xmax)
+
+#dev.copy(png,'bayes_lr_k100.png')
+#dev.off()
+
+
+
+n = 50
+numCandidates = 1000
+k = 125
+xmin = 0
+xmax = 1
+
+X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, numCandidates, k, xmin, xmax)
+
+#dev.copy(png,'bayes_lr_k125.png')
+#dev.off()
+
+
+
+n = 50
+numCandidates = 1000
+k = 150
+xmin = 0
+xmax = 1
+
+X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, numCandidates, k, xmin, xmax)
+
+#dev.copy(png,'bayes_lr_k150.png')
+#dev.off()
+
+
+
+n = 50
+numCandidates = 1000
+k = 200
+xmin = 0
+xmax = 1
+
+X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, numCandidates, k, xmin, xmax)
+
+#dev.copy(png,'bayes_lr_k200.png')
+#dev.off()
+
+
+
+n = 50
+numCandidates = 1000
+k = 500
+xmin = 0
+xmax = 1
+
+X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, numCandidates, k, xmin, xmax)
+
+#dev.copy(png,'bayes_lr_k500.png')
+#dev.off()
+
+
+
+
+
+
+# experimenting with Lattice function
+
 library(OptimalDesign)
 ?od.m1
 candidates = runif(numCandidates, xmin, xmax)
@@ -147,3 +233,4 @@ od.m1(candidates, b, A=NULL, w0=NULL, type="exact", kappa=1e-9,
 library(mined)
 ?Lattice
 mined::Lattice(7, 1)
+

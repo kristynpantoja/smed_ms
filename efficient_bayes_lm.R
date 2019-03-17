@@ -14,11 +14,13 @@ Wasserstein_distance = function(mu1, mu2, var1, var2){
   return(sqrt(mu1 - mu2)^2 + var1 + var2 - 2 * sqrt(var1 * var2))
 }
 
+var_marginaly = function(x, var_e, var_mean) var_e + x^2 * var_mean
+
 # charge function at design point x
 q = function(x, mean_beta0, mean_beta1, var_e, var_mean){
   mu1 = mean_beta0 * x # mean of marginal dist of y | H0, beta0
   mu2 = mean_beta1 * x # mean of marginal dist of y | H1, beta1
-  var = var_e + x^2 * var_mean # variance of marginal dist of y | H1, betai
+  var = var_marginaly(x, var_e, var_mean) # variance of marginal dist of y | H1
   Wass_dist = Wasserstein_distance(mu1, mu2, var, var)
   return(1.0 / Wass_dist^(1/2))
 }
@@ -143,14 +145,18 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10,
 # criterion (1 / d_W(f0, f1; x_i) * 1 / d_W(f0, f1; x_j)) / d(x_i, x_j)
 # here, we assume f's are normal, so we specify the mean and variance of each
 
+
+# pictures
+
+
 mean_beta0 = 1 # slope of null model
 mean_beta1 = 1 / 2 # slope of alternative model
-var_mean = 0.001
-var_e = 1 # same variance
+var_mean = 0.05
+var_e = 0.1 # same variance
 
 n = 11 # in paper, n = numCandidates - not true, it's numCandidates generated for each x_i^k at each step
 numCandidates = 7 # largest prime number less than 100 + 5p = 103
-K = 16
+K = 4 # ceiling(4* sqrt(p))
 p = 1
 xmin = 0
 xmax = 1
@@ -160,8 +166,29 @@ X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, xmin, xmax, K, p)
 f0 = function(x) mean_beta0 * x # null regression model
 f1 = function(x) mean_beta1 * x # alternative regression model
 
+test_k = 4
+X_k = sort(X_test$D[ ,test_k])
+curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f2")
+curve(f1, col = 1, add = TRUE)
+text(X_test$D[ ,test_k], f0(X_test$D[ ,test_k]), c(1:n), col=4)
+text(X_test$D[ ,test_k], f1(X_test$D[ ,test_k]), c(1:n), col=4)
+points(X_k, rep(0, n), col = 2)
 
-# pictures
+dev.copy(png,'efficient_bayes_lm.png')
+dev.off()
+
+# add errors for marginal of y | H_i
+X_test_errors = sapply(X_k, function(x) var_marginaly(x, var_e, var_mean))
+polygon(x = c(X_k, rev(X_k)),y = c(f0(X_k) - 2 * X_test_errors, rev(f0(X_k) + 2 * X_test_errors)),
+        col =  adjustcolor("cyan", alpha.f = 0.10), border = NA)
+polygon(x = c(X_k, rev(X_k)),y = c(f1(X_k) - 2 * X_test_errors, rev(f1(X_k) + 2 * X_test_errors)),
+        col =  adjustcolor("pink", alpha.f = 0.10), border = NA)
+
+dev.copy(png,'efficient_bayes_lm_variance_marginal_y.png')
+dev.off()
+
+
+
 
 test_k = 1
 curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f2")
@@ -198,13 +225,20 @@ curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f
 curve(f1, col = 1, add = TRUE)
 text(X_test$D[ ,test_k], f0(X_test$D[ ,test_k]), c(1:n), col=4)
 text(X_test$D[ ,test_k], f1(X_test$D[ ,test_k]), c(1:n), col=4)
-points(X_test$D[ ,test_k], rep(0, n), col=2)
+points(X_test$D[ ,test_k], rep(0, n), col = 2)
 
 #dev.copy(png,'efficient_bayes_lm_16.png')
 #dev.off()
 
 
 length(X_test$candidates[[3]]) # why is it 132?
+
+
+
+
+
+
+
 
 
 

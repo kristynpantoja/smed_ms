@@ -184,8 +184,8 @@ polygon(x = c(X_k, rev(X_k)),y = c(f0(X_k) - 2 * X_test_errors, rev(f0(X_k) + 2 
 polygon(x = c(X_k, rev(X_k)),y = c(f1(X_k) - 2 * X_test_errors, rev(f1(X_k) + 2 * X_test_errors)),
         col =  adjustcolor("pink", alpha.f = 0.10), border = NA)
 
-dev.copy(png,'efficient_bayes_lm_variance_marginal_y.png')
-dev.off()
+#dev.copy(png,'efficient_bayes_lm_variance_marginal_y.png')
+#dev.off()
 
 
 

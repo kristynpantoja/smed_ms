@@ -85,3 +85,72 @@ expected_post_H0 = expected_marginalY_H0 / (expected_marginalY_H0 + expected_mar
 expected_post_H1 = expected_marginalY_H1 / (expected_marginalY_H0 + expected_marginalY_H1)
 
 BayesFactor_01 = expected_marginalY_H0 / expected_marginalY_H1 # since > 1, Null hypothesis is supported
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# suppose H_1 is true, i.e. y_i = x_i beta0 + epsilon_i
+# then have:
+
+numSims = 1000
+Y = matrix(rep(NA, numSims * n), nrow = n, ncol = numSims) # each column is a new simulation of Y in R^n, for J = numSims total columns and n rows
+for(i in 1:n){
+  for(j in 1:numSims){
+    Y[i, j] = rnorm(n = 1, mean = mean_beta1 * X[i], sd = sqrt(var_e + X[i]^2 * var_mean))
+  }
+}
+
+# just inspecting to see if they actually follow the line  y_i = x_i beta0
+j = 40
+plot(Y[ , j] ~ X)
+
+# calculate expected evidence for each model, P(Y | H_i), i.e. averaged over beta (which is why we have mean_beta in the fmla)
+# but it depends on x's in D... what do we do about those? some kind of a likelihood? Why would this work?
+
+
+
+
+# calculate marginal y at each row and column, for each model
+getMarginalY = function(x, mean_beta, i) dnorm(x, mean = mean_beta * X[i], sd = sqrt(var_e + X[i]^2 * var_mean))
+
+marginalY_H0 = matrix(rep(NA, numSims * n), nrow = n, ncol = numSims)
+for(i in 1:n){
+  for(j in 1:numSims){
+    marginalY_H0[i, j] = getMarginalY(Y[i, j], mean_beta0, i)
+  }
+}
+
+marginalY_H1 = matrix(rep(NA, numSims * n), nrow = n, ncol = numSims)
+for(i in 1:n){
+  for(j in 1:numSims){
+    marginalY_H1[i, j] = getMarginalY(Y[i, j], mean_beta1, i)
+  }
+}
+# calculate expected marginal y for each model by averaging
+expected_marginalY_H0 = mean(marginalY_H0)
+expected_marginalY_H1 = mean(marginalY_H1)
+
+# calculate expected posterior probability of each model (equal prior on models)
+expected_post_H0 = expected_marginalY_H0 / (expected_marginalY_H0 + expected_marginalY_H1)
+expected_post_H1 = expected_marginalY_H1 / (expected_marginalY_H0 + expected_marginalY_H1)
+
+BayesFactor_01 = expected_marginalY_H0 / expected_marginalY_H1 # since > 1, Null hypothesis is supported
+
+
+
+
+
+
+

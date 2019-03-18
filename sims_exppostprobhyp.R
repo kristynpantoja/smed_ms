@@ -83,3 +83,5 @@ expected_marginalY_H1 = mean(marginalY_H1)
 # calculate expected posterior probability of each model (equal prior on models)
 expected_post_H0 = expected_marginalY_H0 / (0.5 * expected_marginalY_H0 + 0.5 * expected_marginalY_H1)
 expected_post_H1 = expected_marginalY_H1 / (0.5 * expected_marginalY_H0 + 0.5 * expected_marginalY_H1)
+
+BayesFactor_01 = expected_marginalY_H0 / expected_marginalY_H1 # since > 1, Null hypothesis is supported

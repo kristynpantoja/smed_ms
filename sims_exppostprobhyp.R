@@ -58,3 +58,28 @@ plot(Y[ , j] ~ X)
 # but it depends on x's in D... what do we do about those? some kind of a likelihood? Why would this work?
 
 
+
+
+# calculate marginal y at each row and column, for each model
+getMarginalY = function(x, mean_beta, i) dnorm(x, mean = mean_beta * X[i], sd = sqrt(var_e + X[i]^2 * var_mean))
+
+marginalY_H0 = matrix(rep(NA, numSims * n), nrow = n, ncol = numSims)
+for(i in 1:n){
+  for(j in 1:numSims){
+    marginalY_H0[i, j] = getMarginalY(Y[i, j], mean_beta0, i)
+  }
+}
+
+marginalY_H1 = matrix(rep(NA, numSims * n), nrow = n, ncol = numSims)
+for(i in 1:n){
+  for(j in 1:numSims){
+    marginalY_H1[i, j] = getMarginalY(Y[i, j], mean_beta1, i)
+  }
+}
+# calculate expected marginal y for each model by averaging
+expected_marginalY_H0 = mean(marginalY_H0)
+expected_marginalY_H1 = mean(marginalY_H1)
+
+# calculate expected posterior probability of each model (equal prior on models)
+expected_post_H0 = expected_marginalY_H0 / (0.5 * expected_marginalY_H0 + 0.5 * expected_marginalY_H1)
+expected_post_H1 = expected_marginalY_H1 / (0.5 * expected_marginalY_H0 + 0.5 * expected_marginalY_H1)

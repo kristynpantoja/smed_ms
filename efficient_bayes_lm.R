@@ -174,8 +174,8 @@ text(X_test$D[ ,test_k], f0(X_test$D[ ,test_k]), c(1:n), col=4)
 text(X_test$D[ ,test_k], f1(X_test$D[ ,test_k]), c(1:n), col=4)
 points(X_k, rep(0, n), col = 2)
 
-dev.copy(png,'efficient_bayes_lm.png')
-dev.off()
+#dev.copy(png,'efficient_bayes_lm_N51')
+#dev.off()
 
 # add errors for marginal of y | H_i
 X_test_errors = sapply(X_k, function(x) var_marginaly(x, var_e, var_mean))

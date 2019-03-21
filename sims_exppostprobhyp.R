@@ -119,6 +119,10 @@ for(i in 1:n){
 j = 40
 plot(Y[ , j] ~ X)
 
+#dev.copy(png,'sim_H1')
+#dev.off()
+
+
 # calculate expected evidence for each model, P(Y | H_i), i.e. averaged over beta (which is why we have mean_beta in the fmla)
 # but it depends on x's in D... what do we do about those? some kind of a likelihood? Why would this work?
 

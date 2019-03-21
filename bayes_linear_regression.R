@@ -146,7 +146,7 @@ X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, numCandidates, k, x
 
 # pictures
 
-n = 50
+n = 51
 numCandidates = 1000
 k = 4
 xmin = 0
@@ -154,7 +154,7 @@ xmax = 1
 
 X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, numCandidates, k, xmin, xmax)
 
-#dev.copy(png,'bayes_lr_k4.png')
+#dev.copy(png,'bayes_lr_k4_N51.png')
 #dev.off()
 
 

@@ -7,8 +7,8 @@ source("efficient_bayes_lm.R")
 
 mean_beta0 = 1 # slope of null model
 mean_beta1 = 1 / 2 # slope of alternative model
-var_mean = 0.05
-var_e = 0.1 # same variance
+var_mean = 0.001
+var_e = 0.01 # same variance
 
 n = 51 # n = numCandidates should be largest prime number less than 100 + 5p = 103
 K = 4 # ceiling(4* sqrt(p))
@@ -53,6 +53,9 @@ for(i in 1:n){
 # just inspecting to see if they actually follow the line  y_i = x_i beta0
 j = 40
 plot(Y[ , j] ~ X)
+
+#dev.copy(png,'sim_H0')
+#dev.off()
 
 # calculate expected evidence for each model, P(Y | H_i), i.e. averaged over beta (which is why we have mean_beta in the fmla)
 # but it depends on x's in D... what do we do about those? some kind of a likelihood? Why would this work?

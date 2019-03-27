@@ -50,7 +50,7 @@ var_e = 0.1 # same variance
 
 ## Running Algorithm
 
-n = 11
+n = 23
 numCandidates = 1000
 k = 4
 xmin = 0

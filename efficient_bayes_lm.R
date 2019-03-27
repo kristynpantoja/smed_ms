@@ -1,3 +1,7 @@
+############################################################
+## Based on Fast Algorithm, Joseph et. al. 2018
+############################################################
+
 ### --- Linear Regression Different Slopes (both intercept at 0, same error variance) --- ###
 
 ## Like bayes_linear_regression.R, but I try to implement some of the techniques in
@@ -7,23 +11,9 @@
 library(transport)
 library(mined)
 
+source("smed_ms_functions.R")
+
 ### Helper  Functions ###
-
-# Wasserstein distance betwen two (univariate) normals, N(mu1, var1) and N(mu2, var2)
-Wasserstein_distance = function(mu1, mu2, var1, var2){
-  return(sqrt(mu1 - mu2)^2 + var1 + var2 - 2 * sqrt(var1 * var2))
-}
-
-var_marginaly = function(x, var_e, var_mean) var_e + x^2 * var_mean
-
-# charge function at design point x
-q = function(x, mean_beta0, mean_beta1, var_e, var_mean){
-  mu1 = mean_beta0 * x # mean of marginal dist of y | H0, beta0
-  mu2 = mean_beta1 * x # mean of marginal dist of y | H1, beta1
-  var = var_marginaly(x, var_e, var_mean) # variance of marginal dist of y | H1
-  Wass_dist = Wasserstein_distance(mu1, mu2, var, var)
-  return(1.0 / Wass_dist^(1/2))
-}
 
 # check if a number is prime, to use Lattice function in
 isprime <- function(x) {
@@ -39,7 +29,7 @@ isprime <- function(x) {
 # minimizing criterion for greedy algorithm - calculate this for each x_i in candidate set,
 # select the one with the smallest value of f_min to add to current design set D.
 #  (Notice that this is different from the 2015 version, bc take MAX of sapply instead of SUM of sapply.)
-f_min = function(candidate_jk, D_k, gamma_k, mean_beta0, mean_beta1, var_e, var_mean){
+f_min_fast = function(candidate_jk, D_k, gamma_k, mean_beta0, mean_beta1, var_e, var_mean){
   q(candidate_jk, mean_beta0, mean_beta1, var_e, var_mean)^gamma_k * 
     max(sapply(D_k, function(x_i) (q(x_i, mean_beta0, mean_beta1, var_e, var_mean)^gamma_k / abs(x_i - candidate_jk))))
 }
@@ -49,7 +39,7 @@ f_min = function(candidate_jk, D_k, gamma_k, mean_beta0, mean_beta1, var_e, var_
 
 # f is normal, so need to specify f0 = {beta0}, f1 = {beta1}, var_e
 # since these determine both f0 and f1's normal parameters 
-SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10, 
+SMED_ms_fast = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10, 
                    xmin = 0, xmax = 1, K, p){
   #  n : number of design points to select (for set of design points, D_k each k = 1, ..., K)
   #  K : number of designs to make (iteratively)
@@ -132,7 +122,7 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10,
       # pick from candidates:
       # first, calculate criterion for each candidate
       
-      f_min_candidates = sapply(C[[k]], function(x) f_min(x, D[1:(j - 1), k], gammas[k], mean_beta0, mean_beta1, var_e, var_mean))
+      f_min_candidates = sapply(C[[k]], function(x) f_min_fast(x, D[1:(j - 1), k], gammas[k], mean_beta0, mean_beta1, var_e, var_mean))
       #choose that which has largest evaluation of criterion
       chosen_cand = which.min(f_min_candidates)
       D[j, k] = C[[k]][chosen_cand]
@@ -161,7 +151,7 @@ p = 1
 xmin = 0
 xmax = 1
 
-X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, xmin, xmax, K, p)
+X_test = SMED_ms_fast(mean_beta0, mean_beta1, var_e, var_mean, n, xmin, xmax, K, p)
 
 f0 = function(x) mean_beta0 * x # null regression model
 f1 = function(x) mean_beta1 * x # alternative regression model
@@ -174,8 +164,11 @@ text(X_test$D[ ,test_k], f0(X_test$D[ ,test_k]), c(1:n), col=4)
 text(X_test$D[ ,test_k], f1(X_test$D[ ,test_k]), c(1:n), col=4)
 points(X_k, rep(0, n), col = 2)
 
-#dev.copy(png,'efficient_bayes_lm_N51')
-#dev.off()
+
+
+
+
+
 
 # add errors for marginal of y | H_i
 X_test_errors = sapply(X_k, function(x) var_marginaly(x, var_e, var_mean))
@@ -184,12 +177,10 @@ polygon(x = c(X_k, rev(X_k)),y = c(f0(X_k) - 2 * X_test_errors, rev(f0(X_k) + 2 
 polygon(x = c(X_k, rev(X_k)),y = c(f1(X_k) - 2 * X_test_errors, rev(f1(X_k) + 2 * X_test_errors)),
         col =  adjustcolor("pink", alpha.f = 0.10), border = NA)
 
-#dev.copy(png,'efficient_bayes_lm_variance_marginal_y.png')
-#dev.off()
 
 
 
-
+# debugging to find out candidates calculations
 test_k = 1
 curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f2")
 curve(f1, col = 1, add = TRUE)
@@ -197,48 +188,6 @@ text(X_test$D[ ,test_k], f0(X_test$D[ ,test_k]), c(1:n), col=4)
 text(X_test$D[ ,test_k], f1(X_test$D[ ,test_k]), c(1:n), col=4)
 points(X_test$D[ ,test_k], rep(0, n), col=2)
 
-#dev.copy(png,'efficient_bayes_lm_1.png')
-#dev.off()
-
-test_k = 4
-curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f2")
-curve(f1, col = 1, add = TRUE)
-text(X_test$D[ ,test_k], f0(X_test$D[ ,test_k]), c(1:n), col=4)
-text(X_test$D[ ,test_k], f1(X_test$D[ ,test_k]), c(1:n), col=4)
-points(X_test$D[ ,test_k], rep(0, n), col=2)
-
-#dev.copy(png,'efficient_bayes_lm_4.png')
-#dev.off()
-
-test_k = 8
-curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f2")
-curve(f1, col = 1, add = TRUE)
-text(X_test$D[ ,test_k], f0(X_test$D[ ,test_k]), c(1:n), col=4)
-text(X_test$D[ ,test_k], f1(X_test$D[ ,test_k]), c(1:n), col=4)
-points(X_test$D[ ,test_k], rep(0, n), col=2)
-
-#dev.copy(png,'efficient_bayes_lm_8.png')
-#dev.off()
-
-test_k = 16
-curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f2")
-curve(f1, col = 1, add = TRUE)
-text(X_test$D[ ,test_k], f0(X_test$D[ ,test_k]), c(1:n), col=4)
-text(X_test$D[ ,test_k], f1(X_test$D[ ,test_k]), c(1:n), col=4)
-points(X_test$D[ ,test_k], rep(0, n), col = 2)
-
-#dev.copy(png,'efficient_bayes_lm_16.png')
-#dev.off()
-
-
 length(X_test$candidates[[3]]) # why is it 132?
-
-
-
-
-
-
-
-
 
 

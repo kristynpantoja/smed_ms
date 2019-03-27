@@ -1,3 +1,7 @@
+############################################################
+## Based on One-At-a-Time Algorithm, Joseph et. al. 2015 
+############################################################
+
 ### --- Linear Regression Different Slopes (both intercept at 0, same error variance) --- ###
 
 # Null Model: y_i = x_i beta0 + epsilon_i
@@ -27,24 +31,9 @@
 
 library(transport)
 
+source("smed_ms_functions.R")
 
 ### Helper  Functions ###
-
-# Wasserstein distance betwen two (univariate) normals, N(mu1, var1) and N(mu2, var2)
-Wasserstein_distance = function(mu1, mu2, var1, var2){
-  return(sqrt(mu1 - mu2)^2 + var1 + var2 - 2 * sqrt(var1 * var2))
-}
-
-var_marginaly = function(x, var_e, var_mean) var_e + x^2 * var_mean
-
-# charge function at design point x
-q = function(x, mean_beta0, mean_beta1, var_e, var_mean){
-  mu1 = mean_beta0 * x # mean of marginal dist of y | H0
-  mu2 = mean_beta1 * x # mean of marginal dist of y | H1
-  var = var_marginaly(x, var_e, var_mean) # variance of marginal dist of y | H1
-  Wass_dist = Wasserstein_distance(mu1, mu2, var, var)
-  return(1.0 / Wass_dist^(1/2))
-}
 
 # minimizing criterion for greedy algorithm - calculate this for each x_i in candidate set,
 # select the one with the smallest value of f_min to add to current design set D
@@ -119,6 +108,17 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10, numCandidate
   return(D)
 }
 
+
+
+
+
+
+
+
+### Testing
+
+## Pick Parameters
+
 # criterion (1 / d_W(f0, f1; x_i) * 1 / d_W(f0, f1; x_j)) / d(x_i, x_j)
 # here, we assume f's are normal, so we specify the mean and variance of each
 
@@ -127,8 +127,7 @@ mean_beta1 = 1 / 2 # slope of alternative model
 var_mean = 0.05
 var_e = 0.1 # same variance
 
-
-
+## Running Algorithm
 
 n = 11
 numCandidates = 1000
@@ -137,91 +136,6 @@ xmin = 0
 xmax = 1
 
 X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, numCandidates, k, xmin, xmax)
-
-#dev.copy(png,'bayes_linear_regression.png')
-#dev.off()
-
-
-
-
-# pictures
-
-n = 51
-numCandidates = 1000
-k = 4
-xmin = 0
-xmax = 1
-
-X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, numCandidates, k, xmin, xmax)
-
-#dev.copy(png,'bayes_lr_k4_N51.png')
-#dev.off()
-
-
-
-n = 50
-numCandidates = 1000
-k = 100
-xmin = 0
-xmax = 1
-
-X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, numCandidates, k, xmin, xmax)
-
-#dev.copy(png,'bayes_lr_k100.png')
-#dev.off()
-
-
-
-n = 50
-numCandidates = 1000
-k = 125
-xmin = 0
-xmax = 1
-
-X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, numCandidates, k, xmin, xmax)
-
-#dev.copy(png,'bayes_lr_k125.png')
-#dev.off()
-
-
-
-n = 50
-numCandidates = 1000
-k = 150
-xmin = 0
-xmax = 1
-
-X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, numCandidates, k, xmin, xmax)
-
-#dev.copy(png,'bayes_lr_k150.png')
-#dev.off()
-
-
-
-n = 50
-numCandidates = 1000
-k = 200
-xmin = 0
-xmax = 1
-
-X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, numCandidates, k, xmin, xmax)
-
-#dev.copy(png,'bayes_lr_k200.png')
-#dev.off()
-
-
-
-n = 50
-numCandidates = 1000
-k = 500
-xmin = 0
-xmax = 1
-
-X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, numCandidates, k, xmin, xmax)
-
-#dev.copy(png,'bayes_lr_k500.png')
-#dev.off()
-
 
 
 

@@ -24,7 +24,7 @@ mean_beta1 = 1 / 2 # slope of alternative model
 var_mean = 0.05
 var_e = 0.1 # same variance
 
-n = 23 # in paper, n = numCandidates - not true, it's numCandidates generated for each x_i^k at each step
+n = 51 # in paper, n = numCandidates - not true, it's numCandidates generated for each x_i^k at each step
 numCandidates = 7 # largest prime number less than 100 + 5p = 103
 K = 4 # ceiling(4* sqrt(p))
 p = 1
@@ -74,7 +74,9 @@ length(X_test$candidates[[3]]) # why is it 132?
 
 ## Debugging: What if Optimization is wrong?
 
-# Checking...
+
+# What if use Fast Algorithm's design method, 
+#  but with One-At-a-Time Algorithm's criterion (sum and k_power)?
 
 X_test = SMED_ms_fast2(mean_beta0, mean_beta1, var_e, var_mean, n, xmin, xmax, K, p, 4)
 
@@ -89,12 +91,55 @@ text(X_test$D[ ,test_k], f0(X_test$D[ ,test_k]), c(1:n), col=4)
 text(X_test$D[ ,test_k], f1(X_test$D[ ,test_k]), c(1:n), col=4)
 points(X_k, rep(0, n), col = 2)
 
+dev.copy(png,'efficient_bayes_oldcriterion_lm_N51.png')
+dev.off()
+
+# Didn't help. Still looks like Fast Algorithm output,
+#  i.e. still mostly concentrated in the middle, rather than upper half.
+#  (just a little more sparse in the left-half of support, like in One-At-a-Time, but only barely)
+
+
+
+
+
+## Debugging: What if Optimization is wrong?
+
+
+# What if use Fast Algorithm's design method, 
+#  but without min-ing at 1 and max-ing at 0 for Ljk lower & upper bounds??
+
+X_test = SMED_ms_fast3(mean_beta0, mean_beta1, var_e, var_mean, n, xmin, xmax, K, p)
+
+f0 = function(x) mean_beta0 * x # null regression model
+f1 = function(x) mean_beta1 * x # alternative regression model
+
+test_k = 4
+X_k = sort(X_test$D[ ,test_k])
+curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f2")
+curve(f1, col = 1, add = TRUE)
+text(X_test$D[ ,test_k], f0(X_test$D[ ,test_k]), c(1:n), col=4)
+text(X_test$D[ ,test_k], f1(X_test$D[ ,test_k]), c(1:n), col=4)
+points(X_k, rep(0, n), col = 2)
+
+dev.copy(png,'efficient_bayes_norestrictionLjk_lm_N51.png')
+dev.off()
 
 
 
 
 
 
+
+
+
+
+
+
+
+
+
+
+# Okay, what if we try taking log of f, then, even though it's Wasserstein distance?
 
 
 

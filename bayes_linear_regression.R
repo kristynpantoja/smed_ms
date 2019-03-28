@@ -70,8 +70,8 @@ for(i in 1:n){
 
 points(X_k, rep(0, N), col = 2)
 
-dev.copy(png, 'oneatatime_pattern_N67.png')
-dev.off()
+#dev.copy(png, 'oneatatime_pattern_N67.png')
+#dev.off()
 
 
 # experimenting with Lattice function

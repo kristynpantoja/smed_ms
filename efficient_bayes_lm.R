@@ -87,12 +87,12 @@ curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f
 curve(f1, col = 1, add = TRUE)
 
 for(i in 1:N){
-  text(X_test$D[i ,test_k], f1(X_test$D[i ,test_k]) + i * 0.01, i, col=4)
+  text(X_test$D[i ,test_k], f1(X_test$D[i ,test_k]) + i * 0.007, i, col=4)
 }
 
 points(X_k, rep(0, N), col = 2)
 
-#dev.copy(png, 'fast_pattern_N67.png')
+#dev.copy(png, 'fast_pattern_N67_match.png')
 #dev.off()
 
 
@@ -100,6 +100,7 @@ points(X_k, rep(0, N), col = 2)
 
 # What if we draw from Uniform, instead of Lattice?
 set.seed(1234)
+set.seed(1236)
 N = 67
 source("smed_ms_functions.R")
 X_test = SMED_ms_fast2(mean_beta0, mean_beta1, var_e, var_mean, N, xmin, xmax, K, p)

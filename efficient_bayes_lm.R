@@ -91,12 +91,14 @@ text(X_test$D[ ,test_k], f0(X_test$D[ ,test_k]), c(1:n), col=4)
 text(X_test$D[ ,test_k], f1(X_test$D[ ,test_k]), c(1:n), col=4)
 points(X_k, rep(0, n), col = 2)
 
-dev.copy(png,'efficient_bayes_oldcriterion_lm_N51.png')
-dev.off()
+#dev.copy(png,'efficient_bayes_oldcriterion_lm_N51.png')
+#dev.off()
 
 # Didn't help. Still looks like Fast Algorithm output,
 #  i.e. still mostly concentrated in the middle, rather than upper half.
 #  (just a little more sparse in the left-half of support, like in One-At-a-Time, but only barely)
+
+
 
 
 
@@ -121,17 +123,99 @@ text(X_test$D[ ,test_k], f0(X_test$D[ ,test_k]), c(1:n), col=4)
 text(X_test$D[ ,test_k], f1(X_test$D[ ,test_k]), c(1:n), col=4)
 points(X_k, rep(0, n), col = 2)
 
-dev.copy(png,'efficient_bayes_norestrictionLjk_lm_N51.png')
+#dev.copy(png,'efficient_bayes_norestrictionLjk_lm_N51.png')
+#dev.off()
+
+
+
+
+
+
+
+## Debugging: Did I not sort right?
+
+X_test = SMED_ms_fast5(mean_beta0, mean_beta1, var_e, var_mean, n, xmin, xmax, K, p)
+
+f0 = function(x) mean_beta0 * x # null regression model
+f1 = function(x) mean_beta1 * x # alternative regression model
+
+test_k = 4
+X_k = sort(X_test$D[ ,test_k])
+curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f2")
+curve(f1, col = 1, add = TRUE)
+text(X_test$D[ ,test_k], f0(X_test$D[ ,test_k]), c(1:n), col=4)
+text(X_test$D[ ,test_k], f1(X_test$D[ ,test_k]), c(1:n), col=4)
+points(X_k, rep(0, n), col = 2)
+
+#dev.copy(png,'efficient_bayes_sorted_lm_N51.png.png')
+#dev.off()
+
+
+
+
+
+
+## Debugging: What if Candidate set is wrong?
+
+N = 11
+
+X_test = SMED_ms_fast4(mean_beta0, mean_beta1, var_e, var_mean, N, xmin, xmax, K, p)
+
+f0 = function(x) mean_beta0 * x # null regression model
+f1 = function(x) mean_beta1 * x # alternative regression model
+
+test_k = 4
+X_k = sort(X_test$D[ ,test_k])
+curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f2")
+curve(f1, col = 1, add = TRUE)
+text(X_test$D[ ,test_k], f0(X_test$D[ ,test_k]), c(1:N), col=4)
+text(X_test$D[ ,test_k], f1(X_test$D[ ,test_k]), c(1:N), col=4)
+points(X_k, rep(0, N), col = 2)
+
+#dev.copy(png,'????.png')
+#dev.off()
+
+
+
+## Debugging: What if Candidate set is wrong?
+
+N = 11
+source("smed_ms_functions.R")
+X_test = SMED_ms_fast6(mean_beta0, mean_beta1, var_e, var_mean, N, xmin, xmax, K, p)
+#X_test_D_sorted = apply(X_test$D, 2, sort)
+#X_test$candidates
+
+f0 = function(x) mean_beta0 * x # null regression model
+f1 = function(x) mean_beta1 * x # alternative regression model
+
+test_k = 4
+X_k = sort(X_test$D[ ,test_k])
+curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f2")
+curve(f1, col = 1, add = TRUE)
+text(X_test$D[ ,test_k], f0(X_test$D[ ,test_k]), c(1:N), col=4)
+text(X_test$D[ ,test_k], f1(X_test$D[ ,test_k]), c(1:N), col=4)
+points(X_k, rep(0, N), col = 2)
+
+dev.copy(png, 'efficient_bayes_FIXED_lm_N11.png')
 dev.off()
 
 
+N = 51
+source("smed_ms_functions.R")
+X_test = SMED_ms_fast6(mean_beta0, mean_beta1, var_e, var_mean, N, xmin, xmax, K, p)
+#X_test_D_sorted = apply(X_test$D, 2, sort)
+#X_test$candidates
 
+test_k = 4
+X_k = sort(X_test$D[ ,test_k])
+curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f2")
+curve(f1, col = 1, add = TRUE)
+text(X_test$D[ ,test_k], f0(X_test$D[ ,test_k]), c(1:N), col=4)
+text(X_test$D[ ,test_k], f1(X_test$D[ ,test_k]), c(1:N), col=4)
+points(X_k, rep(0, N), col = 2)
 
-
-
-
-
-
+#dev.copy(png, 'efficient_bayes_FIXED_lm_N51.png')
+#dev.off()
 
 
 
@@ -141,5 +225,6 @@ dev.off()
 
 # Okay, what if we try taking log of f, then, even though it's Wasserstein distance?
 
-
+#dev.copy(png, 'something.png')
+#dev.off()
 

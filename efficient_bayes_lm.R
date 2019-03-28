@@ -52,8 +52,8 @@ text(X_test$D[ ,test_k], f0(X_test$D[ ,test_k]), c(1:N), col=4)
 text(X_test$D[ ,test_k], f1(X_test$D[ ,test_k]), c(1:N), col=4)
 points(X_k, rep(0, N), col = 2)
 
-dev.copy(png, 'efficient_bayes_FIXED_lm_N11.png')
-dev.off()
+#dev.copy(png, 'efficient_bayes_FIXED_lm_N11.png')
+#dev.off()
 
 
 N = 51
@@ -66,10 +66,56 @@ test_k = 4
 X_k = sort(X_test$D[ ,test_k])
 curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f2")
 curve(f1, col = 1, add = TRUE)
-text(X_test$D[ ,test_k], f0(X_test$D[ ,test_k]), c(1:N), col=4)
-text(X_test$D[ ,test_k], f1(X_test$D[ ,test_k]), c(1:N), col=4)
+
+for(i in 1:N){
+  text(X_test$D[i ,test_k], f1(X_test$D[i ,test_k]) + i * 0.01, i, col=4)
+}
+
 points(X_k, rep(0, N), col = 2)
 
-#dev.copy(png, 'efficient_bayes_FIXED_lm_N51.png')
+
+
+N = 67
+source("smed_ms_functions.R")
+X_test = SMED_ms_fast(mean_beta0, mean_beta1, var_e, var_mean, N, xmin, xmax, K, p)
+#X_test_D_sorted = apply(X_test$D, 2, sort)
+#X_test$candidates
+
+test_k = 4
+X_k = sort(X_test$D[ ,test_k])
+curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f2")
+curve(f1, col = 1, add = TRUE)
+
+for(i in 1:N){
+  text(X_test$D[i ,test_k], f1(X_test$D[i ,test_k]) + i * 0.01, i, col=4)
+}
+
+points(X_k, rep(0, N), col = 2)
+
+#dev.copy(png, 'fast_pattern_N67.png')
 #dev.off()
 
+
+
+
+# What if we draw from Uniform, instead of Lattice?
+set.seed(1234)
+N = 67
+source("smed_ms_functions.R")
+X_test = SMED_ms_fast2(mean_beta0, mean_beta1, var_e, var_mean, N, xmin, xmax, K, p)
+#X_test_D_sorted = apply(X_test$D, 2, sort)
+#X_test$candidates
+
+test_k = 4
+X_k = sort(X_test$D[ ,test_k])
+curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f2")
+curve(f1, col = 1, add = TRUE)
+
+for(i in 1:N){
+  text(X_test$D[i ,test_k], f1(X_test$D[i ,test_k]) + i * 0.007, i, col=4)
+}
+
+points(X_k, rep(0, N), col = 2)
+
+#dev.copy(png, 'fast_pattern_unif_N67.png')
+#dev.off()

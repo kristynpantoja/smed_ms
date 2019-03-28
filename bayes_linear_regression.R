@@ -50,7 +50,7 @@ var_e = 0.1 # same variance
 
 ## Running Algorithm
 
-n = 23
+n = 67
 numCandidates = 1000
 k = 4
 xmin = 0
@@ -58,8 +58,20 @@ xmax = 1
 
 X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, numCandidates, k, xmin, xmax)
 
+f0 = function(x) mean_beta0 * x # null regression model
+f1 = function(x) mean_beta1 * x # alternative regression model
 
+curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f2")
+curve(f1, col = 1, add = TRUE)
 
+for(i in 1:n){
+  text(X_test[i], f1(X_test[i]) + i * 0.007, i, col=4)
+}
+
+points(X_k, rep(0, N), col = 2)
+
+dev.copy(png, 'oneatatime_pattern_N67.png')
+dev.off()
 
 
 # experimenting with Lattice function

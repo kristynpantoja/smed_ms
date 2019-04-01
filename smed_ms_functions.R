@@ -2,7 +2,13 @@
 
 # Wasserstein distance betwen two (univariate) normals, N(mu1, var1) and N(mu2, var2)
 Wasserstein_distance = function(mu1, mu2, var1, var2){
-  return(sqrt(mu1 - mu2)^2 + var1 + var2 - 2 * sqrt(var1 * var2))
+  return(sqrt((mu1 - mu2)^2 + var1 + var2 - 2 * sqrt(var1 * var2)))
+}
+
+Wass_dist_multivar = function(mu1, mu2, var1, var2){
+  sqrt_var2 = sqrtm(var2)
+  return(sqrt(crossprod(mu1 - mu2) 
+         + sum(diag(var1 + var2 - 2 * sqrtm(sqrt_var2 %*% var1 %*% sqrt_var2)))))
 }
 
 var_marginaly = function(x, var_e, var_mean) var_e + x^2 * var_mean
@@ -141,7 +147,7 @@ SMED_ms_fast = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11,
   # or at least check that it's prime!
   
   # generate candidate points, C1. for first design, C1 = D1 = lattice over [0, 1]^p
-  C1 = sort(mined::Lattice(N, p = 1))
+  C1 = seq(from = xmin, to = xmax, length.out = N)
   D1 = C1
   
   ## calculate Wassersteins for each design point
@@ -176,7 +182,7 @@ SMED_ms_fast = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11,
     L1k_lower = max(D[1, k] - R1k, 0) # is this necessary, to max with 0? ################################
     L1k_upper = min(D[1, k] + R1k, 1) # HERE IT IS BECAUSE o/w GET NaNs in q evaluation!
     # candidates from space-filling design, tildeD1_kplus1
-    tildeD1_kplus1 = Lattice(N, p = 1) * (L1k_upper - L1k_lower) + L1k_lower
+    tildeD1_kplus1 = seq(from = L1k_lower, to = L1k_upper, length.out = N)
     # save the candidates to be used in future designs
     #candidates_1k = c(candidates_1k, candidates)
     C[[1]] = c(C[[1]], tildeD1_kplus1)
@@ -204,7 +210,7 @@ SMED_ms_fast = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11,
         R_jk = min(abs(D[-j, k] - D[j, k]))
         lower = min(D[j, k] + R_jk, 1)
         upper = min(D[j, k] + R_jk, 1)
-        tildeDj_kplus1 = Lattice(N, p = 1) * (upper - lower) + lower
+        tildeDj_kplus1 = seq(from = lower, to = upper, length.out = N)
         C[[j]] = c(C[[j]], tildeDj_kplus1) # This is now C_j^{k+1}
         
         
@@ -214,9 +220,9 @@ SMED_ms_fast = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11,
         D[j, k + 1] = C[[j]][chosen_cand]
       } else{
         R_jk = min(abs(D[-j, k] - D[j, k])) #which.min(c(D[j, k] - D[j - 1, k], D[j + 1, k] - D[j, k]))
-        lower = max(D[j, k] - R_jk, 0) # is this necessary, to max with 0? ################################
+        lower = max(D[j, k] - R_jk, 0) 
         upper = min(D[j, k] + R_jk, 1)
-        tildeDjk = Lattice(N, p = 1) * (upper - lower) + lower
+        tildeDjk = seq(from = lower, to = upper, length.out = N)
         C[[j]] = c(C[[j]], tildeDjk) # This is now C_j^{k+1}
         
         f_min_candidates = sapply(C[[j]], function(x) f_min_fast(x, D[1:(j - 1), k + 1], gammas[k], mean_beta0, mean_beta1, var_e, var_mean))
@@ -241,14 +247,6 @@ SMED_ms_fast = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11,
 
 # --- Fast Algorithm for Linear Model Selection
 #      With Uniform instead of Lattice --- #
-
-### Iterative Algorithm for SMED for Model Selection ###
-# Function that implements SMED-inspired model selection of Joseph, Dasgupta, Tuo, Wu
-
-# f is normal, so need to specify f0 = {beta0}, f1 = {beta1}, var_e
-# since these determine both f0 and f1's normal parameters 
-
-# --- Functions for Fast Algorithm for Linear Model Selection --- #
 
 SMED_ms_fast2 = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11, 
                         xmin = 0, xmax = 1, K, p){
@@ -357,5 +355,117 @@ SMED_ms_fast2 = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11,
   return(list("beta0" = mean_beta0, "beta1" = mean_beta1, "D" = D, "candidates" = C))
 }
 
-# criterion (1 / d_W(f0, f1; x_i) * 1 / d_W(f0, f1; x_j)) / d(x_i, x_j)
-# here, we assume f's are normal, so we specify the mean and variance of each
+
+# --- Fast Algorithm for Linear Model Selection
+#      With Sequence instead of Lattice --- #
+
+SMED_ms_fast3 = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11, 
+                         xmin = 0, xmax = 1, K, p){
+  #  N : number of design points to select (for set of design points, D_k each k = 1, ..., K)
+  #  K : number of designs to make (iteratively)
+  #  xmin, xmax : limits on inputs
+  
+  ## -- Create linear models -- #
+  f0 = function(x) mean_beta0 * x # null regression model
+  f1 = function(x) mean_beta1 * x # alternative regression model
+  
+  # -- Make D_1 -- #
+  # check that n >= 3
+  if(N < 3) stop("not enough samples - need at least 3.")
+  # check that n is the largest prime number less than 100 + 5p.... ###################################
+  # or at least check that it's prime!
+  
+  # generate candidate points, C1. for first design, C1 = D1 = lattice over [0, 1]^p
+  C1 = sort(runif(N, xmin, xmax))
+  D1 = C1
+  
+  ## calculate Wassersteins for each design point
+  #Wasser_init = sapply(D_init, function(x) Wasserstein_distance(mean_beta0 * x, mean_beta1 * x, var_e + x^2 * var_mean, var_e + x^2 * var_mean))
+  
+  # -- If K = 1, return the space-filling design -- #
+  if(K == 1){
+    D = D1
+    C = C1
+    return(list("beta0" = mean_beta0, "beta1" = mean_beta1, "D" = D, "candidates" = C))
+  }
+  
+  # -- If K > 1, choose new design -- #
+  D = matrix(rep(D1, K), nrow = N, ncol = K)
+  #Wass_D = matrix(rep(Wasser_init, K), nrow = n, ncol = K)
+  gammas = (c(1:K) - 1) / (K - 1)
+  # save candidates for each K
+  C <- list()
+  for (j in 1:N){
+    C[[j]] = D1
+  }
+  
+  # at index k, determine the next design k + 1
+  for(k in 1:(K - 1)){
+    
+    ## For j = 1, i.e. 1st point in design k + 1:
+    
+    # Get candidates in neighborhood L1k = (lower, upper):
+    # for j = 1
+    # get candidates in L_1k
+    R1k = min(abs(D[-1, k] - D[1, k])) # radius of L1k # can do it like this bc sorted D1, which was used to initialize D
+    L1k_lower = max(D[1, k] - R1k, 0) # is this necessary, to max with 0? ################################
+    L1k_upper = min(D[1, k] + R1k, 1) # HERE IT IS BECAUSE o/w GET NaNs in q evaluation!
+    # candidates from space-filling design, tildeD1_kplus1
+    tildeD1_kplus1 = runif(N, L1k_lower, L1k_upper)
+    # save the candidates to be used in future designs
+    #candidates_1k = c(candidates_1k, candidates)
+    C[[1]] = c(C[[1]], tildeD1_kplus1)
+    # criterion to choose first candidate from candidate set: the point at which f1 and f2 are most different
+    q_evals = sapply(C[[1]], FUN = function(x) q(x, mean_beta0, mean_beta1, var_e, var_mean))
+    xinitind = which.min(q_evals)
+    #xinitind = which.max(abs(f0(C[[1]]) - f1(C[[1]])))
+    
+    ### is this the same as the one with largest f? (here, Wasserstein^(1/2p))
+    ### i.e. the one with smallest q?
+    ### turns out, yes!:
+    ###   a = sapply(C[[1]], FUN = function(x) q(x, mean_beta0, mean_beta1, var_e, var_mean))
+    ###   xinitind == which.min(a)
+    
+    D[1, k + 1] = C[[1]][xinitind] # x1, first element of set of design points, D
+    
+    #Wass_D[1, k] = Wasserstein_distance(mean_beta0 * xinitind, mean_beta1 * xinitind, var_e + xinitind^2 * var_mean, var_e + xinitind^2 * var_mean)
+    # at some point... see their code for initializing kth design. ##################################
+    
+    # for j = 2:n
+    for(j in 2:N){
+      # get candidates in neighborhood L_jk = (lower, upper)
+      if(j == N){
+        #R_jk = D[j, k] - D[j - 1, k]
+        R_jk = min(abs(D[-j, k] - D[j, k]))
+        lower = min(D[j, k] + R_jk, 1)
+        upper = min(D[j, k] + R_jk, 1)
+        tildeDj_kplus1 = runif(N, lower, upper)
+        C[[j]] = c(C[[j]], tildeDj_kplus1) # This is now C_j^{k+1}
+        
+        
+        f_min_candidates = sapply(C[[j]], function(x) f_min_fast(x, D[1:(j - 1), k + 1], gammas[k], mean_beta0, mean_beta1, var_e, var_mean))
+        #choose that which has largest evaluation of criterion
+        chosen_cand = which.min(f_min_candidates)
+        D[j, k + 1] = C[[j]][chosen_cand]
+      } else{
+        R_jk = min(abs(D[-j, k] - D[j, k])) #which.min(c(D[j, k] - D[j - 1, k], D[j + 1, k] - D[j, k]))
+        lower = max(D[j, k] - R_jk, 0) # is this necessary, to max with 0? ################################
+        upper = min(D[j, k] + R_jk, 1)
+        tildeDjk = runif(N, lower, upper)
+        C[[j]] = c(C[[j]], tildeDjk) # This is now C_j^{k+1}
+        
+        f_min_candidates = sapply(C[[j]], function(x) f_min_fast(x, D[1:(j - 1), k + 1], gammas[k], mean_beta0, mean_beta1, var_e, var_mean))
+        #choose that which has largest evaluation of criterion
+        chosen_cand = which.min(f_min_candidates)
+        D[j, k + 1] = C[[j]][chosen_cand]
+      }
+      
+    }
+  }
+  
+  return(list("beta0" = mean_beta0, "beta1" = mean_beta1, "D" = D, "candidates" = C))
+}
+
+
+
+

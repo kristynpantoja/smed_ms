@@ -30,7 +30,6 @@
 # y | x, Hi ~ N(mean_beta_i * x, sigma_e^2 + x^2 * sigma_mean^2)
 
 library(transport)
-
 source("smed_ms_functions.R")
 
 
@@ -58,6 +57,9 @@ xmax = 1
 
 X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, numCandidates, k, xmin, xmax)
 
+#dev.copy(png, 'oneatatime_N67.png')
+#dev.off()
+
 f0 = function(x) mean_beta0 * x # null regression model
 f1 = function(x) mean_beta1 * x # alternative regression model
 
@@ -65,7 +67,7 @@ curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f
 curve(f1, col = 1, add = TRUE)
 
 for(i in 1:n){
-  text(X_test[i], f1(X_test[i]) + i * 0.007, i, col=4)
+  text(X_test[i], f1(X_test[i]) + i * 0.01, i, col=4)
 }
 
 points(X_k, rep(0, N), col = 2)
@@ -86,3 +88,39 @@ library(mined)
 ?Lattice
 mined::Lattice(7, 1)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+n = 100
+numCandidates = 1000
+k = 4
+xmin = 0
+xmax = 1
+
+X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, numCandidates, k, xmin, xmax)
+
+#dev.copy(png, 'oneatatime_N67.png')
+#dev.off()
+
+f0 = function(x) mean_beta0 * x # null regression model
+f1 = function(x) mean_beta1 * x # alternative regression model
+
+curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f2", ylim = c(0, 4))
+curve(f1, col = 1, add = TRUE)
+
+for(i in 1:n){
+  text(X_test[i], f1(X_test[i]) + i * 0.035, i, col=4)
+}
+
+points(X_k, rep(0, N), col = 2)

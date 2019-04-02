@@ -103,17 +103,6 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10, numCandidate
 
 # --- Functions for Fast Algorithm for Linear Model Selection --- #
 
-# check if a number is prime, to use Lattice function in
-isprime <- function(x) {
-  if (x == 2) {
-    TRUE
-  } else if (any(x %% 2:(x - 1) == 0)) {
-    FALSE
-  } else { 
-    TRUE
-  }
-}
-
 # minimizing criterion for greedy algorithm - calculate this for each x_i in candidate set,
 # select the one with the smallest value of f_min to add to current design set D.
 #  (Notice that this is different from the 2015 version, bc take MAX of sapply instead of SUM of sapply.)
@@ -246,7 +235,7 @@ SMED_ms_fast = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11,
 
 
 # --- Fast Algorithm for Linear Model Selection
-#      With Uniform instead of Lattice --- #
+#      With Uniform instead of Seq --- #
 
 SMED_ms_fast2 = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11, 
                         xmin = 0, xmax = 1, K, p){
@@ -357,10 +346,21 @@ SMED_ms_fast2 = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11,
 
 
 # --- Fast Algorithm for Linear Model Selection
-#      With Sequence instead of Lattice --- #
+#      With Lattice instead of Seq --- #
+
+# check if a number is prime, to use Lattice function in
+isprime <- function(x) {
+  if (x == 2) {
+    TRUE
+  } else if (any(x %% 2:(x - 1) == 0)) {
+    FALSE
+  } else { 
+    TRUE
+  }
+}
 
 SMED_ms_fast3 = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11, 
-                         xmin = 0, xmax = 1, K, p){
+                        xmin = 0, xmax = 1, K, p){
   #  N : number of design points to select (for set of design points, D_k each k = 1, ..., K)
   #  K : number of designs to make (iteratively)
   #  xmin, xmax : limits on inputs
@@ -376,7 +376,7 @@ SMED_ms_fast3 = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11,
   # or at least check that it's prime!
   
   # generate candidate points, C1. for first design, C1 = D1 = lattice over [0, 1]^p
-  C1 = sort(runif(N, xmin, xmax))
+  C1 = mined::Lattice(N, p = 1)
   D1 = C1
   
   ## calculate Wassersteins for each design point
@@ -411,7 +411,7 @@ SMED_ms_fast3 = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11,
     L1k_lower = max(D[1, k] - R1k, 0) # is this necessary, to max with 0? ################################
     L1k_upper = min(D[1, k] + R1k, 1) # HERE IT IS BECAUSE o/w GET NaNs in q evaluation!
     # candidates from space-filling design, tildeD1_kplus1
-    tildeD1_kplus1 = runif(N, L1k_lower, L1k_upper)
+    tildeD1_kplus1 = mined::Lattice(N, p = 1) * (L1k_upper - L1k_lower) + L1k_lower
     # save the candidates to be used in future designs
     #candidates_1k = c(candidates_1k, candidates)
     C[[1]] = c(C[[1]], tildeD1_kplus1)
@@ -439,7 +439,7 @@ SMED_ms_fast3 = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11,
         R_jk = min(abs(D[-j, k] - D[j, k]))
         lower = min(D[j, k] + R_jk, 1)
         upper = min(D[j, k] + R_jk, 1)
-        tildeDj_kplus1 = runif(N, lower, upper)
+        tildeDj_kplus1 = mined::Lattice(N, p = 1) * (upper - lower) + lower
         C[[j]] = c(C[[j]], tildeDj_kplus1) # This is now C_j^{k+1}
         
         
@@ -449,9 +449,9 @@ SMED_ms_fast3 = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11,
         D[j, k + 1] = C[[j]][chosen_cand]
       } else{
         R_jk = min(abs(D[-j, k] - D[j, k])) #which.min(c(D[j, k] - D[j - 1, k], D[j + 1, k] - D[j, k]))
-        lower = max(D[j, k] - R_jk, 0) # is this necessary, to max with 0? ################################
+        lower = max(D[j, k] - R_jk, 0) 
         upper = min(D[j, k] + R_jk, 1)
-        tildeDjk = runif(N, lower, upper)
+        tildeDjk = mined::Lattice(N, p = 1) * (upper - lower) + lower
         C[[j]] = c(C[[j]], tildeDjk) # This is now C_j^{k+1}
         
         f_min_candidates = sapply(C[[j]], function(x) f_min_fast(x, D[1:(j - 1), k + 1], gammas[k], mean_beta0, mean_beta1, var_e, var_mean))
@@ -465,7 +465,4 @@ SMED_ms_fast3 = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11,
   
   return(list("beta0" = mean_beta0, "beta1" = mean_beta1, "D" = D, "candidates" = C))
 }
-
-
-
 

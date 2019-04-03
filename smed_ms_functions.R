@@ -120,7 +120,7 @@ f_min_fast = function(candidate_jk, D_k, gamma_k, mean_beta0, mean_beta1, var_e,
 # --- Functions for Fast Algorithm for Linear Model Selection --- #
 
 SMED_ms_fast = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11, 
-                         xmin = 0, xmax = 1, K, p){
+                         xmin = 0, xmax = 1, K, p = 1){
   #  N : number of design points to select (for set of design points, D_k each k = 1, ..., K)
   #  K : number of designs to make (iteratively)
   #  xmin, xmax : limits on inputs
@@ -152,7 +152,7 @@ SMED_ms_fast = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11,
   # -- If K > 1, choose new design -- #
   D = matrix(rep(D1, K), nrow = N, ncol = K)
   #Wass_D = matrix(rep(Wasser_init, K), nrow = n, ncol = K)
-  gammas = (c(1:K) - 1) / (K - 1)
+  gammas = c(1:K) / (K - 1)
   # save candidates for each K
   C <- list()
   for (j in 1:N){
@@ -238,7 +238,7 @@ SMED_ms_fast = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11,
 #      With Uniform instead of Seq --- #
 
 SMED_ms_fast2 = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11, 
-                        xmin = 0, xmax = 1, K, p){
+                        xmin = 0, xmax = 1, K, p = 1){
   #  N : number of design points to select (for set of design points, D_k each k = 1, ..., K)
   #  K : number of designs to make (iteratively)
   #  xmin, xmax : limits on inputs
@@ -270,7 +270,7 @@ SMED_ms_fast2 = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11,
   # -- If K > 1, choose new design -- #
   D = matrix(rep(D1, K), nrow = N, ncol = K)
   #Wass_D = matrix(rep(Wasser_init, K), nrow = n, ncol = K)
-  gammas = (c(1:K) - 1) / (K - 1)
+  gammas = c(1:K) / (K - 1)
   # save candidates for each K
   C <- list()
   for (j in 1:N){
@@ -360,7 +360,7 @@ isprime <- function(x) {
 }
 
 SMED_ms_fast3 = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11, 
-                        xmin = 0, xmax = 1, K, p){
+                        xmin = 0, xmax = 1, K, p = 1){
   #  N : number of design points to select (for set of design points, D_k each k = 1, ..., K)
   #  K : number of designs to make (iteratively)
   #  xmin, xmax : limits on inputs
@@ -392,7 +392,7 @@ SMED_ms_fast3 = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11,
   # -- If K > 1, choose new design -- #
   D = matrix(rep(D1, K), nrow = N, ncol = K)
   #Wass_D = matrix(rep(Wasser_init, K), nrow = n, ncol = K)
-  gammas = (c(1:K) - 1) / (K - 1)
+  gammas = c(1:K) / (K - 1)
   # save candidates for each K
   C <- list()
   for (j in 1:N){

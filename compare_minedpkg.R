@@ -54,9 +54,9 @@ fast_smed_1d = function(f, N = 11, xmin = 0, xmax = 1, K, p = 1){
     #candidates_1k = c(candidates_1k, candidates)
     C[[1]] = c(C[[1]], tildeD1_kplus1)
     # criterion to choose first candidate from candidate set: the point at which f1 and f2 are most different
-    q_evals = sapply(C[[1]], FUN = function(x) q(f, x))
-    xinitind = which.min(q_evals)
-    #xinitind <- which.max(f(C[[1]])) # get the point that has the highest likelihood
+    #q_evals = sapply(C[[1]], FUN = function(x) q(f, x))
+    #xinitind = which.min(q_evals)
+    xinitind <- which.max(f(C[[1]])) # get the point that has the highest likelihood
     
     D[1, k + 1] = C[[1]][xinitind] # x1, first element of set of design points, D
     
@@ -120,13 +120,15 @@ for(i in 1:N){
 }
 
 # mined version
+# varies - why? because they use the lattice function (non-deterministic) way of getting candidates
+# in neighborhoods for each j and k?
 library(mined)
 initial = matrix(seq(from = xmin, to = xmax, length.out = N), N, p)
 f1_smed = mined(initial, logf1)
 # plot
 Xmined_f1 = f1_smed$points
 fXmined_f1 = f1(Xmined_f1)
-curve(unnormalized_normal,from=xmin,to=xmax)
+curve(f1,from=xmin,to=xmax)
 for(i in 1:N){
   text(Xmined_f1[i],fXmined_f1[i],i,col=4)
   points(Xmined_f1[i],0,col=2)

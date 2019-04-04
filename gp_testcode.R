@@ -64,7 +64,7 @@ numFns = 2
 set.seed(1234)
 values <- mvrnorm(numFns, rep(0, length=length(xstar)), covariance_xstar)
 
-# R eshape the data into long (tidy) form, listing x value, y value, and sample number
+# Reshape the data into long (tidy) form, listing x value, y value, and sample number
 data <- data.frame(x=xstar, t(values))
 data <- melt(data, id="x")
 head(data)
@@ -257,9 +257,199 @@ lines(data2)
 
 
 
+####################################################################################
+####################################################################################
+####################################################################################
+####################################################################################
+####################   Gaussian Process Model Selection   #####################
+####################################################################################
+####################################################################################
+####################################################################################
+####################################################################################
 
 
 
+### Wasserstein distance betwen two (univariate) normals, N(mu1, var1) and N(mu2, var2)
+
+Wasserstein_distance = function(mu1, mu2, var1, var2, type = 1){
+  if(type == 1){ # univariate case
+    wass = sqrt((mu1 - mu2)^2 + var1 + var2 - 2 * sqrt(var1 * var2))
+  } else{
+    if(type > 1){ # multivariate case 
+      sqrt_var2 = sqrtm(var2)
+      wass = sqrt(crossprod(mu1 - mu2) + sum(diag(var1 + var2 - 2 * sqrtm(sqrt_var2 %*% var1 %*% sqrt_var2))))
+    } else{
+      stop("invalid type")
+    }
+  }
+  return(as.numeric(wass))
+}
+
+## test Wasserstein function
+
+# multivariate case
+
+p = 4
+mu1 = rep(7, 4)
+var1 = 1 * diag(p)
+mu2 = rep(7, 4)
+var2 = matrix(0.7, p, p) + diag(rep(1-0.7, p))
+N = 500
+
+Wasserstein_distance(mu1, mu2, var1, var2, type = 2) # 1.091925
+
+library(transport)
+library(mnormt)
+X1 = rmnorm(N, mean = mu1, varcov = var1)
+X2 = rmnorm(N, mean = mu2, varcov = var2)
+wasserstein(pp(X1), pp(X2), p) # 1.545051
+##### is this close enough?? #####
+
+# univariate case
+mu1 = 1
+mu2 = 20
+var1 = 4
+var2 = 9
+Wasserstein_distance(mu1, mu2, var1, var2, type = 1) # 19.0263
+x1 = rnorm(N, mean = mu1, sd = sqrt(var1))
+x2 = rnorm(N, mean = mu2, sd = sqrt(var2))
+wasserstein1d(x1, x2) # 19.05987
+# definitely works here!
 
 
 
+## 
+
+q = function(x, mean_beta0, mean_beta1, var_e, var_mean){
+  mu1 = mean_beta0 * x # mean of marginal dist of y | H0
+  mu2 = mean_beta1 * x # mean of marginal dist of y | H1
+  var = var_marginaly(x, var_e, var_mean) # variance of marginal dist of y | H1
+  Wass_dist = Wasserstein_distance(mu1, mu2, var, var)
+  return(1.0 / Wass_dist^(1/2))
+}
+
+f_min_fast = function(candidate_jk, D_k, gamma_k, mean_beta0, mean_beta1, var_e, var_mean){
+  q(candidate_jk, mean_beta0, mean_beta1, var_e, var_mean)^gamma_k * 
+    max(sapply(D_k, function(x_i) (q(x_i, mean_beta0, mean_beta1, var_e, var_mean)^gamma_k / abs(x_i - candidate_jk))))
+}
+
+avg_w = function(x, D_k, j, N, K0, K1, T){
+  Xnotj = D_k[-j]
+  numObs = length(D_k[-j])
+  if(numObs != (N - 1)) print("length(D_k[-j]) is NOT equal to (N - 1)")
+  wassersteins = rep(NA, T)
+  Kernel = NULL # different for each simulation t
+  which_kernel = round(runif(T))
+  y_notj = matrix(rep(NA, numObs * T), nrow = numObs, ncol = T) # each column is a sim. of y_notj
+  for(t in 1:T){
+    # Generate y
+    if(which_kernel[t] == 0){
+      Kernel = K0
+    } else{
+      Kernel = K1
+    }
+    cov_Xnotj_Xnotj = Kernel(Xnotj, Xnotj)
+    cov_xx_inv <- solve(C_fn(obs$x, obs$x, l))
+    # Simulate y_notj^(t)
+    ysimt = mvrnorm(1, rep(0, length = numObs), cov_Xnotj_Xnotj)
+    y_notj[ , t] = ysimt
+    # Get predictive means and covariances
+    # m = 0:
+    cov_Xnotj_Xnotj_inv0 = solve(K0(Xnotj, Xnotj))
+    M0x = K0(x, Xnotj) %*% cov_Xnotj_Xnotj_inv0 %*% ysimt
+    Sigma0x = K0(x, x) - K0(x, Xnotj) %*% cov_Xnotj_Xnotj_inv0 %*% K0(Xnotj, x)
+    # m = 1
+    cov_Xnotj_Xnotj_inv1 = solve(K1(Xnotj, Xnotj))
+    M1x = K1(x, Xnotj) %*% cov_Xnotj_Xnotj_inv1 %*% ysimt
+    Sigma1x = K1(x, x) - K1(x, Xnotj) %*% cov_Xnotj_Xnotj_inv1 %*% K1(Xnotj, x)
+    wassersteins[t] = Wasserstein_distance(M0x, M1x, Sigma0x, Sigma1x, type = 2)
+  }
+  return(mean(wassersteins))
+}
+
+SMED_ms_fast = function(k0, k1, N = 11, xmin = 0, xmax = 1, K, p = 1, T = 3){
+  # k0 is the covariance function / kernel proposed by H0
+  # k1 is the covariance function / kernel proposed by H1
+  # each of k0 and k1 take in two arguments: xi, xj
+  # N is the number of design points
+  
+  # K0 and K1 are the covariance matrices that result from the outer product of k0 and k1 resp.
+  K0 = function(X, Y) outer(X, Y, FUN = k0)
+  K1 = function(X, Y) outer(X, Y, FUN = k1)
+  
+  # -- Make D1 -- #
+  
+  # check that n >= 3
+  if(N < 3) stop("not enough samples - need at least 3.")
+  
+  # generate candidate points, C1. for first design, C1 = D1 = lattice over [0, 1]^p
+  C1 = seq(from = xmin, to = xmax, length.out = N)
+  D1 = C1
+
+  # -- If K = 1, return the space-filling design -- #
+  if(K == 1){
+    D = D1
+    C = C1
+    return(list("beta0" = mean_beta0, "beta1" = mean_beta1, "D" = D, "candidates" = C))
+  }
+  
+  # -- If K > 1, choose next design -- #
+  D = matrix(rep(D1, K), nrow = N, ncol = K)
+  gammas = c(1:K) / (K - 1)
+  # save candidates for each K
+  C <- list()
+  for (j in 1:N){
+    C[[j]] = D1
+  }
+  
+  # at index k, determine the next design k + 1
+  for(k in 1:(K - 1)){
+    
+    ## For j = 1, i.e. 1st point in design k + 1:
+    
+    # for j = 1
+    # get candidates in neighborhood L_1k = (lower, upper):
+    R1k = min(abs(D[-1, k] - D[1, k]))
+    L1k_lower = max(D[1, k] - R1k, 0) # is this necessary, to max with 0? #######
+    L1k_upper = min(D[1, k] + R1k, 1) #IT IS, bc o/w GET NaNs in q evaluation!
+    # candidates from space-filling design = tildeD1_kplus1
+    tildeD1_kplus1 = seq(from = L1k_lower, to = L1k_upper, length.out = N)
+    # update C1_kplus1: save the candidates to be used in future designs
+    C[[1]] = c(C[[1]], tildeD1_kplus1)
+    # criterion to choose first candidate from candidate set:
+    # the point at which f1 and f2 are most different
+    q_evals = sapply(C[[1]], FUN = function(x) q(x, mean_beta0, mean_beta1, var_e, var_mean))
+    xinitind = which.min(q_evals)
+    D[1, k + 1] = C[[1]][xinitind] # x1, first element of new set of design points, D_k+1
+    
+    # for j = 2:n
+    for(j in 2:N){
+      if(j == N){
+        # get candidates in neighborhood L_jk = (lower, upper)
+        R_jk = min(abs(D[-j, k] - D[j, k]))
+        lower = min(D[j, k] + R_jk, 1)
+        upper = min(D[j, k] + R_jk, 1)
+        tildeDj_kplus1 = seq(from = lower, to = upper, length.out = N)
+        C[[j]] = c(C[[j]], tildeDj_kplus1) # This is now C_j^{k+1}
+        # evaluate criterion for each point, choose that with smallest criterion evaluation
+        f_min_candidates = sapply(C[[j]], function(x) f_min_fast(x, D[1:(j - 1), k + 1], gammas[k], mean_beta0, mean_beta1, var_e, var_mean))
+        chosen_cand = which.min(f_min_candidates)
+        D[j, k + 1] = C[[j]][chosen_cand]
+      } else{
+        # get candidates in neighborhood L_jk = (lower, upper)
+        R_jk = min(abs(D[-j, k] - D[j, k])) #which.min(c(D[j, k] - D[j - 1, k], D[j + 1, k] - D[j, k]))
+        lower = max(D[j, k] - R_jk, 0) 
+        upper = min(D[j, k] + R_jk, 1)
+        tildeDjk = seq(from = lower, to = upper, length.out = N)
+        C[[j]] = c(C[[j]], tildeDjk) # This is now C_j^{k+1}
+        # evaluate criterion for each point, choose that with smallest criterion evaluation
+        f_min_candidates = sapply(C[[j]], function(x) f_min_fast(x, D[1:(j - 1), k + 1], gammas[k], mean_beta0, mean_beta1, var_e, var_mean))
+        chosen_cand = which.min(f_min_candidates)
+        D[j, k + 1] = C[[j]][chosen_cand]
+      }
+      
+    }
+  }
+  
+  return("D" = D, "candidates" = C))
+}

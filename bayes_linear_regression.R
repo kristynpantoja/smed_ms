@@ -67,13 +67,17 @@ curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f
 curve(f1, col = 1, add = TRUE)
 
 for(i in 1:n){
-  text(X_test[i], f1(X_test[i]) + i * 0.01, i, col=4)
+  y[i] = i * 0.015
+  text(X_test[i], y[i], i, col=4)
 }
 
-points(X_k, rep(0, N), col = 2)
+points(X_test, rep(0, n), col = 2)
+lines(X_test, y, col = 3)
 
-#dev.copy(png, 'oneatatime_pattern_N67.png')
-#dev.off()
+
+
+dev.copy(png, 'oneatatime_pattern2_N67.png')
+dev.off()
 
 
 # experimenting with Lattice function

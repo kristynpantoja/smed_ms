@@ -198,10 +198,10 @@ for(i in 1:N){
   y[i] = i * 0.04
   text(X_test$D[i ,test_k], y[i], i, col=4)
 }
-points(X_test$D[ ,test_k], rep(0, N), col = 2)
+points(X_test$D[ ,test_k], rep(0, N), col = 2, pch = "*")
 lines(X_test$D[ ,test_k], y, col = 3)
 
-#dev.copy(png, 'fast_pattern_N67_K20.png')
+#dev.copy(png, 'fast_pattern2_N67_K20.png')
 #dev.off()
 
 
@@ -214,9 +214,9 @@ lines(X_test$D[ ,test_k], y, col = 3)
 
 
 
-############################
-## Running Algorithm, K = 40
-############################
+#############################
+## Running Algorithm, K = 100
+#############################
 
 
 
@@ -251,8 +251,8 @@ K = 100
 N = 67
 X_test = SMED_ms_fast(mean_beta0, mean_beta1, var_e, var_mean, N, xmin, xmax, K, p)
 
+# see what the last design looks like
 test_k = 100
-
 X_k = sort(X_test$D[ ,test_k])
 curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f2", ylim = c(0.0, 2.5))
 curve(f1, col = 1, add = TRUE)
@@ -260,6 +260,17 @@ for(i in 1:N){
   text(X_test$D[i ,test_k], f1(X_test$D[i ,test_k]) + i * 0.03, i, col=4)
 }
 points(X_k, rep(0, N), col = 2)
+
+# another view, lines bw points
+curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f2", ylim = c(0, 3))
+curve(f1, col = 1, add = TRUE)
+y = rep(NA, N)
+for(i in 1:N){
+  y[i] = i * 0.04
+  text(X_test$D[i ,test_k], y[i], i, col=4)
+}
+points(X_test$D[ ,test_k], rep(0, N), col = 2, pch = "*")
+lines(X_test$D[ ,test_k], y, col = 3)
 
 ks = seq(from = 0, to = 100, by = 10)
 ks[1] = 1
@@ -275,11 +286,19 @@ for(i in 1:length(ks)){
     text(X_test$D[i ,test_k], f1(X_test$D[i ,test_k]) + i * 0.03, i, col=4)
   }
   points(X_k, rep(0, N), col = 2)
-  dev.copy(png, name)
-  dev.off()
+  #dev.copy(png, name)
+  #dev.off()
 }
 
-
+curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f2", ylim = c(0, 3))
+curve(f1, col = 1, add = TRUE)
+y = rep(NA, N)
+for(i in 1:N){
+  y[i] = i * 0.04
+  text(X_test$D[i ,test_k], y[i], i, col=4)
+}
+points(X_test$D[ ,test_k], rep(0, N), col = 2, pch = "*")
+lines(X_test$D[ ,test_k], y, col = 3)
 
 
 

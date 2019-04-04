@@ -103,7 +103,7 @@ fast_smed_1d = function(f, N = 11, xmin = 0, xmax = 1, K, p = 1){
 ##### test, f1 is normal(1/2, 1/9) in [0, 1]
 
 # my version
-K = 20
+K = 100
 N = 11
 xmin=0; xmax=1; p = 1
 f1 = function(x) exp(-(x - 1/2)^2 / (2 * (1/9)^2))
@@ -118,10 +118,13 @@ for(i in 1:N){
   text(Xtest1[i],fXtest1[i],i,col=4)
   points(Xtest1[i],0,col=2)
 }
+#dev.copy(png, 'f1_test_K100.png')
+#dev.off()
 
 # mined version
 # varies - why? because they use the lattice function (non-deterministic) way of getting candidates
 # in neighborhoods for each j and k?
+set.seed(1234)
 library(mined)
 initial = matrix(seq(from = xmin, to = xmax, length.out = N), N, p)
 f1_smed = mined(initial, logf1)
@@ -134,10 +137,13 @@ for(i in 1:N){
   points(Xmined_f1[i],0,col=2)
 }
 
+#dev.copy(png, 'f1_mined.png')
+#dev.off()
 
 
 
-##### test, f2 is beta(a = 1/2, b = 1/2)
+
+##### test, f2 is beta(a = 2, b = 5)
 
 # just to see what it looks like
 a = 2
@@ -146,7 +152,7 @@ beta_dens = function(x) dbeta(x, a, b)
 curve(beta_dens)
 
 # my version
-K = 4 # for higher K, it's like spacing becomes more important.
+K = 100 # for higher K, it's like spacing becomes more important.
 N = 11
 xmin = 0; xmax = 1; p = 1
 f2 = function(x) x^(a - 1) * (1 - x)^(b - 1)
@@ -161,7 +167,11 @@ for(i in 1:N){
   points(Xtest2[i],0,col=2)
 }
 
+#dev.copy(png, 'f2_test_K100.png')
+#dev.off()
+
 # mined version
+set.seed(1234)
 initial = matrix(seq(from = xmin, to = xmax, length.out = N), N, p)
 f2_smed = mined(initial, logf2)
 # plot
@@ -172,4 +182,5 @@ for(i in 1:N){
   text(Xmined_f2[i],fXmined_f2[i],i,col=4)
   points(Xmined_f2[i],0,col=2)
 }
-
+#dev.copy(png, 'f2_mined.png')
+#dev.off()

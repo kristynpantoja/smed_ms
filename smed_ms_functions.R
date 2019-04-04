@@ -1,14 +1,18 @@
 # --- Functions Used in both One-At-a-Time and Fast Algorithms for Linear Model Selection --- #
 
 # Wasserstein distance betwen two (univariate) normals, N(mu1, var1) and N(mu2, var2)
-Wasserstein_distance = function(mu1, mu2, var1, var2){
-  return(sqrt((mu1 - mu2)^2 + var1 + var2 - 2 * sqrt(var1 * var2)))
-}
-
-Wass_dist_multivar = function(mu1, mu2, var1, var2){
-  sqrt_var2 = sqrtm(var2)
-  return(sqrt(crossprod(mu1 - mu2) 
-         + sum(diag(var1 + var2 - 2 * sqrtm(sqrt_var2 %*% var1 %*% sqrt_var2)))))
+Wasserstein_distance = function(mu1, mu2, var1, var2, type = 1){
+  if(type == 1){ # univariate case
+    wass = sqrt((mu1 - mu2)^2 + var1 + var2 - 2 * sqrt(var1 * var2))
+  } else{
+    if(type > 1){ # multivariate case 
+      sqrt_var2 = sqrtm(var2)
+      wass = sqrt(crossprod(mu1 - mu2) + sum(diag(var1 + var2 - 2 * sqrtm(sqrt_var2 %*% var1 %*% sqrt_var2))))
+    } else{
+      stop("invalid type")
+    }
+  }
+  return(as.numeric(wass))
 }
 
 var_marginaly = function(x, var_e, var_mean) var_e + x^2 * var_mean
@@ -175,9 +179,12 @@ SMED_ms_fast = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11,
     # save the candidates to be used in future designs
     #candidates_1k = c(candidates_1k, candidates)
     C[[1]] = c(C[[1]], tildeD1_kplus1)
-    # criterion to choose first candidate from candidate set: the point at which f1 and f2 are most different
-    q_evals = sapply(C[[1]], FUN = function(x) q(x, mean_beta0, mean_beta1, var_e, var_mean))
-    xinitind = which.min(q_evals)
+    # criterion to choose first candidate from candidate set: 
+    # the point at which f1 and f2 are most different
+    w_evals = sapply(C[[1]], FUN = function(x) Wasserstein_distance(mean_beta0 * x, mean_beta1 * x, 
+                                                                    var_marginaly(x, var_e, var_mean), 
+                                                                    var_marginaly(x, var_e, var_mean)))
+    xinitind = which.max(w_evals)
     
     #xinitind = which.max(abs(f0(C[[1]]) - f1(C[[1]])))
     
@@ -186,6 +193,10 @@ SMED_ms_fast = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11,
     ### turns out, yes!:
     ###   a = sapply(C[[1]], FUN = function(x) q(x, mean_beta0, mean_beta1, var_e, var_mean))
     ###   xinitind == which.min(a)
+    # why are they equivalent, though? is wasserstein always ? 1?
+    # must be, since q is basically 1 / wasserstein?
+    #q_evals = sapply(C[[1]], FUN = function(x) q(x, mean_beta0, mean_beta1, var_e, var_mean))
+    #xinitind = which.min(q_evals)
     
     D[1, k + 1] = C[[1]][xinitind] # x1, first element of set of design points, D
     
@@ -466,4 +477,33 @@ SMED_ms_fast3 = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11,
   
   return(list("beta0" = mean_beta0, "beta1" = mean_beta1, "D" = D, "candidates" = C))
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+####################################################################################
+####################################################################################
+####################################################################################
+####################################################################################
+####################################################################################
+####################################################################################
+####################################################################################
+####################################################################################
+####################################################################################
+
+
+
+
+
 

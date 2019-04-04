@@ -88,7 +88,7 @@ fig1
 # Calculate posterior mean and covariance:
 cov_xx_inv <- solve(C_fn(obs$x, obs$x, l))
 Ef <- C_fn(xstar, obs$x, l) %*% cov_xx_inv %*% obs$y
-Cf <- C_fn(xstar, xstar, l) - C_fn(xstar, obs$x, l)  %*% cov_xx_inv %*% C_fn(obs$x, xstar, l)
+Cf <- C_fn(xstar, xstar, l) - C_fn(xstar, obs$x, l) %*% cov_xx_inv %*% C_fn(obs$x, xstar, l)
 
 # Draw random samples from posterior
 set.seed(1234)
@@ -121,7 +121,7 @@ fig2
 sigma_eps <- 0.25
 cov_xx_inv_noise <- solve(C_fn(obs$x, obs$x, l) + sigma_eps^2 * diag(1, length(obs$x)))
 E_f_noise <- C_fn(xstar, obs$x, l) %*% cov_xx_inv_noise %*% obs$y
-C_f_noise <- C_fn(xstar, xstar, l) - C_fn(xstar, obs$x, l)  %*% cov_xx_inv_noise %*% C_fn(obs$x, xstar, l)
+C_f_noise <- C_fn(xstar, xstar, l) - C_fn(xstar, obs$x, l) %*% cov_xx_inv_noise %*% C_fn(obs$x, xstar, l)
 
 # 3 samples from posterior 
 set.seed(1234)

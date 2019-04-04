@@ -159,7 +159,7 @@ points(X_k, rep(0, N), col = 2)
 
 
 
-#### N = 11
+#### N = 20
 
 K = 20
 N = 11
@@ -185,20 +185,21 @@ points(X_k, rep(0, N), col = 2)
 
 #### N = 67
 
-
 K = 20
 N = 67
 X_test = SMED_ms_fast(mean_beta0, mean_beta1, var_e, var_mean, N, xmin, xmax, K, p)
 
 test_k = K
 
-X_k = sort(X_test$D[ ,test_k])
-curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f2")
+curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f2", ylim = c(0, 3))
 curve(f1, col = 1, add = TRUE)
+y = rep(NA, N)
 for(i in 1:N){
-  text(X_test$D[i ,test_k], f1(X_test$D[i ,test_k]) + i * 0.01, i, col=4)
+  y[i] = i * 0.04
+  text(X_test$D[i ,test_k], y[i], i, col=4)
 }
-points(X_k, rep(0, N), col = 2)
+points(X_test$D[ ,test_k], rep(0, N), col = 2)
+lines(X_test$D[ ,test_k], y, col = 3)
 
 #dev.copy(png, 'fast_pattern_N67_K20.png')
 #dev.off()

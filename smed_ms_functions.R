@@ -178,6 +178,7 @@ SMED_ms_fast = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11,
     # criterion to choose first candidate from candidate set: the point at which f1 and f2 are most different
     q_evals = sapply(C[[1]], FUN = function(x) q(x, mean_beta0, mean_beta1, var_e, var_mean))
     xinitind = which.min(q_evals)
+    
     #xinitind = which.max(abs(f0(C[[1]]) - f1(C[[1]])))
     
     ### is this the same as the one with largest f? (here, Wasserstein^(1/2p))

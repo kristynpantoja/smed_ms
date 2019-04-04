@@ -133,6 +133,8 @@ for(i in 1:N){
 }
 
 
+
+
 ##### test, f2 is beta(a = 1/2, b = 1/2)
 
 # just to see what it looks like

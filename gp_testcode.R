@@ -1,6 +1,7 @@
 library(MASS)
 library(reshape2)
 library(ggplot2)
+library(mnormt)
 
 library(transport)
 library(mined)
@@ -273,7 +274,8 @@ lines(data2)
 
 Wasserstein_distance = function(mu1, mu2, var1, var2, type = 1){
   if(type == 1){ # univariate case
-    wass = sqrt((mu1 - mu2)^2 + var1 + var2 - 2 * sqrt(var1 * var2))
+    #wass = sqrt((mu1 - mu2)^2 + var1 + var2 - 2 * sqrt(var1 * var2))
+    wass = sqrt((mu1 - mu2)^2 + (sqrt(var1) - sqrt(var2))^2)
   } else{
     if(type > 1){ # multivariate case 
       sqrt_var2 = sqrtm(var2)
@@ -299,7 +301,6 @@ N = 500
 Wasserstein_distance(mu1, mu2, var1, var2, type = 2) # 1.091925
 
 library(transport)
-library(mnormt)
 X1 = rmnorm(N, mean = mu1, varcov = var1)
 X2 = rmnorm(N, mean = mu2, varcov = var2)
 wasserstein(pp(X1), pp(X2), p) # 1.545051
@@ -320,28 +321,25 @@ wasserstein1d(x1, x2) # 19.05987
 
 ## 
 
-q = function(x, mean_beta0, mean_beta1, var_e, var_mean){
-  mu1 = mean_beta0 * x # mean of marginal dist of y | H0
-  mu2 = mean_beta1 * x # mean of marginal dist of y | H1
-  var = var_marginaly(x, var_e, var_mean) # variance of marginal dist of y | H1
-  Wass_dist = Wasserstein_distance(mu1, mu2, var, var)
+q = function(x, D_k, j, N, K0, K1, numSims){
+  Wass_dist = avg_w(x, D_k, j, N, K0, K1, numSims)
   return(1.0 / Wass_dist^(1/2))
 }
 
-f_min_fast = function(candidate_jk, D_k, gamma_k, mean_beta0, mean_beta1, var_e, var_mean){
-  q(candidate_jk, mean_beta0, mean_beta1, var_e, var_mean)^gamma_k * 
-    max(sapply(D_k, function(x_i) (q(x_i, mean_beta0, mean_beta1, var_e, var_mean)^gamma_k / abs(x_i - candidate_jk))))
+f_min_fast = function(candidate_jk, D_k, gamma_k, j, N, numSims){
+  q(candidate_jk, D_k, j, N, K0, K1, numSims)^gamma_k * 
+    max(sapply(D_k, function(x_i) (q(x_i, D_k, j, N, K0, K1, numSims)^gamma_k / abs(x_i - candidate_jk))))
 }
 
-avg_w = function(x, D_k, j, N, K0, K1, T){
+avg_w = function(x, D_k, j, N, K0, K1, numSims){
   Xnotj = D_k[-j]
   numObs = length(D_k[-j])
   if(numObs != (N - 1)) print("length(D_k[-j]) is NOT equal to (N - 1)")
-  wassersteins = rep(NA, T)
+  wassersteins = rep(NA, numSims)
   Kernel = NULL # different for each simulation t
-  which_kernel = round(runif(T))
-  y_notj = matrix(rep(NA, numObs * T), nrow = numObs, ncol = T) # each column is a sim. of y_notj
-  for(t in 1:T){
+  which_kernel = round(runif(numSims))
+  y_notj = matrix(rep(NA, numObs * numSims), nrow = numObs, ncol = numSims) # each column is a sim. of y_notj
+  for(t in 1:numSims){
     # Generate y
     if(which_kernel[t] == 0){
       Kernel = K0
@@ -349,25 +347,24 @@ avg_w = function(x, D_k, j, N, K0, K1, T){
       Kernel = K1
     }
     cov_Xnotj_Xnotj = Kernel(Xnotj, Xnotj)
-    cov_xx_inv <- solve(C_fn(obs$x, obs$x, l))
     # Simulate y_notj^(t)
     ysimt = mvrnorm(1, rep(0, length = numObs), cov_Xnotj_Xnotj)
     y_notj[ , t] = ysimt
     # Get predictive means and covariances
     # m = 0:
-    cov_Xnotj_Xnotj_inv0 = solve(K0(Xnotj, Xnotj))
+    cov_Xnotj_Xnotj_inv0 = solve(K0(Xnotj, Xnotj)) # some of these are negative!!!
     M0x = K0(x, Xnotj) %*% cov_Xnotj_Xnotj_inv0 %*% ysimt
     Sigma0x = K0(x, x) - K0(x, Xnotj) %*% cov_Xnotj_Xnotj_inv0 %*% K0(Xnotj, x)
     # m = 1
     cov_Xnotj_Xnotj_inv1 = solve(K1(Xnotj, Xnotj))
     M1x = K1(x, Xnotj) %*% cov_Xnotj_Xnotj_inv1 %*% ysimt
     Sigma1x = K1(x, x) - K1(x, Xnotj) %*% cov_Xnotj_Xnotj_inv1 %*% K1(Xnotj, x)
-    wassersteins[t] = Wasserstein_distance(M0x, M1x, Sigma0x, Sigma1x, type = 2)
+    wassersteins[t] = Wasserstein_distance(M0x, M1x, Sigma0x, Sigma1x, type = 1)
   }
   return(mean(wassersteins))
 }
 
-SMED_ms_fast = function(k0, k1, N = 11, xmin = 0, xmax = 1, K, p = 1, T = 3){
+SMED_ms_fast = function(k0, k1, N = 11, xmin = 0, xmax = 1, K, p = 1, numSims = 3){
   # k0 is the covariance function / kernel proposed by H0
   # k1 is the covariance function / kernel proposed by H1
   # each of k0 and k1 take in two arguments: xi, xj
@@ -413,13 +410,13 @@ SMED_ms_fast = function(k0, k1, N = 11, xmin = 0, xmax = 1, K, p = 1, T = 3){
     L1k_lower = max(D[1, k] - R1k, 0) # is this necessary, to max with 0? #######
     L1k_upper = min(D[1, k] + R1k, 1) #IT IS, bc o/w GET NaNs in q evaluation!
     # candidates from space-filling design = tildeD1_kplus1
-    tildeD1_kplus1 = seq(from = L1k_lower, to = L1k_upper, length.out = N)
+    tildeD1_kplus1 = seq(from = L1k_lower, to = L1k_upper, length.out = N) # repeats first and last ***
     # update C1_kplus1: save the candidates to be used in future designs
-    C[[1]] = c(C[[1]], tildeD1_kplus1)
+    C[[1]] = c(C[[1]], tildeD1_kplus1) # has repeats from ***
     # criterion to choose first candidate from candidate set:
     # the point at which f1 and f2 are most different
-    q_evals = sapply(C[[1]], FUN = function(x) q(x, mean_beta0, mean_beta1, var_e, var_mean))
-    xinitind = which.min(q_evals)
+    w_evals = sapply(C[[1]], FUN = function(x) avg_w(x, D[ , k + 1], j = 1, N, K0, K1, numSims))
+    xinitind = which.max(w_evals)
     D[1, k + 1] = C[[1]][xinitind] # x1, first element of new set of design points, D_k+1
     
     # for j = 2:n
@@ -432,7 +429,7 @@ SMED_ms_fast = function(k0, k1, N = 11, xmin = 0, xmax = 1, K, p = 1, T = 3){
         tildeDj_kplus1 = seq(from = lower, to = upper, length.out = N)
         C[[j]] = c(C[[j]], tildeDj_kplus1) # This is now C_j^{k+1}
         # evaluate criterion for each point, choose that with smallest criterion evaluation
-        f_min_candidates = sapply(C[[j]], function(x) f_min_fast(x, D[1:(j - 1), k + 1], gammas[k], mean_beta0, mean_beta1, var_e, var_mean))
+        f_min_candidates = sapply(C[[j]], function(x) f_min_fast(x, D[ , k + 1], gammas[k], j, N, numSims))
         chosen_cand = which.min(f_min_candidates)
         D[j, k + 1] = C[[j]][chosen_cand]
       } else{
@@ -443,13 +440,32 @@ SMED_ms_fast = function(k0, k1, N = 11, xmin = 0, xmax = 1, K, p = 1, T = 3){
         tildeDjk = seq(from = lower, to = upper, length.out = N)
         C[[j]] = c(C[[j]], tildeDjk) # This is now C_j^{k+1}
         # evaluate criterion for each point, choose that with smallest criterion evaluation
-        f_min_candidates = sapply(C[[j]], function(x) f_min_fast(x, D[1:(j - 1), k + 1], gammas[k], mean_beta0, mean_beta1, var_e, var_mean))
+        f_min_candidates = sapply(C[[j]], function(x) f_min_fast(x, D[ , k + 1], gammas[k], j, N, numSims))
         chosen_cand = which.min(f_min_candidates)
         D[j, k + 1] = C[[j]][chosen_cand]
       }
       
     }
   }
-  
-  return("D" = D, "candidates" = C))
+  return(list("D" = D, "candidates" = C))
 }
+
+
+
+
+## Testing Things
+
+# H0
+l0 = 0.2
+k0 = function(Xi,Xj) exp(-0.5 * (Xi - Xj) ^ 2 / l0 ^ 2) 
+# H1
+l1 = 0.5
+k1 = function(Xi,Xj) exp(-0.5 * (Xi - Xj) ^ 2 / l1 ^ 2) 
+
+N = 11
+xmin = 0
+xmax = 1
+K = 2 # just to see how it changes and also how long it takes
+p = 1 # how many parameters should it be?
+numSims = 3
+

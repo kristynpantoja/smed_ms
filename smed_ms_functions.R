@@ -3,7 +3,8 @@
 # Wasserstein distance betwen two (univariate) normals, N(mu1, var1) and N(mu2, var2)
 Wasserstein_distance = function(mu1, mu2, var1, var2, type = 1){
   if(type == 1){ # univariate case
-    wass = sqrt((mu1 - mu2)^2 + var1 + var2 - 2 * sqrt(var1 * var2))
+    #wass = sqrt((mu1 - mu2)^2 + var1 + var2 - 2 * sqrt(var1 * var2))
+    wass = sqrt((mu1 - mu2)^2 + (sqrt(var1) - sqrt(var2))^2)
   } else{
     if(type > 1){ # multivariate case 
       sqrt_var2 = sqrtm(var2)

@@ -71,11 +71,8 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10, numCandidate
   # post_var = ((1 / sigma_e^2) + (1 / var_mean^2))^(-1)
   
   # -- Generate Candidate Points -- #
-<<<<<<< HEAD
-  candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
-=======
-  candidates = runif(numCandidates, xmin, xmax) # Why are these needed?
->>>>>>> 30a005c4592ad071d4a0e4b1741496b56580218f
+  candidates = seq(from = xmin, to = xmax, length.out = numCandidates)# Why are these needed?
+
   
   # -- Initialize 1st Design Point in D -- #
   # get the point at which f1 and f2 are most different

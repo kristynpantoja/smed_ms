@@ -50,7 +50,7 @@ var_e = 0.1 # same variance
 ## Running Algorithm
 
 n = 67
-numCandidates = 1000
+numCandidates = 1500
 k = 4
 xmin = 0
 xmax = 1
@@ -63,20 +63,18 @@ X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, numCandidates, k, x
 f0 = function(x) mean_beta0 * x # null regression model
 f1 = function(x) mean_beta1 * x # alternative regression model
 
-curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f2")
+curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f2", ylim = c(0, 3))
 curve(f1, col = 1, add = TRUE)
 
 for(i in 1:n){
-  y[i] = i * 0.015
+  y[i] = i * 0.04
   text(X_test[i], y[i], i, col=4)
 }
 
-points(X_test, rep(0, n), col = 2)
+points(X_test, rep(0, n), col = 2, pch = "*")
 lines(X_test, y, col = 3)
 
-
-
-dev.copy(png, 'oneatatime_pattern2_N67.png')
+dev.copy(png, 'oneatatime_seq_pattern2_N67.png')
 dev.off()
 
 

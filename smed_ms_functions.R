@@ -68,7 +68,7 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10, numCandidate
   # post_var = ((1 / sigma_e^2) + (1 / var_mean^2))^(-1)
   
   # -- Generate Candidate Points -- #
-  candidates = runif(numCandidates, xmin, xmax)
+  candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
   
   # -- Initialize 1st Design Point in D -- #
   # get the point at which f1 and f2 are most different
@@ -113,7 +113,7 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, n = 10, numCandidate
 #  (Notice that this is different from the 2015 version, bc take MAX of sapply instead of SUM of sapply.)
 f_min_fast = function(candidate_jk, D_k, gamma_k, mean_beta0, mean_beta1, var_e, var_mean){
   q(candidate_jk, mean_beta0, mean_beta1, var_e, var_mean)^gamma_k * 
-    max(sapply(D_k, function(x_i) (q(x_i, mean_beta0, mean_beta1, var_e, var_mean)^gamma_k / abs(x_i - candidate_jk))))
+    max(sapply(D_k, function(x_i) (q(x_i, mean_beta0, mean_beta1, var_e, var_mean)^gamma_k / abs(x_i - candidate_jk)^(2))))
 }
 
 ### Iterative Algorithm for SMED for Model Selection ###

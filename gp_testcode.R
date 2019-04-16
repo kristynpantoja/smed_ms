@@ -322,7 +322,11 @@ wasserstein1d(x1, x2) # 19.05987
 ## 
 
 q = function(x, D_k, j, N, K0, K1, numSims){
-  Wass_dist = avg_w(x, D_k, j, N, K0, K1, numSims)
+  if(x == D_k) {
+    Wass_dist = 0 # JUST ADDED THIS CASE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  } else{
+    Wass_dist = avg_w(x, D_k, j, N, K0, K1, numSims)
+  }
   return(1.0 / Wass_dist^(1/2))
 }
 

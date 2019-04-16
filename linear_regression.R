@@ -17,7 +17,10 @@ library(transport)
 
 # Wasserstein distance betwen two (univariate) normals, N(mu1, var1) and N(mu2, var2)
 Wasserstein_distance = function(mu1, mu2, var1, var2){
-  return(sqrt(mu1 - mu2)^2 + var1 + var2 - 2 * sqrt(var1 * var2))
+  # the sqrt brackets were in the wrong place
+  # -- so as well as being written in a different form the distance is now also
+  # corrected
+  return(sqrt((mu1 - mu2)^2 + (sqrt(var1) - sqrt(var2))^2))
 }
 
 # charge function at design point x

@@ -44,38 +44,76 @@ source("smed_ms_functions.R")
 
 mean_beta0 = 1 # slope of null model
 mean_beta1 = 1 / 2 # slope of alternative model
-var_mean = 0.05
-var_e = 0.1 # same variance
+var_mean = 0.001
+var_e = 0.01 # same variance
 
 ## Running Algorithm
 
 n = 67
-numCandidates = 1500
+numCandidates = 10^5 # suggested 10^5
 k = 4
 xmin = 0
 xmax = 1
 
-X_test = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, numCandidates, k, xmin, xmax)
+# TIME IT!
+ptm <- proc.time()
+X_test_1atatime = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, numCandidates, k, xmin, xmax)
+# when numCandidates = 1500, elapsed = 16.039 (w/o printing plot)
+# when numCandidates = 2500, elapsed = 41.744
+# when numCandidates = 10^5, elapsed = 1042.209 (w/o printing plot), 1079.530 the second time
+proc.time() - ptm
 
+# HISTOGRAM.
+hist(X_test_1atatime, freq = T)
+mean(X_test_1atatime) # 0.6882634
+sd(X_test_1atatime) # 0.2182556
+
+#dev.copy(png, 'oneatatime_seq_pattern2_N67_nC100000_hist.png')
+#dev.off()
+
+### --- Distances between x's and y's N = 67 --- ###
+
+Xsort = sort(X_test_1atatime)
+Y0 = f0(Xsort)
+Y1 = f1(Xsort)
+diffX = Xsort[-1] - Xsort[-length(Xsort)]
+diffY = Y0 - Y1
+
+sum(diffX) # 0.8859489
+sum(diffY) # 23.05683
+
+hist(diffX) # right-skewed, like dist of X
+hist(diffY) # left-skewed, but less severe drop off
+
+mean(diffX) # 0.01342347
+mean(diffY) # 0.3441317
+
+sd(diffX) # 0.01187598
+sd(diffY) # 0.1091278
+
+
+# PICTURES.
 #dev.copy(png, 'oneatatime_N67.png')
 #dev.off()
+
+
+# PICTURES.
 
 f0 = function(x) mean_beta0 * x # null regression model
 f1 = function(x) mean_beta1 * x # alternative regression model
 
 curve(f0, col = 1, from = xmin, to = xmax, xlab = "design points", ylab = "f1, f2", ylim = c(0, 3))
 curve(f1, col = 1, add = TRUE)
-
+y = rep(NA, n)
 for(i in 1:n){
   y[i] = i * 0.04
-  text(X_test[i], y[i], i, col=4)
+  text(X_test_1atatime[i], y[i], i, col=4)
 }
+points(X_test_1atatime, rep(0, n), col = 2, pch = "*")
+lines(X_test_1atatime, y, col = 3)
 
-points(X_test, rep(0, n), col = 2, pch = "*")
-lines(X_test, y, col = 3)
-
-dev.copy(png, 'oneatatime_seq_pattern2_N67.png')
-dev.off()
+#dev.copy(png, 'oneatatime_seq_pattern2_N67_nC100000.png')
+#dev.off()
 
 
 # experimenting with Lattice function

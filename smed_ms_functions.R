@@ -9,14 +9,14 @@ Wasserstein_distance = function(mu1, mu2, var1, var2, dim = 1){
   # dim:
   #   1 is for univariate case
   #   > 1 is for multivariate case
-  if(type == 1){
+  if(dim == 1){
     wass = sqrt((mu1 - mu2)^2 + (sqrt(var1) - sqrt(var2))^2)
   } else{
-    if(type > 1){
+    if(dim > 1){
       sqrt_var2 = sqrtm(var2)
       wass = sqrt(crossprod(mu1 - mu2) + sum(diag(var1 + var2 - 2 * sqrtm(sqrt_var2 %*% var1 %*% sqrt_var2))))
     } else{
-      stop("invalid type")
+      stop("invalid dim")
     }
   }
   return(as.numeric(wass))
@@ -68,8 +68,8 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11, numCandidate
   #   if 2, candidates are uniformly generated from xmin to xmax
   # initialpt : 
   #   how to get first design point in D
-  #   if 1, minimize q
-  #   if 2, from candidates (for more expensive functions?)
+  #   if 1, from candidates (for more expensive functions?)minimize q
+  #   if 2, minimize q
   
   # Draw a slope for each model
   beta0 = rnorm(n = 1, mean = mean_beta0, sd = sqrt(var_mean))
@@ -89,12 +89,12 @@ SMED_ms = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11, numCandidate
   # Joseph et al. equation (9) says to minimize q(x) to pick the first x ************************************
   D = rep(NA, N)
   if(initialpt == 1){
-    D[1] = optimize(function(x) q(x, mean_beta0, mean_beta1, var_e, var_mean), interval = c(xmin, xmax))$minimum
-  } else{
     xinitind = which.max(abs(f0(candidates) - f1(candidates)))
     D[1] = candidates[xinitind] # x1, first element of set of design points, D
     # candidates that are leftover (options to choose from for next 2:N design points)
     # candidates = candidates[-xinitind] # candidate set, for choosing next design point x_{n+1}
+  } else{
+    D[1] = optimize(function(x) q(x, mean_beta0, mean_beta1, var_e, var_mean), interval = c(xmin, xmax))$minimum
   }
   
   # Plot density and (highest lik) points
@@ -153,17 +153,6 @@ isprime <- function(x) {
   }
 }
 
-# check if a number is prime, to use Lattice function in
-isprime <- function(x) {
-  if (x == 2) {
-    TRUE
-  } else if (any(x %% 2:(x - 1) == 0)) {
-    FALSE
-  } else { 
-    TRUE
-  }
-}
-
 
 
 ### Iterative Algorithm for SMED for Model Selection ###
@@ -195,10 +184,9 @@ SMED_ms_fast = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11, numCand
   # -- Make D_1 -- #
   # check that n >= 3
   if(N < 3) stop("not enough samples - need at least 3.")
-  # check that n is the largest prime number less than 100 + 5p.... ###################################
-  # or at least check that it's prime!
   
   # generate candidate points, C1. for first design, C1 = D1 = lattice over [0, 1]^p
+  C1 = rep(NA, numCandidates)
   if(genCandidates == 1) C1 = seq(from = xmin, to = xmax, length.out = numCandidates)
   if(genCandidates == 2) C1 = sort(runif(numCandidates, xmin, xmax))
   if(genCandidates == 3) C1 = mined::Lattice(numCandidates, p = 1)
@@ -233,18 +221,19 @@ SMED_ms_fast = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11, numCand
     # Get candidates in neighborhood L1k = (lower, upper):
     # for j = 1
     # get candidates in L_1k
-    R1k = min(abs(D[-1, k] - D[1, k])) # radius of L1k # can do it like this bc sorted D1, which was used to initialize D
+    R1k = min(abs(D[-1, k] - D[1, k])) # radius of L1k
     lower = max(D[1, k] - R1k, 0) # is this necessary, to max with 0? ************************************
     upper = min(D[1, k] + R1k, 1) # HERE IT IS BECAUSE o/w GET NaNs in q evaluation! why, though/? *******************
     # candidates from space-filling design, tildeD1_kplus1
     # In general the number of local points does no need to be N ************************************ans
     # so I suggest introducing a N_L. You can set N_L = N for now ************************************ans
     # but we may decide to change it later. ************************************ans
-    if(genCandidates == 1) tildeD1_kplus1 = seq(from = lower, to = upper, length.out = numCandidates)
-    if(genCandidates == 2) tildeD1_kplus1 = runif(numCandidates, lower, upper)
-    if(genCandidates == 3) tildeD1_kplus1 = mined::Lattice(numCandidates, p = 1) * (upper - lower) + lower
+    tildeD1_kplus = rep(NA, numCandidates)
+    if(genCandidates == 1) tildeD1_kplus = seq(from = lower, to = upper, length.out = numCandidates)
+    if(genCandidates == 2) tildeD1_kplus = runif(numCandidates, lower, upper)
+    if(genCandidates == 3) tildeD1_kplus = mined::Lattice(numCandidates, p = 1) * (upper - lower) + lower
     # save the candidates to be used in future designs
-    C[[1]] = c(C[[1]], tildeD1_kplus1)
+    C[[1]] = c(C[[1]], tildeD1_kplus)
     # criterion to choose first candidate from candidate set: 
     # the point at which f1 and f2 are most different
     w_evals = sapply(C[[1]], FUN = function(x) Wasserstein_distance(mean_beta0 * x, mean_beta1 * x, 
@@ -272,6 +261,7 @@ SMED_ms_fast = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11, numCand
         R_jk = min(abs(D[-j, k] - D[j, k]))
         lower = max(D[j, k] - R_jk, 0) # Shouldn't this be -R_jk ... and 0 not 1? ************************************fixed
         upper = min(D[j, k] + R_jk, 1)
+        tildeDj_kplus = rep(NA, numCandidates)
         if(genCandidates == 1) tildeDj_kplus = seq(from = lower, to = upper, length.out = numCandidates)
         if(genCandidates == 2) tildeDj_kplus = runif(numCandidates, lower, upper)
         if(genCandidates == 3) tildeDj_kplus = mined::Lattice(numCandidates, p = 1) * (upper - lower) + lower
@@ -287,6 +277,7 @@ SMED_ms_fast = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11, numCand
         R_jk = min(abs(D[-j, k] - D[j, k])) #which.min(c(D[j, k] - D[j - 1, k], D[j + 1, k] - D[j, k]))
         lower = max(D[j, k] - R_jk, 0) 
         upper = min(D[j, k] + R_jk, 1)
+        tildeDj_kplus = rep(NA, numCandidates)
         if(genCandidates == 1) tildeDj_kplus = seq(from = lower, to = upper, length.out = numCandidates)
         if(genCandidates == 2) tildeDj_kplus = runif(numCandidates, lower, upper)
         if(genCandidates == 3) tildeDj_kplus = mined::Lattice(numCandidates, p = 1) * (upper - lower) + lower
@@ -324,7 +315,26 @@ SMED_ms_fast = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11, numCand
 ####################################################################################
 
 
+#######################################
+### Functions for Evaluating Design ###
+#######################################
 
+### --- Compute Criterion ###
+
+totalPE = function(D, N, mean_beta0, mean_beta1, var_e, var_mean){
+  if(N != length(D)) stop("N is not the same as length of D")
+  numPairs = N * (N - 1) / 2
+  pairwise_PEs = rep(NA, numPairs)
+  counter = 1
+  qD = sapply(FUN = function(x) q(x, mean_beta0, mean_beta1, var_e, var_mean), D)
+  for(i in 1:(N - 1)){
+    for(j in (i + 1):N){
+      pairwise_PEs[counter] = qD[i] * qD[j] / (D[i] - D[j])^2
+      counter = counter + 1
+    }
+  }
+  return(sum(pairwise_PEs))
+}
 
 
 

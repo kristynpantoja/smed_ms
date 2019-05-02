@@ -49,7 +49,7 @@ var_e = 0.01 # same variance
 
 ## Running Algorithm
 
-n = 67
+N = 11
 numCandidates = 10^5 # suggested 10^5
 k = 4
 xmin = 0
@@ -57,7 +57,7 @@ xmax = 1
 
 # TIME IT!
 ptm <- proc.time()
-X_test_1atatime = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, numCandidates, k, xmin, xmax)
+X_test_1atatime = SMED_ms(mean_beta0, mean_beta1, var_e, var_mean, n, numCandidates, k, xmin, xmax, plotD = T)
 # when numCandidates = 1500, elapsed = 16.039 (w/o printing plot)
 # when numCandidates = 2500, elapsed = 41.744
 # when numCandidates = 10^5, elapsed = 1042.209 (w/o printing plot), 1079.530 the second time

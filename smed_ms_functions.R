@@ -627,8 +627,7 @@ totalPE = function(D, N, mean_beta0, mean_beta1, var_e, var_mean){
   qD = sapply(FUN = function(x) q(x, mean_beta0, mean_beta1, var_e, var_mean), D)
   for(i in 1:(N - 1)){
     for(j in (i + 1):N){
-      if(D[i] == 0 | D[j] == 0) pairwise_PEs[counter] = max(qD[-which(qD == Inf)])
-      else pairwise_PEs[counter] = qD[i] * qD[j] / (D[i] - D[j])^2
+      pairwise_PEs[counter] = qD[i] * qD[j] / (D[i] - D[j])^2
       counter = counter + 1
     }
   }
@@ -644,15 +643,14 @@ crit_1atatime = function(D, N, k, mean_beta0, mean_beta1, var_e, var_mean){
   qD = sapply(FUN = function(x) q(x, mean_beta0, mean_beta1, var_e, var_mean), D)
   for(i in 1:(N - 1)){
     for(j in (i + 1):N){
-      if(D[i] == 0 | D[j] == 0) pairwise_PEs[counter] = max(qD[-which(qD == Inf)])
-      else pairwise_PEs[counter] = qD[i] * qD[j] / (D[i] - D[j])^2
+      pairwise_PEs[counter] = (qD[i] * qD[j] / (D[i] - D[j])^2)^k
       counter = counter + 1
     }
   }
   return((sum(pairwise_PEs))^(1/k))
 }
 
-
+ 
 crit_fast = function(D, N, mean_beta0, mean_beta1, var_e, var_mean){
   if(N != length(D)) stop("N is not the same as length of D")
   numPairs = N * (N - 1) / 2
@@ -661,8 +659,7 @@ crit_fast = function(D, N, mean_beta0, mean_beta1, var_e, var_mean){
   qD = sapply(FUN = function(x) q(x, mean_beta0, mean_beta1, var_e, var_mean), D)
   for(i in 1:(N - 1)){
     for(j in (i + 1):N){
-      if(D[i] == 0 | D[j] == 0) pairwise_PEs[counter] = max(qD[-which(qD == Inf)])
-      else pairwise_PEs[counter] = qD[i] * qD[j] / (D[i] - D[j])^2
+      pairwise_PEs[counter] = qD[i] * qD[j] / (D[i] - D[j])^2
       counter = counter + 1
     }
   }

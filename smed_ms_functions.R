@@ -22,7 +22,7 @@ Wasserstein_distance = function(mu1, mu2, var1, var2, dim = 1){
   return(as.numeric(wass))
 }
 
-# Is this var(beta*x + epsilon? ************************************ sort of... it is y | H_0 : after marginalizing out \beta, since it has a prior : Var(y) = Var(E(y|\beta)) + E(Var(y|\beta))
+# Calculate Var[y | H_m], after marginalizing out \beta, for some hypothesis m
 var_marginaly = function(x, var_e, var_mean) var_e + x^2 * var_mean
 
 # charge function at design point x
@@ -192,7 +192,7 @@ SMED_ms_fast = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11, numCand
   C1 = rep(NA, numCandidates)
   if(genCandidates == 1) C1 = seq(from = xmin, to = xmax, length.out = numCandidates)
   if(genCandidates == 2) C1 = sort(runif(numCandidates, xmin, xmax))
-  if(genCandidates == 3) C1 = mined::Lattice(numCandidates, p = 1)
+  if(genCandidates == 3) C1 = mined::Lattice(numCandidates, p = p)
   D1 = C1
   
   ## calculate Wassersteins for each design point
@@ -238,7 +238,7 @@ SMED_ms_fast = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11, numCand
       tildeD1_kplus = rep(NA, numCandidates)
       if(genCandidates == 1) tildeD1_kplus = seq(from = lower, to = upper, length.out = numCandidates)
       if(genCandidates == 2) tildeD1_kplus = runif(numCandidates, lower, upper)
-      if(genCandidates == 3) tildeD1_kplus = mined::Lattice(numCandidates, p = 1) * (upper - lower) + lower
+      if(genCandidates == 3) tildeD1_kplus = mined::Lattice(numCandidates, p = p) * (upper - lower) + lower
       # save the candidates to be used in future designs
       C[[1]] = c(C[[1]], tildeD1_kplus)
       # criterion to choose first candidate from candidate set: 
@@ -276,7 +276,7 @@ SMED_ms_fast = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11, numCand
         tildeDj_kplus = rep(NA, numCandidates)
         if(genCandidates == 1) tildeDj_kplus = seq(from = lower, to = upper, length.out = numCandidates)
         if(genCandidates == 2) tildeDj_kplus = runif(numCandidates, lower, upper)
-        if(genCandidates == 3) tildeDj_kplus = mined::Lattice(numCandidates, p = 1) * (upper - lower) + lower
+        if(genCandidates == 3) tildeDj_kplus = mined::Lattice(numCandidates, p = p) * (upper - lower) + lower
         C[[j]] = c(C[[j]], tildeDj_kplus) # This is now C_j^{k+1}
         # Did you check their code to verify this is how to construct the candidate set? ************************************
         # (the paper doesn't seem very clear) ************************************
@@ -292,7 +292,7 @@ SMED_ms_fast = function(mean_beta0, mean_beta1, var_e, var_mean, N = 11, numCand
         tildeDj_kplus = rep(NA, numCandidates)
         if(genCandidates == 1) tildeDj_kplus = seq(from = lower, to = upper, length.out = numCandidates)
         if(genCandidates == 2) tildeDj_kplus = runif(numCandidates, lower, upper)
-        if(genCandidates == 3) tildeDj_kplus = mined::Lattice(numCandidates, p = 1) * (upper - lower) + lower
+        if(genCandidates == 3) tildeDj_kplus = mined::Lattice(numCandidates, p = p) * (upper - lower) + lower
         C[[j]] = c(C[[j]], tildeDj_kplus) # This is now C_j^{k+1}
         
         f_min_candidates = sapply(C[[j]], function(x) f_min_fast(x, D[1:(j - 1), k + 1], gammas[k], mean_beta0, mean_beta1, var_e, var_mean))

@@ -277,7 +277,8 @@ MED_ms_fast = function(mean_beta0, mean_beta1, var_mean0, var_mean1, var_e,
 ### --- Posterior Variance --- ###
 
 postvar = function(D, var_e, var_mean){
-  return(var_e * solve(crossprod(D) + var_e * (1 / var_mean)))
+  if(is.null(dim(D))) return(var_e * solve(crossprod(D) + var_e * (1 / var_mean)))
+  else return(var_e * solve(crossprod(D) + var_e * diag(1/diag(var_mean))))
 }
 
 ### --- Compute Criterion --- ###

@@ -128,3 +128,24 @@ lines(X_fast3_K, y, col = 3)
 hist(X_fast3_K, freq = T, main = "1atT k=4")
 
 
+
+
+
+
+
+
+
+
+
+# design points locations
+curve(f0, col = 1, from = xmin, to = xmax, xlab = "", ylab = "", ylim = c(0, 3), axes = F, main = "1atT k=4")
+curve(f1, col = 1, add = TRUE)
+axis(1)
+y = rep(NA, N)
+for(i in 1:N){
+  y[i] = i * 0.04
+  text(X[i], y[i], i, col=4)
+}
+points(X, rep(0, N), col = 2, pch = "*")
+lines(X, y, col = 3)
+hist(X, freq = T, main = "1atT k=4")

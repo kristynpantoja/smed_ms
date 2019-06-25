@@ -169,7 +169,7 @@ mean_beta1 = c(0, 1/2) # slope of alternative model
 var_mean0 = diag(c(0.005, 0.005)); var_mean1 = var_mean0 # variance on beta
 var_e = 0.025 # variance on error
 xmin = 0
-xmax = 1 
+xmax = 1
 f0 = function(x) mean_beta0[1] + mean_beta0[2] * x # null regression model
 f1 = function(x) mean_beta1[1] + mean_beta1[2] * x # alternative regression model
 N = 67

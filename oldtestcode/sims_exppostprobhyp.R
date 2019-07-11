@@ -54,7 +54,7 @@ simulateY = function(X, mean_beta, var_mean, var_e, numSims, plotrandsim = FALSE
 }
 
 # testing - it works fine! :D
-#D_space = seq(xmin, xmax, length.out = N)
+D_space = seq(xmin, xmax, length.out = N)
 X = as.matrix(D_space)
 
 simY = simulateY(X, mean_beta = mean_beta0, var_mean0, var_e, numSims)
@@ -178,7 +178,7 @@ expected_BF01_2 = mean(sim2BF01)
 expected_BF01_2
 
 
-
+# graphs n stuf
 
 hyp = c(rep("H0", numSims), rep("H1", numSims))
 postH0 = c(simPostH0, sim2PostH0)
@@ -213,3 +213,59 @@ segments(barCenters, agg_postH0$mean - agg_postH0$se * 2, barCenters,
 arrows(barCenters, agg_postH0$mean - agg_postH0$se * 2, barCenters,
        agg_postH0$mean + agg_postH0$se * 2, lwd = 1.5, angle = 90,
        code = 3, length = 0.05)
+
+
+
+
+
+
+#####################################
+############# Quadratic #############
+#####################################
+
+mean_beta0 = c(1, 0) # slope of null model
+mean_beta1 = c(1, 4, -4) # slope of alternative model
+var_mean0 = diag(c(0.005, 0.005)) # variance on beta0
+var_mean1 = diag(c(0.005, 0.005, 0.005)) # variance on beta1
+var_e = 0.025 # variance on error
+xmin = 0
+xmax = 1
+f0 = function(x) mean_beta0[1] + mean_beta0[2] * x # null regression model
+f1 = function(x) mean_beta1[1] + mean_beta1[2] * x + mean_beta1[3] * x^2 # alternative regression model
+N = 50
+type = c(2, 3)
+p = 3
+
+D_space = seq(xmin, xmax, length.out = N)
+X = cbind(rep(1, N), D_space, D_space^2)
+
+simY = simulateY(X, mean_beta = mean_beta1, var_mean = var_mean1, var_e, numSims, dim = 3)
+randSim = sample(1:numSims, 1); plot(simY[ , randSim] ~ D_space)
+randSim = sample(1:numSims, 1); plot(simY[ , randSim] ~ D_space, xlim = c(0, 1), ylim = c(0, 1))
+
+sim2PostH0 = rep(NA, numSims)
+sim2PostH1 = rep(NA, numSims)
+sim2BF01 = rep(NA, numSims)
+
+for(j in 1:numSims){
+  Y = simY[, j]
+  # get model evidences
+  simEvidenceH0 = model_evidence(Y, X, mean_beta0, var_mean0, var_e)
+  simEvidenceH1 = model_evidence(Y, X, mean_beta1, var_mean1, var_e)
+  # calculate posterior probabilities of models
+  sim2PostH0[j] = simEvidenceH0 / (simEvidenceH0 + simEvidenceH1)
+  sim2PostH1[j] = simEvidenceH1 / (simEvidenceH0 + simEvidenceH1)
+  # calculate bayes factor
+  sim2BF01[j] = sim2PostH0[j] / sim2PostH1[j]
+}
+
+expected_postH0_2 = mean(sim2PostH0)
+expected_postH1_2 = mean(sim2PostH1)
+expected_BF01_2 = mean(sim2BF01)
+expected_BF01_2
+
+
+
+
+
+

@@ -232,26 +232,6 @@ MED_ms_fast = function(mean_beta0, mean_beta1, var_mean0, var_mean1, var_e,
     # for j = 2:N
     for(j in 2:N){
       # get candidates in neighborhood L_jk = (lower, upper)
-      if(j == N){
-        #R_jk = D[j, k] - D[j - 1, k]
-        R_jk = min(abs(D[-j, k] - D[j, k]))
-        lower = max(D[j, k] - R_jk, 0) # Shouldn't this be -R_jk ... and 0 not 1? ************************************fixed
-        upper = min(D[j, k] + R_jk, 1)
-        tildeDj_kplus = rep(NA, numCandidates)
-        if(genCandidates == 1) tildeDj_kplus = seq(from = lower, to = upper, length.out = numCandidates)
-        if(genCandidates == 2) tildeDj_kplus = runif(numCandidates, lower, upper)
-        if(genCandidates == 3) tildeDj_kplus = mined::Lattice(numCandidates, p = p) * (upper - lower) + lower
-        C[[j]] = c(C[[j]], tildeDj_kplus) # This is now C_j^{k+1}
-        # Did you check their code to verify this is how to construct the candidate set? ************************************
-        # (the paper doesn't seem very clear) ************************************
-        
-        f_min_candidates = sapply(C[[j]], function(x) f_min_fast(x, D[1:(j - 1), k + 1], gammas[k], 
-                                                                 mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, 
-                                                                 f0, f1, type, var_margy0, var_margy1, p))
-        #choose that which has largest evaluation of criterion
-        chosen_cand = which.min(f_min_candidates)
-        D[j, k + 1] = C[[j]][chosen_cand]
-      } else{
         R_jk = min(abs(D[-j, k] - D[j, k])) #which.min(c(D[j, k] - D[j - 1, k], D[j + 1, k] - D[j, k]))
         lower = max(D[j, k] - R_jk, 0) 
         upper = min(D[j, k] + R_jk, 1)
@@ -267,7 +247,6 @@ MED_ms_fast = function(mean_beta0, mean_beta1, var_mean0, var_mean1, var_e,
         #choose that which has largest evaluation of criterion
         chosen_cand = which.min(f_min_candidates)
         D[j, k + 1] = C[[j]][chosen_cand]
-      }
       
     }
   }
@@ -283,9 +262,9 @@ MED_ms_fast = function(mean_beta0, mean_beta1, var_mean0, var_mean1, var_e,
 
 ### --- Posterior Variance --- ###
 
-postvar = function(D, var_e, var_mean){
-  if(is.null(dim(D))) return(var_e * solve(crossprod(D) + var_e * (1 / var_mean)))
-  else return(var_e * solve(crossprod(D) + var_e * diag(1/diag(var_mean))))
+postvar = function(X, var_e, var_mean){
+  if(is.null(dim(X))) return(var_e * solve(crossprod(X) + var_e * (1 / var_mean))) # if X has one dimension
+  else return(var_e * solve(crossprod(X) + var_e * diag(1/diag(var_mean)))) # if X has multiple dimensions (i.e. beta is vector, not scalar)
 }
 
 ### --- Compute Criterion --- ###
@@ -375,14 +354,15 @@ evalI = function(X, D, N, p) {
   return(mean(XMiX))
 }
 
-evalGe = function(X, D, N, p){
-  Mi = solve(crossprod(D) / N)
-  XMiX = rep(NA, dim(X)[1])
-  for(i in 1:dim(X)[1]){
-    XMiX[i] = X[i, ] %*% Mi %*% X[i, ]
-  }
-  return(p / max(XMiX))
-}
+#evalGe = function(X, D, N, p){
+#  Mi = solve(crossprod(D) / N)
+#  XMiX = rep(NA, dim(X)[1])
+#  for(i in 1:dim(X)[1]){
+#    XMiX[i] = X[i, ] %*% Mi %*% X[i, ]
+#  }
+#  return(p / max(XMiX))
+#}
+
 
 
 

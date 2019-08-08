@@ -107,6 +107,7 @@ MED_ms_2d = function(mean_beta0, mean_beta1, var_mean0, var_mean1, var_e,
     xnew = candidates[f_opt, ]
     # Update set of design points (D) and plot new point
     D[i, ] = xnew
+    #print(i)
   }
   return(D)
 }
@@ -127,10 +128,9 @@ f_min_fast_2d = function(candidate_jk, D_k, gamma_k, mean_beta0, mean_beta1, var
 
 MED_ms_fast_2d = function(mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, 
                           f0 = NULL, f1 = NULL, type = NULL, var_margy0 = NULL, var_margy1 = NULL, 
-                          N = 11, numCandidates = NULL, K = 10, p = 2, xmin = 0, xmax = 1){
+                          N = 11, numCandidates = NULL, K = 10, p = 2, xmin = 0, xmax = 1, seed = 1){
   
   if(is.null(type) & is.null(f0) & is.null(f1) & is.null(var_margy0) & is.null(var_margy0)) stop("must specify model type and/or model")
-  if(is.null(numCandidates)) numCandidates = N
   
   # Create hypothesized models
   if(is.null(f0)){
@@ -147,16 +147,29 @@ MED_ms_fast_2d = function(mean_beta0, mean_beta1, var_mean0, var_mean1, var_e,
   if(N < 3) stop("not enough samples - need at least 3.")
   
   # generate candidate points, C1. for first design, C1 = D1 = lattice over [0, 1]^p
-  if(length(numCandidates) == 1){
-    sqrtN = floor(sqrt(numCandidates))
-    numCandidates = c(sqrtN, sqrtN)
-    N = sqrtN^2
+  sqrtNumCand = NULL
+  if(is.null(numCandidates)){
+    # make the number of candidates approximately equal to N (must be an integer square root, to make a grid)
+    sqrtNumCand = floor(sqrt(N))
   }
+  if(length(numCandidates) == 1){ # 
+    sqrtNumCand = floor(sqrt(numCandidates)) # to be able to make a grid of candidates
+  }
+  numCandidates = c(sqrtNumCand, sqrtNumCand)
+  numCandidatesTtl = sqrtNumCand^2
   candidates_x1 = seq(from = xmin, to = xmax, length.out = numCandidates[1])
   candidates_x2 = seq(from = xmin, to = xmax, length.out = numCandidates[2])
   C1 = cbind(rep(candidates_x1, each = numCandidates[2]), 
              rep(candidates_x2, times = numCandidates[1])) # each row is a candidate (x1, x2)
-  D1 = C1
+  spots_left = N - dim(C1)[1]
+  if(spots_left != 0){
+    set.seed(seed)
+    candidates_x1_leftover = runif(spots_left, xmin, xmax)
+    candidates_x2_leftover = runif(spots_left, xmin, xmax)
+    D1 =  rbind(C1, cbind(candidates_x1_leftover, candidates_x2_leftover))
+  } else{
+    D1 = C1
+  }
   
   ## calculate Wassersteins for each design point
   #Wasser_init = sapply(D_init, function(x) Wasserstein_distance(mean_beta0 * x, mean_beta1 * x, var_e + x^2 * var_mean, var_e + x^2 * var_mean))
@@ -175,9 +188,9 @@ MED_ms_fast_2d = function(mean_beta0, mean_beta1, var_mean0, var_mean1, var_e,
   gammas = c(1:(K - 1)) / (K - 1)
   # -- the final step should be gamma = 1 because then we optimize the correct criterion
   # save candidates for each K
-  C <- list()
+  C <- array(NA, dim = c(numCandidatesTtl * K, 2, N))
   for (j in 1:N){
-    C[[j]] = D1
+    C[ , , j] = rbind(C1, matrix(rep(NA, 2 * numCandidatesTtl * (K - 1)), numCandidatesTtl * (K - 1), 2))
   }
   
   # at index k, determine the next design k + 1
@@ -189,47 +202,49 @@ MED_ms_fast_2d = function(mean_beta0, mean_beta1, var_mean0, var_mean1, var_e,
     # get candidates in L_1k
     diff = (Dk[-1, ] - matrix(rep(Dk[1, ], N - 1), N - 1, 2, byrow = TRUE))^2
     R1k = min(sqrt(rowSums(diff))) # minimum euclidean distance b/t
-    lower = max(Dk[1, ] - R1k, 0)
-    upper = min(Dk[1, ] + R1k, 1)
-    tildeD1_kplus_x1 = seq(from = lower, to = upper, length.out = numCandidates[1])
-    tildeD1_kplus_x2 = seq(from = lower, to = upper, length.out = numCandidates[2])
+    lower_x1 = max(Dk[1, 1] - R1k, 0); lower_x2 = max(Dk[1, 2] - R1k, 0)
+    upper_x1 = min(Dk[1, 1] + R1k, 1); upper_x2 = min(Dk[1, 2] + R1k, 1)
+    tildeD1_kplus_x1 = seq(from = lower_x1, to = upper_x1, length.out = numCandidates[1])
+    tildeD1_kplus_x2 = seq(from = lower_x2, to = upper_x2, length.out = numCandidates[2])
     tildeD1_kplus = cbind(rep(tildeD1_kplus_x1, each = numCandidates[2]), 
                           rep(tildeD1_kplus_x2, times = numCandidates[1]))
     # save the candidates to be used in future designs
-    C[[1]] = rbind(C[[1]], tildeD1_kplus)
+    C[(k * numCandidatesTtl + 1):((k + 1) * numCandidatesTtl), , 1] = tildeD1_kplus
     # criterion to choose first candidate from candidate set: 
     # the point at which f1 and f2 are most different
-    w_evals = apply(C[[1]], 1, FUN = function(x) Wasserstein_distance(f0(x), f1(x), 
+    w_evals = apply(C[,,1], 1, FUN = function(x) Wasserstein_distance(f0(x), f1(x), 
                                                                       var_marginaly_2d(as.vector(x), var_mean0, var_e, type[1], var_margy0), 
                                                                       var_marginaly_2d(as.vector(x), var_mean1, var_e, type[2], var_margy1)))
     # Joseph et al.2018, after equation (8), says to maximize f(x) to pick the first x (which for us is Wass dist)
     xinitind = which.max(w_evals)
-    Dkplus[1, ] = C[[1]][xinitind, ] # x1, first element of set of design points, D
+    Dkplus[1, ] = C[,,1][xinitind, ] # x1, first element of set of design points, D
     
     # for j = 2:N
     for(j in 2:N){
       # get candidates in neighborhood L_jk = (lower, upper)
       diff = (Dk[-j, ] - matrix(rep(Dk[j, ], N - 1), N - 1, 2, byrow = TRUE))^2
       Rjk = min(sqrt(rowSums(diff)))
-      lower = max(Dk[j, ] - Rjk, 0) 
-      upper = min(Dk[j, ] + Rjk, 1)
-      tildeDj_kplus_x1 = seq(from = lower, to = upper, length.out = numCandidates[1])
-      tildeDj_kplus_x2 = seq(from = lower, to = upper, length.out = numCandidates[2])
+      lower_x1 = max(Dk[j, 1] - Rjk, 0); lower_x2 = max(Dk[j, 2] - Rjk, 0)
+      upper_x1 = min(Dk[j, 1] + Rjk, 1); upper_x2 = min(Dk[j, 2] + Rjk, 1)
+      tildeDj_kplus_x1 = seq(from = lower_x1, to = upper_x1, length.out = numCandidates[1])
+      tildeDj_kplus_x2 = seq(from = lower_x2, to = upper_x2, length.out = numCandidates[2])
       tildeDj_kplus = cbind(rep(tildeDj_kplus_x1, each = numCandidates[2]), 
                             rep(tildeDj_kplus_x2, times = numCandidates[1]))
-      C[[j]] = rbind(C[[j]], tildeDj_kplus) # This is now C_j^{k+1}
+      C[(k * numCandidatesTtl + 1):((k + 1) * numCandidatesTtl) , , j] = tildeDj_kplus # This is now C_j^{k+1}
       
-      f_min_candidates = apply(C[[j]], 1, function(x) f_min_fast_2d(x, Dkplus[1:(j - 1), , drop = FALSE], gammas[k], 
-                                                                    mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, 
-                                                                    f0, f1, type, var_margy0, var_margy1, p))
+      f_min_candidates = apply(C[ , , j], 1, function(x) f_min_fast_2d(x, Dkplus[1:(j - 1), , drop = FALSE], gammas[k], 
+                                                                       mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, 
+                                                                       f0, f1, type, var_margy0, var_margy1, p))
       #choose that which has largest evaluation of criterion
       chosen_cand = which.min(f_min_candidates)
-      Dkplus[j, ] = C[[j]][chosen_cand, ]
+      Dkplus[j, ] = C[ , , j][chosen_cand, ]
+      #print(paste("k:", k, " out of ", (K - 1)," --- j:", j, " out of ", N))
     }
     Dk = Dkplus
   }
   return(list("beta0" = mean_beta0, "beta1" = mean_beta1, "D" = Dkplus, "candidates" = C))
 }
+
 
 
 ##################

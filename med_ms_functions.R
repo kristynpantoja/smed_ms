@@ -43,7 +43,7 @@ q = function(x, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, f0, f1, typ
   var1 = var_marginaly(x, var_mean0, var_e, type = type[1], var_margy0) # variance of marginal dist of y | H0
   var2 = var_marginaly(x, var_mean1, var_e, type = type[2], var_margy1) # variance of marginal dist of y | H1
   Wass_dist = Wasserstein_distance(mu1, mu2, var1, var2)
-  return(1.0 / Wass_dist^(1 / (2 * p)))
+  return(1.0 / Wass_dist)
 }
 
 
@@ -263,9 +263,32 @@ MED_ms_fast = function(mean_beta0, mean_beta1, var_mean0, var_mean1, var_e,
 ### --- Posterior Variance --- ###
 
 postvar = function(X, var_e, var_mean){
-  if(is.null(dim(X))) return(var_e * solve(crossprod(X) + var_e * (1 / var_mean))) # if X has one dimension
+  if(is.null(dim(X)) | (dim(X)[2] == 1)) return(var_e * solve(crossprod(X) + var_e * (1 / var_mean))) # if X has one dimension
   else return(var_e * solve(crossprod(X) + var_e * diag(1/diag(var_mean)))) # if X has multiple dimensions (i.e. beta is vector, not scalar)
 }
+
+# scaled prediction variance
+getSPV = function(X, N){
+  XtX = t(X) %*% X
+  if(is.null(dim(X)) | (dim(X)[2] == 1)){ # if X has one dimension
+    SPV = sapply(X, FUN = function(x) N * t(as.matrix(x)) %*% solve(XtX, x))
+  } else{ # if X has multiple dimensions (i.e. beta is vector, not scalar)
+    XtX = t(X) %*% X
+    SPV = apply(X, 1, FUN = function(x) N * t(as.matrix(x)) %*% solve(XtX, x))
+  }
+  return(SPV)
+}
+
+# variance dispersion graphs (VDGs) to evaluate the prediction variance properties for experimental designs.
+# allows the practitioner to gain an impression regarding the stability of the scaled prediction variance
+
+# the ratio of the prediction variance to the error variance
+# is not a function of the error variance. This ratio, called the relative variance of prediction, depends only on
+# the design and the factor setting and can be calculated before acquiring the data.
+# The prediction variance profile plots the relative variance of prediction as a function of 
+# each factor at fixed values of the other factors 
+
+
 
 ### --- Compute Criterion --- ###
 

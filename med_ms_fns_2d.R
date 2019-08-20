@@ -575,25 +575,45 @@ crit_fast_2d = function(D, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_
   # }
 }
 
-model_evidence = function(Y, X, N, mean_beta, var_mean, var_e){
+model_evidence = function(Y, D, N, mean_beta, var_mean, var_e, type){
   # Y is a vector
   # X is a matrix
   # var_mean is a matrix
   # var_e is a scalar
+  X = NULL
+  if(type == 1) X = D
+  if(type == 2) X = cbind(rep(1, N), D)
+  if(type == 3) X = cbind(rep(1, N), D, D^2)
+  if(type == 4){
+    N = dim(D)[1]
+    X = cbind(rep(1, N), D)
+  }
+  if(type == 5){
+    N = dim(D)[1]
+    X = cbind(rep(1, N), D[,1], D[,1]^2, D[,2], D[,2]^2)
+  }
   N = length(Y)
   marginaly_mean = X %*% mean_beta
   marginaly_var = diag(rep(var_e, N)) + (X %*% var_mean %*% t(X))
   return(dmvnorm(Y, mean = marginaly_mean, sigma = marginaly_var, log = FALSE))
 }
 
-simulateY = function(X, N, mean_beta, var_mean, var_e, numSims, dim = NULL){
+simulateY = function(D, N, mean_beta, var_mean, var_e, numSims, type = NULL){
+  X = NULL
+  if(type == 1) X = D
+  if(type == 2) X = cbind(rep(1, N), D)
+  if(type == 3) X = cbind(rep(1, N), D, D^2)
+  if(type == 4){
+    N = dim(D)[1]
+    X = cbind(rep(1, N), D)
+  }
+  if(type == 5){
+    N = dim(D)[1]
+    X = cbind(rep(1, N), D[,1], D[,1]^2, D[,2], D[,2]^2)
+  }
   Y = matrix(rep(NA, N * numSims), N, numSims) # each column is a separate simulation
   for(j in 1:numSims){
-    if (dim == 1){
-      beta = rnorm(n = 1, mean = mean_beta, sd = sqrt(var_mean))
-    }else {
-      beta = t(rmvnorm(n = 1, mean = mean_beta, sigma = var_mean))
-    }
+    beta = t(rmvnorm(n = 1, mean = mean_beta, sigma = var_mean))
     for(i in 1:N){
       Y[i, j] = rnorm(n = 1, mean = X[i, ] %*% beta, sd = sqrt(var_e))
     }
@@ -601,60 +621,60 @@ simulateY = function(X, N, mean_beta, var_mean, var_e, numSims, dim = NULL){
   return(Y)
 }
 
-calcExpPostProbH_2d = function(X, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e,
-                               numSims = 100, dim = 4, log_space = TRUE){
+calcExpPostProbH_2d = function(D, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e,
+                               numSims = 100, type = NULL, log_space = TRUE){
   set.seed(123)
-  # if(log_space == FALSE){
-  #   # --- Y simulated from H0 --- #
-  #   simY = simulateY(X, mean_beta = mean_beta0, var_mean0, var_e, numSims, dim = 3)
-  #   simPostH0 = rep(NA, numSims)
-  #   simPostH1 = rep(NA, numSims)
-  #   simBF01 = rep(NA, numSims)
-  #   for(j in 1:numSims){
-  #     Y = simY[, j]
-  #     # get model evidences
-  #     simEvidenceH0 = model_evidence(Y, X, mean_beta0, var_mean0, var_e)
-  #     simEvidenceH1 = model_evidence(Y, X, mean_beta1, var_mean1, var_e)
-  #     # calculate posterior probabilities of models
-  #     simPostH0[j] = simEvidenceH0 / (simEvidenceH0 + simEvidenceH1)
-  #     simPostH1[j] = simEvidenceH1 / (simEvidenceH0 + simEvidenceH1)
-  #     # calculate bayes factor
-  #     simBF01[j] = simPostH0[j] / simPostH1[j]
-  #   }
-  #   expected_postH0_YH0 = mean(simPostH0)
-  #   expected_postH1_YH0 = mean(simPostH1)
-  #   expected_BF01_YH0 = mean(simBF01)
-  #   
-  #   # --- Y simulated from H1 --- #
-  #   simY = simulateY(X, mean_beta = mean_beta1, var_mean1, var_e, numSims, dim = 3)
-  #   simPostH0 = rep(NA, numSims)
-  #   simPostH1 = rep(NA, numSims)
-  #   simBF01 = rep(NA, numSims)
-  #   for(j in 1:numSims){
-  #     Y = simY[, j]
-  #     # get model evidences
-  #     simEvidenceH0 = model_evidence(Y, X, mean_beta0, var_mean0, var_e)
-  #     simEvidenceH1 = model_evidence(Y, X, mean_beta1, var_mean1, var_e)
-  #     # calculate posterior probabilities of models
-  #     simPostH0[j] = simEvidenceH0 / (simEvidenceH0 + simEvidenceH1)
-  #     simPostH1[j] = simEvidenceH1 / (simEvidenceH0 + simEvidenceH1)
-  #     # calculate bayes factor
-  #     simBF01[j] = simPostH0[j] / simPostH1[j]
-  #   }
-  #   expected_postH0_YH1 = mean(simPostH0)
-  #   expected_postH1_YH1 = mean(simPostH1)
-  #   expected_BF01_YH1 = mean(simBF01)
-  # } else{
+  if(log_space == FALSE){
     # --- Y simulated from H0 --- #
-    simY = simulateY(X, N, mean_beta0, var_mean0, var_e, numSims, dim = 3)
+    simY = simulateY(D, N, mean_beta0, var_mean0, var_e, numSims, type = type[1])
+    simPostH0 = rep(NA, numSims)
+    simPostH1 = rep(NA, numSims)
+    simBF01 = rep(NA, numSims)
+    for(j in 1:numSims){
+      Y = simY[, j]
+      # get model evidences
+      simEvidenceH0 = model_evidence(Y, D, N, mean_beta0, var_mean0, var_e, type = type[1])
+      simEvidenceH1 = model_evidence(Y, D, N, mean_beta1, var_mean1, var_e, type = type[2])
+      # calculate posterior probabilities of models
+      simPostH0[j] = simEvidenceH0 / (simEvidenceH0 + simEvidenceH1)
+      simPostH1[j] = simEvidenceH1 / (simEvidenceH0 + simEvidenceH1)
+      # calculate bayes factor
+      simBF01[j] = simPostH0[j] / simPostH1[j]
+    }
+    expected_postH0_YH0 = mean(simPostH0)
+    expected_postH1_YH0 = mean(simPostH1)
+    expected_BF01_YH0 = mean(simBF01)
+
+    # --- Y simulated from H1 --- #
+    simY = simulateY(D, N, mean_beta1, var_mean1, var_e, numSims, type = type[2])
+    simPostH0 = rep(NA, numSims)
+    simPostH1 = rep(NA, numSims)
+    simBF01 = rep(NA, numSims)
+    for(j in 1:numSims){
+      Y = simY[, j]
+      # get model evidences
+      simEvidenceH0 = model_evidence(Y, D, N, mean_beta0, var_mean0, var_e, type = type[1])
+      simEvidenceH1 = model_evidence(Y, D, N, mean_beta1, var_mean1, var_e, type = type[2])
+      # calculate posterior probabilities of models
+      simPostH0[j] = simEvidenceH0 / (simEvidenceH0 + simEvidenceH1)
+      simPostH1[j] = simEvidenceH1 / (simEvidenceH0 + simEvidenceH1)
+      # calculate bayes factor
+      simBF01[j] = simPostH0[j] / simPostH1[j]
+    }
+    expected_postH0_YH1 = mean(simPostH0)
+    expected_postH1_YH1 = mean(simPostH1)
+    expected_BF01_YH1 = mean(simBF01)
+  } else{
+    # --- Y simulated from H0 --- #
+    simY = simulateY(D, N, mean_beta0, var_mean0, var_e, numSims, type = type[1])
     logsimPostH0 = rep(NA, numSims)
     logsimPostH1 = rep(NA, numSims)
     logsimBF01 = rep(NA, numSims)
     for(j in 1:numSims){
       Y = simY[, j]
       # get model evidences
-      simEvidenceH0 = model_evidence(Y, X, N, mean_beta0, var_mean0, var_e)
-      simEvidenceH1 = model_evidence(Y, X, N, mean_beta1, var_mean1, var_e)
+      simEvidenceH0 = model_evidence(Y, D, N, mean_beta0, var_mean0, var_e, type = type[1])
+      simEvidenceH1 = model_evidence(Y, D, N, mean_beta1, var_mean1, var_e, type = type[2])
       # calculate posterior probabilities of models
       logsimPostH0[j] = log(simEvidenceH0) - log(simEvidenceH0 + simEvidenceH1)
       logsimPostH1[j] = log(simEvidenceH1) - log(simEvidenceH0 + simEvidenceH1)
@@ -666,15 +686,15 @@ calcExpPostProbH_2d = function(X, N, mean_beta0, mean_beta1, var_mean0, var_mean
     expected_BF01_YH0 = (1 / numSims) * exp(logSumExp(logsimBF01))
     
     # --- Y simulated from H1 --- #
-    simY = simulateY(X, N, mean_beta1, var_mean1, var_e, numSims, dim = 3)
+    simY = simulateY(D, N, mean_beta1, var_mean1, var_e, numSims, type = type[2])
     logsimPostH0 = rep(NA, numSims)
     logsimPostH1 = rep(NA, numSims)
     logsimBF01 = rep(NA, numSims)
     for(j in 1:numSims){
       Y = simY[, j]
       # get model evidences
-      simEvidenceH0 = model_evidence(Y, X, N, mean_beta0, var_mean0, var_e)
-      simEvidenceH1 = model_evidence(Y, X, N, mean_beta1, var_mean1, var_e)
+      simEvidenceH0 = model_evidence(Y, D, N, mean_beta0, var_mean0, var_e, type = type[1])
+      simEvidenceH1 = model_evidence(Y, D, N, mean_beta1, var_mean1, var_e, type = type[2])
       # calculate posterior probabilities of models
       logsimPostH0[j] = log(simEvidenceH0) - log(simEvidenceH0 + simEvidenceH1)
       logsimPostH1[j] = log(simEvidenceH1) - log(simEvidenceH0 + simEvidenceH1)
@@ -684,10 +704,141 @@ calcExpPostProbH_2d = function(X, N, mean_beta0, mean_beta1, var_mean0, var_mean
     expected_postH0_YH1 = (1 / numSims) * exp(logSumExp(logsimPostH0))
     expected_postH1_YH1 = (1 / numSims) * exp(logSumExp(logsimPostH1))
     expected_BF01_YH1 = (1 / numSims) * exp(logSumExp(logsimBF01))
-  # }
+  }
   return(c("expected_postH0_YH0" = expected_postH0_YH0, "expected_postH1_YH0" = expected_postH1_YH0,
            "expected_BF01_YH0" = expected_BF01_YH0, "expected_postH0_YH1" = expected_postH0_YH1,
            "expected_postH1_YH1" = expected_postH1_YH1, "expected_BF01_YH1" = expected_BF01_YH1))
 }
 
+# Scaled Prediction Variance (SPV) : N V[y-hat(x_0)] / sigma^2 = N x_0' (X'X)^(-1) x_0
+
+getSPV_2d = function(D, N, type){
+  numGridPts = 10000
+  gridpts_x1 = seq(from = 0, to = 1, length.out = sqrt(numGridPts))
+  gridpts_x2 = seq(from = 0, to = 1, length.out = sqrt(numGridPts))
+  gridpts = cbind(rep(gridpts_x1, each = sqrt(numGridPts)), 
+                  rep(gridpts_x2, times = sqrt(numGridPts))) # 10k gridpts
+  X = NULL
+  if(type == 4){
+    N = dim(D)[1]
+    X = cbind(rep(1, N), D)
+    gridpts = cbind(rep(1, numGridPts), gridpts)
+  }
+  if(type == 5){
+    N = dim(D)[1]
+    X = cbind(rep(1, N), D[,1], D[,1]^2, D[,2], D[,2]^2)
+    gridpts = cbind(rep(1, numGridPts), gridpts[,1], gridpts[,1]^2, gridpts[,2], gridpts[,2]^2)
+  }
+  XtX = crossprod(X)
+  spv = N * apply(gridpts, 1, function(x) x %*% solve(XtX, x))
+  spv = sort(spv)
+  return(spv)
+}
+
+
+# Covariance function
+#  here, used radial aka squared exponential aka gaussian
+C_fn_elementwise_sqexp2d = function(Xi,Xj, l) exp(-0.5 * sum(((Xi - Xj) / l)^2)) 
+C_fn_sqexp2d = function(X, Y, l){
+  lenX = dim(X)[1]
+  lenY = dim(Y)[1]
+  mat = matrix(rep(NA, lenX*lenY), lenX, lenY)
+  for(i in 1:lenX){
+    for(j in 1:lenY){
+      mat[i, j] = C_fn_elementwise_sqexp2d(X[i,], Y[j,], l)
+    }
+  }
+  return(mat)
+}
+
+#  here is product exponential
+C_fn_elementwise_prodexp2d = function(Xi,Xj, theta) exp(-sum(theta * (Xi - Xj)^2)) 
+C_fn_prodexp2d = function(X, Y, theta){
+  lenX = dim(X)[1]
+  lenY = dim(Y)[1]
+  mat = matrix(rep(NA, lenX*lenY), lenX, lenY)
+  for(i in 1:lenX){
+    for(j in 1:lenY){
+      mat[i, j] = C_fn_elementwise_prodexp(X[i,], Y[j,], l)
+    }
+  }
+  return(mat)
+}
+
+# doesn't work... det(solve(K_X)) = 0
+getSPV_GASP_2d = function(D, N, hyperparam = NULL, type, covtype = 2){
+  D = unique(D)
+  if(covtype == 1){ # doesn't work yet
+    C_fn_elementwise = C_fn_elementwise_prodexp2d
+    C_fn = C_fn_prodexp2d
+  } else if(covtype == 2){
+    C_fn_elementwise = C_fn_elementwise_sqexp2d
+    C_fn = C_fn_sqexp2d
+  }
+  numGridPts = 10000
+  gridpts_x1 = seq(from = 0, to = 1, length.out = sqrt(numGridPts))
+  gridpts_x2 = seq(from = 0, to = 1, length.out = sqrt(numGridPts))
+  gridpts = cbind(rep(gridpts_x1, each = sqrt(numGridPts)), 
+                  rep(gridpts_x2, times = sqrt(numGridPts))) # 10k gridpts
+  X = NULL
+  if(type[2] == 4){
+    N = dim(D)[1]
+    X = cbind(rep(1, N), D)
+    gridpts = cbind(rep(1, numGridPts), gridpts)
+    if(is.null(hyperparam)) hyperparam = rep(0.1, 3)
+  }
+  if(type[2] == 5){
+    N = dim(D)[1]
+    X = cbind(rep(1, N), D[,1], D[,1]^2, D[,2], D[,2]^2)
+    gridpts = cbind(rep(1, numGridPts), gridpts[,1], gridpts[,1]^2, gridpts[,2], gridpts[,2]^2)
+    if(is.null(hyperparam)) hyperparam = rep(0.1, 5)
+  }
+  K_X = C_fn(X, X, hyperparam)
+  ones = rep(1, N)
+  spv = rep(NA, numGridPts)
+  for(i in 1:numGridPts){
+    newx = gridpts[i,]
+    k_newx = apply(X, 1, function(x) C_fn_elementwise(x, newx, hyperparam))
+    term2 = t(k_newx) %*% solve(K_X, k_newx)
+    term3 = (1 - t(ones) %*% solve(K_X, k_newx))^2 / (t(ones) %*% solve(K_X, ones))
+    spv[i] = 1 - term2 + term3
+  }
+  return(spv)
+}
+
+
+
+
+# RMSE for surface h1
+RMSE = function(pred, obs){
+  sqrt(mean((pred - obs)^2))
+}
+
+getRMSE_2d = function(D, N, f_ell){
+  # create hypothetical response variable based on test function, here we use f_ell
+  fake_y = apply(D, 1, function(x) f_ell(x))
+  # analyze design using 2nd order polynomial
+  fake_data = as.data.frame(cbind(D, fake_y))
+  colnames(fake_data) = c("x1", "x2", "y")
+  polymodel_deg1 = lm(fake_y ~ 1 + x1 + x2, data = fake_data)
+  polymodel_deg2 = lm(fake_y ~ 1 + x1 + x2 + I(x1^2) + I(x2^2), data = fake_data)
+  polymodel_deg3 = lm(fake_y ~ 1 + x1 + x2 + I(x1^2) + I(x2^2) + I(x1^3) + I(x2^3), data = fake_data)
+  # predict responses across grid
+  numGridPts = 10000
+  gridpts_x1 = seq(from = 0, to = 1, length.out = sqrt(numGridPts))
+  gridpts_x2 = seq(from = 0, to = 1, length.out = sqrt(numGridPts))
+  gridpts = cbind(rep(gridpts_x1, each = sqrt(numGridPts)), 
+                  rep(gridpts_x2, times = sqrt(numGridPts))) # 10k gridpts
+  new_data = as.data.frame(gridpts)
+  colnames(new_data) = c("x1", "x2")
+  polymodel_deg1_predy = predict(polymodel_deg1, newdata = new_data)
+  polymodel_deg2_predy = predict(polymodel_deg2, newdata = new_data)
+  polymodel_deg3_predy = predict(polymodel_deg3, newdata = new_data)
+  # calculate RMSE
+  obs = apply(gridpts, 1, function(x) f_ell(x))
+  polymodel_deg1_RMSE = RMSE(polymodel_deg1_predy, obs)
+  polymodel_deg2_RMSE = RMSE(polymodel_deg2_predy, obs)
+  polymodel_deg3_RMSE = RMSE(polymodel_deg3_predy, obs)
+  return(list("RMSE_deg1" = polymodel_deg1_RMSE, "RMSE_deg2" = polymodel_deg2_RMSE, "RMSE_deg3" = polymodel_deg3_RMSE))
+}
 

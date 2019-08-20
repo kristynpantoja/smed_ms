@@ -425,12 +425,19 @@ MED_ms_fast_2d_add = function(initD, mean_beta0, mean_beta1, var_mean0, var_mean
   x_maxW = C[,,1][xinitind, ]
   is_x_max_in_initD = any(apply(initD, 1, function(x, want) isTRUE(all.equal(x, want)), x_maxW))
   
+  if(is_x_max_in_initD){
+    # just use x_maxW, but take it out at the end, since it's already included. Note that this means N = N - 1
+    Dkplus[1, ] = x_maxW
+    initD = initD[-which(apply(initD, 1, function(x, want) isTRUE(all.equal(x, want)), x_maxW)),]
+  } else{
+    Dkplus[1, ] = x_maxW # x1, first element of set of design points, D
+  }
+  
   for(k in 1:(K - 1)){
     
     if(is_x_max_in_initD){
       # just use x_maxW, but take it out at the end, since it's already included. Note that this means N = N - 1
       Dkplus[1, ] = x_maxW
-      initD = initD[-which(apply(initD, 1, function(x, want) isTRUE(all.equal(x, want)), x_maxW)),]
     } else{
       Dkplus[1, ] = x_maxW # x1, first element of set of design points, D
     }
@@ -460,7 +467,6 @@ MED_ms_fast_2d_add = function(initD, mean_beta0, mean_beta1, var_mean0, var_mean
   }
   return(list("initD" = old_initD, "addD" = Dkplus, "updatedD" = rbind(old_initD, Dkplus), "q_initD" = initD, "candidates" = C))
 }
-
 
 
 

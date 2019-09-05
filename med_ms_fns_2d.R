@@ -599,7 +599,8 @@ model_evidence = function(Y, D, N, mean_beta, var_mean, var_e, type){
   return(dmvnorm(Y, mean = marginaly_mean, sigma = marginaly_var, log = FALSE))
 }
 
-simulateY = function(D, N, mean_beta, var_mean, var_e, numSims, type = NULL){
+simulateY = function(D, N, mean_beta, var_mean, var_e, numSims, type = NULL, seed = NULL){
+  if(is.null(seed)) set.seed(123)
   X = NULL
   if(type == 1) X = D
   if(type == 2) X = cbind(rep(1, N), D)
@@ -623,11 +624,11 @@ simulateY = function(D, N, mean_beta, var_mean, var_e, numSims, type = NULL){
 }
 
 calcExpPostProbH_2d = function(D, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e,
-                               numSims = 100, type = NULL, log_space = TRUE){
-  set.seed(123)
+                               numSims = 100, type = NULL, log_space = TRUE, seed = 123){
+  set.seed(seed)
   if(log_space == FALSE){
     # --- Y simulated from H0 --- #
-    simY = simulateY(D, N, mean_beta0, var_mean0, var_e, numSims, type = type[1])
+    simY = simulateY(D, N, mean_beta0, var_mean0, var_e, numSims, type = type[1], seed)
     simPostH0 = rep(NA, numSims)
     simPostH1 = rep(NA, numSims)
     simBF01 = rep(NA, numSims)
@@ -710,6 +711,75 @@ calcExpPostProbH_2d = function(D, N, mean_beta0, mean_beta1, var_mean0, var_mean
            "expected_BF01_YH0" = expected_BF01_YH0, "expected_postH0_YH1" = expected_postH0_YH1,
            "expected_postH1_YH1" = expected_postH1_YH1, "expected_BF01_YH1" = expected_BF01_YH1))
 }
+
+
+
+# --- Compute MSE --- #
+
+# first compute estimator, posterior mean
+getPostMean = function(y, D, N, mean_beta, var_e, var_mean, type, diagPrior = TRUE){
+  X = NULL
+  if(type == 1) X = D
+  if(type == 2) X = cbind(rep(1, N), D)
+  if(type == 3) X = cbind(rep(1, N), D, D^2)
+  if(type == 4){
+    X = cbind(rep(1, N), D)
+  }
+  if(type == 5){
+    X = cbind(rep(1, N), D[,1], D[,1]^2, D[,2], D[,2]^2)
+  }
+  D_postvar = postvar(D, N, var_e, var_mean, type, diagPrior)
+  D_postmean = (1 / var_e) * D_postvar %*% (t(X) %*% y + var_e * solve(var_mean, mean_beta))
+  return(D_postmean)
+}
+
+getEmpMSE = function(postmean, truemean){
+  return((postmean - truemean)^2)
+}
+
+calcExpPostMeanMSE = function(D, N, true_beta, numSims, mean_beta, var_e, var_mean, type, diagPrior = TRUE){
+  Ysims = simulateY(D, N, mean_beta, var_mean, var_e, numSims, type = type)
+  post_means = apply(Ysims, 2, FUN = function(y) getPostMean(y, D = D, N = N, mean_beta = mean_beta, var_e = var_e, var_mean = var_mean, type = type, diagPrior = diagPrior))
+  empMSEs = apply(post_means, 2, FUN = function(x) getEmpMSE(x, true_beta))
+  expEpiricalMSE = apply(empMSEs, 1, mean)
+  return(expEpiricalMSE)
+}
+
+# closed-form of MSE of posterior mean = variance of posterior mean if true_beta = mean_beta (since no bias)
+getClosedMSE = function(D, N, true_beta, mean_beta, var_e, var_mean, type, diagPrior = TRUE){
+  X = NULL
+  if(type == 1) X = D
+  if(type == 2) X = cbind(rep(1, N), D)
+  if(type == 3) X = cbind(rep(1, N), D, D^2)
+  if(type == 4){
+    X = cbind(rep(1, N), D)
+  }
+  if(type == 5){
+    X = cbind(rep(1, N), D[,1], D[,1]^2, D[,2], D[,2]^2)
+  }
+  Sigma_B = postvar(D, N, var_e, var_mean, type, diagPrior) # posterior variance
+  XtX = crossprod(X)
+  var_postmean_term1 = (1/var_e) * Sigma_B %*% XtX %*% Sigma_B
+  var_postmean_term2 = (1/var_e)^2 * Sigma_B %*% XtX %*% var_mean %*% XtX %*% Sigma_B
+  var_postmean = var_postmean_term1 + var_postmean_term2
+  expect_postmean = (1/var_e) * Sigma_B %*% (XtX + var_e * solve(var_mean)) %*% matrix(mean_beta)
+  MSE_postmean = diag(var_postmean) + expect_postmean^2 - 2 * true_beta * expect_postmean + true_beta^2
+  return(as.vector(MSE_postmean))
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Scaled Prediction Variance (SPV) : N V[y-hat(x_0)] / sigma^2 = N x_0' (X'X)^(-1) x_0
 

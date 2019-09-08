@@ -1,3 +1,7 @@
+##########
+### 1D ###
+##########
+
 crit_fast = function(D, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, f0, f1, type, var_margy0, var_margy1, p){
   if(N != length(D)) stop("N is not the same as length of D")
   numPairs = N * (N - 1) / 2
@@ -12,6 +16,10 @@ crit_fast = function(D, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, 
   }
   return(max(pairwise_PEs))
 }
+
+##########
+### 2D ###
+##########
 
 crit_fast_2d = function(D, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, f0, f1, type, var_margy0, var_margy1, p, log_space = TRUE){
   if(N != dim(D)[1]) stop("N is not the same as length of D")

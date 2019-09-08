@@ -1,3 +1,11 @@
+require("wasserstein_distance.R")
+require("charge_function_q.R")
+require("variance_marginal_y.R")
+
+##########
+### 2D ###
+##########
+
 MED_ms_fast_2d_add = function(initD, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, 
                               f0 = NULL, f1 = NULL, type = NULL, var_margy0 = NULL, var_margy1 = NULL, 
                               N = 11, numCandidates = NULL, K = 10, p = 2, xmin = 0, xmax = 1, seed = 1){

@@ -1,15 +1,10 @@
+##########
+### 2D ###
+##########
+
 # closed-form of MSE of posterior mean = variance of posterior mean if true_beta = mean_beta (since no bias)
 getClosedMSE = function(D, N, true_beta, mean_beta, var_e, var_mean, type, diagPrior = TRUE){
-  X = NULL
-  if(type == 1) X = D
-  if(type == 2) X = cbind(rep(1, N), D)
-  if(type == 3) X = cbind(rep(1, N), D, D^2)
-  if(type == 4){
-    X = cbind(rep(1, N), D)
-  }
-  if(type == 5){
-    X = cbind(rep(1, N), D[,1], D[,1]^2, D[,2], D[,2]^2)
-  }
+  X = constructDesignX(D, N, type)
   Sigma_B = postvar(D, N, var_e, var_mean, type, diagPrior) # posterior variance
   XtX = crossprod(X)
   var_postmean_term1 = (1/var_e) * Sigma_B %*% XtX %*% Sigma_B

@@ -1,3 +1,11 @@
+require("wasserstein_distance.R")
+require("charge_function_q.R")
+require("variance_marginal_y.R")
+
+##########
+### 2D ###
+##########
+
 # IGNORING POINTS THAT GIVE WASSERSTEIN DISTANCE OF 0!!!! IS THIS THE RIGHT THING TO DO?
 # could instead add a buffer to the wasserstein distance? mu0 - mu1 + 0.01 * (xmax - xmin) or something?
 MED_ms_2d_add = function(initD, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, 

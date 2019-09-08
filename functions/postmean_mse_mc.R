@@ -1,15 +1,6 @@
 # first compute estimator, posterior mean
 getPostMean = function(y, D, N, mean_beta, var_e, var_mean, type, diagPrior = TRUE){
-  X = NULL
-  if(type == 1) X = D
-  if(type == 2) X = cbind(rep(1, N), D)
-  if(type == 3) X = cbind(rep(1, N), D, D^2)
-  if(type == 4){
-    X = cbind(rep(1, N), D)
-  }
-  if(type == 5){
-    X = cbind(rep(1, N), D[,1], D[,1]^2, D[,2], D[,2]^2)
-  }
+  X = constructDesignX(D, N, type)
   D_postvar = postvar(D, N, var_e, var_mean, type, diagPrior)
   D_postmean = (1 / var_e) * D_postvar %*% (t(X) %*% y + var_e * solve(var_mean, mean_beta))
   return(D_postmean)

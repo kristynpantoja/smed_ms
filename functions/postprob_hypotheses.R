@@ -1,21 +1,14 @@
+##########
+### 2D ###
+##########
+
 model_evidence = function(Y, D, N, mean_beta, var_mean, var_e, type){
   # Y is a vector
   # X is a matrix
   # var_mean is a matrix
   # var_e is a scalar
-  X = NULL
-  if(type == 1) X = D
-  if(type == 2) X = cbind(rep(1, N), D)
-  if(type == 3) X = cbind(rep(1, N), D, D^2)
-  if(type == 4){
-    N = dim(D)[1]
-    X = cbind(rep(1, N), D)
-  }
-  if(type == 5){
-    N = dim(D)[1]
-    X = cbind(rep(1, N), D[,1], D[,1]^2, D[,2], D[,2]^2)
-  }
-  N = length(Y)
+  if(N != length(Y)) stop("N is not the same length as Y")
+  X = constructDesignX(D, N, type)
   marginaly_mean = X %*% mean_beta
   marginaly_var = diag(rep(var_e, N)) + (X %*% var_mean %*% t(X))
   return(dmvnorm(Y, mean = marginaly_mean, sigma = marginaly_var, log = FALSE))
@@ -23,18 +16,7 @@ model_evidence = function(Y, D, N, mean_beta, var_mean, var_e, type){
 
 simulateY = function(D, N, mean_beta, var_mean, var_e, numSims, type = NULL, seed = NULL){
   if(is.null(seed)) set.seed(123)
-  X = NULL
-  if(type == 1) X = D
-  if(type == 2) X = cbind(rep(1, N), D)
-  if(type == 3) X = cbind(rep(1, N), D, D^2)
-  if(type == 4){
-    N = dim(D)[1]
-    X = cbind(rep(1, N), D)
-  }
-  if(type == 5){
-    N = dim(D)[1]
-    X = cbind(rep(1, N), D[,1], D[,1]^2, D[,2], D[,2]^2)
-  }
+  X = constructDesignX(D, N, type)
   Y = matrix(rep(NA, N * numSims), N, numSims) # each column is a separate simulation
   for(j in 1:numSims){
     beta = t(rmvnorm(n = 1, mean = mean_beta, sigma = var_mean))

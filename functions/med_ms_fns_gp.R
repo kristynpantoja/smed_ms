@@ -1,22 +1,5 @@
-# Wasserstein distance betwen two normals  ### DONT CHANGE ANYTHING ###
-Wasserstein_distance = function(mu1, mu2, var1, var2, dim = 1){ ### DONT CHANGE ANYTHING ###
-  # Normal(mu1, var1) ### DONT CHANGE ANYTHING ###
-  # Normal(mu2, var2) ### DONT CHANGE ANYTHING ###
-  # dim: ### DONT CHANGE ANYTHING ###
-  #   1 is for univariate case ### DONT CHANGE ANYTHING ###
-  #   > 1 is for multivariate case ### DONT CHANGE ANYTHING ###
-  if(dim == 1){ ### DONT CHANGE ANYTHING ###
-    wass = sqrt((mu1 - mu2)^2 + (sqrt(var1) - sqrt(var2))^2) ### DONT CHANGE ANYTHING ###
-  } else{ ### DONT CHANGE ANYTHING ###
-    if(dim > 1){ ### DONT CHANGE ANYTHING ###
-      sqrt_var2 = sqrtm(var2) ### DONT CHANGE ANYTHING ###
-      wass = sqrt(crossprod(mu1 - mu2) + sum(diag(var1 + var2 - 2 * sqrtm(sqrt_var2 %*% var1 %*% sqrt_var2)))) ### DONT CHANGE ANYTHING ###
-    } else{ ### DONT CHANGE ANYTHING ###
-      stop("invalid dim") ### DONT CHANGE ANYTHING ###
-    } ### DONT CHANGE ANYTHING ###
-  } ### DONT CHANGE ANYTHING ###
-  return(as.numeric(wass)) ### DONT CHANGE ANYTHING ###
-}
+require("wasserstein_distance.R")
+require("charge_function_q.R")
 
 # 1d Covariance functions
 # radial aka squared exponential aka gaussian
@@ -44,18 +27,6 @@ getPredDistr = function(x_star, x_train, y_train, l, C_fn_type){
   pred_mean = t(k_star) %*% solve(K_obs, y_train)
   pred_cov = C_fn_1d(x_star, x_star, l, C_fn_type) - t(k_star) %*% solve(K_obs, k_star)
   return(list("pred_mean" = pred_mean, "pred_cov" = pred_cov))
-}
-
-# charge function evaluated at x
-q_gp = function(x_star, x_train, y_train, l0, l1, C_fn_type0, C_fn_type1){
-  pred_distr0 = getPredDistr(x_star, x_train, y_train, l0, C_fn_type0)
-  pred_distr1 = getPredDistr(x_star, x_train, y_train, l1, C_fn_type1)
-  mu1 = pred_distr0$pred_mean # mean of marginal dist of y | H1
-  mu2 = pred_distr1$pred_mean
-  var1 = pred_distr0$pred_cov
-  var2 = pred_distr1$pred_cov
-  Wass_dist = Wasserstein_distance(mu1, mu2, var1, var2, dim = 1)
-  return(1.0 / Wass_dist)
 }
 
 getW = function(x_star, x_train, y_train, l0, l1, C_fn_type0, C_fn_type1){

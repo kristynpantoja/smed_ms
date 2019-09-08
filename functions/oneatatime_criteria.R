@@ -1,3 +1,10 @@
+require("wasserstein_distance.R")
+require("charge_function_q.R")
+
+##########
+### 1D ###
+##########
+
 crit_1atatime = function(D, N, k, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, f0, f1, type, var_margy0, var_margy1, p, log_space = TRUE){
   if(N != length(D)) stop("N is not the same as length of D")
   if(log_space == FALSE) {
@@ -28,6 +35,10 @@ crit_1atatime = function(D, N, k, mean_beta0, mean_beta1, var_mean0, var_mean1, 
     return(exp((1 / k) * logSumExp(pairwise_terms)))
   }
 }
+
+##########
+### 2D ###
+##########
 
 crit_1atatime_2d = function(D, N, k, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, f0, f1, type, var_margy0, var_margy1, p, log_space = TRUE){
   if(N != dim(D)[1]) stop("N is not the same as length of D")

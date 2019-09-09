@@ -2,3 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
+.Rapp.history
+generate_designs
+.DS_Store

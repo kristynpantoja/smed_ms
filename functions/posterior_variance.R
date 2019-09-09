@@ -1,3 +1,5 @@
+# require("construct_design_matrix.R")
+
 # for 1 and 2 dimensions
 
 ##################

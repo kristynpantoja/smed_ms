@@ -1,3 +1,7 @@
+home = "/Users/kristyn/Documents/research/smed_ms"
+functions_home = paste(home, "/functions", sep="")
+
+
 ###################
 # Loading Designs #
 ###################
@@ -22,15 +26,13 @@ p = 3
 
 # for one-at-a-time algorithm, k = 1
 numCandidates = 10e3
-k = 1
+k = c(1, 4, 50)
 one_at_a_time_k1 = all_designs$one_at_a_time_k1
 
 # for one-at-a-time algorithm, k = 1
-k = 4
 one_at_a_time_k4 = all_designs$one_at_a_time_k4
 
 # for one-at-a-time algorithm, k = 50
-k = 50
 one_at_a_time_k50 = all_designs$one_at_a_time_k50
 
 # for fast algorithm, S = 5
@@ -57,14 +59,27 @@ random_design = all_designs$random_design
 # Evaluate Designs #
 ####################
 
+
+
 library(expm)
 library(matrixStats)
 library(scatterplot3d)
 library(knitr)
-source("med_ms_functions.R")
-source("med_ms_fns_2d.R")
-
 library(mvtnorm)
+library(here)
+source(paste(functions_home, "/construct_design_matrix.R", sep = ""))
+source(paste(functions_home, "/posterior_variance.R", sep = ""))
+source(paste(functions_home, "/variance_marginal_y.R", sep = ""))
+source(paste(functions_home, "/wasserstein_distance.R", sep = ""))
+source(paste(functions_home, "/charge_function_q.R", sep = ""))
+source(paste(functions_home, "/total_potential_energy_criteria.R", sep = ""))
+source(paste(functions_home, "/fast_criteria.R", sep = ""))
+source(paste(functions_home, "/oneatatime_criteria.R", sep = ""))
+source(paste(functions_home, "/postprob_hypotheses.R", sep = ""))
+source(paste(functions_home, "/postmean_mse_closedform.R", sep = ""))
+source(paste(functions_home, "/postmean_mse_mc.R", sep = ""))
+
+#
 
 calculateEvals = function(D, N, mean_beta0, mean_beta1, var_mean0, var_mean1,
                           var_e, f0, f1, type, var_margy0 = NULL, var_margy1 = NULL, p){

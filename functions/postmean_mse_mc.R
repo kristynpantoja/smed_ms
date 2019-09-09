@@ -1,3 +1,5 @@
+# require("construct_design_matrix.R")
+
 # first compute estimator, posterior mean
 getPostMean = function(y, D, N, mean_beta, var_e, var_mean, type, diagPrior = TRUE){
   X = constructDesignX(D, N, type)

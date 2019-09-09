@@ -1,6 +1,6 @@
-require("wasserstein_distance.R")
-require("charge_function_q.R")
-require("variance_marginal_y.R")
+# require("wasserstein_distance.R")
+# require("charge_function_q.R")
+# require("variance_marginal_y.R")
 
 ##########
 ### 1D ###

@@ -1,5 +1,5 @@
-require("wasserstein_distance.R")
-require("charge_function_q.R")
+# require("wasserstein_distance.R")
+# require("charge_function_q.R")
 
 ##########
 ### 1D ###

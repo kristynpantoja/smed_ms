@@ -8,7 +8,7 @@ functions_home = paste(home, "/functions", sep="")
 
 load(paste(home, "/designs_slides.RData", sep = ""))
 # object loaded is list "all_designs"
-
+  
 # parameters/settings
 mean_beta0 = c(0, 0, 0) # null model prior mean on beta
 mean_beta1 = c(0, 0.2, -0.2, 0.2, -0.2) # alternative model prior mean on beta

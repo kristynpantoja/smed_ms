@@ -168,7 +168,7 @@ calcExpPostProbH_2d = function(D, N, mean_beta0, mean_beta1, var_mean0, var_mean
     
     # calculate posterior probabilities of models
     simPostH0 = simEvidenceH0_YH1 / (simEvidenceH0_YH1 + simEvidenceH1_YH1)
-    simPostH1 = simEvidenceH1_YH1 / (simEvidenceH0_YH1 + simEvidenceH1_YH1)
+    simPostH1 = simEvidenceH1_YH1 / (simEvidenceH1_YH1 + simEvidenceH1_YH1)
     # calculate bayes factor
     simBF01 = simPostH0 / simPostH1
     

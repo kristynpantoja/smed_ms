@@ -328,7 +328,7 @@ calcExpPostProbH_2d = function(D, N, mean_beta0, mean_beta1, var_mean0, var_mean
     expected_postH0_YH1 = mean(simPostH0)
     expected_postH1_YH1 = mean(simPostH1)
     expected_BF01_YH1 = mean(simBF01)
-    
+
     return(c("expected_postH0_YH0" = expected_postH0_YH0, "expected_postH1_YH0" = expected_postH1_YH0,
              "expected_BF01_YH0" = expected_BF01_YH0, "expected_postH0_YH1" = expected_postH0_YH1,
              "expected_postH1_YH1" = expected_postH1_YH1, "expected_BF01_YH1" = expected_BF01_YH1))

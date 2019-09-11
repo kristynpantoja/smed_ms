@@ -1,7 +1,6 @@
 home = "/Users/kristyn/Documents/research/smed_ms"
 functions_home = paste(home, "/functions", sep="")
 
-
 ###################
 # Loading Designs #
 ###################

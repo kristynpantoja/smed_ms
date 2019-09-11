@@ -81,6 +81,8 @@ space_filling = all_designs$space_filling
 #axis1 = runif(100, xmin, xmax); axis2 = runif(100, xmin, xmax)
 #random_design = cbind(axis1, axis2)
 random_design = all_designs$random_design
+
+numSims = 100
 ```
 
 # First, Review Posterior Probabilities of Hypotheses
@@ -125,10 +127,11 @@ $$
     - Notice that the first row is $E[P(H_0 | y, \mathbf{D}) | H_0, \mathbf{D}]$ where MED does worse than space-filling
     - And the second-to-last row is $E[P(H_1 | y, \mathbf{D}) | H_1, \mathbf{D}]$ and again MED does worse than space-filling
     - This isn't at all what we expected or wanted!
-    ```{r, echo = FALSE}
+
+```{r, echo = FALSE}
 numSims = 100
-fast_exppostprobs = suppressWarnings(calcExpPostProbH_2d(fast_S5, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, numSims, type = type, log_space = FALSE))
-space_exppostprobs = suppressWarnings(calcExpPostProbH_2d(space_filling, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, numSims, type = type, log_space = FALSE))
+fast_exppostprobs = suppressWarnings(calcExpPostProbH_2d(fast_S5, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, numSims, type = type))
+space_exppostprobs = suppressWarnings(calcExpPostProbH_2d(space_filling, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, numSims, type = type))
 expectedPosteriorProbsHi = data.frame(cbind(fast_exppostprobs[c("expected_postH0_YH0", "expected_postH1_YH1")], 
                                           space_exppostprobs[c("expected_postH0_YH0", "expected_postH1_YH1")]))
 colnames(expectedPosteriorProbsHi) = c("Fast","Space")
@@ -138,14 +141,14 @@ round(expectedPosteriorProbsHi,5)
 
 - (In case you're wondering,) the full table of posterior probabilities is:
 ```{r, echo = FALSE}
-numSims = 100
-fast_exppostprobs = suppressWarnings(calcExpPostProbH_2d(fast_S5, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, numSims, type = type, log_space = FALSE))
-space_exppostprobs = suppressWarnings(calcExpPostProbH_2d(space_filling, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, numSims, type = type, log_space = FALSE))
+numSims = 1000
+# fast_exppostprobs = suppressWarnings(calcExpPostProbH_2d(fast_S5, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, numSims, type = type))
+# space_exppostprobs = suppressWarnings(calcExpPostProbH_2d(space_filling, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, numSims, type = type))
 expectedPosteriorProbs = data.frame(cbind(fast_exppostprobs, space_exppostprobs))
 colnames(expectedPosteriorProbs) = c("Fast","Space")
 rownames(expectedPosteriorProbs) = c("E[P(H0|Y,D)|H0,D]", "E[P(H1|Y,D)|H0,D]", "E[BF01 | H0,D]", 
                                      "E[P(H0|Y,D)|H1,D]", "E[P(H1|Y,D)|H1,D]", "E[BF01|H1,D]")
-round(expectedPosteriorProbs,5)
+round(expectedPosteriorProbs,4)
 ```
 
 - This matters, because the evidence for the other hypothesis shouldn't be higher for MED than for space-filling design. At least, that is not an intended result.
@@ -227,8 +230,8 @@ mean(space_expected_postH0_YH0) # posterior prob of H0
 ```{r}
 x0 = matrix(c(0,0), 1, 2)
 x1 = matrix(c(0.5,0.5), 1, 2)
-x0_exppostprobs = suppressWarnings(calcExpPostProbH_2d(x0, 1, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, numSims, type = type, log_space = FALSE))
-x1_exppostprobs = suppressWarnings(calcExpPostProbH_2d(x1, 1, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, numSims, type = type, log_space = FALSE))
+x0_exppostprobs = suppressWarnings(calcExpPostProbH_2d(x0, 1, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, numSims, type = type))
+x1_exppostprobs = suppressWarnings(calcExpPostProbH_2d(x1, 1, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, numSims, type = type))
 expectedPosteriorProbsHi2 = data.frame(cbind(x0_exppostprobs[c("expected_postH0_YH0", "expected_postH1_YH1")],
                                              x1_exppostprobs[c("expected_postH0_YH0", "expected_postH1_YH1")]))
 colnames(expectedPosteriorProbsHi2) = c("x0", "x1")
@@ -435,11 +438,11 @@ x1_evidence_H1
 - At $\mathbf{D}_0$, the simulated Y should have a hard time distinguishing the models, whereas $\mathbf{D}_1$ should have the easiest time, since it is located where the models are most different from each other.
 
 ```{r, echo=FALSE}
-newN = 5
+newN = 100
 d0 = matrix(rep(0, 3*2), newN, 2)
 d1 = matrix(rep(0.5, newN*2), newN, 2)
-d0_exppostprobs = suppressWarnings(calcExpPostProbH_2d(d0, newN, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, numSims, type = type, log_space = FALSE))
-d1_exppostprobs = suppressWarnings(calcExpPostProbH_2d(d1, newN, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, numSims, type = type, log_space = FALSE))
+d0_exppostprobs = suppressWarnings(calcExpPostProbH_2d(d0, newN, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, numSims, type = type))
+d1_exppostprobs = suppressWarnings(calcExpPostProbH_2d(d1, newN, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, numSims, type = type))
 expectedPosteriorProbsHi2 = data.frame(cbind(d0_exppostprobs[c("expected_postH0_YH0", "expected_postH1_YH1")],
                                           d1_exppostprobs[c("expected_postH0_YH0", "expected_postH1_YH1")]))
 colnames(expectedPosteriorProbsHi2) = c("D0", "D1")
@@ -490,15 +493,15 @@ mean(apply(d1_simEvidenceH1_YH0, 2, prod))
 - Surprisingly, they are similar for $E[f(y | H_0, \mathbf{D})]$. Is this because the null hypothesis is true, so their evidences 
 ```{r}
 mean(d1_simEvidenceH0_YH0) > mean(d0_simEvidenceH0_YH0)
-mean(d1_simEvidenceH0_YH0) * 10e-57 # E[f(y | H0, D1)] for y generated from H0
-mean(d0_simEvidenceH0_YH0) * 10e-57 # E[f(y | H0, D0)] for y generated from H0
+mean(d1_simEvidenceH0_YH0) # E[f(y | H0, D1)] for y generated from H0
+mean(d0_simEvidenceH0_YH0) # E[f(y | H0, D0)] for y generated from H0
 ```
 
 - And unlike with the comparison between MED and space-filling design, $E[f(y | H_{1}, \mathbf{D}_{1})] < E[f(y | H_{1}, \mathbf{D}_{0})]$. This seems right, and it also makes sense that $E[f(y | H_{1}, \mathbf{D}_{0})] \approx E[f(y | H_{0}, \mathbf{D}_{0})]$ above, since it cannot distinguish between $H_0$ and $H_1$ very well at the point $\mathbf{x} = (0, 0)$, where $f_0(\mathbf{x}) = f_1(\mathbf{x})$.
 ```{r}
 mean(d1_simEvidenceH1_YH0) > mean(d0_simEvidenceH1_YH0)
-mean(d1_simEvidenceH1_YH0) * 10e-57 # E[f(y | H1, D1)] for y generated from H0
-mean(d0_simEvidenceH1_YH0) * 10e-57 # E[f(y | H1, D0)] for y generated from H0
+mean(d1_simEvidenceH1_YH0) # E[f(y | H1, D1)] for y generated from H0
+mean(d0_simEvidenceH1_YH0) # E[f(y | H1, D0)] for y generated from H0
 ```
 
 - But why $E[P(H_0 | y, \mathbf{D}_{space}) | H_0, \mathbf{D}_{space}] > E[P(H_0 | y, \mathbf{D}_1) | H_0, \mathbf{D}_1]$? 
@@ -536,6 +539,82 @@ d1_expected_postH0_YH0 = (1 / numSims) * exp(logSumExp(d1_logsimpostH0))
 mean(d0_expected_postH0_YH0) # posterior prob of H0
 mean(d1_expected_postH0_YH0) # posterior prob of H0
 ```
+
+
+
+# Looking at D-Optimal Design
+
+```{r, echo = FALSE}
+numSims = 100
+fast_exppostprobs = suppressWarnings(calcExpPostProbH_2d(fast_S5, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, numSims, type = type))
+space_exppostprobs = suppressWarnings(calcExpPostProbH_2d(space_filling, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, numSims, type = type))
+dopt_exppostprobs = suppressWarnings(calcExpPostProbH_2d(doptimal, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, numSims, type = type))
+expectedPosteriorProbsHi = data.frame(cbind(fast_exppostprobs[c("expected_postH0_YH0", "expected_postH1_YH1")], 
+                                          space_exppostprobs[c("expected_postH0_YH0", "expected_postH1_YH1")],
+                                          dopt_exppostprobs[c("expected_postH0_YH0", "expected_postH1_YH1")]))
+colnames(expectedPosteriorProbsHi) = c("Fast","Space", "DOpt")
+rownames(expectedPosteriorProbsHi) = c("E[P(H0|Y,D)|H0,D]", "E[P(H1|Y,D)|H1,D]")
+round(expectedPosteriorProbsHi,5)
+```
+
+- (In case you're wondering,) the full table of posterior probabilities is:
+```{r, echo = FALSE}
+numSims = 100
+#fast_exppostprobs = suppressWarnings(calcExpPostProbH_2d(fast_S5, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, numSims, type = type))
+#space_exppostprobs = suppressWarnings(calcExpPostProbH_2d(space_filling, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, numSims, type = type))
+#dopt_exppostprobs = suppressWarnings(calcExpPostProbH_2d(doptimal, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, numSims, type = type))
+expectedPosteriorProbs = data.frame(cbind(fast_exppostprobs, space_exppostprobs, dopt_exppostprobs, d0_exppostprobs, d1_exppostprobs))
+colnames(expectedPosteriorProbs) = c("Fast","Space", "DOpt", "D0", "D1")
+rownames(expectedPosteriorProbs) = c("E[P(H0|Y,D)|H0,D]", "E[P(H1|Y,D)|H0,D]", "E[BF01 | H0,D]", 
+                                     "E[P(H0|Y,D)|H1,D]", "E[P(H1|Y,D)|H1,D]", "E[BF01|H1,D]")
+round(expectedPosteriorProbs,4)
+```
+
+- Why isn't Doptimal 0.5, 0.5?
+```{r}
+# DOpt
+dopt_simY_H0 = simulateY(doptimal, N, mean_beta0, var_mean0, var_e, numSims, type = type[1])
+dopt_simEvidenceH0_YH0 = matrix(rep(NA, numSims*N), N, numSims) # added for bf01 calc
+dopt_simEvidenceH1_YH0 = matrix(rep(NA, numSims*N), N, numSims)
+for(j in 1:numSims){
+  for(i in 1:N){
+    Y = dopt_simY_H0[i, j]
+    dopt_simEvidenceH0_YH0[i, j] = model_evidence(Y, doptimal[i, , drop = FALSE], 1, mean_beta0, 
+                                           var_mean0, var_e, type = type[1])
+    dopt_simEvidenceH1_YH0[i, j] = model_evidence(Y, doptimal[i, , drop = FALSE], 1, mean_beta1, 
+                                           var_mean1, var_e, type = type[2])
+  }
+}
+# DOpt
+dopt_simY_H1 = simulateY(doptimal, N, mean_beta1, var_mean1, var_e, numSims, type = type[2])
+dopt_simEvidenceH0_YH1 = matrix(rep(NA, numSims*N), N, numSims) # added for bf01 calc
+dopt_simEvidenceH1_YH1 = matrix(rep(NA, numSims*N), N, numSims)
+for(j in 1:numSims){
+  for(i in 1:N){
+    Y = dopt_simY_H1[i, j]
+    dopt_simEvidenceH0_YH1[i, j] = model_evidence(Y, doptimal[i, , drop = FALSE], 1, mean_beta0, 
+                                           var_mean0, var_e, type = type[1])
+    dopt_simEvidenceH1_YH1[i, j] = model_evidence(Y, doptimal[i, , drop = FALSE], 1, mean_beta1, 
+                                           var_mean1, var_e, type = type[2])
+  }
+}
+mean(apply(dopt_simEvidenceH0_YH0, 2, prod)) * 10e-43
+mean(apply(dopt_simEvidenceH1_YH0, 2, prod)) * 10e-43
+mean(apply(dopt_simEvidenceH0_YH1, 2, prod)) * 10e-43
+mean(apply(dopt_simEvidenceH1_YH1, 2, prod)) * 10e-43
+```
+
+- why aren't they equal?
+```{r}
+xy_plot = rbind(doptimal, doptimal)
+z_plot = c(dopt_simY_H0, dopt_simY_H1)
+scatterplot3d(x = xy_plot[ , 1], y = xy_plot[ , 2], z = z_plot,
+              xlim = c(0, 1), ylim = c(0, 1), color = 2,
+              xlab = "x1", ylab = "x2", zlab = "y", main = "Y | H0 Simulations")
+```
+
+
+
 
 
 

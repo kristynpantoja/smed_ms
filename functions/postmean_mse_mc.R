@@ -1,20 +1,21 @@
 # require("construct_design_matrix.R")
+# require("simulate_y.R")
 
 # first compute estimator, posterior mean
-getPostMean = function(y, D, N, mean_beta, var_e, var_mean, type, diagPrior = TRUE){
+getPostMean = function(y, D, N, true_beta, var_e, var_mean, type, diagPrior = TRUE){
   X = constructDesignX(D, N, type)
   D_postvar = postvar(D, N, var_e, var_mean, type, diagPrior)
-  D_postmean = (1 / var_e) * D_postvar %*% (t(X) %*% y + var_e * solve(var_mean, mean_beta))
+  D_postmean = (1 / var_e) * D_postvar %*% (t(X) %*% y + var_e * solve(var_mean, true_beta))
   return(D_postmean)
 }
 
-getEmpMSE = function(postmean, truemean){
-  return((postmean - truemean)^2)
+getEmpMSE = function(postmean_beta, true_beta){
+  return((postmean_beta - true_beta)^2)
 }
 
 calcExpPostMeanMSE = function(D, N, true_beta, numSims, mean_beta, var_e, var_mean, type, diagPrior = TRUE){
   Ysims = simulateY(D, N, mean_beta, var_mean, var_e, numSims, type = type)
-  post_means = apply(Ysims, 2, FUN = function(y) getPostMean(y, D = D, N = N, mean_beta = mean_beta, var_e = var_e, var_mean = var_mean, type = type, diagPrior = diagPrior))
+  post_means = apply(Ysims, 2, FUN = function(y) getPostMean(y, D, N, true_beta, var_e, var_mean, type, diagPrior = diagPrior))
   empMSEs = apply(post_means, 2, FUN = function(x) getEmpMSE(x, true_beta))
   expEpiricalMSE = apply(empMSEs, 1, mean)
   return(expEpiricalMSE)

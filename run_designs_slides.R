@@ -82,8 +82,9 @@ source(paste(functions_home, "/postmean_mse_mc.R", sep = ""))
 
 #
 
-calculateEvals = function(D, N, mean_beta0, mean_beta1, var_mean0, var_mean1,
-                          var_e, f0, f1, type, var_margy0 = NULL, var_margy1 = NULL, p){
+calculateEvals = function(D, N, true_beta, mean_beta0, mean_beta1, var_mean0, var_mean1,
+                          var_e, f0, f1, true_type, type, var_margy0 = NULL, var_margy1 = NULL, 
+                          p, numSims){
   
   # posterior variance of beta for the alternative hypothesis
   v = postvar(D, N, var_e, var_mean1, type[2])
@@ -102,9 +103,11 @@ calculateEvals = function(D, N, mean_beta0, mean_beta1, var_mean0, var_mean1,
   sds = apply(D, 2, sd)
   
   # expected posterior probabilities of hypotheses and bayes factors
-  exppostprobs = suppressWarnings(calcExpPostProbH_2d(D, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e,
-                                                      numSims = 500, type = type, log_space = FALSE))
-  exppostmeanMSE = calcExpPostMeanMSE(D, N, true_beta = mean_beta1, numSims = 1000, mean_beta1, var_e, var_mean1, type[2], diagPrior = TRUE)
+  exppostprobs = calcExpPostProbH_2d(D, N, true_beta, mean_beta0, mean_beta1, 
+                                     var_mean0, var_mean1, var_e, numSims, true_type, type)
+  exppostmeanMSE = calcExpPostMeanMSE(D, N, true_beta, mean_beta0, mean_beta1, 
+                                      var_mean0, var_mean1, var_e,
+                                      numSims, true_type, type)
   
   # export
   evals = list("v" = v, "TPE" = TPE, "cFast" = cFast, "c1atT" = c1atT, 
@@ -112,12 +115,18 @@ calculateEvals = function(D, N, mean_beta0, mean_beta1, var_mean0, var_mean1,
   return(evals)
 }
 
-one_at_a_time_k1_evaluations = suppressWarnings(calculateEvals(one_at_a_time_k1, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, f0, f1, type, var_margy0 = NULL, var_margy1 = NULL, p))
+numSims = 100
+true_beta_v1 = c(0.0, 0.4, -0.4, 0.4, -0.4)
+true_type_v1 = 5
+set.seed(123)
+one_at_a_time_k1_evaluations = calculateEvals(one_at_a_time_k1, N, true_beta_v1, mean_beta0, mean_beta1, 
+                                              var_mean0, var_mean1, var_e, f0, f1, true_type_v1, type, 
+                                              var_margy0 = NULL, var_margy1 = NULL, p, numSims)
 # the warnings were just to remind myself that the hypotheses do not have models of the same dimensionality.
 # one_at_a_time_k1_evaluations$exppostprobs # these are the expected posterior probabilities of the models from simulated responses (simulated from H0 and H1)
 
 # the rest of the design evaluations:
-one_at_a_time_k4_evaluations = suppressWarnings(calculateEvals(one_at_a_time_k4, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, f0, f1, type, var_margy0 = NULL, var_margy1 = NULL, p))
+one_at_a_time_k4_evaluations = calculateEvals(one_at_a_time_k4, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, f0, f1, type, var_margy0 = NULL, var_margy1 = NULL, p)
 one_at_a_time_k50_evaluations = suppressWarnings(calculateEvals(one_at_a_time_k50, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, f0, f1, type, var_margy0 = NULL, var_margy1 = NULL, p))
 fast_S5_evaluations = suppressWarnings(calculateEvals(fast_S5, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, f0, f1, type, var_margy0 = NULL, var_margy1 = NULL, p))
 doptimal_evaluations = suppressWarnings(calculateEvals(doptimal, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, f0, f1, type, var_margy0 = NULL, var_margy1 = NULL, p))

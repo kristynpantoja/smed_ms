@@ -12,9 +12,9 @@ load(paste(home, "/designs_slides.RData", sep = ""))
 # parameters/settings
 mean_beta0 = c(0, 0, 0) # null model prior mean on beta
 mean_beta1 = c(0, 0.2, -0.2, 0.2, -0.2) # alternative model prior mean on beta
-var_mean0 = diag(c(0.005, 0.005, 0.005)) # null model prior variance on beta
-var_mean1 = diag(c(0.005, 0.005, 0.005, 0.005, 0.005)) # alternative model prior variance on beta
 var_e = 0.005 # variance on error
+var_beta0 = diag(rep(var_e, 3)) # null model prior variance on beta
+var_beta1 = diag(rep(var_e, 5)) # alternative model prior variance on beta
 xmin = 0
 xmax = 1
 f0 = function(x) mean_beta0[1] + mean_beta0[2] * x[1] + mean_beta0[3] * x[2] # null
@@ -82,20 +82,20 @@ source(paste(functions_home, "/postmean_mse_mc.R", sep = ""))
 
 #
 
-calculateEvals = function(D, N, true_beta, mean_beta0, mean_beta1, var_mean0, var_mean1,
+calculateEvals = function(D, N, true_beta, mean_beta0, mean_beta1, var_beta0, var_beta1,
                           var_e, f0, f1, true_type, type, var_margy0 = NULL, var_margy1 = NULL, 
                           p, numSims){
   
   # posterior variance of beta for the alternative hypothesis
-  v = postvar(D, N, var_e, var_mean1, type[2])
+  v = postvar(D, N, var_e, var_beta1, type[2])
   # Total Potential Energy criterion
-  TPE = totalPE_2d(D, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, 
+  TPE = totalPE_2d(D, N, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
                    f0, f1, type, var_margy0, var_margy1, p)
   # Fast Algorithm criterion
-  cFast = crit_fast_2d(D, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, 
+  cFast = crit_fast_2d(D, N, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
                        f0, f1, type, var_margy0, var_margy1, p)
   # One-at-a-Time Algorithm criterion
-  c1atT = crit_1atatime_2d(D, N, k = 4, mean_beta0, mean_beta1, var_mean0, var_mean1, 
+  c1atT = crit_1atatime_2d(D, N, k = 4, mean_beta0, mean_beta1, var_beta0, var_beta1, 
                            var_e, f0, f1, type, var_margy0, var_margy1, p)
   
   # sumstats
@@ -104,9 +104,9 @@ calculateEvals = function(D, N, true_beta, mean_beta0, mean_beta1, var_mean0, va
   
   # expected posterior probabilities of hypotheses and bayes factors
   exppostprobs = calcExpPostProbH_2d(D, N, true_beta, mean_beta0, mean_beta1, 
-                                     var_mean0, var_mean1, var_e, numSims, true_type, type)
+                                     var_beta0, var_beta1, var_e, numSims, true_type, type)
   exppostmeanMSE = calcExpPostMeanMSE(D, N, true_beta, mean_beta0, mean_beta1, 
-                                      var_mean0, var_mean1, var_e,
+                                      var_beta0, var_beta1, var_e,
                                       numSims, true_type, type)
   
   # export
@@ -115,395 +115,112 @@ calculateEvals = function(D, N, true_beta, mean_beta0, mean_beta1, var_mean0, va
   return(evals)
 }
 
+# We want to find an example where MEDs do best i.t.o. Expected Posterior Probabilities of Hypotheses
+# i.e. where MEDs give the highest value of E[P(H1|Y,D)|BT]
+
+# Expected Posterior Probabilities of Hypotheses, BT = c(0.0, 0.4, -0.4, 0.4, -0.4)
+# here, space-filling design does best, and d-optimal design does worst.
+# does it make sense that the MEDs do in-between, though?
+# why does that happen?
+
+# with steeper values, e.g. BT = c(0, 1, -1, 1, -1) the true model is way off from H1, 
+# and all of them do fine except for the d-optimal design. not much to analyze in that case.
+
 numSims = 100
+set.seed(123)
+
 true_beta_v1 = c(0.0, 0.4, -0.4, 0.4, -0.4)
 true_type_v1 = 5
-set.seed(123)
-one_at_a_time_k1_evaluations = calculateEvals(one_at_a_time_k1, N, true_beta_v1, mean_beta0, mean_beta1, 
-                                              var_mean0, var_mean1, var_e, f0, f1, true_type_v1, type, 
-                                              var_margy0 = NULL, var_margy1 = NULL, p, numSims)
-# the warnings were just to remind myself that the hypotheses do not have models of the same dimensionality.
-# one_at_a_time_k1_evaluations$exppostprobs # these are the expected posterior probabilities of the models from simulated responses (simulated from H0 and H1)
+calculateEvals_v1 = function(D){
+  calculateEvals(D, N, true_beta_v1, mean_beta0, mean_beta1, 
+                 var_beta0, var_beta1, var_e, f0, f1, true_type_v1, type, 
+                 var_margy0 = NULL, var_margy1 = NULL, p, numSims)
+}
+k1_evals_v1 = calculateEvals_v1(one_at_a_time_k1)
+k4_evals_v1 = calculateEvals_v1(one_at_a_time_k4)
+k50_evals_v1 = calculateEvals_v1(one_at_a_time_k50)
+fast_evals_v1 = calculateEvals_v1(fast_S5)
+dopt_evals_v1 = calculateEvals_v1(doptimal)
+space_evals_v1 = calculateEvals_v1(space_filling)
+random_evals_v1 = calculateEvals_v1(random_design)
 
-# the rest of the design evaluations:
-one_at_a_time_k4_evaluations = calculateEvals(one_at_a_time_k4, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, f0, f1, type, var_margy0 = NULL, var_margy1 = NULL, p)
-one_at_a_time_k50_evaluations = suppressWarnings(calculateEvals(one_at_a_time_k50, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, f0, f1, type, var_margy0 = NULL, var_margy1 = NULL, p))
-fast_S5_evaluations = suppressWarnings(calculateEvals(fast_S5, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, f0, f1, type, var_margy0 = NULL, var_margy1 = NULL, p))
-doptimal_evaluations = suppressWarnings(calculateEvals(doptimal, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, f0, f1, type, var_margy0 = NULL, var_margy1 = NULL, p))
-space_filling_evaluations = suppressWarnings(calculateEvals(space_filling, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, f0, f1, type, var_margy0 = NULL, var_margy1 = NULL, p))
-random_design_evaluations = suppressWarnings(calculateEvals(random_design, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, f0, f1, type, var_margy0 = NULL, var_margy1 = NULL, p))
+exppostprobs_v1 = data.frame(cbind(k1_evals_v1$exppostprobs, 
+                                   k4_evals_v1$exppostprobs, 
+                                   k50_evals_v1$exppostprobs, 
+                                   fast_evals_v1$exppostprobs, 
+                                   dopt_evals_v1$exppostprobs, 
+                                   space_evals_v1$exppostprobs, 
+                                   random_evals_v1$exppostprobs))
+colnames(exppostprobs_v1) = c("1atT,k=1","1atT,k=4","1atT,k=50","Fast","DOptimal","Space","Random")
+rownames(exppostprobs_v1) = c("E[P(H0|Y,D)|BT]", "E[P(H1|Y,D)|BT]", "E[BF01|BT]")
+round(exppostprobs_v1, 5)
 
-
-expectedPosteriorProbs = data.frame(cbind(one_at_a_time_k1_evaluations$exppostprobs, 
-                                          one_at_a_time_k4_evaluations$exppostprobs, 
-                                          one_at_a_time_k50_evaluations$exppostprobs, 
-                                          fast_S5_evaluations$exppostprobs, 
-                                          doptimal_evaluations$exppostprobs, 
-                                          space_filling_evaluations$exppostprobs, 
-                                          random_design_evaluations$exppostprobs))
-colnames(expectedPosteriorProbs) = c("1atT,k=1","1atT,k=4","1atT,k=50","Fast","DOptimal","Space","Random")
-rownames(expectedPosteriorProbs) = c("E[P(H0|Y,D)|H0,D]", "E[P(H1|Y,D)|H0,D]", "E[BF01 | H0,D]", 
-                                     "E[P(H0|Y,D)|H1,D]", "E[P(H1|Y,D)|H1,D]", "E[BF01|H1,D]")
-round(expectedPosteriorProbs,5)
-
-
-# Trying to figure out why the MEDs do not have higher expected posterior probabilities than all other designs
-# => why E[P(H0|Y,D)|H0,D], E[P(H1|Y,D)|H1,D] are not highest for MEDs.
-
-# Dr. Jones: Check why the Bayesian probability is not higher for our methods than for the space filling design 
-# e.g. check the mean density of the points in the space filling design and our designs (under H1). 
-# If the points in our design have higher density then I think there must be a mistake in the computation of the posterior probability. 
-# If the mean density is not higher in our design then there is something wrong with the criterion we are optimizing.  
-
-# note: (I think he meant to say "If the points in our design DON'T have higher density")
-
-# checking mean density: #
-
+# Expected Posterior Probabilities of Hypotheses, c(0,2, 0, 0)
+# to seei if other type works
 
 numSims = 100
+set.seed(123)
 
-# for data simulated from H1:
-# fast MED
-fast_simY_H1 = simulateY(fast_S5, N, mean_beta1, var_mean1, var_e, numSims, type = type[2])
-fast_simEvidenceH1_YH1 = rep(NA, numSims)
-for(j in 1:numSims){
-  Y = fast_simY_H1[, j]
-  fast_simEvidenceH1_YH1[j] = model_evidence(Y, fast_S5, N, mean_beta1, var_mean1, var_e, type = type[2])
+true_beta_v2 = c(0.2, 0, 0)
+true_type_v2 = 4
+calculateEvals_v2 = function(D){
+  calculateEvals(D, N, true_beta_v2, mean_beta0, mean_beta1, 
+                 var_beta0, var_beta1, var_e, f0, f1, true_type_v2, type, 
+                 var_margy0 = NULL, var_margy1 = NULL, p, numSims)
 }
-# space-filling
-space_simY_H1 = simulateY(space_filling, N, mean_beta1, var_mean1, var_e, numSims, type = type[2])
-space_simEvidenceH1_YH1 = rep(NA, numSims)
-for(j in 1:numSims){
-  Y = space_simY_H1[, j]
-  space_simEvidenceH1_YH1[j] = model_evidence(Y, space_filling, N, mean_beta1, var_mean1, var_e, type = type[2])
+k1_evals_v2 = calculateEvals_v2(one_at_a_time_k1)
+k4_evals_v2 = calculateEvals_v2(one_at_a_time_k4)
+k50_evals_v2 = calculateEvals_v2(one_at_a_time_k50)
+fast_evals_v2 = calculateEvals_v2(fast_S5)
+dopt_evals_v2 = calculateEvals_v2(doptimal)
+space_evals_v2 = calculateEvals_v2(space_filling)
+random_evals_v2 = calculateEvals_v2(random_design)
+
+expMSEs_v2 = data.frame(cbind(k1_evals_v2$expMSEs, 
+                                   k4_evals_v2$expMSEs, 
+                                   k50_evals_v2$expMSEs, 
+                                   fast_evals_v2$expMSEs, 
+                                   dopt_evals_v2$expMSEs, 
+                                   space_evals_v2$expMSEs, 
+                                   random_evals_v2$expMSEs))
+colnames(expMSEs_v2) = c("1atT,k=1","1atT,k=4","1atT,k=50","Fast","DOptimal","Space","Random")
+rownames(expMSEs_v2) = c("E[MSE|H0]", "E[MSE|H1]")
+round(expMSEs_v2, 5)
+
+# Expected Posterior Probabilities of Hypotheses, BT = c(0, 0.2, 0, 0.2, 0)
+# here, we expect d-optimal design to do best, and it does. MEDs do better than the space-filling design
+# and random design. This might be worth noting.
+
+numSims = 100
+set.seed(123)
+
+true_beta_v3 = c(0.2, 0, 0, 0, 0)
+true_type_v3 = 5
+calculateEvals_v3 = function(D){
+  calculateEvals(D, N, true_beta_v3, mean_beta0, mean_beta1, 
+                 var_beta0, var_beta1, var_e, f0, f1, true_type_v3, type, 
+                 var_margy0 = NULL, var_margy1 = NULL, p, numSims)
 }
-mean(fast_simEvidenceH1_YH1) > mean(space_simEvidenceH1_YH1) # fast MED gives higher mean density than space MED for true hypothesis (here, H1), as expected.
+k1_evals_v3 = calculateEvals_v3(one_at_a_time_k1)
+k4_evals_v3 = calculateEvals_v3(one_at_a_time_k4)
+k50_evals_v3 = calculateEvals_v3(one_at_a_time_k50)
+fast_evals_v3 = calculateEvals_v3(fast_S5)
+dopt_evals_v3 = calculateEvals_v3(doptimal)
+space_evals_v3 = calculateEvals_v3(space_filling)
+random_evals_v3 = calculateEvals_v3(random_design)
+
+expMSEs_v3 = data.frame(cbind(k1_evals_v3$expMSEs, 
+                              k4_evals_v3$expMSEs, 
+                              k50_evals_v3$expMSEs, 
+                              fast_evals_v3$expMSEs, 
+                              dopt_evals_v3$expMSEs, 
+                              space_evals_v3$expMSEs, 
+                              random_evals_v3$expMSEs))
+colnames(expMSEs_v3) = c("1atT,k=1","1atT,k=4","1atT,k=50","Fast","DOptimal","Space","Random")
+rownames(expMSEs_v3) = c("E[MSE|H0]", "E[MSE|H1]")
+round(expMSEs_v3, 5)
 
 
 
-# is this true for H0-simulated data also? it should be.
-# fast MED
-fast_simY_H0 = simulateY(fast_S5, N, mean_beta0, var_mean0, var_e, numSims, type = type[1])
-fast_simEvidenceH0_YH0 = rep(NA, numSims) # added for bf01 calc
-fast_simEvidenceH1_YH0 = rep(NA, numSims)
-for(j in 1:numSims){
-  Y = fast_simY_H0[, j]
-  fast_simEvidenceH0_YH0[j] = model_evidence(Y, fast_S5, N, mean_beta0, var_mean0, var_e, type = type[1])
-  fast_simEvidenceH1_YH0[j] = model_evidence(Y, fast_S5, N, mean_beta1, var_mean1, var_e, type = type[2])
-}
-# space-filling
-space_simY_H0 = simulateY(space_filling, N, mean_beta0, var_mean0, var_e, numSims, type = type[1])
-space_simEvidenceH0_YH0 = rep(NA, numSims) # added for bf01 calc
-space_simEvidenceH1_YH0 = rep(NA, numSims)
-for(j in 1:numSims){
-  Y = space_simY_H0[, j]
-  space_simEvidenceH0_YH0[j] = model_evidence(Y, space_filling, N, mean_beta0, var_mean0, var_e, type = type[1])
-  space_simEvidenceH1_YH0[j] = model_evidence(Y, space_filling, N, mean_beta1, var_mean1, var_e, type = type[2])
-}
 
-mean(fast_simEvidenceH1_YH0) > mean(space_simEvidenceH1_YH0) # again, fast MED gives higher mean density than space MED for true hypothesis (here, H0), as expected.
-
-# and...
-mean(fast_simEvidenceH1_YH0)/mean(fast_simEvidenceH1_YH1) > mean(space_simEvidenceH1_YH0)/mean(space_simEvidenceH1_YH1)
-
-# but what about bf? evidence_H0/evidence_H1
-mean(fast_simEvidenceH0_YH0)/mean(fast_simEvidenceH1_YH0) > mean(space_simEvidenceH0_YH0)/mean(space_simEvidenceH1_YH0)
-# why is it false? if they had the same denominator, this would not be true. but evidence for H1 is higher for MED. why?
-mean(fast_simEvidenceH1_YH0) > mean(space_simEvidenceH1_YH0) # well why is the evidence for H1 in MED greater than the evidence for H1 in space-filling design?
-# this is the problem! why does it exist?
-sum(round(fast_simEvidenceH1_YH0, 5) > round(space_simEvidenceH1_YH0, 5))/numSims # it's not from chance!
-# and it's significant! look:
-mean(fast_simEvidenceH1_YH0) / 1e54
-mean(space_simEvidenceH1_YH0) / 1e54
-
-# is evidence even higher for H0 than for H1 for a given design?
-mean(fast_simEvidenceH0_YH0) > mean(fast_simEvidenceH1_YH0)
-mean(space_simEvidenceH0_YH0) > mean(space_simEvidenceH1_YH0)
-# okay well at least there's that.
-
-# gotta look at model evidence calculation:
-
-j = 10
-model_evidence(fast_simY_H0[, j], fast_S5, N, mean_beta1, var_mean1, var_e, type = type[2])
-model_evidence(space_simY_H0[, j], space_filling, N, mean_beta1, var_mean1, var_e, type = type[2])
-
-model_evidence = function(Y, D, N, mean_beta, var_mean, var_e, type){
-  # Y is a vector
-  # X is a matrix
-  # var_mean is a matrix
-  # var_e is a scalar
-  if(N != length(Y)) stop("N is not the same length as Y")
-  X = constructDesignX(D, N, type)
-  marginaly_mean = X %*% mean_beta
-  if(dim(X)[1] > 1){
-    marginaly_var = diag(rep(var_e, N)) + (X %*% var_mean %*% t(X))
-  } else{
-    marginaly_var = var_e + (X %*% var_mean %*% t(X))
-  }
-  return(dmvnorm(Y, mean = marginaly_mean, sigma = marginaly_var, log = FALSE))
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Then what's the issue? Look into the rest of the expected posterior probability calculation...
-
-# for H0:
-# fast
-fast_simY_H0 = simulateY(fast_S5, N, mean_beta0, var_mean0, var_e, numSims, type = type[1])
-fast_simEvidenceH0_YH0 = rep(NA, numSims)
-fast_simEvidenceH1_YH0 = rep(NA, numSims)
-fast_simPostH0 = rep(NA, numSims)
-fast_simPostH1 = rep(NA, numSims)
-fast_simBF01 = rep(NA, numSims)
-for(j in 1:numSims){
-  Y = fast_simY_H0[, j]
-  # get model evidences
-  fast_simEvidenceH0_YH0[j] = model_evidence(Y, fast_S5, N, mean_beta0, var_mean0, var_e, type = type[1])
-  fast_simEvidenceH1_YH0[j] = model_evidence(Y, fast_S5, N, mean_beta1, var_mean1, var_e, type = type[2])
-  # calculate posterior probabilities of models
-  fast_simPostH0[j] = fast_simEvidenceH0_YH0[j] / (fast_simEvidenceH0_YH0[j] + fast_simEvidenceH1_YH0[j])
-  fast_simPostH1[j] = fast_simEvidenceH1_YH0[j] / (fast_simEvidenceH0_YH0[j] + fast_simEvidenceH1_YH0[j])
-  # calculate bayes factor
-  fast_simBF01[j] = fast_simPostH0[j] / fast_simPostH1[j]
-}
-fast_expected_postH0_YH0 = mean(fast_simPostH0)
-fast_expected_postH1_YH0 = mean(fast_simPostH1)
-fast_expected_BF01_YH0 = mean(fast_simBF01)
-# space_filling
-space_simY_H0 = simulateY(space_filling, N, mean_beta0, var_mean0, var_e, numSims, type = type[1])
-space_simEvidenceH0_YH0 = rep(NA, numSims)
-space_simEvidenceH1_YH0 = rep(NA, numSims)
-space_simPostH0 = rep(NA, numSims)
-space_simPostH1 = rep(NA, numSims)
-space_simBF01 = rep(NA, numSims)
-for(j in 1:numSims){
-  Y = space_simY_H0[, j]
-  # get model evidences
-  space_simEvidenceH0_YH0[j] = model_evidence(Y, space_filling, N, mean_beta0, var_mean0, var_e, type = type[1])
-  space_simEvidenceH1_YH0[j] = model_evidence(Y, space_filling, N, mean_beta1, var_mean1, var_e, type = type[2])
-  # calculate posterior probabilities of models
-  space_simPostH0[j] = space_simEvidenceH0_YH0[j] / (space_simEvidenceH0_YH0[j] + space_simEvidenceH1_YH0[j])
-  space_simPostH1[j] = space_simEvidenceH1_YH0[j] / (space_simEvidenceH0_YH0[j] + space_simEvidenceH1_YH0[j])
-  # calculate bayes factor
-  space_simBF01[j] = space_simPostH0[j] / space_simPostH1[j]
-}
-space_expected_postH0_YH0 = mean(space_simPostH0)
-space_expected_postH1_YH0 = mean(space_simPostH1)
-space_expected_BF01_YH0 = mean(space_simBF01)
-
-
-fast_expected_postH0_YH0 > space_expected_postH0_YH0 # shouldn't be false :(
-
-mean(fast_simEvidenceH1_YH0)/mean(fast_simEvidenceH1_YH0) > mean(space_simEvidenceH1_YH0)/mean(space_simEvidenceH1_YH0)
 

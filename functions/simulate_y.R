@@ -12,6 +12,7 @@ simulateY = function(D, N, true_beta, var_e, numSims, type = NULL, seed = NULL){
 }
 
 
+
 # simulateY_old = function(D, N, mean_beta, var_mean, var_e, numSims, type = NULL, seed = NULL){
 #   if(is.null(seed)) set.seed(123)
 #   X = constructDesignX(D, N, type)
@@ -24,3 +25,4 @@ simulateY = function(D, N, true_beta, var_e, numSims, type = NULL, seed = NULL){
 #   }
 #   return(Y)
 # }
+

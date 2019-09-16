@@ -78,4 +78,3 @@ calcExpPostMeanMSE = function(D, N, true_beta, beta_prior_mean0, beta_prior_mean
 #   expEpiricalMSE = apply(empMSEs, 1, mean)
 #   return(expEpiricalMSE)
 # }
-

@@ -106,3 +106,4 @@ calcExpPostProbH_2d = function(D, N, true_beta, beta_prior_mean0, beta_prior_mea
 # }
 # 
 # 
+

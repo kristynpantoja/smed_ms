@@ -10,6 +10,7 @@ getPostMean = function(y, D, N, beta_prior_mean, beta_prior_var, var_e,
   return(D_postmean)
 }
 
+
 getDevianceSq = function(postmean_beta, true_beta){
   return(sum((postmean_beta - true_beta)^2))
 }

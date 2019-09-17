@@ -44,7 +44,3 @@ q_gp = function(x_star, x_train, y_train, l0, l1, C_fn_type0, C_fn_type1){
   Wass_dist = Wasserstein_distance(mu1, mu2, var1, var2, dim = 1)
   return(1.0 / Wass_dist)
 }
-
-
-
-

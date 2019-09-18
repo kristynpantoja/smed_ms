@@ -35,7 +35,6 @@ q_2d = function(x, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, f0, f1, 
 
 # charge function evaluated at x
 q_gp = function(x_star, x_train, y_train, l0, l1, C_fn_type0, C_fn_type1){
-  #
   pred_distr0 = getPredDistr(x_star, x_train, y_train, l0, C_fn_type0)
   pred_distr1 = getPredDistr(x_star, x_train, y_train, l1, C_fn_type1)
   mu1 = pred_distr0$pred_mean # mean of marginal dist of y | H1

@@ -6,19 +6,19 @@
 ### 1D ###
 ##########
 
-f_min_fast = function(candidate_jk, D_k, gamma_k, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, 
-                      f0, f1, type, var_margy0, var_margy1, p){
+f_min_fast = function(candidate_jk, D_k, gamma_k, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
+                      f0, f1, type, var_margy0, var_margy1, p, alpha){
   
-  q(candidate_jk, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, 
-    f0, f1, type, var_margy0, var_margy1, p)^gamma_k * 
-    max(sapply(D_k, function(x_i) q(x_i, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, 
-                                    f0, f1, type, var_margy0, var_margy1, p)^gamma_k / sqrt((x_i - candidate_jk)^2)))
+  q(candidate_jk, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
+    f0, f1, type, var_margy0, var_margy1, p, alpha)^gamma_k * 
+    max(sapply(D_k, function(x_i) q(x_i, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
+                                    f0, f1, type, var_margy0, var_margy1, p, alpha)^gamma_k / sqrt((x_i - candidate_jk)^2)))
 }
 
-MED_ms_fast = function(mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, 
-                       f0 = NULL, f1 = NULL, type = NULL, var_margy0 = NULL, var_margy1 = NULL, 
-                       N = 11, numCandidates = NULL, K = 10, p = 2, xmin = 0, xmax = 1, 
-                       genCandidates = 1, initialpt = 1){
+MED_ms_fast = function(mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
+                       f0 = NULL, f1 = NULL, type = NULL, N = 11, K = 10, 
+                       xmin = 0, xmax = 1, p = 2, alpha = NULL, numCandidates = NULL, 
+                       genCandidates = 1, initialpt = 1, var_margy0 = NULL, var_margy1 = NULL){
   
   if(is.null(type) & is.null(f0) & is.null(f1) & is.null(var_margy0) & is.null(var_margy0)) stop("must specify model type and/or model")
   
@@ -70,8 +70,8 @@ MED_ms_fast = function(mean_beta0, mean_beta1, var_mean0, var_mean1, var_e,
     C[[j]] = D1
   }
   
-  optimal_q = optimize(function(x) q(x, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, f0, f1, 
-                                     type, var_margy0, var_margy1, p), interval = c(xmin, xmax))$minimum
+  optimal_q = optimize(function(x) q(x, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, f0, f1, 
+                                     type, var_margy0, var_margy1, p, alpha), interval = c(xmin, xmax))$minimum
   
   # at index k, determine the next design k + 1
   for(k in 1:(K - 1)){
@@ -99,8 +99,8 @@ MED_ms_fast = function(mean_beta0, mean_beta1, var_mean0, var_mean1, var_e,
       # criterion to choose first candidate from candidate set: 
       # the point at which f1 and f2 are most different
       w_evals = sapply(C[[1]], FUN = function(x) Wasserstein_distance(f0(x), f1(x), 
-                                                                      var_marginaly(x, var_e, var_mean0, type, var_margy0), 
-                                                                      var_marginaly(x, var_e, var_mean1, type, var_margy1)))
+                                                                      var_marginaly(x, var_e, var_beta0, type, var_margy0), 
+                                                                      var_marginaly(x, var_e, var_beta1, type, var_margy1)))
       # Joseph et al.2018, after equation (8), says to maximize f(x) to pick the first x (which for us is Wass dist)
       xinitind = which.max(w_evals)
       
@@ -126,8 +126,8 @@ MED_ms_fast = function(mean_beta0, mean_beta1, var_mean0, var_mean1, var_e,
       C[[j]] = c(C[[j]], tildeDj_kplus) # This is now C_j^{k+1}
       
       f_min_candidates = sapply(C[[j]], function(x) f_min_fast(x, D[1:(j - 1), k + 1], gammas[k], 
-                                                               mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, 
-                                                               f0, f1, type, var_margy0, var_margy1, p))
+                                                               mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
+                                                               f0, f1, type, var_margy0, var_margy1, p, alpha))
       #choose that which has largest evaluation of criterion
       chosen_cand = which.min(f_min_candidates)
       D[j, k + 1] = C[[j]][chosen_cand]
@@ -135,7 +135,7 @@ MED_ms_fast = function(mean_beta0, mean_beta1, var_mean0, var_mean1, var_e,
     }
   }
   
-  return(list("beta0" = mean_beta0, "beta1" = mean_beta1, "D" = D, "candidates" = C))
+  return(list("D" = D, "candidates" = C))
 }
 
 
@@ -144,17 +144,17 @@ MED_ms_fast = function(mean_beta0, mean_beta1, var_mean0, var_mean1, var_e,
 ### 2D ###
 ##########
 
-f_min_fast_2d = function(candidate_jk, D_k, gamma_k, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, 
-                         f0, f1, type, var_margy0, var_margy1, p){
-  q_2d(candidate_jk, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, 
-       f0, f1, type, var_margy0, var_margy1, p)^gamma_k * 
-    max(apply(D_k, 1, function(x_i) q_2d(x_i, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, 
-                                         f0, f1, type, var_margy0, var_margy1, p)^gamma_k / sqrt(sum((x_i - candidate_jk)^2))))
+f_min_fast_2d = function(candidate_jk, D_k, gamma_k, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
+                         f0, f1, type, var_margy0, var_margy1, p, alpha){
+  q_2d(candidate_jk, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
+       f0, f1, type, var_margy0, var_margy1, p, alpha)^gamma_k * 
+    max(apply(D_k, 1, function(x_i) q_2d(x_i, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
+                                         f0, f1, type, var_margy0, var_margy1, p, alpha)^gamma_k / sqrt(sum((x_i - candidate_jk)^2))))
 }
 
-MED_ms_fast_2d = function(mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, 
+MED_ms_fast_2d = function(mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
                           f0 = NULL, f1 = NULL, type = NULL, var_margy0 = NULL, var_margy1 = NULL, 
-                          N = 11, numCandidates = NULL, K = 10, p = 2, xmin = 0, xmax = 1, seed = 1){
+                          N = 11, numCandidates = NULL, K = 10, p = 2, xmin = 0, xmax = 1, alpha = NULL, seed = 1){
   
   if(is.null(type) & is.null(f0) & is.null(f1) & is.null(var_margy0) & is.null(var_margy0)) stop("must specify model type and/or model")
   
@@ -228,8 +228,8 @@ MED_ms_fast_2d = function(mean_beta0, mean_beta1, var_mean0, var_mean1, var_e,
   # criterion to choose first candidate from candidate set: 
   # the point at which f1 and f2 are most different
   w_evals = apply(C[,,1], 1, FUN = function(x) Wasserstein_distance(f0(x), f1(x), 
-                                                                    var_marginaly_2d(as.vector(x), var_mean0, var_e, type[1], var_margy0), 
-                                                                    var_marginaly_2d(as.vector(x), var_mean1, var_e, type[2], var_margy1)))
+                                                                    var_marginaly_2d(as.vector(x), var_beta0, var_e, type[1], var_margy0), 
+                                                                    var_marginaly_2d(as.vector(x), var_beta1, var_e, type[2], var_margy1)))
   # Joseph et al.2018, after equation (8), says to maximize f(x) to pick the first x (which for us is Wass dist)
   xinitind = which.max(w_evals)
   
@@ -250,8 +250,8 @@ MED_ms_fast_2d = function(mean_beta0, mean_beta1, var_mean0, var_mean1, var_e,
       C[(k * numCandidatesTtl + 1):((k + 1) * numCandidatesTtl) , , j] = tildeDj_kplus # This is now C_j^{k+1}
       
       f_min_candidates = apply(C[ , , j], 1, function(x) f_min_fast_2d(x, Dkplus[1:(j - 1), , drop = FALSE], gammas[k], 
-                                                                       mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, 
-                                                                       f0, f1, type, var_margy0, var_margy1, p))
+                                                                       mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
+                                                                       f0, f1, type, var_margy0, var_margy1, p, alpha))
       #choose that which has largest evaluation of criterion
       chosen_cand = which.min(f_min_candidates)
       Dkplus[j, ] = C[ , , j][chosen_cand, ]
@@ -259,5 +259,5 @@ MED_ms_fast_2d = function(mean_beta0, mean_beta1, var_mean0, var_mean1, var_e,
     }
     Dk = Dkplus
   }
-  return(list("beta0" = mean_beta0, "beta1" = mean_beta1, "D" = Dkplus, "candidates" = C))
+  return(list("D" = Dkplus, "candidates" = C))
 }

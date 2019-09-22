@@ -6,26 +6,26 @@
 ##########
 
 model_evidence = function(Y, D, N, beta_prior_mean, beta_prior_var, var_e, hypothesis_model_type){
-  # Y is a vector
-  # X is a matrix
+  # Y is a vector of outputs (or scalar, for one output)
+  # X is a matrix of inputs (or vector, for one input)
   # beta_prior_var is a matrix
   # var_e is a scalar
   if(N != length(Y)) stop("N is not the same length as Y")
   X = constructDesignX(D, N, hypothesis_model_type)
   # get mean and variance of marginal density of y, which is N-dim multivariate normal pdf
   marginaly_mean = X %*% beta_prior_mean
-  if(dim(X)[1] > 1){
+  if(dim(X)[1] > 1){ # if X is a matrix of inputs
     marginaly_var = diag(rep(var_e, N)) + (X %*% beta_prior_var %*% t(X))
-  } else{
+  } else{ # if X is a vector for one input
     marginaly_var = var_e + (X %*% beta_prior_var %*% t(X))
   }
   return(dmvnorm(Y, mean = marginaly_mean, sigma = marginaly_var, log = FALSE))
 }
 
-calcExpPostProbH_2d = function(D, N, true_beta, beta_prior_mean0, beta_prior_mean1, 
-                               beta_prior_var0, beta_prior_var1, var_e,
-                               numSims = 100, true_model_type = NULL, H01_model_types = NULL,
-                               seed = 123){
+calcExpPostProbH = function(D, N, true_beta, beta_prior_mean0, beta_prior_mean1, 
+                            beta_prior_var0, beta_prior_var1, var_e,
+                            numSims = 100, true_model_type = NULL, H01_model_types = NULL,
+                            seed = 123){
   # for now we assume that the type of model for true_beta contains the types for both hypotheses
   set.seed(seed)
   simY = simulateY(D, N, true_beta, var_e, numSims, true_model_type, seed)
@@ -33,7 +33,7 @@ calcExpPostProbH_2d = function(D, N, true_beta, beta_prior_mean0, beta_prior_mea
   simPostH1 = rep(NA, numSims)
   simBF01 = rep(NA, numSims)
   for(j in 1:numSims){
-    Y = simY[, j]
+    Y = simY[ , j]
     # get model evidences for each hypothesized model
     simEvidenceH0 = model_evidence(Y, D, N, beta_prior_mean0, beta_prior_var0, var_e, H01_model_types[1])
     simEvidenceH1 = model_evidence(Y, D, N, beta_prior_mean1, beta_prior_var1, var_e, H01_model_types[2])

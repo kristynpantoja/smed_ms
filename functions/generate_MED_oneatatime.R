@@ -7,19 +7,19 @@
 ##########
 
 f_min = function(candidate, D, k, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
-                 f0, f1, type, var_margy0, var_margy1, p, alpha, log_space = FALSE){
+                 f0, f1, type, var_margy0, var_margy1, p, alpha, buffer, log_space = FALSE){
   if(log_space == FALSE) {
     result = q(candidate, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
-               f0, f1, type, var_margy0, var_margy1, p, alpha)^k * 
+               f0, f1, type, var_margy0, var_margy1, p, alpha, buffer)^k * 
       sum(sapply(D, function(x_i) (q(x_i, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
-                                     f0, f1, type, var_margy0, var_margy1, p, alpha) / sqrt((x_i - candidate)^2))^k))
+                                     f0, f1, type, var_margy0, var_margy1, p, alpha, buffer) / sqrt((x_i - candidate)^2))^k))
     return(result)
   } else{
     # if has logSumExp library
     terms = sapply(D, function(x_i) k * log(q(candidate, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
-                                              f0, f1, type, var_margy0, var_margy1, p, alpha)) + 
+                                              f0, f1, type, var_margy0, var_margy1, p, alpha, buffer)) + 
                      k * log(q(x_i, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
-                               f0, f1, type, var_margy0, var_margy1, p, alpha)) - k * log(sqrt((x_i - candidate)^2)))
+                               f0, f1, type, var_margy0, var_margy1, p, alpha, buffer)) - k * log(sqrt((x_i - candidate)^2)))
     result = exp(logSumExp(terms))
     return(result)
   }
@@ -27,7 +27,7 @@ f_min = function(candidate, D, k, mean_beta0, mean_beta1, var_beta0, var_beta1, 
 
 MED_ms_oneatatime = function(mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
                              f0 = NULL, f1 = NULL, type = NULL, N = 11, numCandidates = 10^5, k = 4, 
-                             xmin = 0, xmax = 1, p = 2, alpha = NULL, 
+                             xmin = 0, xmax = 1, p = 2, alpha = NULL, buffer = 0, 
                              genCandidates = 1, initialpt = 1, var_margy0 = NULL, var_margy1 = NULL, log_space = FALSE){
   
   # var_margy0 and var_margy1 : functions that take in x, var_mean, var_e
@@ -68,7 +68,7 @@ MED_ms_oneatatime = function(mean_beta0, mean_beta1, var_beta0, var_beta1, var_e
     # this does the same thing: but may want to do the above if we want to save wasserstein distances
     # to make the code run raster at some point. for now, do this.
     optimal_q = optimize(function(x) q(x, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, f0, f1, 
-                                       type, var_margy0, var_margy1, p, alpha), interval = c(xmin, xmax))$minimum
+                                       type, var_margy0, var_margy1, p, alpha, buffer), interval = c(xmin, xmax))$minimum
     D[1] = optimal_q
   } else{
     ratio_fun = function(x){
@@ -93,7 +93,7 @@ MED_ms_oneatatime = function(mean_beta0, mean_beta1, var_beta0, var_beta1, var_e
     # Find f_opt: minimum of f_min
     f_min_candidates = sapply(candidates, function(x) f_min(x, D[1:(i - 1)], k, mean_beta0, mean_beta1, 
                                                             var_beta0, var_beta1, var_e, f0, f1, 
-                                                            type, var_margy0, var_margy1, p, alpha, log_space))
+                                                            type, var_margy0, var_margy1, p, alpha, buffer, log_space))
     f_opt = which.min(f_min_candidates)
     xnew = candidates[f_opt]
     # Update set of design points (D) and plot new point
@@ -170,28 +170,30 @@ MED_ms_oneatatime = function(mean_beta0, mean_beta1, var_beta0, var_beta1, var_e
 ##########
 
 f_min_2d = function(candidate, D, k, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
-                    f0, f1, type, var_margy0, var_margy1, p, alpha, log_space = FALSE){
+                    f0, f1, type, var_margy0, var_margy1, p, alpha, buffer, log_space = FALSE){
   if(log_space == FALSE) {
     result = q_2d(candidate, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
-                  f0, f1, type, var_margy0, var_margy1, p, alpha)^k * 
+                  f0, f1, type, var_margy0, var_margy1, p, alpha, buffer)^k * 
       sum(apply(D, 1, function(x_i) (q_2d(x_i, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
-                                          f0, f1, type, var_margy0, var_margy1, p, alpha) / sqrt(sum((x_i - candidate)^2)))^k))
+                                          f0, f1, type, var_margy0, var_margy1, p, alpha, buffer) / 
+                                       sqrt(sum((x_i - candidate)^2)))^k))
     return(result)
   } else{
     # if has logSumExp library
     terms = sapply(D, function(x_i) k * log(q_2d(candidate, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
-                                                 f0, f1, type, var_margy0, var_margy1, p, alpha)) + 
+                                                 f0, f1, type, var_margy0, var_margy1, p, alpha, buffer)) + 
                      k * log(q_2d(x_i, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
-                                  f0, f1, type, var_margy0, var_margy1, p, alpha)) - k * log(sqrt((x_i - candidate)^2)))
+                                  f0, f1, type, var_margy0, var_margy1, p, alpha, buffer)) - 
+                     k * log(sqrt((x_i - candidate)^2)))
     result = exp(logSumExp(terms))
     return(result)
   }
 }
 
 MED_ms_oneatatime_2d = function(mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
-                     f0 = NULL, f1 = NULL, type = NULL, var_margy0 = NULL, var_margy1 = NULL, 
-                     N = 11, numCandidates = 10^5, k = 4, p = 2, xmin = 0, xmax = 1, alpha = NULL, 
-                     log_space = FALSE, genCandidates = 1){
+                     f0 = NULL, f1 = NULL, type = NULL, N = 11, numCandidates = 10^5, k = 4, 
+                     xmin = 0, xmax = 1, p = 3, alpha = NULL, buffer = 0, 
+                     log_space = FALSE, genCandidates = 1, var_margy0 = NULL, var_margy1 = NULL){
   # var_margy0 and var_margy1 : functions that take in x, var_mean, var_e
   
   if(is.null(type) & is.null(f0) & is.null(f1) & is.null(var_margy0) & is.null(var_margy0)) stop("must specify model type and/or model")
@@ -226,19 +228,18 @@ MED_ms_oneatatime_2d = function(mean_beta0, mean_beta1, var_beta0, var_beta1, va
   }
   
   # -- Initialize 1st Design Point in D -- #
-  # NEED TO FIX THIS PART #
   D = matrix(rep(NA, N * 2), N, 2)
-  f0_cand = apply(candidates, 1, FUN = f0)
-  f1_cand = apply(candidates, 1, FUN = f1)
-  xinitind = which.max(abs(f0_cand - f1_cand)) # SPECIFICALLY THIS PART
+  w_evals = apply(candidates, 1, FUN = function(x) Wasserstein_distance(f0(x), f1(x), 
+                                                                    var_marginaly_2d(as.vector(x), var_beta0, var_e, type[1], var_margy0), 
+                                                                    var_marginaly_2d(as.vector(x), var_beta1, var_e, type[2], var_margy1)))
+  xinitind = which.max(w_evals)
   D[1, ] = candidates[xinitind, ]
-  # NEED TO FIX THIS PART #
   
   for(i in 2:N){
     # Find f_opt: minimum of f_min
     f_min_candidates = apply(candidates, 1, function(x) f_min_2d(x, D[1:(i - 1), , drop = FALSE], k, mean_beta0, mean_beta1, 
                                                                  var_beta0, var_beta1, var_e, f0, f1, 
-                                                                 type, var_margy0, var_margy1, p, alpha))
+                                                                 type, var_margy0, var_margy1, p, alpha, buffer))
     f_opt = which.min(f_min_candidates)
     xnew = candidates[f_opt, ]
     # Update set of design points (D) and plot new point

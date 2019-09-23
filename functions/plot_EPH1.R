@@ -41,7 +41,7 @@ EPH_seq = function(designs, N, true_beta, mean_beta0, mean_beta1, var01_seq, var
 }
 
 plot_EPH1 = function(designs, N, betaT, mean_beta0, mean_beta1, var01_seq, var_e,
-                     numSims, true_model_type, H01_model_types, seed = 123){
+                     numSims, true_model_type, H01_model_types, seed = 123, legend.pos = "bottomright"){
   EPH_des = EPH_seq(designs, N, betaT, mean_beta0, mean_beta1, var01_seq, var_e,
                     numSims, true_model_type, H01_model_types, seed = 123)
   plot_ylim = range(EPH_des$EPH1[!is.nan(EPH_des$EPH1)])
@@ -49,6 +49,6 @@ plot_EPH1 = function(designs, N, betaT, mean_beta0, mean_beta1, var01_seq, var_e
   for(i in 2:length(designs)){
     lines(x = var01_seq, y = EPH_des$EPH1[i, ], col = i)
   }
-  if(!is.null(names(designs))) legend("bottomright", names(designs), col = 1:length(designs), lty = 1)
-  else legend("bottomright", paste("design #", 1:length(designs), sep = ""), col = 1:length(designs), lty = 1)
+  if(!is.null(names(designs))) legend(legend.pos, names(designs), col = 1:length(designs), lty = 1)
+  else legend(legend.pos, paste("design #", 1:length(designs), sep = ""), col = 1:length(designs), lty = 1)
 }

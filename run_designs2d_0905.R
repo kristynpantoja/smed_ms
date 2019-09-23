@@ -1,12 +1,25 @@
+library(mvtnorm)
+
+# --- sources to generate MEDs --- #
 home = "/Users/kristyn/Documents/research/smed_ms"
 functions_home = paste(home, "/functions", sep="")
+source(paste(functions_home, "/wasserstein_distance.R", sep = ""))
+source(paste(functions_home, "/charge_function_q.R", sep = ""))
+source(paste(functions_home, "/variance_marginal_y.R", sep = ""))
+source(paste(functions_home, "/variance_marginal_y.R", sep = ""))
+source(paste(functions_home, "/generate_MED_oneatatime.R", sep = ""))
+source(paste(functions_home, "/generate_MED_fast.R", sep = ""))
 
+# --- sources to designs : MSE(Bn), E[P(H1|Y,D)] --- #
+source(paste(functions_home, "/construct_design_matrix.R", sep = ""))
+source(paste(functions_home, "/simulate_y.R", sep = ""))
+source(paste(functions_home, "/postprob_hypotheses.R", sep = ""))
+source(paste(functions_home, "/postmean_mse_mc.R", sep = ""))
+source(paste(functions_home, "/posterior_variance.R", sep = ""))
+source(paste(functions_home, "/postmean_mse_closedform.R", sep = ""))
+source(paste(functions_home, "/plot_EPH1.R", sep = ""))
 
-###################
-# Loading Designs #
-###################
-
-load(paste(home, "/designs_slides.RData", sep = ""))
+load(paste(home, "/designs/designs2d_0905.RData", sep = ""))
 # object loaded is list "all_designs"
   
 # parameters/settings
@@ -46,7 +59,7 @@ doptimal = all_designs$doptimal
 
 # Space-filling (grid)
 #axis1 = seq(from = xmin, to = xmax, length.out = 10); axis2 = seq(from = xmin, to = xmax, length.out = 10)
-#space_filing = cbind(rep(axis1, each = 10), rep(axis2, times = 10))
+#space_filling = cbind(rep(axis1, each = 10), rep(axis2, times = 10))
 space_filling = all_designs$space_filling
 
 # Random

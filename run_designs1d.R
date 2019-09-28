@@ -61,7 +61,7 @@ if(example == 2){
   # --- example 2 --- #
   
   # MED design #
-  # Priors, from dj_simulations.R
+  # Priors
   sigmasq01 = 0.01
   mu0 = c(0, 0)
   V0 = diag(rep(sigmasq01,length(mu0)))

@@ -11,6 +11,9 @@ C_fn_elementwise_matern1dv1 = function(Xi, Xj, l){
   r = abs(Xi - Xj)
   (1 + sqrt(5) * r / l + 5 * r^2 / (3 * l^2)) * exp(- sqrt(3) * r / l)
 }
+# general matern, l = 1
+###### see isen689 hw2
+
 # compute covariance matrix
 C_fn_1d = function(X, Y, l, C_fn_type = 1){
   C_fn_elementwise = NULL
@@ -45,6 +48,18 @@ getW = function(x_star, x_train, y_train, l0, l1, C_fn_type0, C_fn_type1){
 ###################
 ### one at time ###
 ###################
+
+# charge function evaluated at x
+q_gp = function(x_star, x_train, y_train, l0, l1, C_fn_type0, C_fn_type1){
+  pred_distr0 = getPredDistr(x_star, x_train, y_train, l0, C_fn_type0)
+  pred_distr1 = getPredDistr(x_star, x_train, y_train, l1, C_fn_type1)
+  mu1 = pred_distr0$pred_mean # mean of marginal dist of y | H1
+  mu2 = pred_distr1$pred_mean
+  var1 = pred_distr0$pred_cov
+  var2 = pred_distr1$pred_cov
+  Wass_dist = Wasserstein_distance(mu1, mu2, var1, var2, dim = 1)
+  return(1.0 / Wass_dist)
+}
 
 f_min_gp = function(candidate, D, k, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, 
                  f0, f1, type, var_margy0, var_margy1, p, log_space = FALSE){

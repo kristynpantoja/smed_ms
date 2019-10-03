@@ -20,8 +20,8 @@ source(paste(functions_home, "/postmean_mse_closedform.R", sep = ""))
 source(paste(functions_home, "/plot_EPH1.R", sep = ""))
 source(paste(functions_home, "/plot_mse.R", sep = ""))
 
-# choose example: 1, 2, 2.1, 3, 4, 5
-example = 2.1
+# choose example: 1, 2, 2.1, 3, 4, 4.1, 5
+example = 4.1
 
 # shared parameters/settings:
 sigmasq01 = 0.01
@@ -140,6 +140,27 @@ if(example == 4){
   # load designs
   load(paste(home, "/designs/designs1d_ex4.RData", sep = ""))
   designs = designs1d_ex4
+  
+  typeT = 3
+  betaT = mu1
+}
+if(example == 4.1){
+  # --- example 4.1 --- #
+  
+  # MED design #
+  # Priors
+  mu0 = c(0.2, 0.2)
+  V0 = diag(rep(sigmasq01,length(mu0)))
+  mu1 = c(0.2, 0, -0.2)
+  V1 = diag(rep(sigmasq01,length(mu1)))
+  # function settings
+  f0 = function(x) mu0[1] + mu0[2] * x
+  f1 = function(x) mu1[1] + mu1[2] * x + mu1[3] * x^2
+  type01 = c(2, 3)
+  
+  # load designs
+  load(paste(home, "/designs/designs1d_ex4pt1.RData", sep = ""))
+  designs = designs1d_ex4.1
   
   typeT = 3
   betaT = mu1

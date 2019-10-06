@@ -1,5 +1,6 @@
 # require("construct_design_matrix.R")
 # require("simulate_y.R")
+# require("posterior_variance.R")
 
 # first compute estimator, posterior mean
 getPostMean = function(y, D, N, beta_prior_mean, beta_prior_var, var_e, 

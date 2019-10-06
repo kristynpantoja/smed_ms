@@ -16,6 +16,18 @@ q = function(x, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, f0, f1, typ
   return(1.0 / (Wass_dist + buffer)^q_exponent)
 }
 
+q_data = function(x, y, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, f0, f1, type, var_margy0, var_margy1, p, alpha = NULL, buffer = 0){
+  if(length(type) != 2) stop("type should be vector with length == 2")
+  if(is.null(alpha)) alpha = 2 * p
+  mu1.temp = f0(x) # mean of marginal dist of y | H0
+  mu2.temp = f1(x) # mean of marginal dist of y | H1
+  var1.temp = var_marginaly(x, var_mean0, var_e, type = type[1], var_margy0) # variance of marginal dist of y | H0
+  var2.temp = var_marginaly(x, var_mean1, var_e, type = type[2], var_margy1) # variance of marginal dist of y | H1
+  Wass_dist = Wasserstein_distance(mu1.temp, mu2.temp, var1.temp, var2.temp)
+  q_exponent = alpha / (2 * p)
+  return(1.0 / (Wass_dist + buffer)^q_exponent)
+}
+
 ##########
 ### 2D ###
 ##########

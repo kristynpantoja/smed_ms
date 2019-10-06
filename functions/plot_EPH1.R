@@ -1,3 +1,6 @@
+# require("construct_design_matrix.R")
+# require("simulate_y.R")
+
 EPH_seq_1design = function(D, N, true_beta, mean_beta0, mean_beta1, var01_seq, var_e,
                            numSims, true_model_type, H01_model_types, seed = 123){
   EPH = matrix(NA, 3, length(var01_seq))

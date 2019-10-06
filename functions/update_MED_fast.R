@@ -6,15 +6,17 @@
 ### 2D ###
 ##########
 
-MED_ms_fast_2d_add = function(initD, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, 
-                              f0 = NULL, f1 = NULL, type = NULL, var_margy0 = NULL, var_margy1 = NULL, 
-                              N = 11, numCandidates = NULL, K = 10, p = 2, xmin = 0, xmax = 1, seed = 1){
+# not tested yet
+augment_MED_ms_fast_2d = function(initD, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
+                                  f0 = NULL, f1 = NULL, type = NULL, N = 11, K = 10, 
+                                  xmin = 0, xmax = 1, p = 2, alpha = NULL, buffer = 0, numCandidates = NULL,
+                                  var_margy0 = NULL, var_margy1 = NULL, seed = 1){
   # var_margy0 and var_margy1 : functions that take in x, var_mean, var_e
   
   # check if any points in initD give Wasserstein distance of 0 (in which case we don't want to use it since 1/0 in q)
   w_initD = apply(initD, 1, FUN = function(x) Wasserstein_distance(f0(x), f1(x), 
-                                                                   var_marginaly_2d(as.vector(x), var_mean0, var_e, type[1], var_margy0), 
-                                                                   var_marginaly_2d(as.vector(x), var_mean1, var_e, type[2], var_margy1)))
+                                                                   var_marginaly_2d(as.vector(x), var_beta0, var_e, type[1], var_margy0), 
+                                                                   var_marginaly_2d(as.vector(x), var_beta1, var_e, type[2], var_margy1)))
   old_initD = initD
   initD = initD[-which(w_initD == 0),]
   # check if any points are equal to point with max wasserstein
@@ -95,8 +97,8 @@ MED_ms_fast_2d_add = function(initD, mean_beta0, mean_beta1, var_mean0, var_mean
   # criterion to choose first candidate from candidate set: 
   # the point at which f1 and f2 are most different
   w_evals = apply(C[,,1], 1, FUN = function(x) Wasserstein_distance(f0(x), f1(x), 
-                                                                    var_marginaly_2d(as.vector(x), var_mean0, var_e, type[1], var_margy0), 
-                                                                    var_marginaly_2d(as.vector(x), var_mean1, var_e, type[2], var_margy1)))
+                                                                    var_marginaly_2d(as.vector(x), var_beta0, var_e, type[1], var_margy0), 
+                                                                    var_marginaly_2d(as.vector(x), var_beta1, var_e, type[2], var_margy1)))
   # Joseph et al.2018, after equation (8), says to maximize f(x) to pick the first x (which for us is Wass dist)
   xinitind = which.max(w_evals)
   x_maxW = C[,,1][xinitind, ]
@@ -133,8 +135,8 @@ MED_ms_fast_2d_add = function(initD, mean_beta0, mean_beta1, var_mean0, var_mean
       C[(k * numCandidatesTtl + 1):((k + 1) * numCandidatesTtl) , , j] = tildeDj_kplus # This is now C_j^{k+1}
       
       f_min_candidates = apply(C[ , , j], 1, function(x) f_min_fast_2d(x, rbind(initD, Dkplus[1:(j - 1), , drop = FALSE]), gammas[k], 
-                                                                       mean_beta0, mean_beta1, var_mean0, var_mean1, var_e, 
-                                                                       f0, f1, type, var_margy0, var_margy1, p))
+                                                                       mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
+                                                                       f0, f1, type, var_margy0, var_margy1, p, alpha, buffer))
       #choose that which has largest evaluation of criterion
       chosen_cand = which.min(f_min_candidates)
       Dkplus[j, ] = C[ , , j][chosen_cand, ]

@@ -1,4 +1,5 @@
 # require("construct_design_matrix.R")
+# require("posterior_variance.R")
 
 ##########
 ### 2D ###

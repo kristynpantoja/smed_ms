@@ -3,16 +3,13 @@
 # require("variance_marginal_y.R")
 # require("construct_design_matrix.R")
 # require("posterior_variance.R")
+# require("posterior_mean.R")
 
 ##########
 ### 1D ###
 ##########
 
-<<<<<<< HEAD
 add_MED_ms_oneatatime = function(initD, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
-=======
-augment_MED_ms_oneatatime = function(initD, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
->>>>>>> 8be91f343612ec07413a9a73ddadd9dd6a76bf13
                                      f0 = NULL, f1 = NULL, type = NULL, N2 = 11, numCandidates = 10^5, k = 4, 
                                      xmin = 0, xmax = 1, p = 2, alpha = NULL, buffer = 0, 
                                      wasserstein0 = 1, genCandidates = 1, 
@@ -25,15 +22,10 @@ augment_MED_ms_oneatatime = function(initD, mean_beta0, mean_beta1, var_beta0, v
     w_initD = sapply(initD, FUN = function(x) Wasserstein_distance(f0(x), f1(x), 
                                                                      var_marginaly(x, var_beta0, var_e, type[1], var_margy0), 
                                                                      var_marginaly(x, var_beta1, var_e, type[2], var_margy1)))
-<<<<<<< HEAD
     if(length(which(w_initD == 0)) != 0){
       initD = initD[-which(w_initD == 0)]
       w_initD = w_initD[-which(w_initD == 0)]
     }
-=======
-    initD = initD[-which(w_initD == 0)]
-    w_initD = w_initD[-which(w_initD == 0)]
->>>>>>> 8be91f343612ec07413a9a73ddadd9dd6a76bf13
   }
   if(wasserstein0 == 2){
     if(buffer == 0) warning("Buffer = 0, but wasserstein0 = 2; will assign Buffer = 0.0001")
@@ -42,11 +34,7 @@ augment_MED_ms_oneatatime = function(initD, mean_beta0, mean_beta1, var_beta0, v
   
   # other variables and checks
   initN = length(initD)
-<<<<<<< HEAD
   ttlN = initN + N2
-=======
-  ttlN = initN + N
->>>>>>> 8be91f343612ec07413a9a73ddadd9dd6a76bf13
   if(is.null(type) & is.null(f0) & is.null(f1) & is.null(var_margy0) & is.null(var_margy0)) stop("must specify model type and/or model")
   
   # Create hypothesized models
@@ -67,7 +55,6 @@ augment_MED_ms_oneatatime = function(initD, mean_beta0, mean_beta1, var_beta0, v
   if(genCandidates == 1) candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
   if(genCandidates == 2) candidates = sort(runif(numCandidates, min = xmin, max = xmax))
   
-<<<<<<< HEAD
   # -- Initialize 1st additional design point-- #
   D = rep(NA, N2)
   # wass_dist_fun = function(x){
@@ -110,69 +97,6 @@ augment_MED_ms_oneatatime = function(initD, mean_beta0, mean_beta1, var_beta0, v
     D[i] = xnew
   }
   return(list("initD" = old_initD, "addD" = D, "updatedD" = c(old_initD, D), "q_initD" = initD))
-=======
-  # -- Initialize 1st Design Point in D -- #
-  D = rep(NA, N)
-    # wass_dist_fun = function(x){
-    #   distr1.mu = f0(x)
-    #   distr1.var = var_marginaly(x, var_beta0, var_e, type = type[1], var_margy0)
-    #   distr2.mu = f1(x)
-    #   distr2.var = var_marginaly(x, var_beta1, var_e, type = type[2], var_margy1)
-    #   wass_dist = Wasserstein_distance(distr1.mu, distr2.mu, distr1.var, distr2.var)
-    #   return(wass_dist)
-    # }
-    # max.sep.loc2 = optimize(wass_dist_fun, lower=xmin, upper=xmax, maximum = TRUE)$maximum
-    # D[1] = max.sep.loc2
-    # this does the same thing: but may want to do the above if we want to save wasserstein distances
-    # to make the code run raster at some point. for now, do this.
-    optimal_q = optimize(function(x) q(x, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, f0, f1, 
-                                       type, var_margy0, var_margy1, p, alpha, buffer), interval = c(xmin, xmax))$minimum
-    D[1] = optimal_q
-  
-    # -- Initialize 1st Design Point in D -- #
-    D = rep(NA, N)
-    # wass_dist_fun = function(x){
-    #   distr1.mu = f0(x)
-    #   distr1.var = var_marginaly(x, var_beta0, var_e, type = type[1], var_margy0)
-    #   distr2.mu = f1(x)
-    #   distr2.var = var_marginaly(x, var_beta1, var_e, type = type[2], var_margy1)
-    #   wass_dist = Wasserstein_distance(distr1.mu, distr2.mu, distr1.var, distr2.var)
-    #   return(wass_dist)
-    # }
-    # max.sep.loc2 = optimize(wass_dist_fun, lower=xmin, upper=xmax, maximum = TRUE)$maximum
-    # D[1] = max.sep.loc2
-    # this does the same thing: but may want to do the above if we want to save wasserstein distances
-    # to make the code run raster at some point. for now, do this.
-    optimal_q = optimize(function(x) q(x, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, f0, f1, 
-                                       type, var_margy0, var_margy1, p, alpha, buffer), interval = c(xmin, xmax))$minimum
-    xopt = candidates[xinitind, ]
-    is_x_max_in_initD = any(sapply(initD, function(x) x == xopt)) # give tolerance?
-    if(is_x_max_in_initD){
-      N = N - 1
-      # Find f_opt: minimum of f_min
-      f_min_candidates = sapply(candidates, function(x) f_min(x, initD, k, mean_beta0, mean_beta1, 
-                                                              var_beta0, var_beta1, var_e, f0, f1, 
-                                                              type, var_margy0, var_margy1, p, alpha, buffer))
-      f_opt = which.min(f_min_candidates)
-      xnew = candidates[f_opt]
-      # Update set of design points (D) and plot new point
-      D[1] = xnew
-    } else{
-      D[1] = xopt
-    }
-    
-    for(i in 2:N){
-      # Find f_opt: minimum of f_min
-      f_min_candidates = sapply(candidates, function(x) f_min(x, c(initD, D[1:(i - 1)]), k, mean_beta0, mean_beta1, 
-                                                              var_beta0, var_beta1, var_e, f0, f1, 
-                                                              type, var_margy0, var_margy1, p, alpha, buffer, log_space))
-      f_opt = which.min(f_min_candidates)
-      xnew = candidates[f_opt]
-      # Update set of design points (D) and plot new point
-      D[i] = xnew
-    }
-    return(list("initD" = old_initD, "addD" = D, "updatedD" = rbind(old_initD, D), "q_initD" = initD))
->>>>>>> 8be91f343612ec07413a9a73ddadd9dd6a76bf13
 }
 
 
@@ -180,60 +104,35 @@ augment_MED_ms_oneatatime = function(initD, mean_beta0, mean_beta1, var_beta0, v
 
 
 # hasn't been tested
-f_min_data = function(candidate, D, k, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
+f_min_data = function(candidate, D, initD, y,k, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
                       f0, f1, type, var_margy0, var_margy1, p, alpha, buffer, log_space = FALSE){
-  result = q_data(candidate, y, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
+  result = q_data(candidate, initD, y, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
                   f0, f1, type, var_margy0, var_margy1, p, alpha, buffer)^k * 
-    sum(sapply(D, function(x_i) (q_data(x_i, y, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
+    sum(sapply(D, function(x_i) (q_data(x_i, y, initD, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
                                         f0, f1, type, var_margy0, var_margy1, p, alpha, buffer) / sqrt((x_i - candidate)^2))^k))
   return(result)
 }
 
 
 # augment_with_data_MED_ms_oneatatime = function...
-<<<<<<< HEAD
 add_MED_ms_oneatatime_data = function(initD, y, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
-=======
-augmentwithdata_MED_ms_oneatatime = function(initD, y, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
->>>>>>> 8be91f343612ec07413a9a73ddadd9dd6a76bf13
                                      f0 = NULL, f1 = NULL, type = NULL, N2 = 11, numCandidates = 10^5, k = 4, 
                                      xmin = 0, xmax = 1, p = 2, alpha = NULL, buffer = 0, 
                                      wasserstein0 = 1, genCandidates = 1, 
                                      var_margy0 = NULL, var_margy1 = NULL, log_space = FALSE){
   # var_margy0 and var_margy1 : functions that take in x, var_mean, var_e
-<<<<<<< HEAD
   initN = length(initD)
   if(length(y) != initN) stop("length of y does not match length of initial input data, initD")
-=======
-  if(length(y) != initN) stop("length of y does not match length of initial input data, initD")
-  # posterior distribution of beta
-  X0 = constructDesignX(initD, N, type[1])
-  postvar0 = postvar(initD, N, var_e, var_beta0, type[1], diagPrior = TRUE)
-  postmean0 = (1 / var_e) * postvar0 %*% (t(X0) %*% y + var_e * solve(var_beta0, mean_beta0))
-  
-  X1 = constructDesignX(initD, N, type[2])
-  postvar1 = postvar(initD, N, var_e, var_beta0, type[2], diagPrior = TRUE)
-  postmean1 = (1 / var_e) * postvar1 %*% (t(X1) %*% y + var_e * solve(var_beta1, mean_beta1))
->>>>>>> 8be91f343612ec07413a9a73ddadd9dd6a76bf13
   
   # check if any points in initD give Wasserstein distance of 0 (in which case we don't want to use it since 1/0 in q)
   old_initD = initD
   if(wasserstein0 == 1){
-<<<<<<< HEAD
     w_initD = sapply(initD, FUN = function(x) Wasserstein_distance_postpred(x, initD, y, mean_beta0, mean_beta1, 
                                                                             var_beta0, var_beta1, var_e, f0, f1, type, N2))
     if(length(which(w_initD == 0)) != 0){
       initD = initD[-which(w_initD == 0)]
       w_initD = w_initD[-which(w_initD == 0)]
     }
-=======
-    w_initD = sapply(initD, FUN = function(x) Wasserstein_distance(f0(x), f1(x), 
-                                                                   var_marginaly(x, var_beta0, var_e, type[1], var_margy0), 
-                                                                   var_marginaly(x, var_beta1, var_e, type[2], var_margy1)))
-    initD = initD[-which(w_initD == 0)]
-    y = y[-which(w_initD == 0)]
-    w_initD = w_initD[-which(w_initD == 0)]
->>>>>>> 8be91f343612ec07413a9a73ddadd9dd6a76bf13
   }
   if(wasserstein0 == 2){
     if(buffer == 0) warning("Buffer = 0, but wasserstein0 = 2; will assign Buffer = 0.0001")
@@ -242,11 +141,7 @@ augmentwithdata_MED_ms_oneatatime = function(initD, y, mean_beta0, mean_beta1, v
   
   # other variables and checks
   initN = length(initD)
-<<<<<<< HEAD
   ttlN = initN + N2
-=======
-  ttlN = initN + N
->>>>>>> 8be91f343612ec07413a9a73ddadd9dd6a76bf13
   if(is.null(type) & is.null(f0) & is.null(f1) & is.null(var_margy0) & is.null(var_margy0)) stop("must specify model type and/or model")
   
   # Create hypothesized models
@@ -267,12 +162,8 @@ augmentwithdata_MED_ms_oneatatime = function(initD, y, mean_beta0, mean_beta1, v
   if(genCandidates == 1) candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
   if(genCandidates == 2) candidates = sort(runif(numCandidates, min = xmin, max = xmax))
   
-<<<<<<< HEAD
   # -- Initialize 1st additional design point-- #
   D = rep(NA, N2)
-=======
-  # -- Initialize 1st Design Point in D -- #
-  D = rep(NA, N)
   # wass_dist_fun = function(x){
   #   distr1.mu = f0(x)
   #   distr1.var = var_marginaly(x, var_beta0, var_e, type = type[1], var_margy0)
@@ -285,39 +176,13 @@ augmentwithdata_MED_ms_oneatatime = function(initD, y, mean_beta0, mean_beta1, v
   # D[1] = max.sep.loc2
   # this does the same thing: but may want to do the above if we want to save wasserstein distances
   # to make the code run raster at some point. for now, do this.
-  optimal_q = optimize(function(x) q(x, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, f0, f1, 
+  optimal_q = optimize(function(x) q_data(x, initD, y, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, f0, f1, 
                                      type, var_margy0, var_margy1, p, alpha, buffer), interval = c(xmin, xmax))$minimum
-  D[1] = optimal_q
-  
-  # -- Initialize 1st Design Point in D -- #
-  D = rep(NA, N)
->>>>>>> 8be91f343612ec07413a9a73ddadd9dd6a76bf13
-  # wass_dist_fun = function(x){
-  #   distr1.mu = f0(x)
-  #   distr1.var = var_marginaly(x, var_beta0, var_e, type = type[1], var_margy0)
-  #   distr2.mu = f1(x)
-  #   distr2.var = var_marginaly(x, var_beta1, var_e, type = type[2], var_margy1)
-  #   wass_dist = Wasserstein_distance(distr1.mu, distr2.mu, distr1.var, distr2.var)
-  #   return(wass_dist)
-  # }
-  # max.sep.loc2 = optimize(wass_dist_fun, lower=xmin, upper=xmax, maximum = TRUE)$maximum
-  # D[1] = max.sep.loc2
-  # this does the same thing: but may want to do the above if we want to save wasserstein distances
-  # to make the code run raster at some point. for now, do this.
-  optimal_q = optimize(function(x) q(x, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, f0, f1, 
-                                     type, var_margy0, var_margy1, p, alpha, buffer), interval = c(xmin, xmax))$minimum
-<<<<<<< HEAD
   xopt = optimal_q
   is_x_max_in_initD = any(sapply(initD, function(x) x == xopt)) # give tolerance?
   if(is_x_max_in_initD){
-=======
-  xopt = candidates[xinitind, ]
-  is_x_max_in_initD = any(sapply(initD, function(x) x == xopt)) # give tolerance?
-  if(is_x_max_in_initD){
-    N = N - 1
->>>>>>> 8be91f343612ec07413a9a73ddadd9dd6a76bf13
     # Find f_opt: minimum of f_min
-    f_min_candidates = sapply(candidates, function(x) f_min(x, initD, k, mean_beta0, mean_beta1, 
+    f_min_candidates = sapply(candidates, function(x) f_min_data(x, initD, initD, y, k, mean_beta0, mean_beta1, 
                                                             var_beta0, var_beta1, var_e, f0, f1, 
                                                             type, var_margy0, var_margy1, p, alpha, buffer))
     f_opt = which.min(f_min_candidates)
@@ -328,13 +193,9 @@ augmentwithdata_MED_ms_oneatatime = function(initD, y, mean_beta0, mean_beta1, v
     D[1] = xopt
   }
   
-<<<<<<< HEAD
   for(i in starting_index:N2){
-=======
-  for(i in 2:N){
->>>>>>> 8be91f343612ec07413a9a73ddadd9dd6a76bf13
     # Find f_opt: minimum of f_min
-    f_min_candidates = sapply(candidates, function(x) f_min(x, c(initD, D[1:(i - 1)]), k, mean_beta0, mean_beta1, 
+    f_min_candidates = sapply(candidates, function(x) f_min_data(x, y, initD, c(initD, D[1:(i - 1)]), k, mean_beta0, mean_beta1, 
                                                             var_beta0, var_beta1, var_e, f0, f1, 
                                                             type, var_margy0, var_margy1, p, alpha, buffer, log_space))
     f_opt = which.min(f_min_candidates)
@@ -342,11 +203,7 @@ augmentwithdata_MED_ms_oneatatime = function(initD, y, mean_beta0, mean_beta1, v
     # Update set of design points (D) and plot new point
     D[i] = xnew
   }
-<<<<<<< HEAD
   return(list("initD" = old_initD, "addD" = D, "updatedD" = c(old_initD, D), "q_initD" = initD))
-=======
-  return(list("initD" = old_initD, "addD" = D, "updatedD" = rbind(old_initD, D), "q_initD" = initD))
->>>>>>> 8be91f343612ec07413a9a73ddadd9dd6a76bf13
 }
 
 
@@ -357,11 +214,7 @@ augmentwithdata_MED_ms_oneatatime = function(initD, y, mean_beta0, mean_beta1, v
 ##########
 
 # hasn't been tested
-<<<<<<< HEAD
 add_MED_ms_oneatatime_2d = function(initD, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
-=======
-augment_MED_ms_oneatatime_2d = function(initD, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
->>>>>>> 8be91f343612ec07413a9a73ddadd9dd6a76bf13
                                         f0 = NULL, f1 = NULL, type = NULL, N = 11, numCandidates = 10^5, k = 4, 
                                         xmin = 0, xmax = 1, p = 3, alpha = NULL, buffer = 0, y = NULL, 
                                         log_space = FALSE, genCandidates = 1, wasserstein0 = 1, 

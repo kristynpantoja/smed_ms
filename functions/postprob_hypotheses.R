@@ -27,7 +27,6 @@ calcExpPostProbH = function(D, N, true_beta, beta_prior_mean0, beta_prior_mean1,
                             numSims = 100, true_model_type = NULL, H01_model_types = NULL,
                             seed = 123){
   # for now we assume that the type of model for true_beta contains the types for both hypotheses
-  set.seed(seed)
   simY = simulateY(D, N, true_beta, var_e, numSims, true_model_type, seed)
   simPostH0 = rep(NA, numSims)
   simPostH1 = rep(NA, numSims)
@@ -50,6 +49,22 @@ calcExpPostProbH = function(D, N, true_beta, beta_prior_mean0, beta_prior_mean1,
   return(c("expected_postH0" = expected_postH0, "expected_postH1" = expected_postH1,
            "expected_BF01" = expected_BF01))
 }
+
+calcExpPostProbH_data = function(y, D, N, beta_prior_mean0, beta_prior_var0, 
+                                 beta_prior_mean1, beta_prior_var1, var_e, model_types){
+  # get model evidence
+  evidence0 = model_evidence(y, D, N, beta_prior_mean0, beta_prior_var0, var_e, model_types[1])
+  evidence1 = model_evidence(y, D, N, beta_prior_mean1, beta_prior_var1, var_e, model_types[2])
+  # get each hypotheses' posterior probability
+  # calculate posterior probabilities of each hypothesis
+  postprob0 = evidence0 / (evidence0 + evidence1)
+  postprob1 = evidence1 / (evidence0 + evidence1)
+  BF01 = evidence0 / evidence1
+  return(c("postprob0" = postprob0, "postprob1" = postprob1,
+           "BF01" = BF01))
+}
+
+
 
 
 

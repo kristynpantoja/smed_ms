@@ -1,11 +1,11 @@
 library(mvtnorm)
 
 # --- sources to generate MEDs --- #
-home = "/Users/kristyn/Documents/research/smed_ms"
+#home = "/Users/kristyn/Documents/research/smed_ms"
+home = "/Users/kristyn/Documents/smed_ms"
 functions_home = paste(home, "/functions", sep="")
 source(paste(functions_home, "/wasserstein_distance.R", sep = ""))
 source(paste(functions_home, "/charge_function_q.R", sep = ""))
-source(paste(functions_home, "/variance_marginal_y.R", sep = ""))
 source(paste(functions_home, "/variance_marginal_y.R", sep = ""))
 source(paste(functions_home, "/generate_MED_oneatatime.R", sep = ""))
 source(paste(functions_home, "/generate_MED_fast.R", sep = ""))
@@ -57,26 +57,24 @@ design_ex2.1.1_k4_alpha2p_update = add_MED_ms_oneatatime(design_MED_alpha2p, mu0
 hist(design_ex2.1.1_k4_alpha2p_update$updatedD, breaks = 20)
 design_MED_alpha2p_nodata = design_ex2.1.1_k4_alpha2p_update$updatedD
 # see if it's the same as if the 100 points were generated all at once
-# Nttl = 100
-# design_ex2.1.1_k4_alpha2p = MED_ms_oneatatime(mu0, mu1, V0, V1, sigmasq, f0, f1, type, Nttl,
-#                                               numCandidates, k, xmin, xmax, p = p, alpha = NULL)
-# hist(design_ex2.1.1_k4_alpha2p, breaks = 20)
-# all.equal(design_ex2.1.1_k4_alpha2p_update$updatedD, design_ex2.1.1_k4_alpha2p) # TRUE - yay!
+Nttl = 100
+design_ex2.1.1_k4_alpha2p = MED_ms_oneatatime(mu0, mu1, V0, V1, sigmasq, f0, f1, type, Nttl,
+                                              numCandidates, k, xmin, xmax, p = p, alpha = NULL)
+hist(design_ex2.1.1_k4_alpha2p, breaks = 20)
+all.equal(design_ex2.1.1_k4_alpha2p_update$updatedD, design_ex2.1.1_k4_alpha2p) # TRUE - yay!
 
 # add points (with data)
 betaT = mu1
 typeT = 3
-y = as.vector(simulateY(design_MED_alpha2p, N, mu1, sigmasq, 1, typeT, seed = 123))
+set.seed(123)
+y = as.vector(simulateY(design_MED_alpha2p, Ninit, mu1, sigmasq, 1, typeT))
 plot(x = design_MED_alpha2p, y = y)
 
 design_ex2.1.1_k4_alpha2p_update = add_MED_ms_oneatatime_data(design_MED_alpha2p, y, mu0, mu1, V0, V1, sigmasq,
                                                          f0, f1, type, N2 = 50, numCandidates, k, 
                                                          xmin, xmax, p, alpha = NULL)
 hist(design_ex2.1.1_k4_alpha2p_update$updatedD, breaks = 20)
-hist(design_MED_alpha2p_nodata, breaks = 20)
 
 length(design_ex2.1.1_k4_alpha2p_update$q_initD)
-
-
 
 

@@ -86,7 +86,7 @@ add_MED_ms_oneatatime = function(initD, mean_beta0, mean_beta1, var_beta0, var_b
     D[1] = xopt
   }
   
-  for(i in starting_index:N2){
+  for(i in 2:N2){
     # Find f_opt: minimum of f_min
     f_min_candidates = sapply(candidates, function(x) f_min(x, c(initD, D[1:(i - 1)]), k, mean_beta0, mean_beta1, 
                                                             var_beta0, var_beta1, var_e, f0, f1, 
@@ -103,13 +103,12 @@ add_MED_ms_oneatatime = function(initD, mean_beta0, mean_beta1, var_beta0, var_b
 
 
 
-# hasn't been tested
-f_min_data = function(candidate, D, initD, y,k, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
+f_min_data = function(candidate, D, initD, y, k, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
                       f0, f1, type, var_margy0, var_margy1, p, alpha, buffer, log_space = FALSE){
-  result = q_data(candidate, initD, y, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
-                  f0, f1, type, var_margy0, var_margy1, p, alpha, buffer)^k * 
-    sum(sapply(D, function(x_i) (q_data(x_i, y, initD, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
-                                        f0, f1, type, var_margy0, var_margy1, p, alpha, buffer) / sqrt((x_i - candidate)^2))^k))
+  result = q_data(candidate, initD, y, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, f0, f1, type, p, 
+                  alpha, buffer)^k * 
+    sum(sapply(D, function(x_i) (q_data(x_i, initD, y, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, f0, f1, type, p, 
+                                        alpha, buffer) / sqrt((x_i - candidate)^2))^k))
   return(result)
 }
 
@@ -132,6 +131,7 @@ add_MED_ms_oneatatime_data = function(initD, y, mean_beta0, mean_beta1, var_beta
     if(length(which(w_initD == 0)) != 0){
       initD = initD[-which(w_initD == 0)]
       w_initD = w_initD[-which(w_initD == 0)]
+      y = y[-which(w_initD == 0)]
     }
   }
   if(wasserstein0 == 2){
@@ -176,15 +176,14 @@ add_MED_ms_oneatatime_data = function(initD, y, mean_beta0, mean_beta1, var_beta
   # D[1] = max.sep.loc2
   # this does the same thing: but may want to do the above if we want to save wasserstein distances
   # to make the code run raster at some point. for now, do this.
-  optimal_q = optimize(function(x) q_data(x, initD, y, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, f0, f1, 
-                                     type, var_margy0, var_margy1, p, alpha, buffer), interval = c(xmin, xmax))$minimum
-  xopt = optimal_q
+  optimal_q = optimize(function(x) q_data(x, initD, y, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, f0, f1, type, p, 
+                                          alpha, buffer), interval = c(xmin, xmax))$minimum
+  xopt = optimal_q     
   is_x_max_in_initD = any(sapply(initD, function(x) x == xopt)) # give tolerance?
   if(is_x_max_in_initD){
     # Find f_opt: minimum of f_min
-    f_min_candidates = sapply(candidates, function(x) f_min_data(x, initD, initD, y, k, mean_beta0, mean_beta1, 
-                                                            var_beta0, var_beta1, var_e, f0, f1, 
-                                                            type, var_margy0, var_margy1, p, alpha, buffer))
+    f_min_candidates = sapply(candidates, function(x) f_min_data(x, initD, initD, y, k, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
+                                                                 f0, f1, type, var_margy0, var_margy1, p, alpha, buffer, log_space))
     f_opt = which.min(f_min_candidates)
     xnew = candidates[f_opt]
     # Update set of design points (D) and plot new point
@@ -193,11 +192,10 @@ add_MED_ms_oneatatime_data = function(initD, y, mean_beta0, mean_beta1, var_beta
     D[1] = xopt
   }
   
-  for(i in starting_index:N2){
+  for(i in 2:N2){
     # Find f_opt: minimum of f_min
-    f_min_candidates = sapply(candidates, function(x) f_min_data(x, y, initD, c(initD, D[1:(i - 1)]), k, mean_beta0, mean_beta1, 
-                                                            var_beta0, var_beta1, var_e, f0, f1, 
-                                                            type, var_margy0, var_margy1, p, alpha, buffer, log_space))
+    f_min_candidates = sapply(candidates, function(x) f_min_data(x, c(initD, D[1:(i - 1)]), initD, y, k, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
+                                                                 f0, f1, type, var_margy0, var_margy1, p, alpha, buffer, log_space))
     f_opt = which.min(f_min_candidates)
     xnew = candidates[f_opt]
     # Update set of design points (D) and plot new point

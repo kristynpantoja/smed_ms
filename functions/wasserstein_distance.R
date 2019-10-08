@@ -25,7 +25,7 @@ Wasserstein_distance = function(mu1, mu2, var1, var2, dim = 1){
 # require("posterior_variance.R")
 
 Wasserstein_distance_postpred = function(x, initD, y, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
-                                         f0, f1, type, N2, dim = 1){
+                                         f0, f1, type, dim = 1){
   initN = length(initD)
   
   # posterior distribution of beta

@@ -9,6 +9,8 @@
 ### 1D ###
 ##########
 
+# without using data (marginal distribution of y)
+
 add_MED_ms_oneatatime = function(initD, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
                                      f0 = NULL, f1 = NULL, type = NULL, N2 = 11, numCandidates = 10^5, k = 4, 
                                      xmin = 0, xmax = 1, p = 2, alpha = NULL, buffer = 0, 
@@ -101,7 +103,7 @@ add_MED_ms_oneatatime = function(initD, mean_beta0, mean_beta1, var_beta0, var_b
 
 
 
-
+# using data (posterior predictive distribution of y)
 
 f_min_data = function(candidate, D, initD, y, k, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
                       f0, f1, type, var_margy0, var_margy1, p, alpha, buffer, log_space = FALSE){
@@ -112,8 +114,6 @@ f_min_data = function(candidate, D, initD, y, k, mean_beta0, mean_beta1, var_bet
   return(result)
 }
 
-
-# augment_with_data_MED_ms_oneatatime = function...
 add_MED_ms_oneatatime_data = function(initD, y, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
                                      f0 = NULL, f1 = NULL, type = NULL, N2 = 11, numCandidates = 10^5, k = 4, 
                                      xmin = 0, xmax = 1, p = 2, alpha = NULL, buffer = 0, 
@@ -201,8 +201,29 @@ add_MED_ms_oneatatime_data = function(initD, y, mean_beta0, mean_beta1, var_beta
     # Update set of design points (D) and plot new point
     D[i] = xnew
   }
+  
   return(list("initD" = old_initD, "addD" = D, "updatedD" = c(old_initD, D), "q_initD" = initD))
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -23,6 +23,7 @@ theta.fix <- list(theta0, theta1)
 #Comparison table
 p <- matrix(c(0, 0, 
               1, 0), c(2, 2), byrow = TRUE)
+<<<<<<< HEAD
 #Design estimation - is the D-Optimal design... why?
 res <- tpopt(x = c(-1, 1), eta = eta, theta.fix = theta.fix, p = p, 
              x.lb = -1, x.rb = 1)
@@ -35,6 +36,9 @@ res <- tpopt(x = c(-1, 0, 1), eta = eta, theta.fix = theta.fix, p = p,
 #Comparison table
 p <- matrix(c(0, 1, 
               0, 0), c(2, 2), byrow = TRUE)
+=======
+
+>>>>>>> 215423400ca954fbc720cc0dbcdc4b6a76225f70
 #Design estimation - is the D-Optimal design... why?
 res <- tpopt(x = c(-1, 1), eta = eta, theta.fix = theta.fix, p = p, 
              x.lb = -1, x.rb = 1)

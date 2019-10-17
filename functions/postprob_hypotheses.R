@@ -60,8 +60,7 @@ calcExpPostProbH_data = function(y, D, N, beta_prior_mean0, beta_prior_var0,
   postprob0 = evidence0 / (evidence0 + evidence1)
   postprob1 = evidence1 / (evidence0 + evidence1)
   BF01 = evidence0 / evidence1
-  return(c("postprob0" = postprob0, "postprob1" = postprob1,
-           "BF01" = BF01))
+  return(c("postprob0" = postprob0, "postprob1" = postprob1, "BF01" = BF01))
 }
 
 

@@ -1,8 +1,17 @@
+# require("wasserstein_distance.R")
+# require("charge_function_q.R")
+# require("variance_marginal_y.R")
+# require("construct_design_matrix.R")
+# require("posterior_mean.R")
+# require("posterior_variance.R")
+# require("simulate_y.R")
+
+
 simulate_seqMED = function(true_beta, true_type, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
                            f0 = NULL, f1 = NULL, type = NULL, numCandidates = 10^5, k = 4, 
                            xmin = 0, xmax = 1, p = 2, 
                            numSeq = 5, N_seq = 10, alpha_seq = NULL, buffer_seq = 0, 
-                           update_prior = FALSE, wasserstein0 = 1, genCandidates = 1, seed = NULL){
+                           wasserstein0 = 1, genCandidates = 1, seed = NULL){
   if(is.null(alpha_seq)){ # generate space-filling design for first step
     D1 = MED_ms_oneatatime(mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, f0, f1, type, N_seq[1], 
                            numCandidates, k, xmin, xmax, p, alpha = 0, buffer_seq[1], 
@@ -40,19 +49,13 @@ simulate_seqMED = function(true_beta, true_type, mean_beta0, mean_beta1, var_bet
   postvar1 = matrix(current_postvar1, length(mean_beta1), numSeq)
   postmean1 = matrix(current_postmean1, length(mean_beta1), numSeq)
   
+  print(paste("finished ", 1, " out of ", numSeq, " steps", sep = ""))
   for(t in 2:numSeq){
-    if(update_prior == FALSE){
-      Dt = add_MED_ms_oneatatime_data(D, y, mean_beta0, mean_beta1, 
-                                      var_beta0, var_beta1, var_e,  f0, f1, type, N_seq[t], 
-                                      numCandidates, k, xmin, xmax, p, alpha_seq[t], buffer_seq[t],
-                                      wasserstein0, genCandidates)
-    }
-    if(update_prior == TRUE){
-      Dt = add_MED_ms_oneatatime_data(D, y, current_postmean0, current_postmean1, 
-                                      var_beta0, var_beta1, var_e,  f0, f1, type, N_seq[t], 
-                                      numCandidates, k, xmin, xmax, p, alpha_seq[t], buffer_seq[t],
-                                      wasserstein0, genCandidates)
-    }
+    
+    Dt = add_MED_ms_oneatatime_data(D, y, mean_beta0, mean_beta1, 
+                                    var_beta0, var_beta1, var_e,  f0, f1, type, N_seq[t], 
+                                    numCandidates, k, xmin, xmax, p, alpha_seq[t], buffer_seq[t],
+                                    wasserstein0, genCandidates)
     
     yt = as.vector(simulateY(Dt$addD, N_seq[t], true_beta, sigmasq, 1, true_type))
     
@@ -66,14 +69,9 @@ simulate_seqMED = function(true_beta, true_type, mean_beta0, mean_beta1, var_bet
     postvar1[ , t] = diag(postvar(D, length(D), var_e, var_beta1, type[2]))
     postmean1[ , t] = postmean(y, D, length(D), mean_beta1, var_beta1, var_e, type[2])
     
-    if(update_prior == TRUE){
-      current_postvar0 = postvar0[ , t]
-      current_postmean0 = postmean0[ , t]
-      current_postvar1 = postvar1[ , t]
-      current_postmean1 = postmean1[ , t]
-    }
-    
+    print(paste("finished ", t, " out of ", numSeq, " steps", sep = ""))
   }
   return(list("D" = D, "y" = y, "postvar0" = postvar0, "postmean0" = postmean0, 
               "postvar1" = postvar1, "postmean1" = postmean1))
 }
+

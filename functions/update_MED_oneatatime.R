@@ -102,36 +102,44 @@ add_MED_ms_oneatatime = function(initD, mean_beta0, mean_beta1, var_beta0, var_b
 }
 
 
-
 # using data (posterior predictive distribution of y)
 
-f_min_data = function(candidate, D, initD, y, k, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
-                      f0, f1, type, var_margy0, var_margy1, p, alpha, buffer, log_space = FALSE){
-  result = q_data(candidate, initD, y, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, f0, f1, type, p, 
+f_min_data2 = function(candidate, D, postmean0, postmean1, postvar0, postvar1, var_e, type, p, alpha, buffer){
+  result = q_data2(candidate, postmean0, postmean1, postvar0, postvar1, var_e, type, p, 
                   alpha, buffer)^k * 
-    sum(sapply(D, function(x_i) (q_data(x_i, initD, y, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, f0, f1, type, p, 
+    sum(sapply(D, function(x_i) (q_data2(x_i, postmean0, postmean1, postvar0, postvar1, var_e, type, p, 
                                         alpha, buffer) / sqrt((x_i - candidate)^2))^k))
   return(result)
 }
 
 add_MED_ms_oneatatime_data = function(initD, y, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
-                                     f0 = NULL, f1 = NULL, type = NULL, N2 = 11, numCandidates = 10^5, k = 4, 
-                                     xmin = 0, xmax = 1, p = 2, alpha = NULL, buffer = 0, 
-                                     wasserstein0 = 1, genCandidates = 1, 
-                                     var_margy0 = NULL, var_margy1 = NULL, log_space = FALSE){
+                                      f0 = NULL, f1 = NULL, type = NULL, N2 = 11, numCandidates = 10^5, k = 4, 
+                                      xmin = 0, xmax = 1, p = 2, alpha = NULL, buffer = 0, 
+                                      wasserstein0 = 1, genCandidates = 1, 
+                                      var_margy0 = NULL, var_margy1 = NULL, log_space = FALSE){
   # var_margy0 and var_margy1 : functions that take in x, var_mean, var_e
   initN = length(initD)
   if(length(y) != initN) stop("length of y does not match length of initial input data, initD")
   
   # check if any points in initD give Wasserstein distance of 0 (in which case we don't want to use it since 1/0 in q)
   old_initD = initD
+  
+  # posterior distribution of beta
+  postvar0 = postvar(initD, initN, var_e, var_beta0, type[1])
+  postmean0 = postmean(y, initD, initN, mean_beta0, var_beta0, var_e, type[1])
+  postvar1 = postvar(initD, initN, var_e, var_beta1, type[2])
+  postmean1 = postmean(y, initD, initN, mean_beta1, var_beta1, var_e, type[2])
+  
   if(wasserstein0 == 1){
-    w_initD = sapply(initD, FUN = function(x) Wasserstein_distance_postpred(x, initD, y, mean_beta0, mean_beta1, 
-                                                                            var_beta0, var_beta1, var_e, f0, f1, type, N2))
+    w_initD = sapply(initD, FUN = function(x) Wasserstein_distance_postpred2(x, postmean0, postmean1, postvar0, postvar1, var_e, type))
     if(length(which(w_initD == 0)) != 0){
       initD = initD[-which(w_initD == 0)]
       w_initD = w_initD[-which(w_initD == 0)]
       y = y[-which(w_initD == 0)]
+      postvar0 = postvar(initD, initN, var_e, var_beta0, type[1])
+      postmean0 = postmean(y, initD, initN, mean_beta0, var_beta0, var_e, type[1])
+      postvar1 = postvar(initD, initN, var_e, var_beta1, type[2])
+      postmean1 = postmean(y, initD, initN, mean_beta1, var_beta1, var_e, type[2])
     }
   }
   if(wasserstein0 == 2){
@@ -176,14 +184,13 @@ add_MED_ms_oneatatime_data = function(initD, y, mean_beta0, mean_beta1, var_beta
   # D[1] = max.sep.loc2
   # this does the same thing: but may want to do the above if we want to save wasserstein distances
   # to make the code run raster at some point. for now, do this.
-  optimal_q = optimize(function(x) q_data(x, initD, y, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, f0, f1, type, p, 
-                                          alpha, buffer), interval = c(xmin, xmax))$minimum
+  optimal_q = optimize(function(x) q_data2(x, postmean0, postmean1, postvar0, postvar1, var_e, type, p, 
+                                           alpha, buffer), interval = c(xmin, xmax))$minimum
   xopt = optimal_q     
   is_x_max_in_initD = any(sapply(initD, function(x) x == xopt)) # give tolerance?
   if(is_x_max_in_initD){
     # Find f_opt: minimum of f_min
-    f_min_candidates = sapply(candidates, function(x) f_min_data(x, initD, initD, y, k, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
-                                                                 f0, f1, type, var_margy0, var_margy1, p, alpha, buffer, log_space))
+    f_min_candidates = sapply(candidates, function(x) f_min_data2(x, initD, postmean0, postmean1, postvar0, postvar1, var_e, type, p, alpha, buffer))
     f_opt = which.min(f_min_candidates)
     xnew = candidates[f_opt]
     # Update set of design points (D) and plot new point
@@ -194,8 +201,7 @@ add_MED_ms_oneatatime_data = function(initD, y, mean_beta0, mean_beta1, var_beta
   
   for(i in 2:N2){
     # Find f_opt: minimum of f_min
-    f_min_candidates = sapply(candidates, function(x) f_min_data(x, c(initD, D[1:(i - 1)]), initD, y, k, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
-                                                                 f0, f1, type, var_margy0, var_margy1, p, alpha, buffer, log_space))
+    f_min_candidates = sapply(candidates, function(x) f_min_data2(x, c(initD, D[1:(i - 1)]), postmean0, postmean1, postvar0, postvar1, var_e, type, p, alpha, buffer))
     f_opt = which.min(f_min_candidates)
     xnew = candidates[f_opt]
     # Update set of design points (D) and plot new point
@@ -204,6 +210,18 @@ add_MED_ms_oneatatime_data = function(initD, y, mean_beta0, mean_beta1, var_beta
   
   return(list("initD" = old_initD, "addD" = D, "updatedD" = c(old_initD, D), "q_initD" = initD))
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

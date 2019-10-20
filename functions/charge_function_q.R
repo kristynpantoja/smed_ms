@@ -16,13 +16,10 @@ q = function(x, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, f0, f1, typ
   return(1.0 / (Wass_dist + buffer)^q_exponent)
 }
 
-q_data = function(x, initD, y, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, f0, f1, type, p, 
-                  alpha = NULL, buffer = 0){
+q_data2 = function(x, postmean0, postmean1, postvar0, postvar1, var_e, type, p, alpha = NULL, buffer = 0){
   if(length(type) != 2) stop("type should be vector with length == 2")
   if(is.null(alpha)) alpha = 2 * p
-  
-  Wass_dist = Wasserstein_distance_postpred(x, initD, y, mean_beta0, mean_beta1, var_beta0, var_beta1, 
-                                            var_e, f0, f1, type)
+  Wass_dist = Wasserstein_distance_postpred2(x, postmean0, postmean1, postvar0, postvar1, var_e, type)
   q_exponent = alpha / (2 * p)
   return(1.0 / (Wass_dist + buffer)^q_exponent)
 }

@@ -25,7 +25,7 @@ model_evidence = function(Y, D, N, beta_prior_mean, beta_prior_var, var_e, hypot
 calcExpPostProbH = function(D, N, true_beta, beta_prior_mean0, beta_prior_mean1, 
                             beta_prior_var0, beta_prior_var1, var_e,
                             numSims = 100, true_model_type = NULL, H01_model_types = NULL,
-                            seed = 123){
+                            seed = NULL){
   # for now we assume that the type of model for true_beta contains the types for both hypotheses
   simY = simulateY(D, N, true_beta, var_e, numSims, true_model_type, seed)
   simPostH0 = rep(NA, numSims)
@@ -65,59 +65,44 @@ calcExpPostProbH_data = function(y, D, N, beta_prior_mean0, beta_prior_var0,
 
 
 
+## for M hypotheses
 
+calcExpPostProbH_general = function(D, N, true_beta, true_model_type, models, var_e,
+                            numSims = 100, seed = NULL){
+  simY = simulateY(D, N, true_beta, var_e, numSims, true_model_type, seed)
+  # "models" is a list of lists, where each element of list "models" describes a model
+  #   each element/model is a list containing "beta_prior_mean", "beta_prior_var", "model_type"
+  #   in that order
+  # for now we assume that the type of model for true_beta contains the types for both hypotheses
+  model_evidences = matrix(NA, length(models), numSims)
+  model_postprobs = matrix(NA, length(models), numSims)
+  for(j in 1:numSims){
+    Y = simY[ , j]
+    # get model evidences for each hypothesized model
+    for(m in 1:length(models)){
+      model = models[[m]]
+      model_evidences[m, j] = model_evidence(Y, D, N, model[[1]], model[[2]], var_e, model[[3]])
+    }
+    # calculate posterior probabilities of each hypothesis
+    denom = sum(model_evidences[ , j])
+    model_postprobs[ , j] = model_evidences[ , j] / denom
+  }
+  exp_postprobs = apply(model_postprobs, 1, mean)
+  
+  return(c("exp_postprobs" = exp_postprobs))
+}
 
-# mean_beta0 = beta_prior_mean0
-# mean_beta1 = beta_prior_mean1
-# var_mean0 = beta_prior_var0
-# var_mean1 = beta_prior_var1
-# calcExpPostProbH_2d_old = function(D, N, mean_beta0, mean_beta1, var_mean0, var_mean1, var_e,
-#                                numSims = 100, type = NULL, seed = 123){
-#   set.seed(seed)
-#   # --- Y simulated from H0 --- #
-#   simY = simulateY(D, N, mean_beta0, var_mean0, var_e, numSims, type = type[1], seed)
-#   simPostH0 = rep(NA, numSims)
-#   simPostH1 = rep(NA, numSims)
-#   simBF01 = rep(NA, numSims)
-#   for(j in 1:numSims){
-#     Y = simY[, j]
-#     # get model evidences for each hypothesized model
-#     simEvidenceH0 = model_evidence(Y, D, N, mean_beta0, var_mean0, var_e, type = type[1])
-#     simEvidenceH1 = model_evidence(Y, D, N, mean_beta1, var_mean1, var_e, type = type[2])
-#     # calculate posterior probabilities of each hypothesis
-#     simPostH0[j] = simEvidenceH0 / (simEvidenceH0 + simEvidenceH1)
-#     simPostH1[j] = simEvidenceH1 / (simEvidenceH0 + simEvidenceH1)
-#     # calculate bayes factor
-#     simBF01[j] = simPostH0[j] / simPostH1[j]
-#   }
-#   expected_postH0_YH0 = mean(simPostH0)
-#   expected_postH1_YH0 = mean(simPostH1)
-#   expected_BF01_YH0 = mean(simBF01)
-#   
-#   # --- Y simulated from H1 --- #
-#   simY = simulateY(D, N, mean_beta1, var_mean1, var_e, numSims, type = type[2])
-#   simPostH0 = rep(NA, numSims)
-#   simPostH1 = rep(NA, numSims)
-#   simBF01 = rep(NA, numSims)
-#   for(j in 1:numSims){
-#     Y = simY[, j]
-#     # get model evidences
-#     simEvidenceH0 = model_evidence(Y, D, N, mean_beta0, var_mean0, var_e, type = type[1])
-#     simEvidenceH1 = model_evidence(Y, D, N, mean_beta1, var_mean1, var_e, type = type[2])
-#     # calculate posterior probabilities of models
-#     simPostH0[j] = simEvidenceH0 / (simEvidenceH0 + simEvidenceH1)
-#     simPostH1[j] = simEvidenceH1 / (simEvidenceH0 + simEvidenceH1)
-#     # calculate bayes factor
-#     simBF01[j] = simPostH0[j] / simPostH1[j]
-#   }
-#   expected_postH0_YH1 = mean(simPostH0)
-#   expected_postH1_YH1 = mean(simPostH1)
-#   expected_BF01_YH1 = mean(simBF01)
-#   
-#   return(c("expected_postH0_YH0" = expected_postH0_YH0, "expected_postH1_YH0" = expected_postH1_YH0,
-#            "expected_BF01_YH0" = expected_BF01_YH0, "expected_postH0_YH1" = expected_postH0_YH1,
-#            "expected_postH1_YH1" = expected_postH1_YH1, "expected_BF01_YH1" = expected_BF01_YH1))
-# }
-# 
-# 
+calcExpPostProbH_data_general = function(y, D, N, models, var_e){
+  model_evidences = rep(NA, length(models))
+  model_postprobs = rep(NA, length(models))
+  # get model evidence
+  for(m in 1:length(models)){
+    model = models[[m]]
+    model_evidences[m] = model_evidence(y, D, N, model[[1]], model[[2]], var_e, model[[3]])
+  }
+  # get each hypotheses' posterior probability
+  denom = sum(model_evidences)
+  model_postprobs = model_evidences / denom
+  return(c("model_postprobs" = model_postprobs))
+}
 

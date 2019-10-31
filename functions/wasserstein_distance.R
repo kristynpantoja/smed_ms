@@ -19,6 +19,30 @@ Wasserstein_distance = function(mu1, mu2, var1, var2, dim = 1){
 }
 
 
+Wasserstein_distance_gp = function(mu1, mu2, var1, var2, dim = 1){
+  # Normal(mu1, var1)
+  # Normal(mu2, var2)
+  # dim:
+  #   1 is for univariate case
+  #   > 1 is for multivariate case
+  if(dim == 1){
+    wass = tryCatch({sqrt((mu1 - mu2)^2 + (sqrt(var1) - sqrt(var2))^2)}, 
+                    warning = function(warn) {0})
+  } else{
+    if(dim > 1){
+      sqrt_var2 = sqrtm(var2)
+      wass = tryCatch({sqrt(crossprod(mu1 - mu2) + 
+                              sum(diag(var1 + var2 - 
+                                         2 * sqrtm(sqrt_var2 %*% var1 %*% sqrt_var2))))}, 
+                      error = function(e) {0})
+        
+    } else{
+      stop("invalid dim")
+    }
+  }
+  return(as.numeric(wass))
+}
+
 
 # require("posterior_mean.R")
 # require("construct_design_matrix.R")
@@ -29,7 +53,6 @@ Wasserstein_distance_postpred2 = function(x, postmean0, postmean1, postvar0, pos
   
   # posterior distribution of beta
   x0 = t(constructDesignX(x, 1, type[1]))
-  
   x1 = t(constructDesignX(x, 1, type[2]))
   
   # posterior predictive distribution of y, for candidate x
@@ -42,3 +65,24 @@ Wasserstein_distance_postpred2 = function(x, postmean0, postmean1, postvar0, pos
   wass = Wasserstein_distance(postpredmu0, postpredmu1, postpredvar0, postpredvar1)
   return(as.numeric(wass))
 }
+
+Wasserstein_distance_postpred_gp = function(x, Kinv0, Kinv1, initD, y, var_e, type, dim = 1){
+  
+  # posterior distribution of beta
+  k0 = t(as.matrix(getCov(x, initD, type[1], l[1])))
+  k1 = t(as.matrix(getCov(x, initD, type[2], l[2])))
+  
+  # posterior predictive distribution of y, for candidate x
+  postpredmu0 = t(k0) %*% Kinv0 %*% y
+  postpredvar0 = 1 - t(k0) %*% Kinv0 %*% k0
+  if(postpredvar0 < 0) postpredvar0 = 0 # !!!!!!!!!!
+  
+  postpredmu1 = t(k1) %*% Kinv1 %*% y
+  postpredvar1 = 1 - t(k1) %*% Kinv1 %*% k1
+  if(postpredvar1 < 0) postpredvar1 = 0 # !!!!!!!!!!
+  
+  wass = Wasserstein_distance(postpredmu0, postpredmu1, postpredvar0, postpredvar1)
+  return(as.numeric(wass))
+}
+
+

@@ -14,6 +14,10 @@ var_marginaly = function(x, var_mean, var_e, type, var_margy){
       vars = diag(var_mean)
       vars[1] + x^2 * vars[2] + x^4 * vars[3] + var_e
     }
+    else if(type == 4){
+      vars = diag(var_mean)
+      vars[1] + x^2 * vars[2] + x^4 * vars[3] + x^6 * vars[4] + var_e
+    }
     else stop(paste("invalid type given : ", type))
   } else{
     var_margy(x = x, var_mean = var_mean, var_e = var_e)

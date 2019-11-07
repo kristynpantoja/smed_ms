@@ -101,12 +101,21 @@ l= c(0.1, 0.1); type =  c(1, 4); numCandidates = 100; k = 4; p = 2
 MED_ms_gp_1pt(x_train, y_train, type, l, N, numCandidates, k, p, xmin, xmax, nugget = NULL)
 # check Wasserstein_distance_postpred_gp, setting std dev to be 0
 updateDesign = add_MED_ms_oneatatime_data_gp(x_train, y_train, type, l, var_e = 1, N2 = 11, numCandidates, k = 4, p = 2,
-                                             xmin = 0, xmax = 1, nugget = 1e-10, alpha = NULL, buffer = 0, 
+                                             xmin = 0, xmax = 1, nugget = 1e-15, alpha = NULL, buffer = 0, 
                                              genCandidates = 1)
 hist(x_train)
 hist(updateDesign$updatedD)
 plot(x = x_train, y = y_train)
 points(x = updateDesign$addD, y = rep(0, 11), col = 2)
+
+updateDesign2 = add_MED_ms_oneatatime_data_gp2(x_train, y_train, type, l, var_e = 1, N2 = 11, numCandidates, k = 4, p = 2,
+                                             xmin = 0, xmax = 1, nugget = NULL, alpha = NULL, buffer = 0, 
+                                             genCandidates = 1)
+hist(x_train)
+hist(updateDesign2$updatedD)
+plot(x = x_train, y = y_train)
+points(x = updateDesign2$addD, y = rep(0, 11), col = 2)
+
 
 # leave out second summation, with x_i in dataset
 # consider doing the same for SMMED (for polynomial models) to see if the results are the same??

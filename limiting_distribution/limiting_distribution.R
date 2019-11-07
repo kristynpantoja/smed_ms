@@ -269,12 +269,11 @@ N = 300
 type = c(2, 2)
 p = 2
 # for fast algorithm:
-S = 5
-# design_fast3 = MED_ms_fast_print(mean_beta0 = mean_beta0, mean_beta1 = mean_beta1, 
-#                                  var_mean0 = var_mean0, var_mean1 = var_mean1, var_e = var_e, 
-#                                  f0 = f0, f1 = f1, type = type, var_margy0 = NULL, var_margy1 = NULL, 
-#                                  N = N, K = S, p = p, xmin = xmin, xmax = xmax, 
-#                                  genCandidates = 1, initialpt = 1)
+S = 3
+design_fast3 = MED_ms_fast(mean_beta0, mean_beta1, var_mean0, var_mean1, var_e,
+                                 f0 = f0, f1 = f1, type = type, 
+                                 N = N, K = S, xmin = xmin, xmax = xmax, p = p, alpha = 1,
+                                 genCandidates = 1, initialpt = 1)
 # saveRDS(design_fast3, paste(home, "limit_distr/", "design_fast_simplelinear", "_N", N, "_S",S, ".rds",sep=""))
 
 

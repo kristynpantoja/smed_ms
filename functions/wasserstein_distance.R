@@ -66,7 +66,7 @@ Wasserstein_distance_postpred2 = function(x, postmean0, postmean1, postvar0, pos
   return(as.numeric(wass))
 }
 
-Wasserstein_distance_postpred_gp = function(x, Kinv0, Kinv1, initD, y, var_e, type, dim = 1){
+Wasserstein_distance_postpred_gp = function(x, Kinv0, Kinv1, initD, y, var_e, type, l, dim = 1){
   
   # posterior distribution of beta
   k0 = t(as.matrix(getCov(x, initD, type[1], l[1])))
@@ -74,11 +74,11 @@ Wasserstein_distance_postpred_gp = function(x, Kinv0, Kinv1, initD, y, var_e, ty
   
   # posterior predictive distribution of y, for candidate x
   postpredmu0 = t(k0) %*% Kinv0 %*% y
-  postpredvar0 = 1 - t(k0) %*% Kinv0 %*% k0
+  postpredvar0 = var_e * (1 - t(k0) %*% Kinv0 %*% k0)
   if(postpredvar0 < 0) postpredvar0 = 0 # !!!!!!!!!!
   
   postpredmu1 = t(k1) %*% Kinv1 %*% y
-  postpredvar1 = 1 - t(k1) %*% Kinv1 %*% k1
+  postpredvar1 = var_e * (1 - t(k1) %*% Kinv1 %*% k1)
   if(postpredvar1 < 0) postpredvar1 = 0 # !!!!!!!!!!
   
   wass = Wasserstein_distance(postpredmu0, postpredmu1, postpredvar0, postpredvar1)

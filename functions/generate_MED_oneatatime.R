@@ -28,7 +28,8 @@ f_min = function(candidate, D, k, mean_beta0, mean_beta1, var_beta0, var_beta1, 
 MED_ms_oneatatime = function(mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
                              f0 = NULL, f1 = NULL, type = NULL, N = 11, numCandidates = 10^5, k = 4, 
                              xmin = 0, xmax = 1, p = 2, alpha = NULL, buffer = 0, 
-                             genCandidates = 1, initialpt = 1, var_margy0 = NULL, var_margy1 = NULL, log_space = FALSE){
+                             genCandidates = 1, initialpt = 1, var_margy0 = NULL, var_margy1 = NULL, 
+                             jitter = FALSE, jittertype = 1, log_space = FALSE){
   
   # var_margy0 and var_margy1 : functions that take in x, var_mean, var_e
   
@@ -51,7 +52,7 @@ MED_ms_oneatatime = function(mean_beta0, mean_beta1, var_beta0, var_beta1, var_e
   # -- Generate Candidate Points -- #
   if(genCandidates == 1) candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
   if(genCandidates == 2) candidates = sort(runif(numCandidates, min = xmin, max = xmax))
-  
+  old_candidates = candidates
   # -- Initialize 1st Design Point in D -- #
   D = rep(NA, N)
   if(initialpt == 1){
@@ -91,6 +92,14 @@ MED_ms_oneatatime = function(mean_beta0, mean_beta1, var_beta0, var_beta1, var_e
   
   for(i in 2:N){
     # Find f_opt: minimum of f_min
+    if(jitter == TRUE){
+      candidates = old_candidates
+      max_uniform = (xmax - xmin) / (numCandidates - 1)
+      which_jitter_ind = 2:(numCandidates - 1)
+      if(jittertype == 1) jitter_by = runif(length(which_jitter_ind), min = 0, max = max_uniform)
+      if(jittertype == 2) jitter_by = runif(length(which_jitter_ind), min = 0, max = max_uniform / 2)
+      candidates[which_jitter_ind] = candidates[which_jitter_ind] + jitter_by
+    }
     f_min_candidates = sapply(candidates, function(x) f_min(x, D[1:(i - 1)], k, mean_beta0, mean_beta1, 
                                                             var_beta0, var_beta1, var_e, f0, f1, 
                                                             type, var_margy0, var_margy1, p, alpha, buffer, log_space))

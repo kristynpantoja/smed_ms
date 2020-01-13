@@ -8,7 +8,7 @@ library(mvtnorm)
 # source files for evaluations
 
 # --- sources to generate MEDs --- #
-home = "/Users/kristyn/Documents/research/smed_ms"
+home = "/home/kristyn/Documents/smed_ms"
 functions_home = paste(home, "/functions", sep="")
 source(paste(functions_home, "/wasserstein_distance.R", sep = ""))
 source(paste(functions_home, "/charge_function_q.R", sep = ""))
@@ -64,13 +64,12 @@ numCandidates = 10^3
 k = 4
 xmin = -1
 xmax = 1
-p = 2
+p = 1
 N = 100
 
 numSeq = 10
 N_seq = 10
-max_alpha = 2 * p
-alpha_seq = c(0, ((2:numSeq) / numSeq) * (max_alpha))
+alpha_seq = 1
 smmed1 = simulate_seqMED(betaT, typeT, mu0, mu1, V0, V1, sigmasq, f0, f1, type01, 
                              numCandidates, k, xmin, xmax, p, numSeq = numSeq, 
                              N_seq = N_seq, alpha_seq = alpha_seq,seed = 12)
@@ -99,7 +98,7 @@ k = 4
 S = 10
 xmin = -1
 xmax = 1
-p = 2
+p = 1
 N = 100
 
 fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2 + betaT[4] * x^3
@@ -110,8 +109,7 @@ legend("bottomright", c("f0", "f1", "true f"), lty = c(1,2,3), lwd = 5, col = c(
 
 numSeq = 10 
 N_seq = 10
-max_alpha = 2 * p
-alpha_seq = c(0, ((2:numSeq) / numSeq) * (max_alpha))
+alpha_seq = 1
 smmed2 = simulate_seqMED(betaT, typeT, mu0, mu1, V0, V1, sigmasq, f0, f1, type01, 
                               numCandidates, k, xmin, xmax, p, numSeq = numSeq, 
                               N_seq = N_seq, alpha_seq = alpha_seq,seed = 12)

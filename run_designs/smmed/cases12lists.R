@@ -5,10 +5,14 @@ library(scatterplot3d)
 library(knitr)
 library(mvtnorm)
 
+# Cluster
+home = "/scratch/user/kristynp/smed_ms/"
+output_home = paste(home,"run_designs/",sep="")
+
 # source files for evaluations
 
 # --- sources to generate MEDs --- #
-home = "/Users/kristyn/Documents/research/smed_ms"
+
 functions_home = paste(home, "/functions", sep="")
 source(paste(functions_home, "/wasserstein_distance.R", sep = ""))
 source(paste(functions_home, "/charge_function_q.R", sep = ""))
@@ -64,13 +68,12 @@ numCandidates = 10^3
 k = 4
 xmin = -1
 xmax = 1
-p = 2
+p = 1
 N = 100
 
 numSeq = 10 
 N_seq = 10
-max_alpha = 2 * p
-alpha_seq = c(0, ((2:numSeq) / numSeq) * (max_alpha))
+alpha_seq = 1
 
 numSeqMMED = 25
 mmed_data_list = list()
@@ -78,8 +81,7 @@ for(i in 1:numSeqMMED){
   mmed_data_list[[i]] = simulate_seqMED(betaT, typeT, mu0, mu1, V0, V1, sigmasq, f0, f1, type01, 
                                         numCandidates, k, xmin, xmax, p, numSeq = numSeq, N_seq = N_seq, alpha_seq = alpha_seq, seed = 123 + i)
 }
-saveRDS(mmed_data_list, file = "case1smmeds.rds")
-
+saveRDS(mmed_data_list, paste(output_home,"case1smmeds.rds", sep = ""))
 
 # CASE 2 #
 
@@ -103,7 +105,7 @@ k = 4
 S = 10
 xmin = -1
 xmax = 1
-p = 2
+p = 1
 N = 100
 
 fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2 + betaT[4] * x^3
@@ -114,8 +116,7 @@ legend("bottomright", c("f0", "f1", "true f"), lty = c(1,2,3), lwd = 5, col = c(
 
 numSeq = 10 
 N_seq = 10
-max_alpha = 2 * p
-alpha_seq = c(0, ((2:numSeq) / numSeq) * (max_alpha))
+alpha_seq = 1
 
 numSeqMMED = 25
 mmed_data2_list = list()
@@ -124,8 +125,8 @@ for(i in 1:numSeqMMED){
                                          numCandidates, k, xmin, xmax, p, numSeq = numSeq, 
                                          N_seq = N_seq, alpha_seq = alpha_seq, seed = 123 + i)
 }
-saveRDS(mmed_data2_list, file = "case2smmeds.rds")
 
+saveRDS(mmed_data2_list, paste(output_home,"case2smmeds.rds", sep = ""))
 
 
 

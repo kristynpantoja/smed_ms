@@ -127,17 +127,17 @@ logLR01pred_sf_vec = rep(NA, numSims)
 
 # generate mmed and compute RSS0 and RSS1 for mmed and space_fill each
 seed = 1
-for(k in 1:numSims){
-  set.seed(seed + k)
+for(i in 1:numSims){
+  set.seed(seed + i)
   # get y_train
-  y_seq = y_seq_mat[ , k]
+  y_seq = y_seq_mat[ , i]
   y_train = y_seq[x_train_ind]
   # generate mmed
-  mmed_gp_list[[k]] = add_MED_ms_oneatatime_data_gp(x_train, y_train, type01, l01, var_e = 1, N2 = N2, 
+  mmed_gp_list[[i]] = add_MED_ms_oneatatime_data_gp(x_train, y_train, type01, l01, var_e = 1, N2 = N2, 
                                                     k = k, p = p, xmin = xmin, xmax = xmax, 
                                                     nugget = nugget, alpha = alpha, buffer = 0, candidates = x_seq)
   # predictions using each model (using mmed)
-  newpts = mmed_gp_list[[k]]$addD
+  newpts = mmed_gp_list[[i]]$addD
   H0_pred = getPredDistrSeq(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
   H1_pred = getPredDistrSeq(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
   postpredmu0 = H0_pred$pred_mean
@@ -153,7 +153,7 @@ for(k in 1:numSims){
   # err1 = 2 * sqrt(diag(H1_predfn$pred_var))
   # add_errorbands(x_seq, H0_predfn$pred_mean, err0, rgb(0, 1, 0, 0.2))
   # add_errorbands(x_seq, H1_predfn$pred_mean, err1, rgb(0, 0, 1, 0.2))
-  truey = y_seq[mmed_gp_list[[k]]$indices]
+  truey = y_seq[mmed_gp_list[[i]]$indices]
   # points(x = newpts, y = truey, col = 2)
   # points(x = newpts, y = postpredmu0, col = 3)
   # points(x = newpts, y = postpredmu1, col = 4)
@@ -161,12 +161,12 @@ for(k in 1:numSims){
          # col = c(1:4), pch = rep(1,4))
   # it looks like the matern is better for modeling this function
   # compute RSS0 and RSS1 for mmed
-  RSS0mmed_vec[k] = sum((postpredmu0 - truey)^2)  
-  RSS1mmed_vec[k] = sum((postpredmu1 - truey)^2)
+  RSS0mmed_vec[i] = sum((postpredmu0 - truey)^2)  
+  RSS1mmed_vec[i] = sum((postpredmu1 - truey)^2)
   # compute log lik ratio for mmed (pred)
   likH0 = dmvnorm(truey, mean = H0_pred$pred_mean, sigma = H0_pred$pred_var, log = TRUE)
   likH1 = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
-  logLR01pred_mmed_vec[k] = likH0 - likH1
+  logLR01pred_mmed_vec[i] = likH0 - likH1
   
   # space filling: (note: y_train is different for each function, which is why we need this in the loop)
   # predictions using each model
@@ -177,12 +177,12 @@ for(k in 1:numSims){
   postpredmu1 = H1_pred$pred_mean
   truey = y_seq[x_spacefill_ind]
   # compute RSS0 and RSS1 for spacefilling
-  RSS0sf_vec[k] = sum((postpredmu0 - truey)^2)  
-  RSS1sf_vec[k] = sum((postpredmu1 - truey)^2)
+  RSS0sf_vec[i] = sum((postpredmu0 - truey)^2)  
+  RSS1sf_vec[i] = sum((postpredmu1 - truey)^2)
   # compute log lik ratio for spacefilling (pred)
   likH0 = dmvnorm(truey, mean = H0_pred$pred_mean, sigma = H0_pred$pred_var, log = TRUE)
   likH1 = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
-  logLR01pred_sf_vec[k] = likH0 - likH1
+  logLR01pred_sf_vec[i] = likH0 - likH1
   
   # plot(x_seq, y_seq, type = "l", ylim = range(y_seq, postpredmu0, postpredmu1), ylab = "sample function",
   #    main = "Matern Kernel") # plot the function
@@ -239,17 +239,17 @@ logLR01pred_sf_vec = rep(NA, numSims)
 
 # generate mmed and compute RSS0 and RSS1 for mmed and space_fill each
 seed = 1
-for(k in 1:numSims){
-  set.seed(seed + k)
+for(i in 1:numSims){
+  set.seed(seed + i)
   # get y_train
-  y_seq = y_seq_mat[ , k]
+  y_seq = y_seq_mat[ , i]
   y_train = y_seq[x_train_ind]
   # generate mmed
-  mmed_gp_list[[k]] = add_MED_ms_oneatatime_data_gp(x_train, y_train, type01, l01, var_e = 1, N2 = N2, 
+  mmed_gp_list[[i]] = add_MED_ms_oneatatime_data_gp(x_train, y_train, type01, l01, var_e = 1, N2 = N2, 
                                                     k = k, p = p, xmin = xmin, xmax = xmax, 
                                                     nugget = nugget, alpha = alpha, buffer = 0, candidates = x_seq)
   # predictions using each model (using mmed)
-  newpts = mmed_gp_list[[k]]$addD
+  newpts = mmed_gp_list[[i]]$addD
   H0_pred = getPredDistrSeq(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
   H1_pred = getPredDistrSeq(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
   postpredmu0 = H0_pred$pred_mean
@@ -259,26 +259,26 @@ for(k in 1:numSims){
   # points(x = x_train, y = y_train)
   # H0_predfn = getPredDistrSeq(x_seq, x_train, y_train, type01[1], l01[1], nugget = NULL)
   # H1_predfn = getPredDistrSeq(x_seq, x_train, y_train, type01[2], l01[2], nugget = NULL)
-  # lines(x = x_seq, y = H0_predfn$pred_mean, col = 3)
-  # lines(x = x_seq, y = H1_predfn$pred_mean, col = 4)
+  # lines(x = x_seq, y = H0_predfn$pred_mean)
+  # lines(x = x_seq, y = H1_predfn$pred_mean)
   # err0 = 2 * sqrt(diag(H0_predfn$pred_var))
   # err1 = 2 * sqrt(diag(H1_predfn$pred_var))
   # add_errorbands(x_seq, H0_predfn$pred_mean, err0, rgb(0, 1, 0, 0.2))
   # add_errorbands(x_seq, H1_predfn$pred_mean, err1, rgb(0, 0, 1, 0.2))
-  truey = y_seq[mmed_gp_list[[k]]$indices]
+  truey = y_seq[mmed_gp_list[[i]]$indices]
   # points(x = newpts, y = truey, col = 2)
   # points(x = newpts, y = postpredmu0, col = 3)
   # points(x = newpts, y = postpredmu1, col = 4)
   # legend("bottomright", legend = c("train y", "true y", "H0:gaussian", "H1:periodic"),
-  #        col = c(1:4), pch = rep(1,4))
+  # col = c(1:4), pch = rep(1,4))
   # it looks like the matern is better for modeling this function
   # compute RSS0 and RSS1 for mmed
-  RSS0mmed_vec[k] = sum((postpredmu0 - truey)^2)  
-  RSS1mmed_vec[k] = sum((postpredmu1 - truey)^2)
+  RSS0mmed_vec[i] = sum((postpredmu0 - truey)^2)  
+  RSS1mmed_vec[i] = sum((postpredmu1 - truey)^2)
   # compute log lik ratio for mmed (pred)
   likH0 = dmvnorm(truey, mean = H0_pred$pred_mean, sigma = H0_pred$pred_var, log = TRUE)
   likH1 = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
-  logLR01pred_mmed_vec[k] = likH0 - likH1
+  logLR01pred_mmed_vec[i] = likH0 - likH1
   
   # space filling: (note: y_train is different for each function, which is why we need this in the loop)
   # predictions using each model
@@ -289,12 +289,12 @@ for(k in 1:numSims){
   postpredmu1 = H1_pred$pred_mean
   truey = y_seq[x_spacefill_ind]
   # compute RSS0 and RSS1 for spacefilling
-  RSS0sf_vec[k] = sum((postpredmu0 - truey)^2)  
-  RSS1sf_vec[k] = sum((postpredmu1 - truey)^2)
+  RSS0sf_vec[i] = sum((postpredmu0 - truey)^2)  
+  RSS1sf_vec[i] = sum((postpredmu1 - truey)^2)
   # compute log lik ratio for spacefilling (pred)
   likH0 = dmvnorm(truey, mean = H0_pred$pred_mean, sigma = H0_pred$pred_var, log = TRUE)
   likH1 = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
-  logLR01pred_sf_vec[k] = likH0 - likH1
+  logLR01pred_sf_vec[i] = likH0 - likH1
   
   # plot(x_seq, y_seq, type = "l", ylim = range(y_seq, postpredmu0, postpredmu1), ylab = "sample function",
   #    main = "Matern Kernel") # plot the function
@@ -351,17 +351,18 @@ logLR01pred_sf_vec = rep(NA, numSims)
 
 # generate mmed and compute RSS0 and RSS1 for mmed and space_fill each
 seed = 1
-for(k in 1:numSims){
-  set.seed(seed + k)
+seed = 1
+for(i in 1:numSims){
+  set.seed(seed + i)
   # get y_train
-  y_seq = y_seq_mat[ , k]
+  y_seq = y_seq_mat[ , i]
   y_train = y_seq[x_train_ind]
   # generate mmed
-  mmed_gp_list[[k]] = add_MED_ms_oneatatime_data_gp(x_train, y_train, type01, l01, var_e = 1, N2 = N2, 
+  mmed_gp_list[[i]] = add_MED_ms_oneatatime_data_gp(x_train, y_train, type01, l01, var_e = 1, N2 = N2, 
                                                     k = k, p = p, xmin = xmin, xmax = xmax, 
                                                     nugget = nugget, alpha = alpha, buffer = 0, candidates = x_seq)
   # predictions using each model (using mmed)
-  newpts = mmed_gp_list[[k]]$addD
+  newpts = mmed_gp_list[[i]]$addD
   H0_pred = getPredDistrSeq(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
   H1_pred = getPredDistrSeq(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
   postpredmu0 = H0_pred$pred_mean
@@ -377,20 +378,20 @@ for(k in 1:numSims){
   # err1 = 2 * sqrt(diag(H1_predfn$pred_var))
   # add_errorbands(x_seq, H0_predfn$pred_mean, err0, rgb(0, 1, 0, 0.2))
   # add_errorbands(x_seq, H1_predfn$pred_mean, err1, rgb(0, 0, 1, 0.2))
-  truey = y_seq[mmed_gp_list[[k]]$indices]
+  truey = y_seq[mmed_gp_list[[i]]$indices]
   # points(x = newpts, y = truey, col = 2)
   # points(x = newpts, y = postpredmu0, col = 3)
   # points(x = newpts, y = postpredmu1, col = 4)
   # legend("bottomright", legend = c("train y", "true y", "H0:gaussian", "H1:periodic"),
-  #        col = c(1:4), pch = rep(1,4))
+  # col = c(1:4), pch = rep(1,4))
   # it looks like the matern is better for modeling this function
   # compute RSS0 and RSS1 for mmed
-  RSS0mmed_vec[k] = sum((postpredmu0 - truey)^2)  
-  RSS1mmed_vec[k] = sum((postpredmu1 - truey)^2)
+  RSS0mmed_vec[i] = sum((postpredmu0 - truey)^2)  
+  RSS1mmed_vec[i] = sum((postpredmu1 - truey)^2)
   # compute log lik ratio for mmed (pred)
   likH0 = dmvnorm(truey, mean = H0_pred$pred_mean, sigma = H0_pred$pred_var, log = TRUE)
   likH1 = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
-  logLR01pred_mmed_vec[k] = likH0 - likH1
+  logLR01pred_mmed_vec[i] = likH0 - likH1
   
   # space filling: (note: y_train is different for each function, which is why we need this in the loop)
   # predictions using each model
@@ -401,12 +402,12 @@ for(k in 1:numSims){
   postpredmu1 = H1_pred$pred_mean
   truey = y_seq[x_spacefill_ind]
   # compute RSS0 and RSS1 for spacefilling
-  RSS0sf_vec[k] = sum((postpredmu0 - truey)^2)  
-  RSS1sf_vec[k] = sum((postpredmu1 - truey)^2)
+  RSS0sf_vec[i] = sum((postpredmu0 - truey)^2)  
+  RSS1sf_vec[i] = sum((postpredmu1 - truey)^2)
   # compute log lik ratio for spacefilling (pred)
   likH0 = dmvnorm(truey, mean = H0_pred$pred_mean, sigma = H0_pred$pred_var, log = TRUE)
   likH1 = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
-  logLR01pred_sf_vec[k] = likH0 - likH1
+  logLR01pred_sf_vec[i] = likH0 - likH1
   
   # plot(x_seq, y_seq, type = "l", ylim = range(y_seq, postpredmu0, postpredmu1), ylab = "sample function",
   #    main = "Matern Kernel") # plot the function
@@ -460,24 +461,24 @@ logLR01pred_sf_vec = rep(NA, numSims)
 
 # generate mmed and compute RSS0 and RSS1 for mmed and space_fill each
 seed = 1
-for(k in 1:numSims){
-  set.seed(seed + k)
+for(i in 1:numSims){
+  set.seed(seed + i)
   # get x_train
   x_train_ind = sample(1:numx, N)
-  x_train_ind_mat[ , k] = x_train_ind
+  x_train_ind_mat[ , i] = x_train_ind
   x_train = x_seq[x_train_ind]
-  x_train_mat[ , k] = x_train
+  x_train_mat[ , i] = x_train
   x_spacefill_ind = floor(c(1, 1 + ((numx - 1)/(N2 - 1)) * 1:((numx - 1) / ((numx - 1)/(N2 - 1)))))
   x_spacefill = x_seq[x_spacefill_ind]
   # get y_train
-  y_seq = y_seq_mat[ , k]
+  y_seq = y_seq_mat[ , i]
   y_train = y_seq[x_train_ind]
   # generate mmed
-  mmed_gp_list[[k]] = add_MED_ms_oneatatime_data_gp(x_train, y_train, type01, l01, var_e = 1, N2 = N2, 
+  mmed_gp_list[[i]] = add_MED_ms_oneatatime_data_gp(x_train, y_train, type01, l01, var_e = 1, N2 = N2, 
                                                     k = k, p = p, xmin = xmin, xmax = xmax, 
                                                     nugget = nugget, alpha = alpha, buffer = 0, candidates = x_seq)
   # predictions using each model (using mmed)
-  newpts = mmed_gp_list[[k]]$addD
+  newpts = mmed_gp_list[[i]]$addD
   H0_pred = getPredDistrSeq(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
   H1_pred = getPredDistrSeq(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
   postpredmu0 = H0_pred$pred_mean
@@ -493,7 +494,7 @@ for(k in 1:numSims){
   # err1 = 2 * sqrt(diag(H1_predfn$pred_var))
   # add_errorbands(x_seq, H0_predfn$pred_mean, err0, rgb(0, 1, 0, 0.2))
   # add_errorbands(x_seq, H1_predfn$pred_mean, err1, rgb(0, 0, 1, 0.2))
-  truey = y_seq[mmed_gp_list[[k]]$indices]
+  truey = y_seq[mmed_gp_list[[i]]$indices]
   # points(x = newpts, y = truey, col = 2)
   # points(x = newpts, y = postpredmu0, col = 3)
   # points(x = newpts, y = postpredmu1, col = 4)
@@ -501,12 +502,12 @@ for(k in 1:numSims){
   #        col = c(1:4), pch = rep(1,4))
   # it looks like the matern is better for modeling this function
   # compute RSS0 and RSS1 for mmed
-  RSS0mmed_vec[k] = sum((postpredmu0 - truey)^2)  
-  RSS1mmed_vec[k] = sum((postpredmu1 - truey)^2)
+  RSS0mmed_vec[i] = sum((postpredmu0 - truey)^2)  
+  RSS1mmed_vec[i] = sum((postpredmu1 - truey)^2)
   # compute log lik ratio for mmed (pred)
   likH0 = dmvnorm(truey, mean = H0_pred$pred_mean, sigma = H0_pred$pred_var, log = TRUE)
   likH1 = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
-  logLR01pred_mmed_vec[k] = likH0 - likH1
+  logLR01pred_mmed_vec[i] = likH0 - likH1
   
   # space filling: (note: y_train is different for each function, which is why we need this in the loop)
   # predictions using each model
@@ -517,12 +518,12 @@ for(k in 1:numSims){
   postpredmu1 = H1_pred$pred_mean
   truey = y_seq[x_spacefill_ind]
   # compute RSS0 and RSS1 for spacefilling
-  RSS0sf_vec[k] = sum((postpredmu0 - truey)^2)  
-  RSS1sf_vec[k] = sum((postpredmu1 - truey)^2)
+  RSS0sf_vec[i] = sum((postpredmu0 - truey)^2)  
+  RSS1sf_vec[i] = sum((postpredmu1 - truey)^2)
   # compute log lik ratio for spacefilling (pred)
   likH0 = dmvnorm(truey, mean = H0_pred$pred_mean, sigma = H0_pred$pred_var, log = TRUE)
   likH1 = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
-  logLR01pred_sf_vec[k] = likH0 - likH1
+  logLR01pred_sf_vec[i] = likH0 - likH1
   
   # plot(x_seq, y_seq, type = "l", ylim = range(y_seq, postpredmu0, postpredmu1), ylab = "sample function",
   #    main = "Matern Kernel") # plot the function

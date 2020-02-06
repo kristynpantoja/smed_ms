@@ -1,7 +1,10 @@
 # require("wasserstein_distance.R")
 # require("charge_function_q.R")
 
-# 1d Covariance functions
+
+###############################
+### 1d Covariance functions ###
+###############################
 # radial aka squared exponential aka gaussian
 # phi_sqexp = function(Xi,Xj, l) exp(-0.5 * ((Xi - Xj) / ls)^2)
 phi_sqexp = function(Xi,Xj, l) exp(-0.5 * (Xi - Xj) ^ 2 / l ^ 2) 
@@ -70,9 +73,24 @@ getW = function(x_star, x_train, y_train, type01, l01, nugget){
 
 
 
-###################
-### one at time ###
-###################
+##################
+### helper fns ###
+##################
+
+logjointlik = function(x_star, y_star, x_train, y_train, type_arg, l_arg){
+  Sigma11 = getCov(x_train, x_train, type_arg, l_arg)
+  Sigma22 = getCov(x_star, x_star, type_arg, l_arg)
+  Sigma21 = getCov(x_train, x_star, type_arg, l_arg)
+  joint_var = rbind(cbind(Sigma11, Sigma21), cbind(t(Sigma21), Sigma22))
+  y = c(y_train, y_star)
+  return(dmvnorm(y, mean = rep(0, length(y)), sigma = joint_var, log = TRUE))
+}
+
+
+
+#############################
+### one at time algorithm ###
+#############################
 
 # # charge function evaluated at x
 # q_gp = function(x_star, x_train, y_train, l01, type01){

@@ -19,7 +19,7 @@ library(mvtnorm)
 
 # Cluster
 home = "/scratch/user/kristynp/smed_ms"
-output_home = paste(home,"/run_designs/",sep="")
+output_home = paste(home,"/run_designs_v2/",sep="")
 
 # --- sources to generate MEDs --- #
 
@@ -58,7 +58,7 @@ add_errorbands = function(xs, ys, MoE, color){
 }
 
 # --- simulations  --- #
-numSims = 100
+numSims = 25
 
 # x_seq, grid over which to generate subsequent functions
 xmin = 0; xmax = 1

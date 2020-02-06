@@ -19,7 +19,7 @@ library(mvtnorm)
 
 # Cluster
 home = "/scratch/user/kristynp/smed_ms"
-output_home = paste(home,"/run_designs/",sep="")
+output_home = paste(home,"/run_designs_v2/",sep="")
 
 # --- sources to generate MEDs --- #
 
@@ -58,7 +58,7 @@ add_errorbands = function(xs, ys, MoE, color){
 }
 
 # --- simulations  --- #
-numSims = 100
+numSims = 25
 
 # x_seq, grid over which to generate subsequent functions
 xmin = 0; xmax = 1
@@ -215,7 +215,7 @@ for(i in 1:numSims){
   RSS1mmed_vec[i] = sum((postpredmu1 - truey)^2)
   # compute log evidences (pred) for mmed
   logPredEvid0mmed_vec[i] = dmvnorm(truey, mean = H0_pred$pred_mean, sigma = H0_pred$pred_var, log = TRUE)
-  logPredEvid1mmed_vec[i] = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
+  logPredEvid0mmed_vec[i] = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
   # compute log evidences (joint) for mmed
   logJointEvid0mmed_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[1], l01[1])
   logJointEvid1mmed_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[2], l01[2])
@@ -404,7 +404,7 @@ for(i in 1:numSims){
   RSS1mmed_vec[i] = sum((postpredmu1 - truey)^2)
   # compute log evidences (pred) for mmed
   logPredEvid0mmed_vec[i] = dmvnorm(truey, mean = H0_pred$pred_mean, sigma = H0_pred$pred_var, log = TRUE)
-  logPredEvid1mmed_vec[i] = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
+  logPredEvid0mmed_vec[i] = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
   # compute log evidences (joint) for mmed
   logJointEvid0mmed_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[1], l01[1])
   logJointEvid1mmed_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[2], l01[2])
@@ -593,7 +593,7 @@ for(i in 1:numSims){
   RSS1mmed_vec[i] = sum((postpredmu1 - truey)^2)
   # compute log evidences (pred) for mmed
   logPredEvid0mmed_vec[i] = dmvnorm(truey, mean = H0_pred$pred_mean, sigma = H0_pred$pred_var, log = TRUE)
-  logPredEvid1mmed_vec[i] = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
+  logPredEvid0mmed_vec[i] = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
   # compute log evidences (joint) for mmed
   logJointEvid0mmed_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[1], l01[1])
   logJointEvid1mmed_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[2], l01[2])
@@ -729,9 +729,9 @@ for(i in 1:numSims){
   # get x_train
   x_train_and_uniform_inds = sample(1:numx, Ntotal)
   x_train_ind = x_train_and_uniform_inds[1:N]
-  x_train_ind_mat[ , i] = x_train_ind
+  x_train_ind_mat[1 , i] = x_train_ind
   x_train = x_seq[x_train_ind]
-  x_train_mat[ , i] = x_train
+  x_train_mat[1 , i] = x_train
   # get y_train
   y_seq = y_seq_mat[ , i]
   y_train = y_seq[x_train_ind]
@@ -788,7 +788,7 @@ for(i in 1:numSims){
   RSS1mmed_vec[i] = sum((postpredmu1 - truey)^2)
   # compute log evidences (pred) for mmed
   logPredEvid0mmed_vec[i] = dmvnorm(truey, mean = H0_pred$pred_mean, sigma = H0_pred$pred_var, log = TRUE)
-  logPredEvid1mmed_vec[i] = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
+  logPredEvid0mmed_vec[i] = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
   # compute log evidences (joint) for mmed
   logJointEvid0mmed_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[1], l01[1])
   logJointEvid1mmed_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[2], l01[2])

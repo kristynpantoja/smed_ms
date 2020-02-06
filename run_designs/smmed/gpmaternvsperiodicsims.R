@@ -1,3 +1,9 @@
+###################################
+## --- Gaussian vs. Periodic --- ##
+###################################
+
+# --- libraries --- #
+
 # libraries
 library(expm)
 library(matrixStats)
@@ -5,14 +11,15 @@ library(scatterplot3d)
 library(knitr)
 library(mvtnorm)
 
+# --- workspaces --- #
+
 # Computer
 # home = "/home/kristyn/Documents/smed_ms"
+# output_home = paste(home, "/", sep = "")
 
 # Cluster
 home = "/scratch/user/kristynp/smed_ms"
-output_home = paste(home,"/run_designs/",sep="")
-
-# source files for evaluations
+output_home = paste(home,"/run_designs_nonseq_v2/",sep="")
 
 # --- sources to generate MEDs --- #
 
@@ -38,7 +45,7 @@ source(paste(functions_home, "/plot_MSE.R", sep = ""))
 source(paste(functions_home, "/plot_posterior_variance.R", sep = ""))
 source(paste(functions_home, "/postpredyhat_mse_closedform.R", sep = ""))
 
-# --- Sources/Libraries for gaussian process stuff  --- #
+# --- sources/functions for gaussian process stuff  --- #
 
 source(paste(functions_home, "/med_ms_fns_gp.R", sep = ""))
 source(paste(functions_home, "/update_MED_oneatatime.R", sep = ""))
@@ -50,18 +57,18 @@ add_errorbands = function(xs, ys, MoE, color){
   polygon(c(xs,rev(xs)),c(y_lower,rev(y_upper)),col=color, border = NA)
 }
 
-
-
-## Gaussian vs. Periodic
+# --- simulations  --- #
+numSims = 100
 
 # x_seq, grid over which to generate subsequent functions
 xmin = 0; xmax = 1
 numx = 1001
 x_seq = seq(from = xmin, to = xmax, length.out = numx) # set training points
 
-# train set designs
+# train set designs (input points)
 N = 6; N2 = 15
 Ntotal = 21
+
 # 1. make space-filling design
 # space_filling = seq(from = xmin, to = xmax, length.out = Ntotal)
 space_filling_ind = c(1, 1 + ((numx - 1)/(Ntotal - 1)) * 1:((numx - 1) / ((numx - 1)/(Ntotal - 1))))
@@ -89,20 +96,15 @@ x_spacefill3 = x_seq[x_spacefill3_ind]
 # all.equal(space_filling, sort(c(x_train3, x_spacefill3)))
 
 # MMED parameters for testing
-l01= c(0.1, 0.5); type01 = c(4, 5); numCandidates = 1001; k = 4; p = 1; nugget = NULL; alpha = 1
+l01= c(0.01, 0.1); type01 = c(4, 5); numCandidates = 1001; k = 4; p = 1; nugget = NULL; alpha = 1
 
-# generate periodic function
+# generate periodic functions
 set.seed(13)
 null_cov = getCov(x_seq, x_seq, type01[2], l01[2])
 null_mean = rep(0, numx)
-y_seq_periodic = t(rmvnorm(n = 1, mean = null_mean, sigma = null_cov)) # the function values
-
-# things that stay the same
-numSims = 25
 seed = 1
 set.seed(seed)
 y_seq_mat = t(rmvnorm(n = numSims, mean = null_mean, sigma = null_cov)) # the function values
-
 
 
 
@@ -211,7 +213,7 @@ for(i in 1:numSims){
 RSS01mmed_vec = RSS0mmed_vec/RSS1mmed_vec
 RSS01sf_vec = RSS0sf_vec/RSS1sf_vec
 
-train1sims = list("domain" = x_seq,
+train1sims = list("grid" = x_seq,
                   "sim_fns" = y_seq_mat,
                   "x_train" = x_train,
                   "x_train_ind" = x_train_ind,
@@ -331,7 +333,7 @@ for(i in 1:numSims){
 RSS01mmed_vec = RSS0mmed_vec/RSS1mmed_vec
 RSS01sf_vec = RSS0sf_vec/RSS1sf_vec
 
-train2sims = list("domain" = x_seq,
+train2sims = list("grid" = x_seq,
                   "sim_fns" = y_seq_mat,
                   "x_train" = x_train,
                   "x_train_ind" = x_train_ind,
@@ -451,7 +453,7 @@ for(i in 1:numSims){
 RSS01mmed_vec = RSS0mmed_vec/RSS1mmed_vec
 RSS01sf_vec = RSS0sf_vec/RSS1sf_vec
 
-train3sims = list("domain" = x_seq,
+train3sims = list("grid" = x_seq,
                   "sim_fns" = y_seq_mat,
                   "x_train" = x_train,
                   "x_train_ind" = x_train_ind,
@@ -568,7 +570,7 @@ for(i in 1:numSims){
 RSS01mmed_vec = RSS0mmed_vec/RSS1mmed_vec
 RSS01sf_vec = RSS0sf_vec/RSS1sf_vec
 
-train4sims = list("domain" = x_seq,
+train4sims = list("grid" = x_seq,
                   "sim_fns" = y_seq_mat,
                   "x_train" = x_train_mat,
                   "x_train_ind" = x_train_ind_mat,

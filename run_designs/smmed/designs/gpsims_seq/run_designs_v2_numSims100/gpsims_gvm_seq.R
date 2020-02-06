@@ -19,7 +19,7 @@ library(mvtnorm)
 
 # Cluster
 home = "/scratch/user/kristynp/smed_ms"
-output_home = paste(home,"/run_designs/",sep="")
+output_home = paste(home,"/run_designs_v2_numSims100/",sep="")
 
 # --- sources to generate MEDs --- #
 

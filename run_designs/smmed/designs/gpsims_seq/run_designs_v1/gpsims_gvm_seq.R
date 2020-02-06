@@ -19,7 +19,7 @@ library(mvtnorm)
 
 # Cluster
 home = "/scratch/user/kristynp/smed_ms"
-output_home = paste(home,"/run_designs/",sep="")
+output_home = paste(home,"/run_designs_v1/",sep="")
 
 # --- sources to generate MEDs --- #
 
@@ -58,7 +58,7 @@ add_errorbands = function(xs, ys, MoE, color){
 }
 
 # --- simulations  --- #
-numSims = 100
+numSims = 25
 
 # x_seq, grid over which to generate subsequent functions
 xmin = 0; xmax = 1
@@ -97,7 +97,7 @@ x_spacefill3 = x_seq[x_spacefill3_ind]
 # input set 4 (uniform)
 
 # MMED parameters for testing
-l01= c(0.01, 0.01); type01 = c(1, 4); numCandidates = 1001; k = 4; p = 1; nugget = NULL; alpha = 1
+l01= c(0.1, 0.1); type01 = c(1, 4); numCandidates = 1001; k = 4; p = 1; nugget = NULL; alpha = 1
 
 # generate matern functions
 set.seed(12)

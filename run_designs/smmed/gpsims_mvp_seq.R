@@ -1,3 +1,9 @@
+##################################################
+## --- Gaussian vs. Periodic (Sequentially) --- ##
+##################################################
+
+# --- libraries --- #
+
 # libraries
 library(expm)
 library(matrixStats)
@@ -5,15 +11,15 @@ library(scatterplot3d)
 library(knitr)
 library(mvtnorm)
 
+# --- workspaces --- #
+
 # Computer
-home = "/home/kristyn/Documents/smed_ms"
-output_home = paste(home, "/", sep = "")
+# home = "/home/kristyn/Documents/smed_ms"
+# output_home = paste(home, "/", sep = "")
 
 # Cluster
-# home = "/scratch/user/kristynp/smed_ms"
-# output_home = paste(home,"/run_designs/",sep="")
-
-# source files for evaluations
+home = "/scratch/user/kristynp/smed_ms"
+output_home = paste(home,"/run_designs/",sep="")
 
 # --- sources to generate MEDs --- #
 
@@ -39,7 +45,7 @@ source(paste(functions_home, "/plot_MSE.R", sep = ""))
 source(paste(functions_home, "/plot_posterior_variance.R", sep = ""))
 source(paste(functions_home, "/postpredyhat_mse_closedform.R", sep = ""))
 
-# --- Sources/Libraries for gaussian process stuff  --- #
+# --- sources/functions for gaussian process stuff  --- #
 
 source(paste(functions_home, "/med_ms_fns_gp.R", sep = ""))
 source(paste(functions_home, "/update_MED_oneatatime.R", sep = ""))
@@ -51,9 +57,8 @@ add_errorbands = function(xs, ys, MoE, color){
   polygon(c(xs,rev(xs)),c(y_lower,rev(y_upper)),col=color, border = NA)
 }
 
-
-
-## Gaussian vs. Periodic
+# --- simulations  --- #
+numSims = 100
 
 # x_seq, grid over which to generate subsequent functions
 xmin = 0; xmax = 1
@@ -90,16 +95,12 @@ x_spacefill3 = x_seq[x_spacefill3_ind]
 # all.equal(space_filling, sort(c(x_train3, x_spacefill3)))
 
 # MMED parameters for testing
-l01= c(0.1, 0.5); type01 = c(4, 5); numCandidates = 1001; k = 4; p = 1; nugget = NULL; alpha = 1
+l01= c(0.01, 0.1); type01 = c(4, 5); numCandidates = 1001; k = 4; p = 1; nugget = NULL; alpha = 1
 
-# generate periodic function
+# generate periodic functions
 set.seed(13)
 null_cov = getCov(x_seq, x_seq, type01[2], l01[2])
 null_mean = rep(0, numx)
-y_seq_periodic = t(rmvnorm(n = 1, mean = null_mean, sigma = null_cov)) # the function values
-
-# things that stay the same
-numSims = 25
 seed = 1
 set.seed(seed)
 y_seq_mat = t(rmvnorm(n = numSims, mean = null_mean, sigma = null_cov)) # the function values
@@ -110,37 +111,60 @@ stepN = 5 # get 5 new points at each step
 
 
 
-## TRAIN SET 1 ##
+## INPUT SET 1 ##
 
+# input set 1
 x_train = x_train1
 x_train_ind = x_train1_ind
+
+# space-filling for input set 1
 x_spacefill = x_spacefill1
 x_spacefill_ind = x_spacefill1_ind
 
 # these get rewritten for each train set
+# uniform
+x_uniform_mat = matrix(NA, N2, numSims)
+x_uniform_ind_mat = matrix(NA, N2, numSims)
+# mmed output list (just in case)
 mmed_gp_list = list()
+# mmed points (x and y)
+newpts_mat = matrix(NA, N2, numSims)
+newpts_ind_mat = matrix(NA, N2, numSims)
+truey_mat = matrix(NA, N2, numSims)
+# RSS
 RSS0mmed_vec = rep(NA, numSims)
 RSS1mmed_vec = rep(NA, numSims)
 RSS0sf_vec = rep(NA, numSims)
 RSS1sf_vec = rep(NA, numSims)
-newpts_mat = matrix(NA, N2, numSims)
-truey_mat = matrix(NA, N2, numSims)
-# save log likelihood ratio (posterior predictive distr)
-logLR01pred_mmed_vec = rep(NA, numSims)
-logLR01pred_sf_vec = rep(NA, numSims)
+RSS0unif_vec = rep(NA, numSims)
+RSS1unif_vec = rep(NA, numSims)
+# log predictive density
+logPredEvid0mmed_vec = rep(NA, numSims)
+logPredEvid1mmed_vec = rep(NA, numSims)
+logPredEvid0sf_vec = rep(NA, numSims)
+logPredEvid1sf_vec = rep(NA, numSims)
+logPredEvid0unif_vec = rep(NA, numSims)
+logPredEvid1unif_vec = rep(NA, numSims)
+# log joint density
+logJointEvid0mmed_vec = rep(NA, numSims)
+logJointEvid1mmed_vec = rep(NA, numSims)
+logJointEvid0sf_vec = rep(NA, numSims)
+logJointEvid1sf_vec = rep(NA, numSims)
+logJointEvid0unif_vec = rep(NA, numSims)
+logJointEvid1unif_vec = rep(NA, numSims)
 
-# see what they look like
-# plot(x_seq, y_seq_mat[ , 1], type = "l", ylim = range(y_seq_mat), ylab = "sample function",
-#      main = "Matern Kernel") # plot the function
-# lines(x_seq, y_seq_mat[ , 2], col = 2); lines(x_seq, y_seq_mat[ , 3], col = 3); lines(x_seq, y_seq_mat[ , 4], col = 4)
-
-# generate mmed and compute RSS0 and RSS1 for mmed and space_fill each
+# run simulations
 seed = 1
 for(i in 1:numSims){
   set.seed(seed + i)
   # get y_train
   y_seq = y_seq_mat[ , i]
   y_train = y_seq[x_train_ind]
+  # get x_uniform
+  x_uniform_ind = sample(1:numx, N2)
+  x_uniform_ind_mat[ , i] = x_uniform_ind
+  x_uniform = x_seq[x_uniform_ind]
+  x_uniform_mat[ , i] = x_uniform
   
   # generate mmed
   # step 1:
@@ -148,7 +172,6 @@ for(i in 1:numSims){
                                              k = k, p = p, xmin = xmin, xmax = xmax, 
                                              nugget = nugget, alpha = alpha, buffer = 0, candidates = x_seq)
   step1_newpts = step1_mmed$addD
-  step1_truey = y_seq[step1_mmed$indices]
   
   x_train_new = c(x_train, step1_mmed$addD)
   x_train_ind_new = c(x_train_ind, step1_mmed$indices)
@@ -158,7 +181,6 @@ for(i in 1:numSims){
                                              k = k, p = p, xmin = xmin, xmax = xmax, 
                                              nugget = nugget, alpha = alpha, buffer = 0, candidates = x_seq)
   step2_newpts = step2_mmed$addD
-  step2_truey = y_seq[step2_mmed$indices]
   
   x_train_new = c(x_train_new, step2_mmed$addD)
   x_train_ind_new = c(x_train_ind_new, step2_mmed$indices)
@@ -168,7 +190,6 @@ for(i in 1:numSims){
                                              k = k, p = p, xmin = xmin, xmax = xmax, 
                                              nugget = nugget, alpha = alpha, buffer = 0, candidates = x_seq)
   step3_newpts = step3_mmed$addD
-  step3_truey = y_seq[step3_mmed$indices]
   
   x_train_new = c(x_train_new, step3_mmed$addD)
   x_train_ind_new = c(x_train_ind_new, step3_mmed$indices)
@@ -176,91 +197,163 @@ for(i in 1:numSims){
   
   mmed_gp_list[[i]] = list(step1_mmed, step2_mmed, step3_mmed)
   
-  # predictions using each model (using mmed)
+  # mmed inputs' predictions and evaluations
   newpts = c(step1_newpts, step2_newpts, step3_newpts)
   newpts_mat[ , i] = newpts
+  newpts_ind = c(step1_mmed$indices, step2_mmed$indices, step3_mmed$indices)
+  newpts_ind_mat[ , i] = newpts_ind
+  truey = y_seq[newpts_ind]
+  truey_mat[ , i] = truey
   H0_pred = getPredDistrSeq(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
   H1_pred = getPredDistrSeq(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
   postpredmu0 = H0_pred$pred_mean
   postpredmu1 = H1_pred$pred_mean
-  truey = c(step1_truey, step2_truey, step3_truey)
-  truey_mat[ , i] = truey
   # compute RSS0 and RSS1 for mmed
   RSS0mmed_vec[i] = sum((postpredmu0 - truey)^2)  
   RSS1mmed_vec[i] = sum((postpredmu1 - truey)^2)
-  # compute log lik ratio for mmed (pred)
-  likH0 = dmvnorm(truey, mean = H0_pred$pred_mean, sigma = H0_pred$pred_var, log = TRUE)
-  likH1 = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
-  logLR01pred_mmed_vec[i] = likH0 - likH1
+  # compute log evidences (pred) for mmed
+  logPredEvid0mmed_vec[i] = dmvnorm(truey, mean = H0_pred$pred_mean, sigma = H0_pred$pred_var, log = TRUE)
+  logPredEvid1mmed_vec[i] = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
+  # compute log evidences (joint) for mmed
+  logJointEvid0mmed_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[1], l01[1])
+  logJointEvid1mmed_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[2], l01[2])
   
-  # space filling: (note: y_train is different for each function, which is why we need this in the loop)
-  # predictions using each model
+  # space-filling inputs' predictions and evaluations
+  # (note: y_train is different for each function, which is why we need this in the loop)
   newpts = x_spacefill
+  truey = y_seq[x_spacefill_ind]
   H0_pred = getPredDistrSeq(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
   H1_pred = getPredDistrSeq(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
   postpredmu0 = H0_pred$pred_mean
   postpredmu1 = H1_pred$pred_mean
-  truey = y_seq[x_spacefill_ind]
   # compute RSS0 and RSS1 for spacefilling
   RSS0sf_vec[i] = sum((postpredmu0 - truey)^2)  
   RSS1sf_vec[i] = sum((postpredmu1 - truey)^2)
-  # compute log lik ratio for spacefilling (pred)
-  likH0 = dmvnorm(truey, mean = H0_pred$pred_mean, sigma = H0_pred$pred_var, log = TRUE)
-  likH1 = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
-  logLR01pred_sf_vec[i] = likH0 - likH1
+  # compute log evidences (pred) for spacefilling
+  logPredEvid0sf_vec[i] = dmvnorm(truey, mean = H0_pred$pred_mean, sigma = H0_pred$pred_var, log = TRUE)
+  logPredEvid1sf_vec[i] = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
+  # compute log evidences (joint) for spacefilling
+  logJointEvid0sf_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[1], l01[1])
+  logJointEvid1sf_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[2], l01[2])
+  
+  # uniform inputs' predictions and evaluations
+  newpts = x_uniform
+  truey = y_seq[x_uniform_ind]
+  H0_pred = getPredDistrSeq(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
+  H1_pred = getPredDistrSeq(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
+  postpredmu0 = H0_pred$pred_mean
+  postpredmu1 = H1_pred$pred_mean
+  # compute RSS0 and RSS1 for uniform
+  RSS0unif_vec[i] = sum((postpredmu0 - truey)^2)  
+  RSS1unif_vec[i] = sum((postpredmu1 - truey)^2)
+  # compute log evidences (pred) for uniform
+  logPredEvid0unif_vec[i] = dmvnorm(truey, mean = H0_pred$pred_mean, sigma = H0_pred$pred_var, log = TRUE)
+  logPredEvid1unif_vec[i] = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
+  # compute log evidences (joint) for uniform
+  logJointEvid0unif_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[1], l01[1])
+  logJointEvid1unif_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[2], l01[2])
 }
 
-RSS01mmed_vec = RSS0mmed_vec/RSS1mmed_vec
-RSS01sf_vec = RSS0sf_vec/RSS1sf_vec
-
-train1sims = list("domain" = x_seq,
+train1sims = list("grid" = x_seq,
                   "sim_fns" = y_seq_mat,
                   "x_train" = x_train,
                   "x_train_ind" = x_train_ind,
+                  # save the 3 designs (post input pts) that we're comparing
                   "x_spacefill" = x_spacefill,
                   "x_spacefill_ind" = x_spacefill_ind,
+                  "x_uniform" = x_uniform_mat,
+                  "x_uniform_ind" = x_uniform_ind_mat,
                   "mmed_gp_list" = mmed_gp_list,
-                  "smmed_pts" = newpts_mat,
-                  "true_y" = truey_mat,
-                  "RSS01mmed_vec" = RSS01mmed_vec,
-                  "logLR01pred_mmed_vec" = logLR01pred_mmed_vec,
-                  "RSS01sf_vec" = RSS01sf_vec,
-                  "logLR01pred_sf_vec" = logLR01pred_sf_vec)
+                  "x_mmed" = newpts_mat,
+                  "x_mmed_ind" = newpts_ind_mat,
+                  "y_mmed" = truey_mat,
+                  # save evaluations for each of them also
+                  "RSS0mmed_vec" = RSS0mmed_vec,
+                  "RSS1mmed_vec" = RSS1mmed_vec,
+                  "RSS0sf_vec" = RSS0sf_vec,
+                  "RSS1sf_vec" = RSS1sf_vec,
+                  "RSS0unif_vec" = RSS0unif_vec,
+                  "RSS1unif_vec" = RSS1unif_vec,
+                  "RSS01mmed" = RSS0mmed_vec / RSS1mmed_vec,
+                  "RSS01sf" = RSS0sf_vec / RSS1sf_vec,
+                  "RSS01unif" = RSS0unif_vec / RSS1unif_vec,
+                  #
+                  "logPredEvid0mmed_vec" = logPredEvid0mmed_vec,
+                  "logPredEvid1mmed_vec" = logPredEvid1mmed_vec,
+                  "logPredEvid0sf_vec" = logPredEvid0sf_vec,
+                  "logPredEvid1sf_vec" = logPredEvid1sf_vec,
+                  "logPredEvid0unif_vec" = logPredEvid0unif_vec,
+                  "logPredEvid1unif_vec" = logPredEvid1unif_vec,
+                  "logPredEvid01mmed" = logPredEvid0mmed_vec - logPredEvid1mmed_vec,
+                  "logPredEvid01sf" = logPredEvid0sf_vec - logPredEvid1sf_vec,
+                  "logPredEvid01unif" = logPredEvid0unif_vec - logPredEvid1unif_vec,
+                  #
+                  "logJointEvid0mmed_vec" = logJointEvid0mmed_vec,
+                  "logJointEvid1mmed_vec" = logJointEvid1mmed_vec,
+                  "logJointEvid0sf_vec" = logJointEvid0sf_vec,
+                  "logJointEvid1sf_vec" = logJointEvid1sf_vec,
+                  "logJointEvid0unif_vec" = logJointEvid0unif_vec,
+                  "logJointEvid1unif_vec" = logJointEvid1unif_vec,
+                  "logJointEvid01mmed" = logJointEvid0mmed_vec - logJointEvid1mmed_vec,
+                  "logJointEvid01sf" = logJointEvid0sf_vec - logJointEvid1sf_vec,
+                  "logJointEvid01unif" = logJointEvid0unif_vec - logJointEvid1unif_vec)
 saveRDS(train1sims, paste(output_home,"mvp_seq_train1sims.rds", sep = ""))
 
 
+## INPUT SET 2 ##
 
-## TRAIN SET 2 ##
-
+# input set 2
 x_train = x_train2
 x_train_ind = x_train2_ind
+
+# space-filling for input set 2
 x_spacefill = x_spacefill2
 x_spacefill_ind = x_spacefill2_ind
 
 # these get rewritten for each train set
+# uniform
+x_uniform_mat = matrix(NA, N2, numSims)
+x_uniform_ind_mat = matrix(NA, N2, numSims)
+# mmed output list (just in case)
 mmed_gp_list = list()
+# mmed points (x and y)
+newpts_mat = matrix(NA, N2, numSims)
+newpts_ind_mat = matrix(NA, N2, numSims)
+truey_mat = matrix(NA, N2, numSims)
+# RSS
 RSS0mmed_vec = rep(NA, numSims)
 RSS1mmed_vec = rep(NA, numSims)
 RSS0sf_vec = rep(NA, numSims)
 RSS1sf_vec = rep(NA, numSims)
-newpts_mat = matrix(NA, N2, numSims)
-truey_mat = matrix(NA, N2, numSims)
-# save log likelihood ratio (posterior predictive distr)
-logLR01pred_mmed_vec = rep(NA, numSims)
-logLR01pred_sf_vec = rep(NA, numSims)
+RSS0unif_vec = rep(NA, numSims)
+RSS1unif_vec = rep(NA, numSims)
+# log predictive density
+logPredEvid0mmed_vec = rep(NA, numSims)
+logPredEvid1mmed_vec = rep(NA, numSims)
+logPredEvid0sf_vec = rep(NA, numSims)
+logPredEvid1sf_vec = rep(NA, numSims)
+logPredEvid0unif_vec = rep(NA, numSims)
+logPredEvid1unif_vec = rep(NA, numSims)
+# log joint density
+logJointEvid0mmed_vec = rep(NA, numSims)
+logJointEvid1mmed_vec = rep(NA, numSims)
+logJointEvid0sf_vec = rep(NA, numSims)
+logJointEvid1sf_vec = rep(NA, numSims)
+logJointEvid0unif_vec = rep(NA, numSims)
+logJointEvid1unif_vec = rep(NA, numSims)
 
-# see what they look like
-# plot(x_seq, y_seq_mat[ , 1], type = "l", ylim = range(y_seq_mat), ylab = "sample function",
-#      main = "Matern Kernel") # plot the function
-# lines(x_seq, y_seq_mat[ , 2], col = 2); lines(x_seq, y_seq_mat[ , 3], col = 3); lines(x_seq, y_seq_mat[ , 4], col = 4)
-
-# generate mmed and compute RSS0 and RSS1 for mmed and space_fill each
+# run simulations
 seed = 1
 for(i in 1:numSims){
   set.seed(seed + i)
   # get y_train
   y_seq = y_seq_mat[ , i]
   y_train = y_seq[x_train_ind]
+  # get x_uniform
+  x_uniform_ind = sample(1:numx, N2)
+  x_uniform_ind_mat[ , i] = x_uniform_ind
+  x_uniform = x_seq[x_uniform_ind]
+  x_uniform_mat[ , i] = x_uniform
   
   # generate mmed
   # step 1:
@@ -268,7 +361,6 @@ for(i in 1:numSims){
                                              k = k, p = p, xmin = xmin, xmax = xmax, 
                                              nugget = nugget, alpha = alpha, buffer = 0, candidates = x_seq)
   step1_newpts = step1_mmed$addD
-  step1_truey = y_seq[step1_mmed$indices]
   
   x_train_new = c(x_train, step1_mmed$addD)
   x_train_ind_new = c(x_train_ind, step1_mmed$indices)
@@ -278,7 +370,6 @@ for(i in 1:numSims){
                                              k = k, p = p, xmin = xmin, xmax = xmax, 
                                              nugget = nugget, alpha = alpha, buffer = 0, candidates = x_seq)
   step2_newpts = step2_mmed$addD
-  step2_truey = y_seq[step2_mmed$indices]
   
   x_train_new = c(x_train_new, step2_mmed$addD)
   x_train_ind_new = c(x_train_ind_new, step2_mmed$indices)
@@ -288,7 +379,6 @@ for(i in 1:numSims){
                                              k = k, p = p, xmin = xmin, xmax = xmax, 
                                              nugget = nugget, alpha = alpha, buffer = 0, candidates = x_seq)
   step3_newpts = step3_mmed$addD
-  step3_truey = y_seq[step3_mmed$indices]
   
   x_train_new = c(x_train_new, step3_mmed$addD)
   x_train_ind_new = c(x_train_ind_new, step3_mmed$indices)
@@ -296,86 +386,163 @@ for(i in 1:numSims){
   
   mmed_gp_list[[i]] = list(step1_mmed, step2_mmed, step3_mmed)
   
-  # predictions using each model (using mmed)
+  # mmed inputs' predictions and evaluations
   newpts = c(step1_newpts, step2_newpts, step3_newpts)
   newpts_mat[ , i] = newpts
+  newpts_ind = c(step1_mmed$indices, step2_mmed$indices, step3_mmed$indices)
+  newpts_ind_mat[ , i] = newpts_ind
+  truey = y_seq[newpts_ind]
+  truey_mat[ , i] = truey
   H0_pred = getPredDistrSeq(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
   H1_pred = getPredDistrSeq(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
   postpredmu0 = H0_pred$pred_mean
   postpredmu1 = H1_pred$pred_mean
-  truey = c(step1_truey, step2_truey, step3_truey)
-  truey_mat[ , i] = truey
   # compute RSS0 and RSS1 for mmed
   RSS0mmed_vec[i] = sum((postpredmu0 - truey)^2)  
   RSS1mmed_vec[i] = sum((postpredmu1 - truey)^2)
-  # compute log lik ratio for mmed (pred)
-  likH0 = dmvnorm(truey, mean = H0_pred$pred_mean, sigma = H0_pred$pred_var, log = TRUE)
-  likH1 = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
-  logLR01pred_mmed_vec[i] = likH0 - likH1
+  # compute log evidences (pred) for mmed
+  logPredEvid0mmed_vec[i] = dmvnorm(truey, mean = H0_pred$pred_mean, sigma = H0_pred$pred_var, log = TRUE)
+  logPredEvid1mmed_vec[i] = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
+  # compute log evidences (joint) for mmed
+  logJointEvid0mmed_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[1], l01[1])
+  logJointEvid1mmed_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[2], l01[2])
   
-  # space filling: (note: y_train is different for each function, which is why we need this in the loop)
-  # predictions using each model
+  # space-filling inputs' predictions and evaluations
+  # (note: y_train is different for each function, which is why we need this in the loop)
   newpts = x_spacefill
+  truey = y_seq[x_spacefill_ind]
   H0_pred = getPredDistrSeq(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
   H1_pred = getPredDistrSeq(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
   postpredmu0 = H0_pred$pred_mean
   postpredmu1 = H1_pred$pred_mean
-  truey = y_seq[x_spacefill_ind]
   # compute RSS0 and RSS1 for spacefilling
   RSS0sf_vec[i] = sum((postpredmu0 - truey)^2)  
   RSS1sf_vec[i] = sum((postpredmu1 - truey)^2)
-  # compute log lik ratio for spacefilling (pred)
-  likH0 = dmvnorm(truey, mean = H0_pred$pred_mean, sigma = H0_pred$pred_var, log = TRUE)
-  likH1 = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
-  logLR01pred_sf_vec[i] = likH0 - likH1
+  # compute log evidences (pred) for spacefilling
+  logPredEvid0sf_vec[i] = dmvnorm(truey, mean = H0_pred$pred_mean, sigma = H0_pred$pred_var, log = TRUE)
+  logPredEvid1sf_vec[i] = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
+  # compute log evidences (joint) for spacefilling
+  logJointEvid0sf_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[1], l01[1])
+  logJointEvid1sf_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[2], l01[2])
+  
+  # uniform inputs' predictions and evaluations
+  newpts = x_uniform
+  truey = y_seq[x_uniform_ind]
+  H0_pred = getPredDistrSeq(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
+  H1_pred = getPredDistrSeq(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
+  postpredmu0 = H0_pred$pred_mean
+  postpredmu1 = H1_pred$pred_mean
+  # compute RSS0 and RSS1 for uniform
+  RSS0unif_vec[i] = sum((postpredmu0 - truey)^2)  
+  RSS1unif_vec[i] = sum((postpredmu1 - truey)^2)
+  # compute log evidences (pred) for uniform
+  logPredEvid0unif_vec[i] = dmvnorm(truey, mean = H0_pred$pred_mean, sigma = H0_pred$pred_var, log = TRUE)
+  logPredEvid1unif_vec[i] = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
+  # compute log evidences (joint) for uniform
+  logJointEvid0unif_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[1], l01[1])
+  logJointEvid1unif_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[2], l01[2])
 }
 
-RSS01mmed_vec = RSS0mmed_vec/RSS1mmed_vec
-RSS01sf_vec = RSS0sf_vec/RSS1sf_vec
-
-train2sims = list("domain" = x_seq,
+train2sims = list("grid" = x_seq,
                   "sim_fns" = y_seq_mat,
                   "x_train" = x_train,
                   "x_train_ind" = x_train_ind,
+                  # save the 3 designs (post input pts) that we're comparing
                   "x_spacefill" = x_spacefill,
                   "x_spacefill_ind" = x_spacefill_ind,
+                  "x_uniform" = x_uniform_mat,
+                  "x_uniform_ind" = x_uniform_ind_mat,
                   "mmed_gp_list" = mmed_gp_list,
-                  "smmed_pts" = newpts_mat,
-                  "true_y" = truey_mat,
-                  "RSS01mmed_vec" = RSS01mmed_vec,
-                  "logLR01pred_mmed_vec" = logLR01pred_mmed_vec,
-                  "RSS01sf_vec" = RSS01sf_vec,
-                  "logLR01pred_sf_vec" = logLR01pred_sf_vec)
+                  "x_mmed" = newpts_mat,
+                  "x_mmed_ind" = newpts_ind_mat,
+                  "y_mmed" = truey_mat,
+                  # save evaluations for each of them also
+                  "RSS0mmed_vec" = RSS0mmed_vec,
+                  "RSS1mmed_vec" = RSS1mmed_vec,
+                  "RSS0sf_vec" = RSS0sf_vec,
+                  "RSS1sf_vec" = RSS1sf_vec,
+                  "RSS0unif_vec" = RSS0unif_vec,
+                  "RSS1unif_vec" = RSS1unif_vec,
+                  "RSS01mmed" = RSS0mmed_vec / RSS1mmed_vec,
+                  "RSS01sf" = RSS0sf_vec / RSS1sf_vec,
+                  "RSS01unif" = RSS0unif_vec / RSS1unif_vec,
+                  #
+                  "logPredEvid0mmed_vec" = logPredEvid0mmed_vec,
+                  "logPredEvid1mmed_vec" = logPredEvid1mmed_vec,
+                  "logPredEvid0sf_vec" = logPredEvid0sf_vec,
+                  "logPredEvid1sf_vec" = logPredEvid1sf_vec,
+                  "logPredEvid0unif_vec" = logPredEvid0unif_vec,
+                  "logPredEvid1unif_vec" = logPredEvid1unif_vec,
+                  "logPredEvid01mmed" = logPredEvid0mmed_vec - logPredEvid1mmed_vec,
+                  "logPredEvid01sf" = logPredEvid0sf_vec - logPredEvid1sf_vec,
+                  "logPredEvid01unif" = logPredEvid0unif_vec - logPredEvid1unif_vec,
+                  #
+                  "logJointEvid0mmed_vec" = logJointEvid0mmed_vec,
+                  "logJointEvid1mmed_vec" = logJointEvid1mmed_vec,
+                  "logJointEvid0sf_vec" = logJointEvid0sf_vec,
+                  "logJointEvid1sf_vec" = logJointEvid1sf_vec,
+                  "logJointEvid0unif_vec" = logJointEvid0unif_vec,
+                  "logJointEvid1unif_vec" = logJointEvid1unif_vec,
+                  "logJointEvid01mmed" = logJointEvid0mmed_vec - logJointEvid1mmed_vec,
+                  "logJointEvid01sf" = logJointEvid0sf_vec - logJointEvid1sf_vec,
+                  "logJointEvid01unif" = logJointEvid0unif_vec - logJointEvid1unif_vec)
 saveRDS(train2sims, paste(output_home,"mvp_seq_train2sims.rds", sep = ""))
 
 
+## INPUT SET 3 ##
 
-## TRAIN SET 3 ##
-
+# input set 3
 x_train = x_train3
 x_train_ind = x_train3_ind
+
+# space-filling for input set 3
 x_spacefill = x_spacefill3
 x_spacefill_ind = x_spacefill3_ind
 
 # these get rewritten for each train set
+# uniform
+x_uniform_mat = matrix(NA, N2, numSims)
+x_uniform_ind_mat = matrix(NA, N2, numSims)
+# mmed output list (just in case)
 mmed_gp_list = list()
+# mmed points (x and y)
+newpts_mat = matrix(NA, N2, numSims)
+newpts_ind_mat = matrix(NA, N2, numSims)
+truey_mat = matrix(NA, N2, numSims)
+# RSS
 RSS0mmed_vec = rep(NA, numSims)
 RSS1mmed_vec = rep(NA, numSims)
 RSS0sf_vec = rep(NA, numSims)
 RSS1sf_vec = rep(NA, numSims)
-newpts_mat = matrix(NA, N2, numSims)
-truey_mat = matrix(NA, N2, numSims)
-# save log likelihood ratio (posterior predictive distr)
-logLR01pred_mmed_vec = rep(NA, numSims)
-logLR01pred_sf_vec = rep(NA, numSims)
+RSS0unif_vec = rep(NA, numSims)
+RSS1unif_vec = rep(NA, numSims)
+# log predictive density
+logPredEvid0mmed_vec = rep(NA, numSims)
+logPredEvid1mmed_vec = rep(NA, numSims)
+logPredEvid0sf_vec = rep(NA, numSims)
+logPredEvid1sf_vec = rep(NA, numSims)
+logPredEvid0unif_vec = rep(NA, numSims)
+logPredEvid1unif_vec = rep(NA, numSims)
+# log joint density
+logJointEvid0mmed_vec = rep(NA, numSims)
+logJointEvid1mmed_vec = rep(NA, numSims)
+logJointEvid0sf_vec = rep(NA, numSims)
+logJointEvid1sf_vec = rep(NA, numSims)
+logJointEvid0unif_vec = rep(NA, numSims)
+logJointEvid1unif_vec = rep(NA, numSims)
 
-# generate mmed and compute RSS0 and RSS1 for mmed and space_fill each
+# run simulations
 seed = 1
 for(i in 1:numSims){
   set.seed(seed + i)
   # get y_train
   y_seq = y_seq_mat[ , i]
   y_train = y_seq[x_train_ind]
+  # get x_uniform
+  x_uniform_ind = sample(1:numx, N2)
+  x_uniform_ind_mat[ , i] = x_uniform_ind
+  x_uniform = x_seq[x_uniform_ind]
+  x_uniform_mat[ , i] = x_uniform
   
   # generate mmed
   # step 1:
@@ -383,7 +550,6 @@ for(i in 1:numSims){
                                              k = k, p = p, xmin = xmin, xmax = xmax, 
                                              nugget = nugget, alpha = alpha, buffer = 0, candidates = x_seq)
   step1_newpts = step1_mmed$addD
-  step1_truey = y_seq[step1_mmed$indices]
   
   x_train_new = c(x_train, step1_mmed$addD)
   x_train_ind_new = c(x_train_ind, step1_mmed$indices)
@@ -393,7 +559,6 @@ for(i in 1:numSims){
                                              k = k, p = p, xmin = xmin, xmax = xmax, 
                                              nugget = nugget, alpha = alpha, buffer = 0, candidates = x_seq)
   step2_newpts = step2_mmed$addD
-  step2_truey = y_seq[step2_mmed$indices]
   
   x_train_new = c(x_train_new, step2_mmed$addD)
   x_train_ind_new = c(x_train_ind_new, step2_mmed$indices)
@@ -403,7 +568,6 @@ for(i in 1:numSims){
                                              k = k, p = p, xmin = xmin, xmax = xmax, 
                                              nugget = nugget, alpha = alpha, buffer = 0, candidates = x_seq)
   step3_newpts = step3_mmed$addD
-  step3_truey = y_seq[step3_mmed$indices]
   
   x_train_new = c(x_train_new, step3_mmed$addD)
   x_train_ind_new = c(x_train_ind_new, step3_mmed$indices)
@@ -411,91 +575,169 @@ for(i in 1:numSims){
   
   mmed_gp_list[[i]] = list(step1_mmed, step2_mmed, step3_mmed)
   
-  # predictions using each model (using mmed)
+  # mmed inputs' predictions and evaluations
   newpts = c(step1_newpts, step2_newpts, step3_newpts)
   newpts_mat[ , i] = newpts
+  newpts_ind = c(step1_mmed$indices, step2_mmed$indices, step3_mmed$indices)
+  newpts_ind_mat[ , i] = newpts_ind
+  truey = y_seq[newpts_ind]
+  truey_mat[ , i] = truey
   H0_pred = getPredDistrSeq(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
   H1_pred = getPredDistrSeq(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
   postpredmu0 = H0_pred$pred_mean
   postpredmu1 = H1_pred$pred_mean
-  truey = c(step1_truey, step2_truey, step3_truey)
-  truey_mat[ , i] = truey
   # compute RSS0 and RSS1 for mmed
   RSS0mmed_vec[i] = sum((postpredmu0 - truey)^2)  
   RSS1mmed_vec[i] = sum((postpredmu1 - truey)^2)
-  # compute log lik ratio for mmed (pred)
-  likH0 = dmvnorm(truey, mean = H0_pred$pred_mean, sigma = H0_pred$pred_var, log = TRUE)
-  likH1 = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
-  logLR01pred_mmed_vec[i] = likH0 - likH1
+  # compute log evidences (pred) for mmed
+  logPredEvid0mmed_vec[i] = dmvnorm(truey, mean = H0_pred$pred_mean, sigma = H0_pred$pred_var, log = TRUE)
+  logPredEvid1mmed_vec[i] = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
+  # compute log evidences (joint) for mmed
+  logJointEvid0mmed_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[1], l01[1])
+  logJointEvid1mmed_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[2], l01[2])
   
-  # space filling: (note: y_train is different for each function, which is why we need this in the loop)
-  # predictions using each model
+  # space-filling inputs' predictions and evaluations
+  # (note: y_train is different for each function, which is why we need this in the loop)
   newpts = x_spacefill
+  truey = y_seq[x_spacefill_ind]
   H0_pred = getPredDistrSeq(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
   H1_pred = getPredDistrSeq(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
   postpredmu0 = H0_pred$pred_mean
   postpredmu1 = H1_pred$pred_mean
-  truey = y_seq[x_spacefill_ind]
   # compute RSS0 and RSS1 for spacefilling
   RSS0sf_vec[i] = sum((postpredmu0 - truey)^2)  
   RSS1sf_vec[i] = sum((postpredmu1 - truey)^2)
-  # compute log lik ratio for spacefilling (pred)
-  likH0 = dmvnorm(truey, mean = H0_pred$pred_mean, sigma = H0_pred$pred_var, log = TRUE)
-  likH1 = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
-  logLR01pred_sf_vec[i] = likH0 - likH1
+  # compute log evidences (pred) for spacefilling
+  logPredEvid0sf_vec[i] = dmvnorm(truey, mean = H0_pred$pred_mean, sigma = H0_pred$pred_var, log = TRUE)
+  logPredEvid1sf_vec[i] = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
+  # compute log evidences (joint) for spacefilling
+  logJointEvid0sf_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[1], l01[1])
+  logJointEvid1sf_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[2], l01[2])
+  
+  # uniform inputs' predictions and evaluations
+  newpts = x_uniform
+  truey = y_seq[x_uniform_ind]
+  H0_pred = getPredDistrSeq(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
+  H1_pred = getPredDistrSeq(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
+  postpredmu0 = H0_pred$pred_mean
+  postpredmu1 = H1_pred$pred_mean
+  # compute RSS0 and RSS1 for uniform
+  RSS0unif_vec[i] = sum((postpredmu0 - truey)^2)  
+  RSS1unif_vec[i] = sum((postpredmu1 - truey)^2)
+  # compute log evidences (pred) for uniform
+  logPredEvid0unif_vec[i] = dmvnorm(truey, mean = H0_pred$pred_mean, sigma = H0_pred$pred_var, log = TRUE)
+  logPredEvid1unif_vec[i] = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
+  # compute log evidences (joint) for uniform
+  logJointEvid0unif_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[1], l01[1])
+  logJointEvid1unif_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[2], l01[2])
 }
 
-RSS01mmed_vec = RSS0mmed_vec/RSS1mmed_vec
-RSS01sf_vec = RSS0sf_vec/RSS1sf_vec
-
-train3sims = list("domain" = x_seq,
+train3sims = list("grid" = x_seq,
                   "sim_fns" = y_seq_mat,
                   "x_train" = x_train,
                   "x_train_ind" = x_train_ind,
+                  # save the 3 designs (post input pts) that we're comparing
                   "x_spacefill" = x_spacefill,
                   "x_spacefill_ind" = x_spacefill_ind,
+                  "x_uniform" = x_uniform_mat,
+                  "x_uniform_ind" = x_uniform_ind_mat,
                   "mmed_gp_list" = mmed_gp_list,
-                  "smmed_pts" = newpts_mat,
-                  "true_y" = truey_mat,
-                  "RSS01mmed_vec" = RSS01mmed_vec,
-                  "logLR01pred_mmed_vec" = logLR01pred_mmed_vec,
-                  "RSS01sf_vec" = RSS01sf_vec,
-                  "logLR01pred_sf_vec" = logLR01pred_sf_vec)
+                  "x_mmed" = newpts_mat,
+                  "x_mmed_ind" = newpts_ind_mat,
+                  "y_mmed" = truey_mat,
+                  # save evaluations for each of them also
+                  "RSS0mmed_vec" = RSS0mmed_vec,
+                  "RSS1mmed_vec" = RSS1mmed_vec,
+                  "RSS0sf_vec" = RSS0sf_vec,
+                  "RSS1sf_vec" = RSS1sf_vec,
+                  "RSS0unif_vec" = RSS0unif_vec,
+                  "RSS1unif_vec" = RSS1unif_vec,
+                  "RSS01mmed" = RSS0mmed_vec / RSS1mmed_vec,
+                  "RSS01sf" = RSS0sf_vec / RSS1sf_vec,
+                  "RSS01unif" = RSS0unif_vec / RSS1unif_vec,
+                  #
+                  "logPredEvid0mmed_vec" = logPredEvid0mmed_vec,
+                  "logPredEvid1mmed_vec" = logPredEvid1mmed_vec,
+                  "logPredEvid0sf_vec" = logPredEvid0sf_vec,
+                  "logPredEvid1sf_vec" = logPredEvid1sf_vec,
+                  "logPredEvid0unif_vec" = logPredEvid0unif_vec,
+                  "logPredEvid1unif_vec" = logPredEvid1unif_vec,
+                  "logPredEvid01mmed" = logPredEvid0mmed_vec - logPredEvid1mmed_vec,
+                  "logPredEvid01sf" = logPredEvid0sf_vec - logPredEvid1sf_vec,
+                  "logPredEvid01unif" = logPredEvid0unif_vec - logPredEvid1unif_vec,
+                  #
+                  "logJointEvid0mmed_vec" = logJointEvid0mmed_vec,
+                  "logJointEvid1mmed_vec" = logJointEvid1mmed_vec,
+                  "logJointEvid0sf_vec" = logJointEvid0sf_vec,
+                  "logJointEvid1sf_vec" = logJointEvid1sf_vec,
+                  "logJointEvid0unif_vec" = logJointEvid0unif_vec,
+                  "logJointEvid1unif_vec" = logJointEvid1unif_vec,
+                  "logJointEvid01mmed" = logJointEvid0mmed_vec - logJointEvid1mmed_vec,
+                  "logJointEvid01sf" = logJointEvid0sf_vec - logJointEvid1sf_vec,
+                  "logJointEvid01unif" = logJointEvid0unif_vec - logJointEvid1unif_vec)
 saveRDS(train3sims, paste(output_home,"mvp_seq_train3sims.rds", sep = ""))
 
 
+## INPUT SET 4 ##
 
-## TRAIN SET 4 ##
-
+# input set 4
 x_train_mat = matrix(NA, N, numSims)
 x_train_ind_mat = matrix(NA, N, numSims)
 
+# space-filling for input set 4
+x_spacefill_ind = floor(c(1, 1 + ((numx - 1)/(N2 - 1)) * 1:((numx - 1) / ((numx - 1)/(N2 - 1)))))
+x_spacefill = x_seq[x_spacefill_ind]
+
 # these get rewritten for each train set
+# uniform
+x_uniform_mat = matrix(NA, N2, numSims)
+x_uniform_ind_mat = matrix(NA, N2, numSims)
+# mmed output list (just in case)
 mmed_gp_list = list()
+# mmed points (x and y)
+newpts_mat = matrix(NA, N2, numSims)
+newpts_ind_mat = matrix(NA, N2, numSims)
+truey_mat = matrix(NA, N2, numSims)
+# RSS
 RSS0mmed_vec = rep(NA, numSims)
 RSS1mmed_vec = rep(NA, numSims)
 RSS0sf_vec = rep(NA, numSims)
 RSS1sf_vec = rep(NA, numSims)
-newpts_mat = matrix(NA, N2, numSims)
-truey_mat = matrix(NA, N2, numSims)
-# save log likelihood ratio (posterior predictive distr)
-logLR01pred_mmed_vec = rep(NA, numSims)
-logLR01pred_sf_vec = rep(NA, numSims)
+RSS0unif_vec = rep(NA, numSims)
+RSS1unif_vec = rep(NA, numSims)
+# log predictive density
+logPredEvid0mmed_vec = rep(NA, numSims)
+logPredEvid1mmed_vec = rep(NA, numSims)
+logPredEvid0sf_vec = rep(NA, numSims)
+logPredEvid1sf_vec = rep(NA, numSims)
+logPredEvid0unif_vec = rep(NA, numSims)
+logPredEvid1unif_vec = rep(NA, numSims)
+# log joint density
+logJointEvid0mmed_vec = rep(NA, numSims)
+logJointEvid1mmed_vec = rep(NA, numSims)
+logJointEvid0sf_vec = rep(NA, numSims)
+logJointEvid1sf_vec = rep(NA, numSims)
+logJointEvid0unif_vec = rep(NA, numSims)
+logJointEvid1unif_vec = rep(NA, numSims)
 
-# generate mmed and compute RSS0 and RSS1 for mmed and space_fill each
+# run simulations
 seed = 1
 for(i in 1:numSims){
   set.seed(seed + i)
   # get x_train
-  x_train_ind = sample(1:numx, N)
+  x_train_and_uniform_inds = sample(1:numx, Ntotal)
+  x_train_ind = x_train_and_uniform_inds[1:N]
   x_train_ind_mat[ , i] = x_train_ind
   x_train = x_seq[x_train_ind]
   x_train_mat[ , i] = x_train
-  x_spacefill_ind = floor(c(1, 1 + ((numx - 1)/(N2 - 1)) * 1:((numx - 1) / ((numx - 1)/(N2 - 1)))))
-  x_spacefill = x_seq[x_spacefill_ind]
   # get y_train
   y_seq = y_seq_mat[ , i]
   y_train = y_seq[x_train_ind]
+  # get x_uniform
+  x_uniform_ind = x_train_and_uniform_inds[(N+1):Ntotal]
+  x_uniform_ind_mat[ , i] = x_uniform_ind
+  x_uniform = x_seq[x_uniform_ind]
+  x_uniform_mat[ , i] = x_uniform
   
   # generate mmed
   # step 1:
@@ -503,7 +745,6 @@ for(i in 1:numSims){
                                              k = k, p = p, xmin = xmin, xmax = xmax, 
                                              nugget = nugget, alpha = alpha, buffer = 0, candidates = x_seq)
   step1_newpts = step1_mmed$addD
-  step1_truey = y_seq[step1_mmed$indices]
   
   x_train_new = c(x_train, step1_mmed$addD)
   x_train_ind_new = c(x_train_ind, step1_mmed$indices)
@@ -513,7 +754,6 @@ for(i in 1:numSims){
                                              k = k, p = p, xmin = xmin, xmax = xmax, 
                                              nugget = nugget, alpha = alpha, buffer = 0, candidates = x_seq)
   step2_newpts = step2_mmed$addD
-  step2_truey = y_seq[step2_mmed$indices]
   
   x_train_new = c(x_train_new, step2_mmed$addD)
   x_train_ind_new = c(x_train_ind_new, step2_mmed$indices)
@@ -523,7 +763,6 @@ for(i in 1:numSims){
                                              k = k, p = p, xmin = xmin, xmax = xmax, 
                                              nugget = nugget, alpha = alpha, buffer = 0, candidates = x_seq)
   step3_newpts = step3_mmed$addD
-  step3_truey = y_seq[step3_mmed$indices]
   
   x_train_new = c(x_train_new, step3_mmed$addD)
   x_train_ind_new = c(x_train_ind_new, step3_mmed$indices)
@@ -531,56 +770,109 @@ for(i in 1:numSims){
   
   mmed_gp_list[[i]] = list(step1_mmed, step2_mmed, step3_mmed)
   
-  # predictions using each model (using mmed)
+  # mmed inputs' predictions and evaluations
   newpts = c(step1_newpts, step2_newpts, step3_newpts)
   newpts_mat[ , i] = newpts
+  newpts_ind = c(step1_mmed$indices, step2_mmed$indices, step3_mmed$indices)
+  newpts_ind_mat[ , i] = newpts_ind
+  truey = y_seq[newpts_ind]
+  truey_mat[ , i] = truey
   H0_pred = getPredDistrSeq(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
   H1_pred = getPredDistrSeq(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
   postpredmu0 = H0_pred$pred_mean
   postpredmu1 = H1_pred$pred_mean
-  truey = c(step1_truey, step2_truey, step3_truey)
-  truey_mat[ , i] = truey
   # compute RSS0 and RSS1 for mmed
   RSS0mmed_vec[i] = sum((postpredmu0 - truey)^2)  
   RSS1mmed_vec[i] = sum((postpredmu1 - truey)^2)
-  # compute log lik ratio for mmed (pred)
-  likH0 = dmvnorm(truey, mean = H0_pred$pred_mean, sigma = H0_pred$pred_var, log = TRUE)
-  likH1 = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
-  logLR01pred_mmed_vec[i] = likH0 - likH1
+  # compute log evidences (pred) for mmed
+  logPredEvid0mmed_vec[i] = dmvnorm(truey, mean = H0_pred$pred_mean, sigma = H0_pred$pred_var, log = TRUE)
+  logPredEvid1mmed_vec[i] = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
+  # compute log evidences (joint) for mmed
+  logJointEvid0mmed_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[1], l01[1])
+  logJointEvid1mmed_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[2], l01[2])
   
-  # space filling: (note: y_train is different for each function, which is why we need this in the loop)
-  # predictions using each model
+  # space-filling inputs' predictions and evaluations
+  # (note: y_train is different for each function, which is why we need this in the loop)
   newpts = x_spacefill
+  truey = y_seq[x_spacefill_ind]
   H0_pred = getPredDistrSeq(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
   H1_pred = getPredDistrSeq(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
   postpredmu0 = H0_pred$pred_mean
   postpredmu1 = H1_pred$pred_mean
-  truey = y_seq[x_spacefill_ind]
   # compute RSS0 and RSS1 for spacefilling
   RSS0sf_vec[i] = sum((postpredmu0 - truey)^2)  
   RSS1sf_vec[i] = sum((postpredmu1 - truey)^2)
-  # compute log lik ratio for spacefilling (pred)
-  likH0 = dmvnorm(truey, mean = H0_pred$pred_mean, sigma = H0_pred$pred_var, log = TRUE)
-  likH1 = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
-  logLR01pred_sf_vec[i] = likH0 - likH1
+  # compute log evidences (pred) for spacefilling
+  logPredEvid0sf_vec[i] = dmvnorm(truey, mean = H0_pred$pred_mean, sigma = H0_pred$pred_var, log = TRUE)
+  logPredEvid1sf_vec[i] = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
+  # compute log evidences (joint) for spacefilling
+  logJointEvid0sf_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[1], l01[1])
+  logJointEvid1sf_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[2], l01[2])
+  
+  # uniform inputs' predictions and evaluations
+  newpts = x_uniform
+  truey = y_seq[x_uniform_ind]
+  H0_pred = getPredDistrSeq(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
+  H1_pred = getPredDistrSeq(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
+  postpredmu0 = H0_pred$pred_mean
+  postpredmu1 = H1_pred$pred_mean
+  # compute RSS0 and RSS1 for uniform
+  RSS0unif_vec[i] = sum((postpredmu0 - truey)^2)  
+  RSS1unif_vec[i] = sum((postpredmu1 - truey)^2)
+  # compute log evidences (pred) for uniform
+  logPredEvid0unif_vec[i] = dmvnorm(truey, mean = H0_pred$pred_mean, sigma = H0_pred$pred_var, log = TRUE)
+  logPredEvid1unif_vec[i] = dmvnorm(truey, mean = H1_pred$pred_mean, sigma = H1_pred$pred_var, log = TRUE)
+  # compute log evidences (joint) for uniform
+  logJointEvid0unif_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[1], l01[1])
+  logJointEvid1unif_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[2], l01[2])
 }
 
 RSS01mmed_vec = RSS0mmed_vec/RSS1mmed_vec
 RSS01sf_vec = RSS0sf_vec/RSS1sf_vec
 
-train4sims = list("domain" = x_seq,
+train4sims = list("grid" = x_seq,
                   "sim_fns" = y_seq_mat,
                   "x_train" = x_train_mat,
                   "x_train_ind" = x_train_ind_mat,
+                  # save the 3 designs (post input pts) that we're comparing
                   "x_spacefill" = x_spacefill,
                   "x_spacefill_ind" = x_spacefill_ind,
+                  "x_uniform" = x_uniform_mat,
+                  "x_uniform_ind" = x_uniform_ind_mat,
                   "mmed_gp_list" = mmed_gp_list,
-                  "smmed_pts" = newpts_mat,
-                  "true_y" = truey_mat,
-                  "RSS01mmed_vec" = RSS01mmed_vec,
-                  "logLR01pred_mmed_vec" = logLR01pred_mmed_vec,
-                  "RSS01sf_vec" = RSS01sf_vec,
-                  "logLR01pred_sf_vec" = logLR01pred_sf_vec)
+                  "x_mmed" = newpts_mat,
+                  "x_mmed_ind" = newpts_ind_mat,
+                  "y_mmed" = truey_mat,
+                  # save evaluations for each of them also
+                  "RSS0mmed_vec" = RSS0mmed_vec,
+                  "RSS1mmed_vec" = RSS1mmed_vec,
+                  "RSS0sf_vec" = RSS0sf_vec,
+                  "RSS1sf_vec" = RSS1sf_vec,
+                  "RSS0unif_vec" = RSS0unif_vec,
+                  "RSS1unif_vec" = RSS1unif_vec,
+                  "RSS01mmed" = RSS0mmed_vec / RSS1mmed_vec,
+                  "RSS01sf" = RSS0sf_vec / RSS1sf_vec,
+                  "RSS01unif" = RSS0unif_vec / RSS1unif_vec,
+                  #
+                  "logPredEvid0mmed_vec" = logPredEvid0mmed_vec,
+                  "logPredEvid1mmed_vec" = logPredEvid1mmed_vec,
+                  "logPredEvid0sf_vec" = logPredEvid0sf_vec,
+                  "logPredEvid1sf_vec" = logPredEvid1sf_vec,
+                  "logPredEvid0unif_vec" = logPredEvid0unif_vec,
+                  "logPredEvid1unif_vec" = logPredEvid1unif_vec,
+                  "logPredEvid01mmed" = logPredEvid0mmed_vec - logPredEvid1mmed_vec,
+                  "logPredEvid01sf" = logPredEvid0sf_vec - logPredEvid1sf_vec,
+                  "logPredEvid01unif" = logPredEvid0unif_vec - logPredEvid1unif_vec,
+                  #
+                  "logJointEvid0mmed_vec" = logJointEvid0mmed_vec,
+                  "logJointEvid1mmed_vec" = logJointEvid1mmed_vec,
+                  "logJointEvid0sf_vec" = logJointEvid0sf_vec,
+                  "logJointEvid1sf_vec" = logJointEvid1sf_vec,
+                  "logJointEvid0unif_vec" = logJointEvid0unif_vec,
+                  "logJointEvid1unif_vec" = logJointEvid1unif_vec,
+                  "logJointEvid01mmed" = logJointEvid0mmed_vec - logJointEvid1mmed_vec,
+                  "logJointEvid01sf" = logJointEvid0sf_vec - logJointEvid1sf_vec,
+                  "logJointEvid01unif" = logJointEvid0unif_vec - logJointEvid1unif_vec)
 saveRDS(train4sims, paste(output_home,"mvp_seq_train4sims.rds", sep = ""))
 
 

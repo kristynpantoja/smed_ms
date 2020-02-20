@@ -5,6 +5,7 @@
 # require("posterior_mean.R")
 # require("posterior_variance.R")
 # require("simulate_y.R")
+# require("generate_MED_oneatatime.R")
 
 
 simulate_seqMED = function(true_beta, true_type, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 

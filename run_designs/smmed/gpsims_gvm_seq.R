@@ -829,9 +829,6 @@ for(i in 1:numSims){
   logJointEvid1unif_vec[i] = logjointlik(newpts, truey, x_train, y_train, type01[2], l01[2])
 }
 
-RSS01mmed_vec = RSS0mmed_vec/RSS1mmed_vec
-RSS01sf_vec = RSS0sf_vec/RSS1sf_vec
-
 train4sims = list("grid" = x_seq,
                   "sim_fns" = y_seq_mat,
                   "x_train" = x_train_mat,

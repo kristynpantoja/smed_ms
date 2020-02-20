@@ -54,10 +54,10 @@ getCov = function(X1, X2, type = 1, l = 1){
     X1 = as.matrix(X1)
     X2 = as.matrix(X2)
   }
-  Sigma <- matrix(NA, nrow=dim(X1)[1], ncol = dim(X2)[1])
+  Sigma = matrix(NA, nrow=dim(X1)[1], ncol = dim(X2)[1])
   for (i in 1:nrow(Sigma)) {
     for (j in 1:ncol(Sigma)) {
-      Sigma[i,j] = phi(X1[i, ], X2[j, ], l)
+      Sigma[i,j] = phi(X1[i, , drop = FALSE], X2[j, , drop = FALSE], l)
     }
   }
   return(Sigma)

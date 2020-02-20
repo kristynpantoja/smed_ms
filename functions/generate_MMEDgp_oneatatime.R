@@ -14,6 +14,14 @@ f_min_data_gp = function(candidate, D, Kinv0, Kinv1, initD, y, var_e, type, l, p
   return(result)
 }
 
+f_min_data_gp2 = function(candidate, D, Kinv0, Kinv1, subinitD, initD, y, var_e, type, l, p, alpha, buffer){
+  result = q_data_gp2(candidate, Kinv0, Kinv1, subinitD, initD, y, var_e, type, l, p, 
+                     alpha, buffer)^k * 
+    sum(sapply(D, function(x_i) (q_data_gp2(x_i, Kinv0, Kinv1, subinitD, initD, y, var_e, type, l, p, 
+                                           alpha, buffer) / sqrt((x_i - candidate)^2))^k))
+  return(result)
+}
+
 add_MED_ms_oneatatime_data_gp = function(initD, y, type, l, var_e, N2 = 11, numCandidates = 10^5, k = 4, p = 2, 
                                          xmin = 0, xmax = 1, nugget = NULL, alpha = NULL, buffer = 0, 
                                          genCandidates = 1, candidates = NULL){
@@ -99,26 +107,42 @@ add_MED_ms_oneatatime_data_gp = function(initD, y, type, l, var_e, N2 = 11, numC
 }
 
 # meant to be able to handle multiple dimensional input, for variable selection problem
-add_MED_ms_oneatatime_data_gp2 = function(initD, y, type, l, var_e, N2 = 11, numCandidates = 10^5, k = 4, p = 2, 
+add_MED_ms_oneatatime_data_gp2 = function(initD, y, type, l, subdim = NULL, var_e, N2 = 11, numCandidates = 10^5, k = 4, p = 2, 
                                          xmin = 0, xmax = 1, nugget = NULL, alpha = NULL, buffer = 0, 
                                          genCandidates = 1, candidates = NULL){
+  # later, put some checks that things (like expand.grid) are matrices, NOT data frames!
+  
   initN = dim(initD)[1]
   if(length(y) != initN) stop("length of y does not match length of initial input data, initD")
   
   # check if any points in initD give Wasserstein distance of 0 (in which case we don't want to use it since 1/0 in q)
   old_initD = initD
-  
-  # posterior distribution of beta
-  if(is.null(nugget)){
-    Kinv0 = solve(getCov(initD, initD, type[1], l[1]))
-    Kinv1 = solve(getCov(initD, initD, type[2], l[2]))
-  } else{
-    Kinv0 = solve(getCov(initD, initD, type[1], l[1]) + diag(rep(nugget, length(initD))))
-    Kinv1 = solve(getCov(initD, initD, type[2], l[2]) + diag(rep(nugget, length(initD))))
-  }
-  
   ttlN = initN + N2
-  
+  subinitD = NULL
+  # posterior distribution of beta
+  if(type[1] == type[2]){
+    if(!is.null(subdim)){
+      subinitD = initD[ , subdim, drop = FALSE]
+    } else{
+      warning("types are the same, but subdim was not given; assumed to be V1")
+      subinitD = initD[ , 1, drop = FALSE]
+    }
+    if(is.null(nugget)){
+      Kinv0 = solve(getCov(subinitD, subinitD, type[1], l[1]))
+      Kinv1 = solve(getCov(initD, initD, type[2], l[2]))
+    } else{
+      Kinv0 = solve(getCov(subinitD, subinitD, type[1], l[1]) + diag(rep(nugget, dim(subinitD)[1])))
+      Kinv1 = solve(getCov(initD, initD, type[2], l[2]) + diag(rep(nugget, length(initD))))
+    }
+  } else{
+    if(is.null(nugget)){
+      Kinv0 = solve(getCov(initD, initD, type[1], l[1]))
+      Kinv1 = solve(getCov(initD, initD, type[2], l[2]))
+    } else{
+      Kinv0 = solve(getCov(initD, initD, type[1], l[1]) + diag(rep(nugget, length(initD))))
+      Kinv1 = solve(getCov(initD, initD, type[2], l[2]) + diag(rep(nugget, length(initD))))
+    }
+  }
   
   # -- Generate Candidate Points -- #
   if(!is.null(candidates)){
@@ -133,13 +157,14 @@ add_MED_ms_oneatatime_data_gp2 = function(initD, y, type, l, var_e, N2 = 11, num
       candidates = expand.grid(candidates_marginal, candidates_marginal)
     }
   }
+  candidates = as.matrix(candidates)
   
   # -- Initialize 1st additional design point-- #
-  D = matrix(rep(NA, N * 2), N, 2)
+  D = matrix(rep(NA, N2 * 2), N2, 2)
   D_ind = rep(NA, N2)
-  w_evals = apply(candidates, 1, FUN = function(x) Wasserstein_distance_postpred_gp(x, Kinv0, Kinv1, initD, y, var_e, type, l))
+  w_evals = apply(candidates, 1, FUN = function(x) Wasserstein_distance_postpred_gp2(x, Kinv0, Kinv1, subinitD, initD, y, var_e, type, l))
   xoptindex = which.max(w_evals)
-  xopt = candidates[xoptindex]
+  xopt = candidates[xoptindex, ]
   # I'm just gonna assume (and I think this is a safe assumption based on how Wasserstein was defined)
   # that the optimal point won't be one already in the initial design.
   D[1, ] = xopt
@@ -147,12 +172,13 @@ add_MED_ms_oneatatime_data_gp2 = function(initD, y, type, l, var_e, N2 = 11, num
   
   for(i in 2:N2){
     # Find f_opt: minimum of f_min
-    f_min_candidates = apply(candidates, 1, function(x) f_min_data_gp(x, D[1:(i - 1), , drop = FALSE], Kinv0, Kinv1, initD, y, var_e, type, l, p, alpha, buffer))
+    f_min_candidates = apply(candidates, 1, function(x) f_min_data_gp2(x, D[1:(i - 1), , drop = FALSE], Kinv0, Kinv1, subinitD, initD, y, var_e, type, l, p, alpha, buffer))
     f_opt = which.min(f_min_candidates)
     xnew = candidates[f_opt]
     # Update set of design points (D) and plot new point
     D[i, ] = xnew
     D_ind[i] = f_opt
+    print(D[i, ])
   }
   
   return(list("initD" = old_initD, "addD" = D, "updatedD" = c(old_initD, D), "q_initD" = initD, 

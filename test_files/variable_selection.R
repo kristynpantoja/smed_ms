@@ -35,16 +35,6 @@ x_seq = seq(from = xmin, to = xmax, length.out = numx) # set training points
 # input set designs
 N = 6; N2 = 15
 Ntotal = N + N2
-# 1. make space-filling design
-# space_filling = seq(from = xmin, to = xmax, length.out = Ntotal)
-space_filling_ind = c(1, 1 + ((numx - 1)/(Ntotal - 1)) * 1:((numx - 1) / ((numx - 1)/(Ntotal - 1))))
-space_filling = x_seq[space_filling_ind]
-
-# input set 1
-x_train1_ind = space_filling_ind[1:N]
-x_train1 = x_seq[x_train1_ind]
-x_spacefill1_ind = space_filling_ind[-c(1:N)]
-x_spacefill1 = x_seq[x_spacefill1_ind]
 
 # MMED parameters for testing
 l01= c(0.1, 0.1)
@@ -56,12 +46,9 @@ nugget = NULL
 alpha = 1
 
 # input set 1
-x_train = x_train1
-x_train_ind = x_train1_ind
-
-# space-filling for input set 1
-x_spacefill = x_spacefill1
-x_spacefill_ind = x_spacefill1_ind
+set.seed(6)
+x_train_ind = sample(1:numx, N)
+x_train = x_seq[x_train_ind]
 
 
 ### 1 DIMENSION vs 1 DIMENSION (comparing two different kernels)
@@ -138,9 +125,6 @@ train1sims_1v1 = list("grid" = x_seq,
                      "sim_fns" = y_seq_mat,
                      "x_train" = x_train,
                      "x_train_ind" = x_train_ind,
-                     # save the 3 designs (post input pts) that we're comparing
-                     "x_spacefill" = x_spacefill,
-                     "x_spacefill_ind" = x_spacefill_ind,
                      "mmed_gp_list" = mmed_gp_list,
                      "x_mmed" = newpts_mat,
                      "x_mmed_ind" = newpts_ind_mat,
@@ -158,16 +142,21 @@ train1sims_1v1 = list("grid" = x_seq,
 ##############################
 ##############################
 
+numx2 = 21
+x_seq2 = seq(from = xmin, to = xmax, length.out = numx2)
+x_grid = expand.grid(x_seq2, x_seq2)
 
-
+# using the designs we have will be tricky. just uniformly select points.
+set.seed(6)
+x_train_ind = sample(1:numx2, N) # figure out a better way to sample! ##############################
+x_train = x_grid[x_train_ind + numx2*(1:N), ]
+# x_grid[x_train_ind, ] 
+# x_grid[x_train_ind + numx2*(1:N), 1] # same 1st variable values
 
 ### 1 DIMENSION vs 2 DIMENSIONS
 type01 = c(1, 1)
 # generate matern functions (true dim = 2)
 set.seed(12)
-numx2 = 11
-x_seq2 = seq(from = xmin, to = xmax, length.out = numx2)
-x_grid = expand.grid(x_seq2, x_seq2)
 null_cov = getCov(x_grid, x_grid, type01[2], l01[2])
 null_mean = rep(0, numx2^2)
 seed = 1
@@ -175,7 +164,7 @@ set.seed(seed)
 y_seq_mat = t(rmvnorm(n = numSims, mean = null_mean, sigma = null_cov)) # the function values
 sim_index = 3
 quilt.plot(x_grid, y_seq_mat[ , sim_index])
-plot(x_grid[ , 2], y_seq_mat[ , sim_index])
+plot(x_grid[ , 1], y_seq_mat[ , sim_index])
 # generate matern functions (true dim = 1)
 set.seed(12)
 numx2 = 11
@@ -189,13 +178,12 @@ y_seq_mat_1d = t(rmvnorm(n = numSims, mean = null_mean, sigma = null_cov)) # the
 # expand to 2 dims
 y_seq_mat_grid = matrix(NA, nrow = numx2^2, ncol = numSims)
 for(i in 1:numSims){
-  expanded = expand.grid(y_seq_mat[ , i], y_seq_mat[ , i])
+  expanded = expand.grid(y_seq_mat_1d[ , i], y_seq_mat_1d[ , i])
   y_seq_mat_grid[ , i] = expanded[ , 1]
 }
-# sim_index = 3
-# y_grid = expand.grid(y_seq_mat[ , sim_index], y_seq_mat[ , sim_index])
-# quilt.plot(x_grid, y_grid[ , 1])
-# quilt.plot(x_grid, y_grid[ , 2])
+sim_index = 3
+quilt.plot(x_grid, y_seq_mat_grid[ , sim_index])
+plot(x_grid[ , 1], y_seq_mat_grid[ , sim_index])
 
 # mmed output list (just in case)
 mmed_gp_list = list()
@@ -219,7 +207,7 @@ for(i in 1:numSims){
   y_train = y_seq[x_train_ind]
   
   # generate mmed
-  mmed_gp_list[[i]] = add_MED_ms_oneatatime_data_gp(x_train, y_train, type01, l01, var_e = 1, N2 = N2, 
+  mmed_gp_list[[i]] = add_MED_ms_oneatatime_data_gp2(x_train, y_train, type01, l01, subdim = 1, var_e = 1, N2 = N2, 
                                                     k = k, p = p, xmin = xmin, xmax = xmax, 
                                                     nugget = nugget, alpha = alpha, buffer = 0, candidates = x_seq)
   

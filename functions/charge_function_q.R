@@ -32,6 +32,14 @@ q_data_gp = function(x, Kinv0, Kinv1, initD, y, var_e, type, l, p, alpha = NULL,
   return(1.0 / (Wass_dist + buffer)^q_exponent)
 }
 
+q_data_gp2 = function(x, Kinv0, Kinv1, subinitD, initD, y, var_e, type, l, p, alpha = NULL, buffer = 0){
+  if(length(type) != 2) stop("type should be vector with length == 2")
+  if(is.null(alpha)) alpha = 1
+  Wass_dist = Wasserstein_distance_postpred_gp2(x, Kinv0, Kinv1, subinitD, initD, y, var_e, type, l)
+  q_exponent = alpha / (2 * p)
+  return(1.0 / (Wass_dist + buffer)^q_exponent)
+}
+
 # q_data_gp_NEW = function(x, Kc0, Kc1, initD, y, var_e, type, l, p, alpha = NULL, buffer = 0){
 #   if(length(type) != 2) stop("type should be vector with length == 2")
 #   if(is.null(alpha)) alpha = 1

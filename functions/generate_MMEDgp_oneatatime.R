@@ -170,6 +170,14 @@ add_MED_ms_oneatatime_data_gp2 = function(initD, y, type, l, subdim = NULL, var_
   D[1, ] = xopt
   D_ind[1] = xoptindex
   
+  
+  # temporarily, since uses global variables #########################################
+  # quilt.plot(x_grid, y_seq)
+  # plot(x_grid[ , 1], y_seq, ylim = range(y_seq))
+  # order_truef = order(x_grid[,1])
+  # lines(x_grid[order_truef,1], y_seq_mat_grid[order_truef,sim_index])
+  # points(D[1, 1], y_seq[D_ind[1]], col = 2)
+  #####################################################################################
   for(i in 2:N2){
     # Find f_opt: minimum of f_min
     f_min_candidates = apply(candidates, 1, function(x) f_min_data_gp2(x, D[1:(i - 1), , drop = FALSE], Kinv0, Kinv1, subinitD, initD, y, var_e, type, l, p, alpha, buffer))
@@ -178,7 +186,10 @@ add_MED_ms_oneatatime_data_gp2 = function(initD, y, type, l, subdim = NULL, var_
     # Update set of design points (D) and plot new point
     D[i, ] = xnew
     D_ind[i] = f_opt
-    print(D[i, ])
+    # print(D[i, ])
+    # temporarily, since uses global variables ##########################################
+    # points(D[i, 1], y_seq[D_ind[i]], col = 2)
+    #####################################################################################
   }
   
   return(list("initD" = old_initD, "addD" = D, "updatedD" = c(old_initD, D), "q_initD" = initD, 

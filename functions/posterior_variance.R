@@ -1,6 +1,6 @@
 # require("construct_design_matrix.R")
 
-# for 1 and 2 dimensions
+# for 1 or multiple dimensions
 
 ##################
 ### evaluate D ###
@@ -8,7 +8,7 @@
 
 ### --- Posterior Variance --- ###
 
-postvar = function(D, N, var_e, var_beta, type, diagPrior = TRUE){
+postvar = function(D, N, var_e, var_beta, type = NULL, diagPrior = TRUE){
   X = constructDesignX(D, N, type)
   if(is.null(dim(X)) | (dim(X)[2] == 1)){ # if X has one dimension
     if(diagPrior == TRUE) return(var_e * solve(crossprod(X) + var_e * (1 / var_beta)))

@@ -24,6 +24,14 @@ q_data2 = function(x, postmean0, postmean1, postvar0, postvar1, var_e, type, p, 
   return(1.0 / (Wass_dist + buffer)^q_exponent)
 }
 
+# q_data_multidim = function(x, postmean0, postmean1, postvar0, postvar1, var_e, type, p, alpha = NULL, buffer = 0){
+#   if(length(type) != 2) stop("type should be vector with length == 2")
+#   if(is.null(alpha)) alpha = 1
+#   Wass_dist = Wasserstein_distance_postpred_multidim(x, postmean0, postmean1, postvar0, postvar1, var_e, type)
+#   q_exponent = alpha / (2 * p)
+#   return(1.0 / (Wass_dist + buffer)^q_exponent)
+# }
+
 q_data_gp = function(x, Kinv0, Kinv1, initD, y, var_e, type, l, p, alpha = NULL, buffer = 0){
   if(length(type) != 2) stop("type should be vector with length == 2")
   if(is.null(alpha)) alpha = 1

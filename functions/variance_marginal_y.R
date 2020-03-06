@@ -1,4 +1,11 @@
 # Var[y | H_m], after marginalizing out \beta, for some hypothesis m
+var_marginaly_multidim = function(x, var_mean, var_e){
+  as.vector(x)
+  vars = diag(var_mean)
+  if(length(x) != length(vars)) stop("dimension of x and var_beta don't match! (one of them != p)")
+  sum(vars * x^2) + var_e
+}
+
 var_marginaly = function(x, var_mean, var_e, type, var_margy){
   # type:
   #   1 for linear model without slope

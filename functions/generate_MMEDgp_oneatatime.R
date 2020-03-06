@@ -14,7 +14,7 @@ f_min_data_gp = function(candidate, D, Kinv0, Kinv1, initD, y, var_e, type, l, p
   return(result)
 }
 
-add_MED_ms_oneatatime_data_gp = function(initD, y, type, l, var_e, N2 = 11, numCandidates = 10^5, k = 4, p = 2, 
+add_MED_ms_oneatatime_data_gp = function(initD, y, type, l, var_e, N2 = 11, numCandidates = 10^5, k = 4, p = 1, 
                                          xmin = 0, xmax = 1, nugget = NULL, alpha = NULL, buffer = 0, 
                                          genCandidates = 1, candidates = NULL){
   initN = length(initD)
@@ -111,11 +111,11 @@ add_MED_ms_oneatatime_data_gp = function(initD, y, type, l, var_e, N2 = 11, numC
 f_min_data_gp2 = function(candidate, D, Kinv0, Kinv1, subinitD, initD, y, var_e, type, l, p, alpha, buffer){
   result = q_data_gp2(candidate, Kinv0, Kinv1, subinitD, initD, y, var_e, type, l, p, 
                       alpha, buffer)^k * 
-    sum(sapply(D, function(x_i) (q_data_gp2(x_i, Kinv0, Kinv1, subinitD, initD, y, var_e, type, l, p, 
-                                            alpha, buffer) / sqrt((x_i - candidate)^2))^k))
+    sum(apply(D, 1, function(x_i) (q_data_gp2(x_i, Kinv0, Kinv1, subinitD, initD, y, var_e, type, l, p, 
+                                            alpha, buffer) / sqrt(sum((x_i - candidate)^2)))^k))
   return(result)
 }
-add_MED_ms_oneatatime_data_gp2 = function(initD, y, type, l, subdim = NULL, var_e, N2 = 11, numCandidates = 10^5, k = 4, p = 2, 
+add_MED_ms_oneatatime_data_gp2 = function(initD, y, type, l, subdim = NULL, var_e, N2 = 11, numCandidates = 10^5, k = 4, p = 1, 
                                          xmin = 0, xmax = 1, nugget = NULL, alpha = NULL, buffer = 0, 
                                          genCandidates = 1, candidates = NULL){
   # later, put some checks that things (like expand.grid) are matrices, NOT data frames!
@@ -190,7 +190,7 @@ add_MED_ms_oneatatime_data_gp2 = function(initD, y, type, l, subdim = NULL, var_
     # Find f_opt: minimum of f_min
     f_min_candidates = apply(candidates, 1, function(x) f_min_data_gp2(x, D[1:(i - 1), , drop = FALSE], Kinv0, Kinv1, subinitD, initD, y, var_e, type, l, p, alpha, buffer))
     f_opt = which.min(f_min_candidates)
-    xnew = candidates[f_opt]
+    xnew = candidates[f_opt, ]
     # Update set of design points (D) and plot new point
     D[i, ] = xnew
     D_ind[i] = f_opt

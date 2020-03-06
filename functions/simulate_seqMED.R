@@ -75,4 +75,3 @@ simulate_seqMED = function(true_beta, true_type, mean_beta0, mean_beta1, var_bet
   return(list("D" = D, "y" = y, "postvar0" = postvar0, "postmean0" = postmean0, 
               "postvar1" = postvar1, "postmean1" = postmean1))
 }
-

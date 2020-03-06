@@ -115,7 +115,7 @@ f_min_data2 = function(candidate, D, postmean0, postmean1, postvar0, postvar1, v
 add_MED_ms_oneatatime_data = function(initD, y, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
                                       f0 = NULL, f1 = NULL, type = NULL, N2 = 11, numCandidates = 10^5, k = 4, 
                                       xmin = 0, xmax = 1, p = 2, alpha = NULL, buffer = 0, 
-                                      wasserstein0 = 1, genCandidates = 1, 
+                                      wasserstein0 = 1, genCandidates = 1, candidates = NULL, 
                                       var_margy0 = NULL, var_margy1 = NULL, log_space = FALSE){
   # var_margy0 and var_margy1 : functions that take in x, var_mean, var_e
   initN = length(initD)
@@ -212,8 +212,105 @@ add_MED_ms_oneatatime_data = function(initD, y, mean_beta0, mean_beta1, var_beta
 }
 
 
+# multidimensional case
+add_MED_ms_oneatatime_data_multidim = function(initD, y, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e,
+                                      f0 = NULL, f1 = NULL, type = NULL, N2 = 11, numCandidates = 10^5, k = 4,
+                                      xmin = 0, xmax = 1, p = 2, alpha = NULL, buffer = 0, candidates = NULL,
+                                      wasserstein0 = 1, genCandidates = 1, log_space = FALSE){
 
+  # var_margy0 and var_margy1 : functions that take in x, var_mean, var_e
+  initN = length(initD)
+  if(length(y) != initN) stop("length of y does not match length of initial input data, initD")
 
+  # check if any points in initD give Wasserstein distance of 0 (in which case we don't want to use it since 1/0 in q)
+  old_initD = initD
+
+  # posterior distribution of beta
+  postvar0 = postvar(initD, initN, var_e, var_beta0, type[1])
+  postmean0 = postmean(y, initD, initN, mean_beta0, var_beta0, var_e, type[1])
+  postvar1 = postvar(initD, initN, var_e, var_beta1, type[2])
+  postmean1 = postmean(y, initD, initN, mean_beta1, var_beta1, var_e, type[2])
+
+  if(wasserstein0 == 1){
+    w_initD = sapply(initD, FUN = function(x) Wasserstein_distance_postpred_multidim(x, postmean0, postmean1, postvar0, postvar1, var_e, type))
+    if(length(which(w_initD == 0)) != 0){
+      initD = initD[-which(w_initD == 0)]
+      y = y[-which(w_initD == 0)]
+      w_initD = w_initD[-which(w_initD == 0)]
+      postvar0 = postvar(initD, initN, var_e, var_beta0, type[1])
+      postmean0 = postmean(y, initD, initN, mean_beta0, var_beta0, var_e, type[1])
+      postvar1 = postvar(initD, initN, var_e, var_beta1, type[2])
+      postmean1 = postmean(y, initD, initN, mean_beta1, var_beta1, var_e, type[2])
+    }
+  }
+  if(wasserstein0 == 2){
+    if(buffer == 0) warning("Buffer = 0, but wasserstein0 = 2; will assign Buffer = 0.0001")
+    buffer == 0.0001
+  }
+
+  # other variables and checks
+  initN = length(initD)
+  ttlN = initN + N2
+  # if(is.null(type) & is.null(f0) & is.null(f1) & is.null(var_margy0) & is.null(var_margy0)) stop("must specify model type and/or model")
+  #
+  # # Create hypothesized models
+  # if(is.null(f0)){
+  #   if(type[1] == 1) f0 = function(x) mean_beta0 * x
+  #   else if(type[1] == 2) f0 = function(x) mean_beta0[1] + mean_beta0[2] * x
+  #   else if(type[1] == 3) f0 = function(x) mean_beta0[1] + mean_beta0[2] * x + mean_beta0[3] * x^2
+  #   else stop("type[1] is invalid and f0 is not provided")
+  # }
+  # if(is.null(f1)){
+  #   if(type[2] == 1) f1 = function(x) mean_beta1 * x
+  #   else if(type[2] == 2) f1 = function(x) mean_beta1[1] + mean_beta1[2] * x
+  #   else if(type[2] == 3) f1 = function(x) mean_beta1[1] + mean_beta1[2] * x + mean_beta1[3] * x^2
+  #   else stop("type[2] is invalid and f1 is not provided")
+  # }
+
+  # -- Generate Candidate Points -- #
+  if(genCandidates == 1) candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
+  if(genCandidates == 2) candidates = sort(runif(numCandidates, min = xmin, max = xmax))
+
+  # -- Initialize 1st additional design point-- #
+  D = rep(NA, N2)
+  # wass_dist_fun = function(x){
+  #   distr1.mu = f0(x)
+  #   distr1.var = var_marginaly(x, var_beta0, var_e, type = type[1], var_margy0)
+  #   distr2.mu = f1(x)
+  #   distr2.var = var_marginaly(x, var_beta1, var_e, type = type[2], var_margy1)
+  #   wass_dist = Wasserstein_distance(distr1.mu, distr2.mu, distr1.var, distr2.var)
+  #   return(wass_dist)
+  # }
+  # max.sep.loc2 = optimize(wass_dist_fun, lower=xmin, upper=xmax, maximum = TRUE)$maximum
+  # D[1] = max.sep.loc2
+  # this does the same thing: but may want to do the above if we want to save wasserstein distances
+  # to make the code run raster at some point. for now, do this.
+  optimal_q = optimize(function(x) q_data_multidim(x, postmean0, postmean1, postvar0, postvar1, var_e, type, p,
+                                           alpha, buffer), interval = c(xmin, xmax))$minimum
+  xopt = optimal_q
+  is_x_max_in_initD = any(sapply(initD, function(x) x == xopt)) # give tolerance?
+  if(is_x_max_in_initD){
+    # Find f_opt: minimum of f_min
+    f_min_candidates = sapply(candidates, function(x) f_min_data2(x, initD, postmean0, postmean1, postvar0, postvar1, var_e, type, p, alpha, buffer))
+    f_opt = which.min(f_min_candidates)
+    xnew = candidates[f_opt]
+    # Update set of design points (D) and plot new point
+    D[1] = xnew
+  } else{
+    D[1] = xopt
+  }
+
+  for(i in 2:N2){
+    # Find f_opt: minimum of f_min
+    f_min_candidates = sapply(candidates, function(x) f_min_data2(x, c(initD, D[1:(i - 1)]), postmean0, postmean1, postvar0, postvar1, var_e, type, p, alpha, buffer))
+    f_opt = which.min(f_min_candidates)
+    xnew = candidates[f_opt]
+    # Update set of design points (D) and plot new point
+    D[i] = xnew
+  }
+
+  return(list("initD" = old_initD, "addD" = D, "updatedD" = c(old_initD, D), "q_initD" = initD))
+}
 
 
 

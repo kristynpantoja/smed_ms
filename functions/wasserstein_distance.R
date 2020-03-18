@@ -19,36 +19,16 @@ Wasserstein_distance = function(mu1, mu2, var1, var2, dim = 1){
 }
 
 
-# Wasserstein_distance_gp = function(mu1, mu2, var1, var2, dim = 1){
-#   # Normal(mu1, var1)
-#   # Normal(mu2, var2)
-#   # dim:
-#   #   1 is for univariate case
-#   #   > 1 is for multivariate case
-#   if(dim == 1){
-#     wass = tryCatch({sqrt((mu1 - mu2)^2 + (sqrt(var1) - sqrt(var2))^2)}, 
-#                     warning = function(warn) {0})
-#   } else{
-#     if(dim > 1){
-#       sqrt_var2 = sqrtm(var2)
-#       wass = tryCatch({sqrt(crossprod(mu1 - mu2) + 
-#                               sum(diag(var1 + var2 - 
-#                                          2 * sqrtm(sqrt_var2 %*% var1 %*% sqrt_var2))))}, 
-#                       error = function(e) {0})
-#         
-#     } else{
-#       stop("invalid dim")
-#     }
-#   }
-#   return(as.numeric(wass))
-# }
-
 
 # require("posterior_mean.R")
 # require("construct_design_matrix.R")
 # require("posterior_variance.R")
 
+####################################################################
+### MMED with data (uses posterior predictive distribution of y) ###
+####################################################################
 
+# 1 dimension, or with transformations of x
 Wasserstein_distance_postpred2 = function(x, postmean0, postmean1, postvar0, postvar1, var_e, type, dim = 1){
   
   # posterior distribution of beta
@@ -66,6 +46,30 @@ Wasserstein_distance_postpred2 = function(x, postmean0, postmean1, postvar0, pos
   return(as.numeric(wass))
 }
 
+# multidimensional 
+Wasserstein_distance_postpred_multidim = function(x, indices0, indices1, postmean0, postmean1, postvar0, postvar1, var_e, dim = 1){
+  # Wasserstein_distance_postpred2(x, postmean0, postmean1, postvar0, postvar1, var_e, type = c(NULL, NULL), dim = 1)
+  
+  # posterior distribution of beta
+  x0 = t(constructDesignX(x, 1, NULL))[ , indices0]
+  x1 = t(constructDesignX(x, 1, NULL))[ , indices1]
+  
+  # posterior predictive distribution of y, for candidate x
+  postpredmu0 = t(x0) %*% postmean0
+  postpredvar0 = t(x0) %*% postvar0 %*% x0 + var_e
+  
+  postpredmu1 = t(x1) %*% postmean1
+  postpredvar1 = t(x1) %*% postvar1 %*% x1 + var_e
+  
+  wass = Wasserstein_distance(postpredmu0, postpredmu1, postpredvar0, postpredvar1)
+  return(as.numeric(wass))
+}
+
+###############################################
+### MMED GP, one-at-a-time greedy algorithm ###
+###############################################
+
+# compare covariance functions or other parameters in 1 dimension
 Wasserstein_distance_postpred_gp = function(x, Kinv0, Kinv1, initD, y, var_e, type, l){
   
   # posterior distribution of beta
@@ -85,6 +89,11 @@ Wasserstein_distance_postpred_gp = function(x, Kinv0, Kinv1, initD, y, var_e, ty
   return(as.numeric(wass))
 }
 
+################################################
+### MMED GP for Variable Selection, 1D vs 2D ###
+################################################
+
+# meant to be able to handle 2d dimensional input, for variable selection problem
 Wasserstein_distance_postpred_gp2 = function(x, Kinv0, Kinv1, subinitD = NULL, initD, y, var_e, type, l){
   x = as.matrix(x)
   if(dim(x)[1] !=1) x = t(x)

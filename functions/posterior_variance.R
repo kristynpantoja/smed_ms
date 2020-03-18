@@ -8,6 +8,7 @@
 
 ### --- Posterior Variance --- ###
 
+# works for multidimensional case too
 postvar = function(D, N, var_e, var_beta, type = NULL, diagPrior = TRUE){
   X = constructDesignX(D, N, type)
   if(is.null(dim(X)) | (dim(X)[2] == 1)){ # if X has one dimension
@@ -18,4 +19,3 @@ postvar = function(D, N, var_e, var_beta, type = NULL, diagPrior = TRUE){
     else return(var_e * solve(crossprod(X) + var_e * solve(var_beta)))
   }
 }
-

@@ -5,14 +5,14 @@
 # require("posterior_mean.R")
 # require("posterior_variance.R")
 # require("simulate_y.R")
-# require("generate_MED_oneatatime.R")
+# require("generate_MED_oneatatime.R")  
 
 
 simulate_seqMED = function(true_beta, true_type, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
                            f0 = NULL, f1 = NULL, type = NULL, numCandidates = 10^5, k = 4, 
-                           xmin = 0, xmax = 1, p = 2, 
+                           xmin = 0, xmax = 1, p = 1, 
                            numSeq = 5, N_seq = 10, alpha_seq = NULL, buffer_seq = 0, 
-                           wasserstein0 = 1, genCandidates = 1, seed = NULL){
+                           wasserstein0 = 1, genCandidates = 1, candidates = NULL, seed = NULL){
   if(is.null(alpha_seq)){ # generate space-filling design for first step
     D1 = MED_ms_oneatatime(mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, f0, f1, type, N_seq[1], 
                            numCandidates, k, xmin, xmax, p, alpha = 0, buffer_seq[1], 
@@ -50,13 +50,19 @@ simulate_seqMED = function(true_beta, true_type, mean_beta0, mean_beta1, var_bet
   postvar1 = matrix(current_postvar1, length(mean_beta1), numSeq)
   postmean1 = matrix(current_postmean1, length(mean_beta1), numSeq)
   
+  # -- Generate Candidate Points -- #
+  if(is.null(candidates)){
+    if(genCandidates == 1) candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
+    if(genCandidates == 2) candidates = sort(runif(numCandidates, min = xmin, max = xmax))
+  }
+  
   print(paste("finished ", 1, " out of ", numSeq, " steps", sep = ""))
   for(t in 2:numSeq){
     
     Dt = add_MED_ms_oneatatime_data(D, y, mean_beta0, mean_beta1, 
                                     var_beta0, var_beta1, var_e,  f0, f1, type, N_seq[t], 
                                     numCandidates, k, xmin, xmax, p, alpha_seq[t], buffer_seq[t],
-                                    wasserstein0, genCandidates)
+                                    wasserstein0, genCandidates, candidates)
     
     yt = as.vector(simulateY(Dt$addD, N_seq[t], true_beta, sigmasq, 1, true_type))
     

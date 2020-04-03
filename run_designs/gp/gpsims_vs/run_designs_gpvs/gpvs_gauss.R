@@ -25,7 +25,7 @@ library(MASS)
 library(mvtnorm)
 
 # --- simulations  --- #
-numSims = 1
+numSims = 10
 
 # settings
 xmin = 0; xmax = 1

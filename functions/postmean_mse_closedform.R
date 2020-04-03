@@ -16,11 +16,18 @@ getClosedEBn = function(D, N, true_beta, beta_prior_mean, beta_prior_var, var_e,
 }
 
 
-getClosedMSE = function(D, N, true_beta, beta_prior_mean, beta_prior_var, var_e, type, diagPrior = TRUE){
+getClosedMSE = function(D, N, true_beta, beta_prior_mean, beta_prior_var, var_e, type, indices = NULL, diagPrior = TRUE){
   X = constructDesignX(D, N, type) # design matrix, depends on the model (type)
-  Sigma_B = postvar(D, N, var_e, beta_prior_var, type, diagPrior) # posterior variance
-  # 1. calculate the variance of the posterior mean
-  XtX = crossprod(X)
+  if(!is.null(type)){
+    Sigma_B = postvar(D, N, var_e, beta_prior_var, type, diagPrior) # posterior variance
+    # 1. calculate the variance of the posterior mean
+    XtX = crossprod(X)
+  } else{
+    if(is.null(indices)) stop("if type is NULL, must provide indices")
+    Sigma_B = postvar(D[ , indices], N, var_e, beta_prior_var, type, diagPrior) # posterior variance
+    # 1. calculate the variance of the posterior mean
+    XtX = crossprod(X[ , indices])
+  }
   var_postmean_term1 = (1/var_e) * Sigma_B %*% XtX %*% Sigma_B
   # grab the variance terms in the variance-covariance matrix
   var_postmean = diag(var_postmean_term1)

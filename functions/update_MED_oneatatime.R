@@ -270,10 +270,10 @@ add_MED_ms_oneatatime_data_multidim = function(initD, inity, mean_beta_full, bet
       initD = initD[-which(w_initD == 0), ]
       y = inity[-which(w_initD == 0)]
       w_initD = w_initD[-which(w_initD == 0)]
-      postvar0 = postvar(initD, initN, var_e, var_beta0, type = NULL)
-      postmean0 = postmean(inity, initD, initN, mean_beta0, var_beta0, var_e, type = NULL)
-      postvar1 = postvar(initD, initN, var_e, var_beta1, type = NULL)
-      postmean1 = postmean(inity, initD, initN, mean_beta1, var_beta1, var_e, type = NULL)
+      postvar0 = postvar(initD[ , indices0], initN, var_e, var_beta0, type = NULL)
+      postmean0 = postmean(inity, initD[ , indices0], initN, mean_beta0, var_beta0, var_e, type = NULL)
+      postvar1 = postvar(initD[ , indices1], initN, var_e, var_beta1, type = NULL)
+      postmean1 = postmean(inity, initD[ , indices1], initN, mean_beta1, var_beta1, var_e, type = NULL)
     }
   }
   if(wasserstein0 == 2){

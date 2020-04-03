@@ -5,19 +5,25 @@
 ### 2D ###
 ##########
 
-model_evidence = function(Y, D, N, beta_prior_mean, beta_prior_var, var_e, hypothesis_model_type){
+model_evidence = function(Y, D, N, beta_prior_mean, beta_prior_var, var_e, hypothesis_model_type, indices = NULL){
   # Y is a vector of outputs (or scalar, for one output)
   # X is a matrix of inputs (or vector, for one input)
   # beta_prior_var is a matrix
   # var_e is a scalar
-  if(N != length(Y)) stop("N is not the same length as Y")
-  X = constructDesignX(D, N, hypothesis_model_type)
-  # get mean and variance of marginal density of y, which is N-dim multivariate normal pdf
-  marginaly_mean = X %*% beta_prior_mean
-  if(dim(X)[1] > 1){ # if X is a matrix of inputs
+  if(!is.null(hypothesis_model_type)){
+    if(N != length(Y)) stop("N is not the same length as Y")
+    X = constructDesignX(D, N, hypothesis_model_type)
+    # get mean and variance of marginal density of y, which is N-dim multivariate normal pdf
+    marginaly_mean = X %*% beta_prior_mean
+    if(dim(X)[1] > 1){ # if X is a matrix of inputs
+      marginaly_var = diag(rep(var_e, N)) + (X %*% beta_prior_var %*% t(X))
+    } else{ # if X is a vector for one input
+      marginaly_var = var_e + (X %*% beta_prior_var %*% t(X))
+    }
+  } else{
+    X = constructDesignX(D, N, hypothesis_model_type)[ , indices]
+    marginaly_mean = X %*% beta_prior_mean
     marginaly_var = diag(rep(var_e, N)) + (X %*% beta_prior_var %*% t(X))
-  } else{ # if X is a vector for one input
-    marginaly_var = var_e + (X %*% beta_prior_var %*% t(X))
   }
   return(dmvnorm(Y, mean = marginaly_mean, sigma = marginaly_var, log = FALSE))
 }
@@ -67,38 +73,48 @@ calcExpPostProbH_data = function(y, D, N, beta_prior_mean0, beta_prior_var0,
 
 ## for M hypotheses
 
-calcExpPostProbH_general = function(D, N, true_beta, true_model_type, models, var_e,
-                            numSims = 100, seed = NULL){
-  simY = simulateY(D, N, true_beta, var_e, numSims, true_model_type, seed)
+# for non-sequential designs, where data needs to be generated in simulations to estimate
+calcEPPH = function(D, N, true_beta, true_model_type, models, var_e, numSims = 100, true_indices = NULL, seed = NULL){
+  if(!is.null(true_model_type)){
+    simY = simulateY(D, N, true_beta, var_e, numSims, true_model_type, seed)
+  } else{
+    simY = simulateY_multidim(D[ , true_indices], N, true_beta, var_e, numSims, seed)
+  }
   # "models" is a list of lists, where each element of list "models" describes a model
   #   each element/model is a list containing "beta_prior_mean", "beta_prior_var", "model_type"
   #   in that order
+  #   if the model type is for variable selection, i.e. model_type == NULL, there will be a fourth element
+  #   in the model's list: indices, which corresponds to its hypothesized beta_prior_mean
   # for now we assume that the type of model for true_beta contains the types for both hypotheses
-  model_evidences = matrix(NA, length(models), numSims)
+  # model_evidences = matrix(NA, length(models), numSims)
   model_postprobs = matrix(NA, length(models), numSims)
   for(j in 1:numSims){
     Y = simY[ , j]
-    # get model evidences for each hypothesized model
-    for(m in 1:length(models)){
-      model = models[[m]]
-      model_evidences[m, j] = model_evidence(Y, D, N, model[[1]], model[[2]], var_e, model[[3]])
-    }
-    # calculate posterior probabilities of each hypothesis
-    denom = sum(model_evidences[ , j])
-    model_postprobs[ , j] = model_evidences[ , j] / denom
+    # # get model evidences for each hypothesized model
+    # for(m in 1:length(models)){
+    #   model = models[[m]]
+    #   if(length(model) == 3) model[[4]] = NULL
+    #   model_evidences[m, j] = model_evidence(Y, D, N, model[[1]], model[[2]], var_e, model[[3]], model[[4]])
+    # }
+    # # calculate posterior probabilities of each hypothesis
+    # denom = sum(model_evidences[ , j])
+    # model_postprobs[ , j] = model_evidences[ , j] / denom
+    model_postprobs[ , j] = calcEPPHdata(Y, D, N, models, var_e)
   }
   exp_postprobs = apply(model_postprobs, 1, mean)
   
   return(c("exp_postprobs" = exp_postprobs))
 }
 
-calcExpPostProbH_data_general = function(y, D, N, models, var_e){
+# for designs with data
+calcEPPHdata = function(y, D, N, models, var_e){
   model_evidences = rep(NA, length(models))
   model_postprobs = rep(NA, length(models))
   # get model evidence
   for(m in 1:length(models)){
     model = models[[m]]
-    model_evidences[m] = model_evidence(y, D, N, model[[1]], model[[2]], var_e, model[[3]])
+    if(length(model) == 3) model[[4]] = NULL
+    model_evidences[m] = model_evidence(y, D, N, model[[1]], model[[2]], var_e, model[[3]], model[[4]])
   }
   # get each hypotheses' posterior probability
   denom = sum(model_evidences)
@@ -106,3 +122,13 @@ calcExpPostProbH_data_general = function(y, D, N, models, var_e){
   return(c("model_postprobs" = model_postprobs))
 }
 
+calcEPPHseqdata = function(smmed, models, var_e, initN, numSeq, N_seq){
+  postprobs = matrix(NA, length(models), numSeq)
+  for(i in 1:numSeq){
+    changing_postprobs = calcEPPHdata(smmed$y[1:(initN + N_seq * i)],
+                                      smmed$D[1:(initN + N_seq * i), ], 
+                                      N = initN + N_seq * i, models, sigmasq)
+    postprobs[ , i] = changing_postprobs
+  }
+  return(postprobs)
+}

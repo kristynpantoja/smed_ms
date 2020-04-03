@@ -235,24 +235,24 @@ initD = matrix(runif(n = pfull * initN, min = xmin, max = xmax), nrow = initN, n
 inity = as.vector(simulateY_multidim(initD[ , indicesT], initN, betaT, sigmasq, 1, seed = 123))
 
 # #simulate_seqMED_multidim args
-mean_beta_full = mu_full
-beta_true = betaT
-indices_true = indicesT
-# indices0, indices1,
-mean_beta0 = mu0
-mean_beta1 = mu1
-var_e = sigmasq
-var_beta = sigmasq01
-var_beta0 = V0
-var_beta1 = V1
-# xmin = -1, xmax = 1, numCandidates = 10^35,
-# k = 4, p = 1,
-# initD = NULL, inity = NULL, numSeq = 5, N_seq = 10, alpha_seq = NULL,
-buffer_seq = 0
-candidates = NULL
-wasserstein0 = 1
-genCandidates = 1
-seed = NULL
+# mean_beta_full = mu_full
+# beta_true = betaT
+# indices_true = indicesT
+# # indices0, indices1,
+# mean_beta0 = mu0
+# mean_beta1 = mu1
+# var_e = sigmasq
+# var_beta = sigmasq01
+# var_beta0 = V0
+# var_beta1 = V1
+# # xmin = -1, xmax = 1, numCandidates = 10^35,
+# # k = 4, p = 1,
+# # initD = NULL, inity = NULL, numSeq = 5, N_seq = 10, alpha_seq = NULL,
+# buffer_seq = 0
+# candidates = NULL
+# wasserstein0 = 1
+# genCandidates = 1
+# seed = NULL
 
 
 # #add_MED_ms_oneatatime_data_multidim args

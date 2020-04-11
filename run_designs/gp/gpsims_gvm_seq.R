@@ -47,9 +47,11 @@ source(paste(functions_home, "/postpredyhat_mse_closedform.R", sep = ""))
 
 # --- sources/functions for gaussian process stuff  --- #
 
-source(paste(functions_home, "/med_ms_fns_gp.R", sep = ""))
-source(paste(functions_home, "/update_MED_oneatatime.R", sep = ""))
+source(paste(functions_home, "/generate_MMEDgp_oneatatime.R", sep = ""))
+source(paste(functions_home, "/wasserstein_distance.R", sep = ""))
 source(paste(functions_home, "/charge_function_q.R", sep = ""))
+source(paste(functions_home, "/covariance_functions.R", sep = ""))
+source(paste(functions_home, "/gp_predictive.R", sep = ""))
 
 add_errorbands = function(xs, ys, MoE, color){
   y_lower = ys - MoE
@@ -57,8 +59,19 @@ add_errorbands = function(xs, ys, MoE, color){
   polygon(c(xs,rev(xs)),c(y_lower,rev(y_upper)),col=color, border = NA)
 }
 
+logjointlik = function(x_star, y_star, x_train, y_train, type_arg, l_arg, nugget = NULL){
+  # browser()
+  Sigma11 = getCov(x_train, x_train, type_arg, l_arg)
+  Sigma22 = getCov(x_star, x_star, type_arg, l_arg)
+  Sigma21 = getCov(x_train, x_star, type_arg, l_arg)
+  y = c(y_train, y_star)
+  if(is.null(nugget)) joint_var = rbind(cbind(Sigma11, Sigma21), cbind(t(Sigma21), Sigma22))
+  else joint_var = rbind(cbind(Sigma11, Sigma21), cbind(t(Sigma21), Sigma22)) + diag(rep(nugget, length(y)))
+  return(dmvnorm(y, mean = rep(0, length(y)), sigma = joint_var, log = TRUE))
+}
+
 # --- simulations  --- #
-numSims = 100
+numSims = 1
 
 # x_seq, grid over which to generate subsequent functions
 xmin = 0; xmax = 1
@@ -206,8 +219,8 @@ for(i in 1:numSims){
   newpts_ind_mat[ , i] = newpts_ind
   truey = y_seq[newpts_ind]
   truey_mat[ , i] = truey
-  H0_pred = getPredDistrSeq(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
-  H1_pred = getPredDistrSeq(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
+  H0_pred = getGPPredictive(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
+  H1_pred = getGPPredictive(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
   postpredmu0 = H0_pred$pred_mean
   postpredmu1 = H1_pred$pred_mean
   # compute RSS0 and RSS1 for mmed
@@ -224,8 +237,8 @@ for(i in 1:numSims){
   # (note: y_train is different for each function, which is why we need this in the loop)
   newpts = x_spacefill
   truey = y_seq[x_spacefill_ind]
-  H0_pred = getPredDistrSeq(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
-  H1_pred = getPredDistrSeq(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
+  H0_pred = getGPPredictive(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
+  H1_pred = getGPPredictive(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
   postpredmu0 = H0_pred$pred_mean
   postpredmu1 = H1_pred$pred_mean
   # compute RSS0 and RSS1 for spacefilling
@@ -241,8 +254,8 @@ for(i in 1:numSims){
   # uniform inputs' predictions and evaluations
   newpts = x_uniform
   truey = y_seq[x_uniform_ind]
-  H0_pred = getPredDistrSeq(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
-  H1_pred = getPredDistrSeq(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
+  H0_pred = getGPPredictive(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
+  H1_pred = getGPPredictive(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
   postpredmu0 = H0_pred$pred_mean
   postpredmu1 = H1_pred$pred_mean
   # compute RSS0 and RSS1 for uniform
@@ -395,8 +408,8 @@ for(i in 1:numSims){
   newpts_ind_mat[ , i] = newpts_ind
   truey = y_seq[newpts_ind]
   truey_mat[ , i] = truey
-  H0_pred = getPredDistrSeq(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
-  H1_pred = getPredDistrSeq(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
+  H0_pred = getGPPredictive(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
+  H1_pred = getGPPredictive(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
   postpredmu0 = H0_pred$pred_mean
   postpredmu1 = H1_pred$pred_mean
   # compute RSS0 and RSS1 for mmed
@@ -413,8 +426,8 @@ for(i in 1:numSims){
   # (note: y_train is different for each function, which is why we need this in the loop)
   newpts = x_spacefill
   truey = y_seq[x_spacefill_ind]
-  H0_pred = getPredDistrSeq(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
-  H1_pred = getPredDistrSeq(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
+  H0_pred = getGPPredictive(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
+  H1_pred = getGPPredictive(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
   postpredmu0 = H0_pred$pred_mean
   postpredmu1 = H1_pred$pred_mean
   # compute RSS0 and RSS1 for spacefilling
@@ -430,8 +443,8 @@ for(i in 1:numSims){
   # uniform inputs' predictions and evaluations
   newpts = x_uniform
   truey = y_seq[x_uniform_ind]
-  H0_pred = getPredDistrSeq(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
-  H1_pred = getPredDistrSeq(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
+  H0_pred = getGPPredictive(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
+  H1_pred = getGPPredictive(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
   postpredmu0 = H0_pred$pred_mean
   postpredmu1 = H1_pred$pred_mean
   # compute RSS0 and RSS1 for uniform
@@ -584,8 +597,8 @@ for(i in 1:numSims){
   newpts_ind_mat[ , i] = newpts_ind
   truey = y_seq[newpts_ind]
   truey_mat[ , i] = truey
-  H0_pred = getPredDistrSeq(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
-  H1_pred = getPredDistrSeq(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
+  H0_pred = getGPPredictive(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
+  H1_pred = getGPPredictive(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
   postpredmu0 = H0_pred$pred_mean
   postpredmu1 = H1_pred$pred_mean
   # compute RSS0 and RSS1 for mmed
@@ -602,8 +615,8 @@ for(i in 1:numSims){
   # (note: y_train is different for each function, which is why we need this in the loop)
   newpts = x_spacefill
   truey = y_seq[x_spacefill_ind]
-  H0_pred = getPredDistrSeq(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
-  H1_pred = getPredDistrSeq(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
+  H0_pred = getGPPredictive(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
+  H1_pred = getGPPredictive(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
   postpredmu0 = H0_pred$pred_mean
   postpredmu1 = H1_pred$pred_mean
   # compute RSS0 and RSS1 for spacefilling
@@ -619,8 +632,8 @@ for(i in 1:numSims){
   # uniform inputs' predictions and evaluations
   newpts = x_uniform
   truey = y_seq[x_uniform_ind]
-  H0_pred = getPredDistrSeq(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
-  H1_pred = getPredDistrSeq(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
+  H0_pred = getGPPredictive(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
+  H1_pred = getGPPredictive(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
   postpredmu0 = H0_pred$pred_mean
   postpredmu1 = H1_pred$pred_mean
   # compute RSS0 and RSS1 for uniform
@@ -779,8 +792,8 @@ for(i in 1:numSims){
   newpts_ind_mat[ , i] = newpts_ind
   truey = y_seq[newpts_ind]
   truey_mat[ , i] = truey
-  H0_pred = getPredDistrSeq(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
-  H1_pred = getPredDistrSeq(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
+  H0_pred = getGPPredictive(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
+  H1_pred = getGPPredictive(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
   postpredmu0 = H0_pred$pred_mean
   postpredmu1 = H1_pred$pred_mean
   # compute RSS0 and RSS1 for mmed
@@ -797,8 +810,8 @@ for(i in 1:numSims){
   # (note: y_train is different for each function, which is why we need this in the loop)
   newpts = x_spacefill
   truey = y_seq[x_spacefill_ind]
-  H0_pred = getPredDistrSeq(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
-  H1_pred = getPredDistrSeq(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
+  H0_pred = getGPPredictive(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
+  H1_pred = getGPPredictive(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
   postpredmu0 = H0_pred$pred_mean
   postpredmu1 = H1_pred$pred_mean
   # compute RSS0 and RSS1 for spacefilling
@@ -814,8 +827,8 @@ for(i in 1:numSims){
   # uniform inputs' predictions and evaluations
   newpts = x_uniform
   truey = y_seq[x_uniform_ind]
-  H0_pred = getPredDistrSeq(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
-  H1_pred = getPredDistrSeq(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
+  H0_pred = getGPPredictive(newpts, x_train, y_train, type01[1], l01[1], nugget = NULL)
+  H1_pred = getGPPredictive(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
   postpredmu0 = H0_pred$pred_mean
   postpredmu1 = H1_pred$pred_mean
   # compute RSS0 and RSS1 for uniform

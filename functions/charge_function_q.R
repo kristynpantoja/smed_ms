@@ -16,11 +16,11 @@ q = function(x, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, f0, f1, typ
   return(1.0 / (Wass_dist + buffer)^q_exponent)
 }
 
-q_data2 = function(x, postmean0, postmean1, postvar0, postvar1, var_e, type, p, alpha = NULL, buffer = 0){
+q_data = function(x, postmean0, postmean1, postvar0, postvar1, var_e, type, p, alpha = NULL, buffer = 0){
   if(length(type) != 2) stop("type should be vector with length == 2")
   if(is.null(alpha)) alpha = 1
   
-  Wass_dist = Wasserstein_distance_postpred2(x, postmean0, postmean1, postvar0, postvar1, var_e, type)
+  Wass_dist = Wasserstein_distance_postpred(x, postmean0, postmean1, postvar0, postvar1, var_e, type)
   q_exponent = alpha / (2 * p)
   return(1.0 / (Wass_dist + buffer)^q_exponent)
 }
@@ -41,7 +41,7 @@ q_data_multidim = function(x, indices0, indices1, postmean0, postmean1, postvar0
 #   return(1.0 / (Wass_dist + buffer)^q_exponent)
 # }
 
-q_data_gp = function(x, Kinv0, Kinv1, initD, y, var_e, type, l, p, alpha = NULL, buffer = 0){
+q_gp = function(x, Kinv0, Kinv1, initD, y, var_e, type, l, p, alpha = NULL, buffer = 0){
   if(length(type) != 2) stop("type should be vector with length == 2")
   if(is.null(alpha)) alpha = 1
   Wass_dist = Wasserstein_distance_postpred_gp(x, Kinv0, Kinv1, initD, y, var_e, type, l)
@@ -49,10 +49,10 @@ q_data_gp = function(x, Kinv0, Kinv1, initD, y, var_e, type, l, p, alpha = NULL,
   return(1.0 / (Wass_dist + buffer)^q_exponent)
 }
 
-q_data_gp2 = function(x, Kinv0, Kinv1, subinitD, initD, y, var_e, type, l, p, alpha = NULL, buffer = 0){
+q_gpvs = function(x, Kinv0, Kinv1, subinitD, initD, y, var_e, type, l, p, alpha = NULL, buffer = 0){
   if(length(type) != 2) stop("type should be vector with length == 2")
   if(is.null(alpha)) alpha = 1
-  Wass_dist = Wasserstein_distance_postpred_gp2(x, Kinv0, Kinv1, subinitD, initD, y, var_e, type, l)
+  Wass_dist = Wasserstein_distance_postpred_gpvs(x, Kinv0, Kinv1, subinitD, initD, y, var_e, type, l)
   q_exponent = alpha / (2 * p)
   return(1.0 / (Wass_dist + buffer)^q_exponent)
 }

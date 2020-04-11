@@ -29,7 +29,7 @@ Wasserstein_distance = function(mu1, mu2, var1, var2, dim = 1){
 ####################################################################
 
 # 1 dimension, or with transformations of x
-Wasserstein_distance_postpred2 = function(x, postmean0, postmean1, postvar0, postvar1, var_e, type, dim = 1){
+Wasserstein_distance_postpred = function(x, postmean0, postmean1, postvar0, postvar1, var_e, type, dim = 1){
   
   # posterior distribution of beta
   x0 = t(constructDesignX(x, 1, type[1]))
@@ -48,7 +48,7 @@ Wasserstein_distance_postpred2 = function(x, postmean0, postmean1, postvar0, pos
 
 # multidimensional 
 Wasserstein_distance_postpred_multidim = function(x, indices0, indices1, postmean0, postmean1, postvar0, postvar1, var_e, dim = 1){
-  # Wasserstein_distance_postpred2(x, postmean0, postmean1, postvar0, postvar1, var_e, type = c(NULL, NULL), dim = 1)
+  # Wasserstein_distance_postpred(x, postmean0, postmean1, postvar0, postvar1, var_e, type = c(NULL, NULL), dim = 1)
   
   # posterior distribution of beta
   x0 = t(constructDesignX(x, 1, NULL))[ , indices0]
@@ -94,7 +94,7 @@ Wasserstein_distance_postpred_gp = function(x, Kinv0, Kinv1, initD, y, var_e, ty
 ################################################
 
 # meant to be able to handle 2d dimensional input, for variable selection problem
-Wasserstein_distance_postpred_gp2 = function(x, Kinv0, Kinv1, subinitD = NULL, initD, y, var_e, type, l){
+Wasserstein_distance_postpred_gpvs = function(x, Kinv0, Kinv1, subinitD = NULL, initD, y, var_e, type, l){
   x = as.matrix(x)
   if(dim(x)[1] !=1) x = t(x)
   # print(x)
@@ -126,23 +126,3 @@ Wasserstein_distance_postpred_gp2 = function(x, Kinv0, Kinv1, subinitD = NULL, i
   wass = Wasserstein_distance(postpredmu0, postpredmu1, postpredvar0, postpredvar1, dim = 1)
   return(as.numeric(wass))
 }
-
-
-# Wasserstein_distance_postpred_gp_NEW = function(x, Kc0, Kc1, initD, y, var_e, type, l, dim = 1){
-#   
-#   # posterior distribution of beta
-#   k0 = t(as.matrix(getCov(x, initD, type[1], l[1])))
-#   k1 = t(as.matrix(getCov(x, initD, type[2], l[2])))
-#   
-#   # posterior predictive distribution of y, for candidate x
-#   postpredmu0 = t(k0) %*% forwardsolve(Kc0, y)
-#   postpredvar0 = var_e * (1 - t(k0) %*% forwardsolve(Kc0, k0))
-#   if(postpredvar0 < 0) postpredvar0 = 0 # !!!!!!!!!!
-#   
-#   postpredmu1 = t(k1) %*% forwardsolve(Kc1, y)
-#   postpredvar1 = var_e * (1 - t(k1) %*% forwardsolve(Kc1, k1))
-#   if(postpredvar1 < 0) postpredvar1 = 0 # !!!!!!!!!!
-#   
-#   wass = Wasserstein_distance(postpredmu0, postpredmu1, postpredvar0, postpredvar1)
-#   return(as.numeric(wass))
-# }

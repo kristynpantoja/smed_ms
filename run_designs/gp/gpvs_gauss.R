@@ -4,12 +4,12 @@
 # --- Working Directory --- #
 
 # Computer
-# home = "/home/kristyn/Documents/smed_ms"
-# output_home = paste(home, "/", sep = "")
+home = "/home/kristyn/Documents/smed_ms"
+output_home = paste(home, "/", sep = "")
 
 # Cluster
-home = "/scratch/user/kristynp/smed_ms"
-output_home = paste(home,"/run_designs_gpvs/",sep="")
+# home = "/scratch/user/kristynp/smed_ms"
+# output_home = paste(home,"/run_designs_gpvs/",sep="")
 
 # --- Sources/Libraries --- #
 functions_home = paste(home, "/functions", sep="")
@@ -25,7 +25,7 @@ library(MASS)
 library(mvtnorm)
 
 # --- simulations  --- #
-numSims = 1
+numSims = 10
 
 # settings
 xmin = 0; xmax = 1

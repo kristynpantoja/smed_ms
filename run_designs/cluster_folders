@@ -1,0 +1,10 @@
+run_designs_lmvs: wrong priors
+run_designs_lmvs2: 0-priors (right)
+
+run_designs_lmvs3: 0-priors, more steps (numSeq = 10)
+
+run_designs_gpvs: gp for vs with noise, 25 sims this time
+
+next time, update functions and scripts
+re-import functions folder
+upload updated scripts (both in Documents)

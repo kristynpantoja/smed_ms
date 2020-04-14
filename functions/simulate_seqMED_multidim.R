@@ -34,7 +34,7 @@ simulate_seqMED_multidim = function(mean_beta_full, beta_true = NULL, indices_tr
     }
   }
   if(is.null(initD)){
-    stop("no initial data! haven't written this case for multiple dimensions yet")
+    stop("no initial data! haven't written this case for multiple dimensions yet. going to just randomly select points.")
     # if(is.null(alpha_seq)){ # generate space-filling design for first step
     #   D1 = MED_ms_oneatatime(mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, f0, f1, type, N_seq[1], 
     #                          numCandidates, k, xmin, xmax, p, alpha = 0, buffer_seq[1], 
@@ -49,21 +49,11 @@ simulate_seqMED_multidim = function(mean_beta_full, beta_true = NULL, indices_tr
     D1 = initD
     initN = dim(D1)[1]
   }
-  
-  if(numSeq == 1){
-    return(D1)
-  }
   # sequence checks
   if(length(N_seq) == 1) N_seq = rep(N_seq, numSeq)
   if(length(buffer_seq) == 1) buffer_seq = rep(buffer_seq, numSeq)
   if(is.null(alpha_seq)) alpha_seq = rep(1, numSeq)
   if(!is.null(alpha_seq) & length(alpha_seq) == 1) alpha_seq = rep(alpha_seq, numSeq)
-  
-  if(is.null(initD)){
-    Nttl = sum(N_seq)
-  } else{
-    Nttl = sum(initN, N_seq)
-  }
   
   if(!is.null(seed)) set.seed(seed)
   # get y1 (if not given)
@@ -74,6 +64,10 @@ simulate_seqMED_multidim = function(mean_beta_full, beta_true = NULL, indices_tr
   }
   y = y1
   D = D1
+  if(numSeq == 1){
+    return(list("D" = D1,
+                "y" = y1))
+  }
   
   # why do I do this? why only take the diagonal of postvar?
   current_postvar0 = diag(postvar(D[ , indices0], initN, var_e, var_beta0, type = NULL))
@@ -81,7 +75,8 @@ simulate_seqMED_multidim = function(mean_beta_full, beta_true = NULL, indices_tr
   current_postvar1 = diag(postvar(D[ , indices1], initN, var_e, var_beta1, type = NULL))
   current_postmean1 = postmean(y, D[ , indices1], initN, mean_beta1, var_beta1, var_e, type = NULL)
   
-  # to save it more compactly; first one is for initial data
+  # to save it more compactly; only need pointwise variance, no need to save whole covariance matrix
+  # first one is for initial data
   # the other numSeq - 1 ones will be replaced during the numSeq loop
   postvar0 = matrix(current_postvar0, length(mean_beta0), numSeq)
   postmean0 = matrix(current_postmean0, length(mean_beta0), numSeq)
@@ -95,7 +90,7 @@ simulate_seqMED_multidim = function(mean_beta_full, beta_true = NULL, indices_tr
                         nrow = numCandidates, ncol = pfull)
   }
     
-  print(paste("finished ", 1, " out of ", numSeq, " steps", sep = ""))
+  print(paste("finished ", 0, " out of ", numSeq, " steps", sep = ""))
   for(t in 1:numSeq){
     seed = seed + t
     

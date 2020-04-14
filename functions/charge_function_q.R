@@ -49,10 +49,10 @@ q_gp = function(x, Kinv0, Kinv1, initD, y, var_e, type, l, p, alpha = NULL, buff
   return(1.0 / (Wass_dist + buffer)^q_exponent)
 }
 
-q_gpvs = function(x, Kinv0, Kinv1, subinitD, initD, y, var_e, type, l, p, alpha = NULL, buffer = 0){
+q_gpvs = function(x, Kinv0, Kinv1, subdim, subinitD, initD, y, var_e, type, l, p, alpha = NULL, buffer = 0){
   if(length(type) != 2) stop("type should be vector with length == 2")
   if(is.null(alpha)) alpha = 1
-  Wass_dist = Wasserstein_distance_postpred_gpvs(x, Kinv0, Kinv1, subinitD, initD, y, var_e, type, l)
+  Wass_dist = Wasserstein_distance_postpred_gpvs(x, Kinv0, Kinv1, subdim, subinitD, initD, y, var_e, type, l)
   q_exponent = alpha / (2 * p)
   return(1.0 / (Wass_dist + buffer)^q_exponent)
 }

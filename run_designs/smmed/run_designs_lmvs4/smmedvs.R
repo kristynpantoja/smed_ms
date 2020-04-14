@@ -4,12 +4,12 @@
 # --- Working Directory --- #
 
 # Computer
-home = "/home/kristyn/Documents/smed_ms"
-output_home = paste(home, "/", sep = "")
+# home = "/home/kristyn/Documents/smed_ms"
+# output_home = paste(home, "/", sep = "")
 
 # Cluster
-# home = "/scratch/user/kristynp/smed_ms"
-# output_home = paste(home,"/run_designs_lmvs4/",sep="")
+home = "/scratch/user/kristynp/smed_ms"
+output_home = paste(home,"/run_designs_lmvs4/",sep="")
 
 # --- Sources/Libraries --- #
 functions_home = paste(home, "/functions", sep="")
@@ -36,18 +36,18 @@ source(paste(functions_home, "/update_MED_oneatatime.R", sep = ""))
 source(paste(functions_home, "/simulate_seqMED_multidim.R", sep = ""))
 
 # --- simulations  --- #
-numSims = 1
+numSims = 5
 
 # --- settings  --- #
 
-mu_full = c(0.5, 0.5, 0.5, 0.5, 0.5) #
+mu_full = c(-0.2, -0.4, 0.4)
 
 # settings
 xmin = -1
 xmax = 1
 sigmasq01 = 0.25
 sigmasq = 0.3
-numCandidates = 5000 #
+numCandidates = 10^4
 xmin = -1
 xmax = 1
 p = 3
@@ -57,11 +57,11 @@ pfull = length(mu_full)
 
 # sequential settings
 numSeq = 5
-N_seq = 10 #
+N_seq = 27
 alpha_seq = 1
 
 # hypotheses
-indices0 = c(1, 2, 3) #
+indices0 = c(1, 2)
 indices1 = 1:length(mu_full)
 mu0 = rep(0, length(indices0))
 mu1 = rep(0, length(indices1))
@@ -84,6 +84,7 @@ for(i in 1:numSims){
   smmed_listH0[[i]] = simulate_seqMED_multidim(mu_full, betaT, indicesT, indices0, indices1, mu0, mu1, 
                                              sigmasq, sigmasq01, V0, V1, xmin, xmax, numCandidates, k, p,
                                              initD, inity, numSeq, N_seq, seed = seed)
+  print("finished H0 case, sim #", i, sep = "")
 }
 saveRDS(smmed_listH0, paste(output_home, "lm2vs3H0_sims.rds", sep = ""))
 
@@ -100,15 +101,13 @@ for(i in 1:numSims){
   smmed_listH1[[i]] = simulate_seqMED_multidim(mu_full, betaT, indicesT, indices0, indices1, mu0, mu1, 
                                              sigmasq, sigmasq01, V0, V1, xmin, xmax, numCandidates, k, p,
                                              initD, inity, numSeq, N_seq, seed = seed)
+  print("finished H1 case, sim #", i, sep = "")
 }
 saveRDS(smmed_listH1, paste(output_home, "lm2vs3H1_sims.rds", sep = ""))
 
-# sim_ind = 1
-# par(mfrow = c(3, 2))
-# for(marginal_ind in 1:pfull){
-#   design = smmed_listH0[[sim_ind]]$D
-#   hi = hist(design[ (initN + 1):dim(design)[1], marginal_ind], breaks = 5, 
-#        main = paste("marginal", marginal_ind, sep = ":"), xlab = "design marginal")
-#   print(paste(min(hi$counts), max(hi$counts), sep = ";"))
-# }
+
+
+
+
+
 

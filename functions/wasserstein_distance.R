@@ -94,7 +94,7 @@ Wasserstein_distance_postpred_gp = function(x, Kinv0, Kinv1, initD, y, var_e, ty
 ################################################
 
 # meant to be able to handle 2d dimensional input, for variable selection problem
-Wasserstein_distance_postpred_gpvs = function(x, Kinv0, Kinv1, subinitD = NULL, initD, y, var_e, type, l){
+Wasserstein_distance_postpred_gpvs = function(x, Kinv0, Kinv1, subdim, subinitD = NULL, initD, y, var_e, type, l){
   x = as.matrix(x)
   if(dim(x)[1] !=1) x = t(x)
   # print(x)
@@ -103,7 +103,7 @@ Wasserstein_distance_postpred_gpvs = function(x, Kinv0, Kinv1, subinitD = NULL, 
   if(is.null(subinitD)){
     k0 = t(as.matrix(getCov(x, initD, type[1], l[1])))
   } else{
-    k0 = t(as.matrix(getCov(x, subinitD, type[1], l[1])))
+    k0 = t(as.matrix(getCov(x[ , subdim, drop = FALSE], subinitD, type[1], l[1])))
   }
   k1 = t(as.matrix(getCov(x, initD, type[2], l[2])))
   

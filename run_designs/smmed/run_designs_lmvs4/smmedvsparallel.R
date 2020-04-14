@@ -1,15 +1,15 @@
-# linear regression variable selection 
-# testing higher dimensions
-
 # --- Working Directory --- #
 
 # Computer
-home = "/home/kristyn/Documents/smed_ms"
-output_home = paste(home, "/", sep = "")
+# home = "/home/kristyn/Documents/smed_ms"
+# output_home = paste(home, "/", sep = "")
 
 # Cluster
-# home = "/scratch/user/kristynp/smed_ms"
-# output_home = paste(home,"/run_designs_lmvs4/",sep="")
+home = "/scratch/user/kristynp/smed_ms"
+output_home = paste(home,"/run_designs_lmvs4/",sep="")
+
+jid=commandArgs(trailingOnly=T)[1]
+jid=as.numeric(jid)
 
 # --- Sources/Libraries --- #
 functions_home = paste(home, "/functions", sep="")
@@ -70,45 +70,28 @@ V1 = diag(rep(sigmasq01,length(mu1)))
 f0 = function(x) mu0 %*% x[indices0]
 f1 = function(x) mu1 %*% x[indices1]
 
-
-# sims for H0 case
+# sim for H0 case
 betaT = mu_full[indices0]
 indicesT = indices0
 fT = function(x) betaT %*% x[indicesT]
-smmed_listH0 = list()
-seed = 1
-for(i in 1:numSims){
-  set.seed(seed + i)
-  initD = matrix(runif(n = pfull * initN, min = xmin, max = xmax), nrow = initN, ncol = pfull)
-  inity = as.vector(simulateY_multidim(initD[ , indicesT], initN, betaT, sigmasq, 1, seed = seed))
-  smmed_listH0[[i]] = simulate_seqMED_multidim(mu_full, betaT, indicesT, indices0, indices1, mu0, mu1, 
+seed = jid + 1
+set.seed(seed)
+initD = matrix(runif(n = pfull * initN, min = xmin, max = xmax), nrow = initN, ncol = pfull)
+inity = as.vector(simulateY_multidim(initD[ , indicesT], initN, betaT, sigmasq, 1, seed = seed))
+smmed_H0 = simulate_seqMED_multidim(mu_full, betaT, indicesT, indices0, indices1, mu0, mu1, 
                                              sigmasq, sigmasq01, V0, V1, xmin, xmax, numCandidates, k, p,
                                              initD, inity, numSeq, N_seq, seed = seed)
-}
-saveRDS(smmed_listH0, paste(output_home, "lm2vs3H0_sims.rds", sep = ""))
+saveRDS(smmed_H0, paste(output_home, "lmvs3v5H0_sim", jid, ".rds", sep = ""))
 
-# sims for H1 case
+# sim for H1 case
 betaT = mu_full[indices1]
 indicesT = indices1
 fT = function(x) betaT %*% x[indicesT]
-smmed_listH1 = list()
-seed = 1
-for(i in 1:numSims){
-  set.seed(seed + i)
-  initD = matrix(runif(n = pfull * initN, min = xmin, max = xmax), nrow = initN, ncol = pfull)
-  inity = as.vector(simulateY_multidim(initD[ , indicesT], initN, betaT, sigmasq, 1, seed = seed))
-  smmed_listH1[[i]] = simulate_seqMED_multidim(mu_full, betaT, indicesT, indices0, indices1, mu0, mu1, 
+seed = jid + 1
+set.seed(seed)
+initD = matrix(runif(n = pfull * initN, min = xmin, max = xmax), nrow = initN, ncol = pfull)
+inity = as.vector(simulateY_multidim(initD[ , indicesT], initN, betaT, sigmasq, 1, seed = seed))
+smmed_H1 = simulate_seqMED_multidim(mu_full, betaT, indicesT, indices0, indices1, mu0, mu1, 
                                              sigmasq, sigmasq01, V0, V1, xmin, xmax, numCandidates, k, p,
                                              initD, inity, numSeq, N_seq, seed = seed)
-}
-saveRDS(smmed_listH1, paste(output_home, "lm2vs3H1_sims.rds", sep = ""))
-
-# sim_ind = 1
-# par(mfrow = c(3, 2))
-# for(marginal_ind in 1:pfull){
-#   design = smmed_listH0[[sim_ind]]$D
-#   hi = hist(design[ (initN + 1):dim(design)[1], marginal_ind], breaks = 5, 
-#        main = paste("marginal", marginal_ind, sep = ":"), xlab = "design marginal")
-#   print(paste(min(hi$counts), max(hi$counts), sep = ";"))
-# }
-
+saveRDS(smmed_H1, paste(output_home, "lmvs3v5H1_sim", jid, ".rds", sep = ""))

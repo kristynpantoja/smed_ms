@@ -4,7 +4,7 @@ SMMEDgpvs_oneatatime = function(type_true = NULL, l_true = NULL, subdim_true = N
                                 initN = NULL, initD = NULL, initD_indices = NULL, inity = NULL, numSeq = 5, N_seq = 10, 
                                 alpha_seq = 1, buffer_seq = 0, candidates = NULL, numDimsMax = NULL, genCandidates = 1, 
                                 seed = NULL){
-  initD = unname(as.matrix(initD))
+  initD = as.matrix(initD)
   if(is.null(candidates) & is.null(true_y)){
     if(is.null(subdim_true)) subdim_true = 1:numDimsMax
     if(length(subdim_true) == 1) if(subdim_true != 1) subdim_true = 1:subdim_true
@@ -16,11 +16,11 @@ SMMEDgpvs_oneatatime = function(type_true = NULL, l_true = NULL, subdim_true = N
         xseq = seq(from = xmin, to = xmax, length.out = numCandidates)
         xseqlist = list()
         for(i in 1:numDimsMax) xseqlist[[i]] = xseq 
-        candidates = unname(as.matrix(expand.grid(xseqlist), dimnames = NULL))
+        candidates = as.matrix(expand.grid(xseqlist))
       }
     }
   }
-  if(typeof(candidates) == "list") candidates = as.matrix(candidates, dimnames = NULL)
+  candidates = as.matrix(candidates)
   # sequence checks
   if(length(N_seq) == 1) N_seq = rep(N_seq, numSeq)
   if(length(buffer_seq) == 1) buffer_seq = rep(buffer_seq, numSeq)

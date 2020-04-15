@@ -1,3 +1,5 @@
+### NOT WORTH PARALLELIZING MAYBE?
+
 # --- Working Directory --- #
 
 # Computer

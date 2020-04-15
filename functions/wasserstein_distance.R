@@ -94,10 +94,35 @@ Wasserstein_distance_postpred_gp = function(x, Kinv0, Kinv1, initD, y, var_e, ty
 ################################################
 
 # meant to be able to handle 2d dimensional input, for variable selection problem
+# Wasserstein_distance_postpred_gpvsold = function(x, Kinv0, Kinv1, subdim, subinitD = NULL, initD, y, var_e, type, l){
+#   x = as.matrix(x)
+#   if(dim(x)[1] !=1) x = t(x)
+#   
+#   # posterior distribution of beta
+#   if(is.null(subinitD)){
+#     k0 = t(as.matrix(getCov(x, initD, type[1], l[1])))
+#   } else{
+#     # k0 = t(as.matrix(getCov(x[ , subdim, drop = FALSE], subinitD, type[1], l[1])))
+#     k0 = t(as.matrix(getCov(x, subinitD, type[1], l[1])))
+#   }
+#   k1 = t(as.matrix(getCov(x, initD, type[2], l[2])))
+#   
+#   # posterior predictive distribution of y, for candidate x
+#   postpredmu0 = t(k0) %*% Kinv0 %*% y
+#   postpredvar0 = var_e * (1 - t(k0) %*% Kinv0 %*% k0)
+#   if(postpredvar0 < 0) postpredvar0 = 0 # !!!!!!!!!!
+#   
+#   postpredmu1 = t(k1) %*% Kinv1 %*% y
+#   postpredvar1 = var_e * (1 - t(k1) %*% Kinv1 %*% k1)
+#   if(postpredvar1 < 0) postpredvar1 = 0 # !!!!!!!!!!
+#   wass = Wasserstein_distance(postpredmu0, postpredmu1, postpredvar0, postpredvar1, dim = 1)
+#   return(as.numeric(wass))
+# }
 Wasserstein_distance_postpred_gpvs = function(x, Kinv0, Kinv1, subdim, subinitD = NULL, initD, y, var_e, type, l){
+  if(!is.null(subinitD)) if(typeof(subinitD) == "list") subinitD = as.matrix(subinitD)
+  if(typeof(initD) == "list") initD = as.matrix(initD)
   x = as.matrix(x)
   if(dim(x)[1] !=1) x = t(x)
-  # print(x)
   
   # posterior distribution of beta
   if(is.null(subinitD)){
@@ -115,14 +140,6 @@ Wasserstein_distance_postpred_gpvs = function(x, Kinv0, Kinv1, subdim, subinitD 
   postpredmu1 = t(k1) %*% Kinv1 %*% y
   postpredvar1 = var_e * (1 - t(k1) %*% Kinv1 %*% k1)
   if(postpredvar1 < 0) postpredvar1 = 0 # !!!!!!!!!!
-  # print(paste("dim of mu1: ", paste(dim(postpredmu0))))
-  # print(paste("dim of mu2: ", dim(postpredmu1)))
-  # print(paste("dim of var1: ", dim(postpredvar0)))
-  # print(paste("dim of var1: ", dim(postpredvar1)))
-  # print(paste("mu1: ", postpredmu0))
-  # print(paste("mu2: ", postpredmu1))
-  # print(paste("var1: ", postpredvar0))
-  # print(paste("var1: ", postpredvar1))
   wass = Wasserstein_distance(postpredmu0, postpredmu1, postpredvar0, postpredvar1, dim = 1)
   return(as.numeric(wass))
 }

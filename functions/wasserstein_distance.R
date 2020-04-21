@@ -47,7 +47,7 @@ Wasserstein_distance_postpred = function(x, postmean0, postmean1, postvar0, post
 }
 
 # multidimensional 
-Wasserstein_distance_postpred_multidim = function(x, indices0, indices1, postmean0, postmean1, postvar0, postvar1, var_e, dim = 1){
+Wasserstein_vs = function(x, indices0, indices1, postmean0, postmean1, postvar0, postvar1, var_e, dim = 1){
   # Wasserstein_distance_postpred(x, postmean0, postmean1, postvar0, postvar1, var_e, type = c(NULL, NULL), dim = 1)
   
   # posterior distribution of beta
@@ -118,19 +118,37 @@ Wasserstein_distance_postpred_gp = function(x, Kinv0, Kinv1, initD, y, var_e, ty
 #   wass = Wasserstein_distance(postpredmu0, postpredmu1, postpredvar0, postpredvar1, dim = 1)
 #   return(as.numeric(wass))
 # }
-Wasserstein_distance_postpred_gpvs = function(x, Kinv0, Kinv1, subdim, subinitD = NULL, initD, y, var_e, type, l){
-  if(!is.null(subinitD)) if(typeof(subinitD) == "list") subinitD = as.matrix(subinitD)
-  if(typeof(initD) == "list") initD = as.matrix(initD)
-  x = as.matrix(x)
-  if(dim(x)[1] !=1) x = t(x)
+# Wasserstein_distance_postpred_gpvs = function(x, Kinv0, Kinv1, subdim, subinitD = NULL, initD, y, var_e, type, l){
+#   if(!is.null(subinitD)) if(typeof(subinitD) == "list") subinitD = as.matrix(subinitD)
+#   if(typeof(initD) == "list") initD = as.matrix(initD)
+#   x = as.matrix(x)
+#   if(dim(x)[1] !=1) x = t(x)
+#   
+#   # posterior distribution of beta
+#   if(is.null(subinitD)){
+#     k0 = t(as.matrix(getCov(x, initD, type[1], l[1])))
+#   } else{
+#     k0 = t(as.matrix(getCov(x[ , subdim, drop = FALSE], subinitD, type[1], l[1])))
+#   }
+#   k1 = t(as.matrix(getCov(x, initD, type[2], l[2])))
+#   
+#   # posterior predictive distribution of y, for candidate x
+#   postpredmu0 = t(k0) %*% Kinv0 %*% y
+#   postpredvar0 = var_e * (1 - t(k0) %*% Kinv0 %*% k0)
+#   if(postpredvar0 < 0) postpredvar0 = 0 # !!!!!!!!!!
+#   
+#   postpredmu1 = t(k1) %*% Kinv1 %*% y
+#   postpredvar1 = var_e * (1 - t(k1) %*% Kinv1 %*% k1)
+#   if(postpredvar1 < 0) postpredvar1 = 0 # !!!!!!!!!!
+#   wass = Wasserstein_distance(postpredmu0, postpredmu1, postpredvar0, postpredvar1, dim = 1)
+#   return(as.numeric(wass))
+# }
+Wasserstein_distance_postpred_gpvs = function(x, Kinv0, Kinv1, indices0, indices1, initD0, initD1, y, var_e, type, l){
+  x = t(as.matrix(x))
   
   # posterior distribution of beta
-  if(is.null(subinitD)){
-    k0 = t(as.matrix(getCov(x, initD, type[1], l[1])))
-  } else{
-    k0 = t(as.matrix(getCov(x[ , subdim, drop = FALSE], subinitD, type[1], l[1])))
-  }
-  k1 = t(as.matrix(getCov(x, initD, type[2], l[2])))
+  k0 = t(as.matrix(getCov(x[ , indices0, drop = FALSE], initD0, type[1], l[1])))
+  k1 = t(as.matrix(getCov(x[ , indices1, drop = FALSE], initD1, type[2], l[2])))
   
   # posterior predictive distribution of y, for candidate x
   postpredmu0 = t(k0) %*% Kinv0 %*% y

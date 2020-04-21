@@ -1,0 +1,14 @@
+#!/bin/bash
+#BSUB -u kristynp@stat.tamu.edu
+#BSUB -B
+#BSUB -N
+#BSUB -L /bin/bash
+#BSUB -o lmvs_%J_out.txt
+#BSUB -e lmvs_%J_err.txt
+#BSUB -n 1
+#BSUB -M 2560
+#BSUB -W 24:00
+#BSUB -J "lmvs[4]"
+
+module load R_tamu/3.5.0-iomkl-2017b-recommended-mt
+Rscript smmedvsparallel.R ${LSB_JOBINDEX}

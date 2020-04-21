@@ -1,0 +1,14 @@
+#!/bin/bash
+#BSUB -u kristynp@stat.tamu.edu
+#BSUB -B
+#BSUB -N
+#BSUB -L /bin/bash
+#BSUB -n 1
+#BSUB -o gpvs_%J_out.txt
+#BSUB -e gpvs_%J_err.txt
+#BSUB -M 2560
+#BSUB -W 24:00
+#BSUB -J "gpvs12"
+
+module load R_tamu/3.5.0-iomkl-2017b-recommended-mt
+Rscript gpvs12.R

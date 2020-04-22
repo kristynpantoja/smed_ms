@@ -96,7 +96,7 @@ add_MMEDvs_oneatatime = function(initD, inity, mean_beta_full, beta_true = NULL,
     # print(i)
   }
   
-  return(list("initD" = old_initD, "addD" = D, "updatedD" = c(old_initD, D), "q_initD" = initD))
+  return(list("initD" = initD, "addD" = D, "D" = rbind(initD, D)))
 }
 
 

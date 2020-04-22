@@ -59,7 +59,7 @@ generate_SMMEDvs = function(mean_beta_full, beta_true = NULL, indices_true = NUL
   if(!is.null(seed)) set.seed(seed)
   # get y1 (if not given)
   if(is.null(inity)){
-    y1 = as.vector(simulateY_multidim(D1[ , indices_true], N_seq[1], beta_true, sigmasq, 1, seed = seed))
+    y1 = as.vector(simulateYvs(D1[ , indices_true], N_seq[1], beta_true, sigmasq, 1, seed = seed))
   } else{
     y1 = inity
   }
@@ -102,7 +102,7 @@ generate_SMMEDvs = function(mean_beta_full, beta_true = NULL, indices_true = NUL
                     alpha = alpha_seq[t], buffer = buffer_seq[t], candidates,
                     wasserstein0, genCandidate, algorithm = algorithm)
     
-    yt = as.vector(simulateY_multidim(Dt$addD[ , indices_true], N_seq[t], beta_true, sigmasq, 1, seed = seed))
+    yt = as.vector(simulateYvs(Dt$addD[ , indices_true], N_seq[t], beta_true, sigmasq, 1, seed = seed))
     
     # update D and y with new data
     D = rbind(D, Dt$addD)
@@ -117,7 +117,8 @@ generate_SMMEDvs = function(mean_beta_full, beta_true = NULL, indices_true = NUL
     
     print(paste("finished ", t, " out of ", numSeq, " steps", sep = ""))
   }
-  return(list("D" = D, "y" = y, "postvar0" = postvar0, "postmean0" = postmean0, 
+  return(list("initD" = initD, "addD" = D[(initN + 1):dim(D)[1], ], "D" = D, "y" = y, 
+              "postvar0" = postvar0, "postmean0" = postmean0, 
               "postvar1" = postvar1, "postmean1" = postmean1))
 }
 

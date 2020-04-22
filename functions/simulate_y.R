@@ -12,12 +12,25 @@ simulateY = function(D, N, true_beta, var_e, numSims, type = NULL, seed = NULL){
   }
   Y = matrix(rep(NA, N * numSims), N, numSims) # each column is a separate simulation
   for(j in 1:numSims){
-    Y[ , j] = rmvnorm(1, X %*% true_beta, var_e * diag(N))
+    # Y[ , j] = rmvnorm(1, X %*% true_beta, var_e * diag(N))
+    Y[ , j] = X %*% true_beta + sqrt(var_e) * rnorm(N)
   }
   return(Y)
 }
 
-simulateY_multidim = function(D, N, true_beta, var_e, numSims, seed = NULL){
-  X = D
+simulateYvs = function(D, N, true_beta, var_e, numSims, seed = NULL){
   simulateY(D, N, true_beta, var_e, numSims, type = NULL, seed = NULL)
 }
+
+# X = constructDesignX(x_random2[ , indicesT], Ntot2, NULL)
+# y1 = as.vector(rmvnorm(1, X %*% betaT, sigmasq * diag(Ntot2)))
+# y2 = X %*% betaT + sqrt(sigmasq) * rnorm(Ntot2, 0, 1)
+# y3 = X %*% betaT + rnorm(Ntot2, 0, sqrt(sigmasq))
+# lm(y1 ~ -1 + X)
+# lm(y2 ~ -1 + X)
+# lm(y3 ~ -1 + X)
+# microbenchmark(
+#   as.vector(rmvnorm(1, X %*% betaT, sigmasq * diag(Ntot2))),
+#   X %*% betaT + sqrt(sigmasq) * rnorm(Ntot2, 0, 1),
+#   X %*% betaT + rnorm(Ntot2, 0, sqrt(sigmasq))
+# )

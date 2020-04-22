@@ -1,29 +1,24 @@
 # require("construct_design_matrix.R")
 # require("simulate_y.R")
 
-##########
-### 2D ###
-##########
-
 model_evidence = function(Y, D, N, beta_prior_mean, beta_prior_var, var_e, hypothesis_model_type, indices = NULL){
   # Y is a vector of outputs (or scalar, for one output)
   # X is a matrix of inputs (or vector, for one input)
   # beta_prior_var is a matrix
   # var_e is a scalar
+  if(N != length(Y)) stop("N is not the same length as Y")
   if(!is.null(hypothesis_model_type)){
-    if(N != length(Y)) stop("N is not the same length as Y")
     X = constructDesignX(D, N, hypothesis_model_type)
-    # get mean and variance of marginal density of y, which is N-dim multivariate normal pdf
-    marginaly_mean = X %*% beta_prior_mean
-    if(dim(X)[1] > 1){ # if X is a matrix of inputs
-      marginaly_var = diag(rep(var_e, N)) + (X %*% beta_prior_var %*% t(X))
-    } else{ # if X is a vector for one input
-      marginaly_var = var_e + (X %*% beta_prior_var %*% t(X))
-    }
   } else{
     X = constructDesignX(D, N, hypothesis_model_type)[ , indices]
-    marginaly_mean = X %*% beta_prior_mean
+  }
+  # get mean and variance of marginal density of y, which is N-dim multivariate normal pdf
+  marginaly_mean = X %*% beta_prior_mean
+  if(dim(X)[1] > 1){ # if X is a matrix of inputs
     marginaly_var = diag(rep(var_e, N)) + (X %*% beta_prior_var %*% t(X))
+  } else{ # if X is a vector for one input
+    warning("X is a vector, not a matrix - is that what you expected?")
+    marginaly_var = var_e + (X %*% beta_prior_var %*% t(X))
   }
   return(dmvnorm(Y, mean = marginaly_mean, sigma = marginaly_var, log = FALSE))
 }
@@ -46,7 +41,7 @@ calcExpPostProbH = function(D, N, true_beta, beta_prior_mean0, beta_prior_mean1,
     simPostH0[j] = simEvidenceH0 / (simEvidenceH0 + simEvidenceH1)
     simPostH1[j] = simEvidenceH1 / (simEvidenceH0 + simEvidenceH1)
     # calculate bayes factor
-    simBF01[j] = simPostH0[j] / simPostH1[j]
+    simBF01[j] = simEvidenceH0 / simEvidenceH1
   }
   expected_postH0 = mean(simPostH0)
   expected_postH1 = mean(simPostH1)
@@ -78,7 +73,7 @@ calcEPPH = function(D, N, true_beta, true_model_type, models, var_e, numSims = 1
   if(!is.null(true_model_type)){
     simY = simulateY(D, N, true_beta, var_e, numSims, true_model_type, seed)
   } else{
-    simY = simulateY_multidim(D[ , true_indices], N, true_beta, var_e, numSims, seed)
+    simY = simulateYvs(D[ , true_indices], N, true_beta, var_e, numSims, seed)
   }
   # "models" is a list of lists, where each element of list "models" describes a model
   #   each element/model is a list containing "beta_prior_mean", "beta_prior_var", "model_type"
@@ -90,15 +85,6 @@ calcEPPH = function(D, N, true_beta, true_model_type, models, var_e, numSims = 1
   model_postprobs = matrix(NA, length(models), numSims)
   for(j in 1:numSims){
     Y = simY[ , j]
-    # # get model evidences for each hypothesized model
-    # for(m in 1:length(models)){
-    #   model = models[[m]]
-    #   if(length(model) == 3) model[[4]] = NULL
-    #   model_evidences[m, j] = model_evidence(Y, D, N, model[[1]], model[[2]], var_e, model[[3]], model[[4]])
-    # }
-    # # calculate posterior probabilities of each hypothesis
-    # denom = sum(model_evidences[ , j])
-    # model_postprobs[ , j] = model_evidences[ , j] / denom
     model_postprobs[ , j] = calcEPPHdata(Y, D, N, models, var_e)
   }
   exp_postprobs = apply(model_postprobs, 1, mean)
@@ -122,11 +108,11 @@ calcEPPHdata = function(y, D, N, models, var_e){
   return(c("model_postprobs" = model_postprobs))
 }
 
-calcEPPHseqdata = function(smmed, models, var_e, initN, numSeq, N_seq){
+calcEPPHseqdata = function(y, D, models, var_e, initN, numSeq, N_seq){
   postprobs = matrix(NA, length(models), numSeq)
   for(i in 1:numSeq){
-    changing_postprobs = calcEPPHdata(smmed$y[1:(initN + N_seq * i)],
-                                      smmed$D[1:(initN + N_seq * i), ], 
+    changing_postprobs = calcEPPHdata(y[1:(initN + N_seq * i)],
+                                      D[1:(initN + N_seq * i), ], 
                                       N = initN + N_seq * i, models, sigmasq)
     postprobs[ , i] = changing_postprobs
   }

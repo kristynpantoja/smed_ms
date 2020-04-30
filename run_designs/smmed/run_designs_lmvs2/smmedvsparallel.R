@@ -2,12 +2,12 @@
 
 # Computer
 # home = "/home/kristyn/Documents/smed_ms"
-# output_home = paste(home, "/run_designs/smmed/run_designs_lmvs/", sep = "")
-# jid = 5
+# output_home = paste(home, "/run_designs/smmed/run_designs_lmvs2/", sep = "")
+# jid = 1
 
 # Cluster
 home = "/scratch/user/kristynp/smed_ms"
-output_home = paste(home,"/run_designs_lmvs/",sep="")
+output_home = paste(home,"/run_designs_lmvs2/",sep="")
 jid=commandArgs(trailingOnly=T)[1]
 jid=as.numeric(jid)
 
@@ -40,7 +40,7 @@ xmin = -1
 xmax = 1
 sigmasq01 = 0.5
 sigmasq = 0.3
-numCandidates = 5000 #
+numCandidates = 10000 #
 xmin = -1
 xmax = 1
 p = 3
@@ -49,8 +49,8 @@ initN = 5
 pfull = length(mu_full)
 
 # sequential settings
-numSeq = 9
-N_seq = 3
+numSeq = 5
+N_seq = 27
 alpha_seq = 1
 
 # hypotheses

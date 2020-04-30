@@ -30,14 +30,14 @@ mu_full = c(0.5, 0.5, 0.5) #
 # settings
 xmin = -1
 xmax = 1
-sigmasq01 = 0.25
+sigmasq01 = 0.5
 sigmasq = 0.3
 numCandidates = 1000 #
 xmin = -1
 xmax = 1
 p = 3
 k = 4 * p
-initN = 50
+initN = 5
 pfull = length(mu_full)
 
 alpha_seq = 1
@@ -62,12 +62,12 @@ set.seed(12)
 initD = matrix(runif(n = pfull * initN, min = xmin, max = xmax), nrow = initN, ncol = pfull)
 inity = as.vector(simulateYvs(initD[ , indicesT], initN, betaT, sigmasq, 1, seed = 123))
 
-numSeq_seq = c(50, 100, 250, 500, 700, 1000)
+numSeq_seq = c(50, 100, 250)
 N_seq2 = 1
-sigmasq2 = 0.001
+sigmasq2 = 0.3
 
-par(mfrow=c(1,length(models)))
 models = list("H0" = list(mu0, V0, NULL, indices0), "H1" = list(mu1, V1, NULL, indices1))
+par(mfrow=c(1,length(models)))
 for(i in 1:length(numSeq_seq)){
   numSeq2 = numSeq_seq[i]
   Nnew2 = numSeq2 * N_seq2
@@ -88,14 +88,14 @@ for(i in 1:length(numSeq_seq)){
     if(k == 1){
       plot(x = 1:numSeq2, y = EPPHseq_rand2[k, ], type = "l", 
            xlab = "steps 1:numSeq", ylab = paste("P(H", k - 1, "|Y)", sep = ""), 
-           ylim = c(0, 1))
-      # points(x = numSeq2, y = EPPHs_rand2[k, ])
+           ylim = c(0, 1), main = paste("n=", numSeq2, sep = ""))
+      points(x = numSeq2, y = EPPHs_rand2[k])
     }
     if(k == 2){
       plot(x = 1:numSeq2, y = EPPHseq_rand2[k, ], type = "l", 
            xlab = "steps 1:numSeq", ylab = paste("P(H", k - 1, "|Y)", sep = ""), 
            ylim = c(0, 1))
-      # points(x = numSeq2, y = EPPHs_rand2[k, ])
+      points(x = numSeq2, y = EPPHs_rand2[k])
     }
   }
 }

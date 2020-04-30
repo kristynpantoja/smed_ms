@@ -111,9 +111,9 @@ calcEPPHdata = function(y, D, N, models, var_e){
 calcEPPHseqdata = function(y, D, models, var_e, initN, numSeq, N_seq){
   postprobs = matrix(NA, length(models), numSeq)
   for(i in 1:numSeq){
-    changing_postprobs = calcEPPHdata(y[1:(initN + N_seq * i)],
-                                      D[1:(initN + N_seq * i), ], 
-                                      N = initN + N_seq * i, models, sigmasq)
+    seq_ind = 1:(initN + N_seq * i)
+    changing_postprobs = calcEPPHdata(y[seq_ind], D[seq_ind, , drop = FALSE], 
+                                      N = initN + N_seq * i, models, var_e)
     postprobs[ , i] = changing_postprobs
   }
   return(postprobs)

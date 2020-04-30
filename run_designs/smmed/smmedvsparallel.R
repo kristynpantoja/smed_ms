@@ -3,7 +3,7 @@
 # Computer
 home = "/home/kristyn/Documents/smed_ms"
 output_home = paste(home, "/run_designs/smmed/run_designs_lmvs/", sep = "")
-jid = 3
+jid = 5
 
 # Cluster
 # home = "/scratch/user/kristynp/smed_ms"
@@ -38,19 +38,19 @@ mu_full = c(0.5, 0.5, 0.5) #
 # settings
 xmin = -1
 xmax = 1
-sigmasq01 = 0.25
+sigmasq01 = 0.5
 sigmasq = 0.3
 numCandidates = 1000 #
 xmin = -1
 xmax = 1
 p = 3
 k = 4 * p
-initN = 50
+initN = 5
 pfull = length(mu_full)
 
 # sequential settings
-numSeq = 3
-N_seq = 5 #
+numSeq = 9
+N_seq = 3
 alpha_seq = 1
 
 # hypotheses
@@ -70,7 +70,7 @@ fT = function(x) betaT %*% x[indicesT]
 seed = jid + 1
 set.seed(seed)
 initD = matrix(runif(n = pfull * initN, min = xmin, max = xmax), nrow = initN, ncol = pfull)
-inity = as.vector(simulateY_multidim(initD[ , indicesT], initN, betaT, sigmasq, 1, seed = seed))
+inity = as.vector(simulateYvs(initD[ , indicesT], initN, betaT, sigmasq, 1, seed = seed))
 smmed_H0 = generate_SMMEDvs(mu_full, betaT, indicesT, indices0, indices1, mu0, mu1,
                             sigmasq, sigmasq01, V0, V1, xmin, xmax, numCandidates, k, p,
                             initD, inity, numSeq, N_seq, seed = 12)
@@ -83,7 +83,7 @@ fT = function(x) betaT %*% x[indicesT]
 seed = jid + 1
 set.seed(seed)
 initD = matrix(runif(n = pfull * initN, min = xmin, max = xmax), nrow = initN, ncol = pfull)
-inity = as.vector(simulateY_multidim(initD[ , indicesT], initN, betaT, sigmasq, 1, seed = seed))
+inity = as.vector(simulateYvs(initD[ , indicesT], initN, betaT, sigmasq, 1, seed = seed))
 smmed_H1 = generate_SMMEDvs(mu_full, betaT, indicesT, indices0, indices1, mu0, mu1,
                             sigmasq, sigmasq01, V0, V1, xmin, xmax, numCandidates, k, p,
                             initD, inity, numSeq, N_seq, seed = 12)

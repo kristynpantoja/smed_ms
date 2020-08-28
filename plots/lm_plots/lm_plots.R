@@ -76,43 +76,89 @@ smmed_data_list = readRDS(paste(home, "/run_designs/smmed/designs/case1smmeds.rd
 numSeqMMED = length(smmed_data_list)
 
 par(mfrow = c(1,2))
-hist(smmed_data$D, breaks = 20, main = "Sequential M-MED (with data)", xlab = "x")
-plot(x = smmed_data$D, y = smmed_data$y, xlab = "x", col = 1)
+hist(smmed_data$D, breaks = 20, main = "", xlab = "x")
+plot(x = smmed_data$D, y = smmed_data$y, xlab = "x", ylab = "", col = 1)
+legend("bottomleft", legend = c("data", "true model"), lty = c(NA, 1), pch = c(1, NA))
 curve(fT, add = TRUE)
 
-
+# png("image.png", width = 800, height = 600)
+# plot(...)
+# dev.off()
 
 # --- Fits --- #
 
 designs = list(dopt_linear, dopt_quadratic, space_filling, smmed_data$D)
-design_names = c("doptlin", "doptquad", "spacefill", "SMMED")
+design_names = c("doptlin", "doptquad", "grid", "smmed")
 design_col = c(4, 5, 3, 1)
 
 par(mfrow=c(2,2))
 
-col_postmeans = c(2, 3, 4)
-plot(x = 1:numSeq, y = smmed_data$postmean1[1, ], type = "l", ylim = c(-0.5, 0.5), main = "Posterior Mean, Quadratic", xlab = "steps 1:10", ylab = "beta", col = 1)
-lines(x = 1:numSeq, y = smmed_data$postmean1[2, ], type = "l", col = 2)
-lines(x = 1:numSeq, y = smmed_data$postmean1[3, ], type = "l", col = 3)
-abline(h = betaT[1], lty = 2, col = 1)
-abline(h = betaT[2], lty = 2, col = 2)
-abline(h = betaT[3], lty = 2, col = 3)
-legend("bottomleft", c("BT0", "BT1", "BT2"), lty = c(2, 2, 2), col = col_postmeans, bg = "white")
+col_postmeans = c(3, 5, 4)
+plot(x = 1:numSeq, y = smmed_data$postmean1[1, ], type = "l", 
+     ylim = c(-0.5, 0.5), #main = "Posterior Mean, Quadratic", 
+     xlab = "steps 1:10", ylab = "beta", col = col_postmeans[1])
+lines(x = 1:numSeq, y = smmed_data$postmean1[2, ], type = "l", col = col_postmeans[2])
+lines(x = 1:numSeq, y = smmed_data$postmean1[3, ], type = "l", col = col_postmeans[3])
+abline(h = betaT[1], lty = 2, col = col_postmeans[1])
+abline(h = betaT[2], lty = 2, col = col_postmeans[2])
+abline(h = betaT[3], lty = 2, col = col_postmeans[3])
+legend("bottomleft", c("Bn0", "Bn1", "Bn2"), lty = c(1, 1, 1), col = col_postmeans, bg = "white")
 
-col_postmeans = c(1, 2)
-plot(x = 1:numSeq, y = smmed_data$postmean0[1, ], type = "l", ylim = c(-0.5, 0.5), main = "Posterior Mean, Linear", xlab = "steps 1:10", ylab = "beta", col = 1)
-lines(x = 1:numSeq, y = smmed_data$postmean0[2, ], type = "l", col = 2)
-legend("bottomleft", c("Bn0", "Bn1"), lty = c(1, 1), col = col_postmeans, bg = "white")
+col_postmeans = c(8, 6)
+plot(x = 1:numSeq, y = smmed_data$postmean0[1, ], type = "l", 
+     ylim = c(-0.5, 0.5), #main = "Posterior Mean, Linear", 
+     xlab = "steps 1:10", ylab = "beta", col = col_postmeans[1])
+lines(x = 1:numSeq, y = smmed_data$postmean0[2, ], type = "l", col = col_postmeans[2])
+legend("topleft", c("Bn0", "Bn1"), lty = c(1, 1), col = col_postmeans, bg = "white")
 
-fEst = function(x) smmed_data$postmean1[1, N_seq] + smmed_data$postmean1[2, N_seq] * x + smmed_data$postmean1[3, N_seq] * x^2
-curve(fT, xlim = c(-1, 1), main = "Estimated Quadratic")
+fEst = function(x) smmed_data$postmean1[1, N_seq] + 
+  smmed_data$postmean1[2, N_seq] * x + smmed_data$postmean1[3, N_seq] * x^2
+curve(fT, xlim = c(-1, 1))
 curve(fEst, col = 2, add = T)
-legend("bottomleft", c("true model", "estimated model"), lty = c(1, 1), col = c(1, 2))
+legend("topright", c("true model", "estimated model"), lty = c(1, 1), col = c(1, 2))
 
 fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2
-fEst = function(x) smmed_data$postmean0[1, N_seq] + smmed_data$postmean0[2, N_seq] * x
-curve(fT, xlim = c(-1, 1), main = "Estimated Line")
+fEst = function(x) smmed_data$postmean0[1, N_seq] + 
+  smmed_data$postmean0[2, N_seq] * x
+curve(fT, xlim = c(-1, 1))
 curve(fEst, col = 2, add = T)
+
+# wasserstein distance
+par(mfrow = c(1, 1))
+
+testx = seq(from = xmin, to = xmax, length.out = numCandidates)
+is_already_in_D = testx %in% smmed_data$D
+testx = testx[!is_already_in_D]
+wass_testx = sapply(testx, function(x) Wasserstein_distance_postpred(x, smmed_data$postmean0[,10], smmed_data$postmean1[,10], 
+                                                                     diag(smmed_data$postvar0[,10]), diag(smmed_data$postvar1[,10]), sigmasq, type01))
+plot(x = testx, y = (wass_testx), type = "l", ylim = range(-0.5, 0.5), 
+     ylab = "wasserstein(x)", xlab = "", main = "")
+f0data = function(x) smmed_data$postmean0[,10][1] + smmed_data$postmean0[,10][2] * x
+f1data = function(x) smmed_data$postmean1[,10][1] + smmed_data$postmean1[,10][2] * x + smmed_data$postmean1[,10][3] * x^2
+fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2
+curve(f0data, col = 2, lwd = 5, add = T)
+curve(f1data, add = T, col = 5, lty = 2, lwd = 5)
+curve(fT, add = T, col = 1, lty = 3, lwd = 5)
+
+# left shade
+xshade = seq(from = -1, to = -0.6, length.out = 100)
+yshade1 = sapply(xshade, FUN = f0data)
+yshade2 = sapply(xshade, FUN = f1data)
+polygon(c(xshade,rev(xshade)),c(yshade2,rev(yshade1)),col=rgb(1, 0, 0, 0.1), border = NA)
+
+# middle shade
+xshade = seq(from = -0.6, to = 0.6, length.out = 100)
+yshade1 = sapply(xshade, FUN = f0data)
+yshade2 = sapply(xshade, FUN = f1data)
+polygon(c(xshade,rev(xshade)),c(yshade2,rev(yshade1)),col=rgb(1, 0, 0, 0.1), border = NA)
+
+# right shade
+xshade = seq(from = 0.6, to = 1, length.out = 100)
+yshade1 = sapply(xshade, FUN = f0data)
+yshade2 = sapply(xshade, FUN = f1data)
+polygon(c(xshade,rev(xshade)),c(yshade2,rev(yshade1)),col=rgb(1, 0, 0, 0.1), border = NA)
+
+legend("bottomleft", c("f0", "f1", "true f"), lty = c(1,2,3), lwd = 5, col = c(2, 5, 1))
 
 
 # --- EPPH --- #
@@ -156,8 +202,8 @@ BF01seq_mean = apply(BF01seq, 1, mean)
 
 par(mfrow=c(1,2))
 
-plot(x = 1:numSeq, y = postprobs0seq_mean, type = "l", main = "P(H0|Y)", 
-     xlab = "steps 1:numSeq", ylab = "P(H0|Y)", ylim = c(0, 1))
+plot(x = 1:numSeq, y = postprobs0seq_mean, type = "l", main = "", 
+     xlab = "steps 1:numSeq", ylab = "", ylim = c(0, 1))
 # for(k in 1:numSeqMMED){
 #   lines(x = 1:numSeq, y = postprobs0seq[,k], col=rgb(0, 0, 0, 0.1))
 # }
@@ -165,10 +211,10 @@ plot(x = 1:numSeq, y = postprobs0seq_mean, type = "l", main = "P(H0|Y)",
 abline(h = exppostprobs_space[1], col = 3)
 abline(h = exppostprobs_dopt1[1], col = 4)
 abline(h = exppostprobs_dopt2[1], col = 5)
-legend("topright", c(design_names), lty = c(rep(1, length(design_col))), col = c(design_col), bg = "white")
+legend("topleft", c(design_names), lty = c(rep(1, length(design_col))), col = c(design_col), bg = "white")
 
-plot(x = 1:numSeq, y = postprobs1seq_mean, type = "l", main = "P(H1|Y)", 
-     xlab = "steps 1:numSeq", ylab = "P(H1|Y)", ylim = c(0, 1))
+plot(x = 1:numSeq, y = postprobs1seq_mean, type = "l", main = "", 
+     xlab = "steps 1:numSeq", ylab = "", ylim = c(0, 1))
 # for(k in 1:numSeqMMED){
 #   lines(x = 1:numSeq, y = postprobs1seq[,k], col=rgb(0, 0, 0, 0.1))
 # }
@@ -248,8 +294,9 @@ smmed_data2_list = readRDS(paste(home, "/run_designs/smmed/designs/case2smmeds.r
 numSeqMMED = length(smmed_data2_list)
 
 par(mfrow = c(1,2))
-hist(smmed_data2$D, breaks = 20, main = "Sequential M-MED (with data)", xlab = "x")
-plot(x = smmed_data2$D, y = smmed_data2$y, xlab = "x")
+hist(smmed_data2$D, breaks = 20, main = "", xlab = "x")
+plot(x = smmed_data2$D, y = smmed_data2$y, xlab = "x", ylab = "")
+legend("bottomleft", legend = c("data", "true model"), lty = c(NA, 1), pch = c(1, NA))
 curve(fT, add = TRUE)
 
 
@@ -265,44 +312,84 @@ for(k in 1:numSeq){
                                                    smmed_data2$D[1:(N_seq * k)], (N_seq * k), 
                                                    c(0, 0, 0, 0), diag(rep(sigmasq01, 4)), sigmasq, 4))
 }
-plot(x = 1:numSeq, y = smmed_data2.postmean2[1, ], type = "l", ylim = range(betaT, smmed_data2.postmean2), main = "Posterior Mean, Cubic", xlab = "steps 1:10", ylab = "beta", col = 1)
-lines(x = 1:numSeq, y = smmed_data2.postmean2[2, ], type = "l", col = 2)
-lines(x = 1:numSeq, y = smmed_data2.postmean2[3, ], type = "l", col = 3)
-lines(x = 1:numSeq, y = smmed_data2.postmean2[4, ], type = "l", col = 4)
-abline(h = betaT[1], lty = 1, col = 1) # even though i said lty = 2, it gets covered.
-abline(h = betaT[2], lty = 2, col = 2)
-abline(h = betaT[3], lty = 2, col = 3)
-abline(h = betaT[4], lty = 2, col = 4)
-legend("bottomleft", c("BT0", "BT1", "BT2", "BT3"), lty = rep(2, 4), col = col_postmeans, bg = "white")
+plot(x = 1:numSeq, y = smmed_data2.postmean2[1, ], type = "l", ylim = range(betaT, smmed_data2.postmean2), xlab = "steps 1:10", ylab = "beta", col = col_postmeans[1])
+lines(x = 1:numSeq, y = smmed_data2.postmean2[2, ], type = "l", col = col_postmeans[2])
+lines(x = 1:numSeq, y = smmed_data2.postmean2[3, ], type = "l", col = col_postmeans[3])
+lines(x = 1:numSeq, y = smmed_data2.postmean2[4, ], type = "l", col = col_postmeans[4])
+abline(h = betaT[1], lty = 1, col = col_postmeans[1]) # even though i said lty = 2, it gets covered.
+abline(h = betaT[2], lty = 2, col = col_postmeans[2])
+abline(h = betaT[3], lty = 2, col = col_postmeans[3])
+abline(h = betaT[4], lty = 2, col = col_postmeans[4])
+legend("bottomleft", c("Bn0", "Bn1", "Bn2", "Bn3"), lty = 1, 
+       col = col_postmeans, bg = "white")
 
 col_postmeans = c(1, 2, 3)
-plot(x = 1:numSeq, y = smmed_data2$postmean1[1, ], type = "l", ylim = range(betaT, smmed_data2.postmean2), main = "Posterior Mean, Quadratic", xlab = "steps 1:10", ylab = "beta", col = 1)
-lines(x = 1:numSeq, y = smmed_data2$postmean1[2, ], type = "l", col = 2)
-lines(x = 1:numSeq, y = smmed_data2$postmean1[3, ], type = "l", col = 3)
+plot(x = 1:numSeq, y = smmed_data2$postmean1[1, ], type = "l", ylim = range(betaT, smmed_data2.postmean2), xlab = "steps 1:10", ylab = "beta", col = col_postmeans[1])
+lines(x = 1:numSeq, y = smmed_data2$postmean1[2, ], type = "l", col = col_postmeans[2])
+lines(x = 1:numSeq, y = smmed_data2$postmean1[3, ], type = "l", col = col_postmeans[3])
 legend("bottomleft", c("Bn0", "Bn1", "Bn2"), lty = c(1, 1, 1), col = col_postmeans, bg = "white")
 
 col_postmeans = c(1, 2)
-plot(x = 1:numSeq, y = smmed_data2$postmean0[1, ], type = "l", ylim = range(betaT, smmed_data2.postmean2), main = "Posterior Mean, Linear", xlab = "steps 1:10", ylab = "beta", col = 1)
+plot(x = 1:numSeq, y = smmed_data2$postmean0[1, ], type = "l", ylim = range(betaT, smmed_data2.postmean2), xlab = "steps 1:10", ylab = "beta", col = col_postmeans[1])
 # would plot error bars from posterior variances, but they're soooo small... why?
-lines(x = 1:numSeq, y = smmed_data2$postmean0[2, ], type = "l", col = 2)
+lines(x = 1:numSeq, y = smmed_data2$postmean0[2, ], type = "l", col = col_postmeans[2])
 legend("bottomleft", c("Bn0", "Bn1"), lty = c(1, 1), col = col_postmeans, bg = "white")
 
 # smmed_data2.postmean2.1 = postmean(smmed_data2$y, smmed_data2$D, N, 
 #                                        c(0, 0, 0, 0), diag(rep(sigmasq01, 4)), sigmasq, 4)
 # fEst = function(x) smmed_data2.postmean2.1[1] + smmed_data2.postmean2.1[2] * x + smmed_data2.postmean2.1[3] * x^2 + smmed_data2.postmean2.1[4] * x^3
 fEst = function(x) smmed_data2.postmean2[1, N_seq] + smmed_data2.postmean2[2, N_seq] * x + smmed_data2.postmean2[3, N_seq] * x^2 + smmed_data2.postmean2[4, N_seq] * x^3
-curve(fT, xlim = c(-1, 1), main = "Estimated Cubic")
+curve(fT, xlim = c(-1, 1))
 curve(fEst, col = 2, add = T)
 legend("bottomleft", c("true model", "estimated model"), lty = c(1, 1), col = c(1, 2))
 
 fEst = function(x) smmed_data2$postmean1[1, N_seq] + smmed_data2$postmean1[2, N_seq] * x + smmed_data2$postmean1[3, N_seq] * x^2
-curve(fT, xlim = c(-1, 1), main = "Estimated Quadratic")
+curve(fT, xlim = c(-1, 1))
 curve(fEst, col = 2, add = T)
 
 fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2 + betaT[4] * x^3
 fEst = function(x) smmed_data2$postmean0[1, N_seq] + smmed_data2$postmean0[2, N_seq] * x
-curve(fT, xlim = c(-1, 1), main = "Estimated Line")
+curve(fT, xlim = c(-1, 1))
 curve(fEst, col = 2, add = T)
+
+
+
+# --- high density areas (wasserstein distance) --- #
+
+par(mfrow = c(1, 1))
+testx = seq(from = xmin, to = xmax, length.out = numCandidates)
+is_already_in_D = testx %in% smmed_data$D
+testx = testx[!is_already_in_D]
+wass_testx = sapply(testx, function(x) Wasserstein_distance_postpred(x, smmed_data$postmean0[,10], smmed_data$postmean1[,10], 
+                                                                     diag(smmed_data$postvar0[,10]), diag(smmed_data$postvar1[,10]), sigmasq, type01))
+plot(x = testx, y = (wass_testx), type = "l", ylim = range(-1, 1), 
+     main = "wasserstein(x)")
+f0data = function(x) smmed_data$postmean0[,10][1] + smmed_data$postmean0[,10][2] * x
+f1data = function(x) smmed_data$postmean1[,10][1] + smmed_data$postmean1[,10][2] * x + smmed_data$postmean1[,10][3] * x^2
+fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2
+curve(f0data, col = 2, lwd = 5, add = T)
+curve(f1data, add = T, col = 5, lty = 2, lwd = 5)
+curve(fT, add = T, col = 1, lty = 3, lwd = 5)
+
+# left shade
+xshade = seq(from = -1, to = -0.6, length.out = 100)
+yshade1 = sapply(xshade, FUN = f0data)
+yshade2 = sapply(xshade, FUN = f1data)
+polygon(c(xshade,rev(xshade)),c(yshade2,rev(yshade1)),col=rgb(1, 0, 0, 0.1), border = NA)
+
+# middle shade
+xshade = seq(from = -0.6, to = 0.6, length.out = 100)
+yshade1 = sapply(xshade, FUN = f0data)
+yshade2 = sapply(xshade, FUN = f1data)
+polygon(c(xshade,rev(xshade)),c(yshade2,rev(yshade1)),col=rgb(1, 0, 0, 0.1), border = NA)
+
+# right shade
+xshade = seq(from = 0.6, to = 1, length.out = 100)
+yshade1 = sapply(xshade, FUN = f0data)
+yshade2 = sapply(xshade, FUN = f1data)
+polygon(c(xshade,rev(xshade)),c(yshade2,rev(yshade1)),col=rgb(1, 0, 0, 0.1), border = NA)
+
+legend("bottomright", c("f0", "f1", "true f"), lty = c(1,2,3), lwd = 5, col = c(2, 5, 1))
 
 
 
@@ -369,8 +456,6 @@ for(k in 1:length(models)){
   plot(x = 1:numSeq, y = postprobs_means[ k, ], type = "l", 
        xlab = "steps 1:numSeq", ylab = paste("P(H", k - 1, "|Y)", sep = ""), 
        ylim = range(postprobs[ k, ], exppostprobs_space[k], exppostprobs_dopt1[k], exppostprobs_dopt2[k]))
-  if(k == length(models)) title(paste("P(H", "T", "|Y)", sep = ""))
-  else title(paste("P(H", k - 1, "|Y)", sep = ""))
   # for(m in 1:numSeqMMED){
   #   lines(x = 1:numSeq, y = postprobs_seq[k, , m], col=rgb(0, 0, 0, 0.1))
   # }
@@ -394,7 +479,8 @@ yhatmse_doptlin = getClosedMSEyhat_seq(x_seq, dopt_linear, N, betaT, typeT,
                                        c(0, 0, 0, 0), diag(rep(sigmasq01, 4)), sigmasq, 4)
 par(mfrow = c(1,1))
 ylimarg = range(0, yhatmse_space$MSEyhat, yhatmse_smmed$MSEyhat)
-plot(x_seq, yhatmse_space$MSEyhat, type = "l", col = 3, ylim = ylimarg)
+plot(x_seq, yhatmse_space$MSEyhat, type = "l", col = 3, ylim = ylimarg, 
+     ylab = "", xlab = "")
 lines(x_seq, yhatmse_doptquad$MSEyhat, col = 5)
 lines(x_seq, yhatmse_smmed$MSEyhat, col = 1)
 lines(x_seq, yhatmse_doptlin$MSEyhat, col = 4)

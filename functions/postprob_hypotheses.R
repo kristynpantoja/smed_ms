@@ -23,6 +23,10 @@ model_evidence = function(Y, D, N, beta_prior_mean, beta_prior_var, var_e, hypot
   return(dmvnorm(Y, mean = marginaly_mean, sigma = marginaly_var, log = FALSE))
 }
 
+######################
+## for 2 hypotheses ##
+######################
+
 calcExpPostProbH = function(D, N, true_beta, beta_prior_mean0, beta_prior_mean1, 
                             beta_prior_var0, beta_prior_var1, var_e,
                             numSims = 100, true_model_type = NULL, H01_model_types = NULL,
@@ -65,8 +69,9 @@ calcExpPostProbH_data = function(y, D, N, beta_prior_mean0, beta_prior_var0,
 }
 
 
-
-## for M hypotheses
+######################
+## for M hypotheses ##
+######################
 
 # for non-sequential designs, where data needs to be generated in simulations to estimate
 calcEPPH = function(D, N, true_beta, true_model_type, models, var_e, numSims = 100, true_indices = NULL, seed = NULL){
@@ -109,12 +114,12 @@ calcEPPHdata = function(y, D, N, models, var_e){
 }
 
 calcEPPHseqdata = function(y, D, models, var_e, initN, numSeq, N_seq){
-  postprobs = matrix(NA, length(models), numSeq)
-  for(i in 1:numSeq){
+  postprobs = matrix(NA, length(models), numSeq + 1)
+  for(i in 0:numSeq){
     seq_ind = 1:(initN + N_seq * i)
     changing_postprobs = calcEPPHdata(y[seq_ind], D[seq_ind, , drop = FALSE], 
                                       N = initN + N_seq * i, models, var_e)
-    postprobs[ , i] = changing_postprobs
+    postprobs[ , i + 1] = changing_postprobs
   }
   return(postprobs)
 }

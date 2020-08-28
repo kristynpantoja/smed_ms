@@ -130,8 +130,9 @@ EPPHs_fact = calcEPPH(x_factorial, Ntot, betaT, NULL, models, sigmasq, numSims_p
 EPPHs_smmed = calcEPPHseqdata(smmedvsH0$y, smmedvsH0$D, models, sigmasq, initN, numSeq, N_seq)
 
 #EPPHs for smmed sims
-EPPH0_smmedsims = matrix(NA, numSeq, numSimsH0)
-EPPH1_smmedsims = matrix(NA, numSeq, numSimsH0)
+idxlast = numSeq + 1
+EPPH0_smmedsims = matrix(NA, idxlast, numSimsH0)
+EPPH1_smmedsims = matrix(NA, idxlast, numSimsH0)
 for(i in 1:numSimsH0){
   simH0.temp = simsH0[[i]]
   EPPH_temp = calcEPPHseqdata(simH0.temp$y, simH0.temp$D, models, sigmasq, initN, numSeq, N_seq)
@@ -152,57 +153,47 @@ par(mfrow=c(1,length(models)))
 #mean
 for(k in 1:length(models)){
   if(k == 1){
-    plot(x = 1:numSeq, y = EPPH0_smmedsims_mean, type = "l", 
-         xlab = "# steps", ylab = paste("P(H", k - 1, "|Y)", sep = ""), 
+    plot(x = 1:idxlast, y = EPPH0_smmedsims_mean, type = "l", 
+         xlab = "", ylab = paste("E[P(H", k - 1, "|Y,X)|X]", sep = ""), 
          ylim = range(EPPHs_smmed[ k, ], EPPHs_rand[k], EPPHs_dopt[k], 0, 1))
-    points(x = numSeq, y = EPPH0_smmedsims_mean[numSeq])
+    points(x = idxlast, y = EPPH0_smmedsims_mean[idxlast])
   }
   if(k == 2){
-    plot(x = 1:numSeq, y = EPPH1_smmedsims_mean, type = "l", 
-         xlab = "# steps", ylab = paste("P(H", k - 1, "|Y)", sep = ""), 
+    plot(x = 1:idxlast, y = EPPH1_smmedsims_mean, type = "l", 
+         xlab = "", ylab = paste("E[P(H", k - 1, "|Y,X)|X]", sep = ""), 
          ylim = range(EPPHs_smmed[ k, ], EPPHs_rand[k], EPPHs_dopt[k], 0, 1))
-    points(x = numSeq, y = EPPH1_smmedsims_mean[numSeq])
+    points(x = idxlast, y = EPPH1_smmedsims_mean[idxlast])
   }
-  title(paste("P(H", k - 1, "|Y)", sep = ""))
-  # for(i in 1:numSimsH0){
-  #   if(k == 1) lines(x = 1:numSeq, y = EPPH0_smmedsims[ , i], col = rgb(0, 0, 0, 0.1))
-  #   if(k == 2) lines(x = 1:numSeq, y = EPPH1_smmedsims[ , i], col = rgb(0, 0, 0, 0.1))
-  # }
   abline(h = EPPHs_rand[k], col = 3, lty = 3)
   abline(h = EPPHs_dopt[k], col = 4, lty = 3)
   abline(h = EPPHs_fact[k], col = 6, lty = 3)
-  points(x = numSeq, y = EPPHs_rand[k], col = 3, pch = 16)
-  points(x = numSeq, y = EPPHs_dopt[k], col = 4, pch = 17)
-  points(x = numSeq, y = EPPHs_fact[k], col = 6, pch = 18)
-  if(k == 1) legend("bottomright", c("smmed mean", design_names[-1]), lty = c(1, rep(NA, 3)), pch = c(NA, 16:18), col = c(design_col), bg = "white")
+  points(x = idxlast, y = EPPHs_rand[k], col = 3, pch = 16)
+  points(x = idxlast, y = EPPHs_dopt[k], col = 4, pch = 17)
+  points(x = idxlast, y = EPPHs_fact[k], col = 6, pch = 18)
+  if(k == 1) legend("bottomright", design_names, lty = c(1, rep(3, 3)), pch = c(1, 16:18), col = design_col, bg = "white")
 }
-# median
-for(k in 1:length(models)){
-  if(k == 1){
-    plot(x = 1:numSeq, y = EPPH0_smmedsims_med, type = "l", 
-         xlab = "steps 1:numSeq", ylab = paste("P(H", k - 1, "|Y)", sep = ""), 
-         ylim = range(EPPHs_smmed[ k, ], EPPHs_rand[k], EPPHs_dopt[k], 0, 1))
-    points(x = numSeq, y = EPPH0_smmedsims_med[numSeq])
-  }
-  if(k == 2){
-    plot(x = 1:numSeq, y = EPPH1_smmedsims_med, type = "l", 
-         xlab = "# steps", ylab = paste("P(H", k - 1, "|Y)", sep = ""), 
-         ylim = range(EPPHs_smmed[ k, ], EPPHs_rand[k], EPPHs_dopt[k], 0, 1))
-    points(x = numSeq, y = EPPH1_smmedsims_med[numSeq])
-  }
-  title(paste("P(H", k - 1, "|Y)", sep = ""))
-  # for(i in 1:numSimsH0){
-  #   if(k == 1) lines(x = 1:numSeq, y = EPPH0_smmedsims[ , i], col = rgb(0, 0, 0, 0.1))
-  #   if(k == 2) lines(x = 1:numSeq, y = EPPH1_smmedsims[ , i], col = rgb(0, 0, 0, 0.1))
-  # }
-  abline(h = EPPHs_rand[k], col = 3, lty = 3)
-  abline(h = EPPHs_dopt[k], col = 4, lty = 3)
-  abline(h = EPPHs_fact[k], col = 6, lty = 3)
-  points(x = numSeq, y = EPPHs_rand[k], col = 3, pch = 16)
-  points(x = numSeq, y = EPPHs_dopt[k], col = 4, pch = 17)
-  points(x = numSeq, y = EPPHs_fact[k], col = 6, pch = 18)
-  if(k == 1) legend("bottomright", c("smmed median", design_names[-1]), lty = c(1, rep(NA, 3)), pch = c(NA, 16:18), col = c(design_col), bg = "white")
-}
+# # median
+# for(k in 1:length(models)){
+#   if(k == 1){
+#     plot(x = 1:numSeq, y = EPPH0_smmedsims_med, type = "l", 
+#          xlab = "# steps", ylab = paste("P(H", k - 1, "|Y)", sep = ""), 
+#          ylim = range(EPPHs_smmed[ k, ], EPPHs_rand[k], EPPHs_dopt[k], 0, 1))
+#     points(x = numSeq, y = EPPH0_smmedsims_med[numSeq])
+#   }
+#   if(k == 2){
+#     plot(x = 1:numSeq, y = EPPH1_smmedsims_med, type = "l", 
+#          xlab = "# steps", ylab = paste("P(H", k - 1, "|Y)", sep = ""), 
+#          ylim = range(EPPHs_smmed[ k, ], EPPHs_rand[k], EPPHs_dopt[k], 0, 1))
+#     points(x = numSeq, y = EPPH1_smmedsims_med[numSeq])
+#   }
+#   abline(h = EPPHs_rand[k], col = 3, lty = 3)
+#   abline(h = EPPHs_dopt[k], col = 4, lty = 3)
+#   abline(h = EPPHs_fact[k], col = 6, lty = 3)
+#   points(x = numSeq, y = EPPHs_rand[k], col = 3, pch = 16)
+#   points(x = numSeq, y = EPPHs_dopt[k], col = 4, pch = 17)
+#   points(x = numSeq, y = EPPHs_fact[k], col = 6, pch = 18)
+#   if(k == 1) legend("bottomright", design_names, lty = c(1, rep(3, 3)), pch = c(1, 16:18), col = design_col, bg = "white")
+# }
 
 
 
@@ -210,18 +201,22 @@ for(k in 1:length(models)){
 
 numSims_seqPPH = numSimsH0
 
-rand_seqPPH0 = matrix(NA, nrow = numSeq, ncol = numSims_seqPPH)
-dopt_seqPPH0 = matrix(NA, nrow = numSeq, ncol = numSims_seqPPH)
-fact_seqPPH0 = matrix(NA, nrow = numSeq, ncol = numSims_seqPPH)
-smmed_seqPPH0 = matrix(NA, nrow = numSeq, ncol = numSims_seqPPH)
+rand_seqPPH0 = matrix(NA, nrow = numSeq + 1, ncol = numSims_seqPPH)
+dopt_seqPPH0 = matrix(NA, nrow = numSeq + 1, ncol = numSims_seqPPH)
+fact_seqPPH0 = matrix(NA, nrow = numSeq + 1, ncol = numSims_seqPPH)
+smmed_seqPPH0 = matrix(NA, nrow = numSeq + 1, ncol = numSims_seqPPH)
 
-rand_seqPPH1 = matrix(NA, nrow = numSeq, ncol = numSims_seqPPH)
-dopt_seqPPH1 = matrix(NA, nrow = numSeq, ncol = numSims_seqPPH)
-fact_seqPPH1 = matrix(NA, nrow = numSeq, ncol = numSims_seqPPH)
-smmed_seqPPH1 = matrix(NA, nrow = numSeq, ncol = numSims_seqPPH)
+rand_seqPPH1 = matrix(NA, nrow = numSeq + 1, ncol = numSims_seqPPH)
+dopt_seqPPH1 = matrix(NA, nrow = numSeq + 1, ncol = numSims_seqPPH)
+fact_seqPPH1 = matrix(NA, nrow = numSeq + 1, ncol = numSims_seqPPH)
+smmed_seqPPH1 = matrix(NA, nrow = numSeq + 1, ncol = numSims_seqPPH)
 
 for(j in 1:numSims_seqPPH){
   set.seed(j + 50)
+  smmedsim = simsH0[[j]]
+  initD = smmedsim$initD
+  inity = smmedsim$y[1:initN]
+  
   # random design
   x_random = matrix(runif(n = pfull * Nnew, min = xmin, max = xmax), 
                     nrow = Nnew, ncol = pfull)
@@ -253,8 +248,6 @@ for(j in 1:numSims_seqPPH){
   x_factorial = rbind(initD, x_factorial)
   y_factorial = c(inity, y_factorial)
   
-  smmedsim = simsH0[[j]]
-  
   rand_seqPPH.temp = calcEPPHseqdata(y_random, x_random, models, sigmasq, initN, numSeq, N_seq)
   rand_seqPPH0[ , j] = rand_seqPPH.temp[1, ]
   rand_seqPPH1[ , j] = rand_seqPPH.temp[2, ]
@@ -281,62 +274,61 @@ dopt_seqPPH1_mean = apply(dopt_seqPPH1, 1, mean)
 fact_seqPPH1_mean = apply(fact_seqPPH1, 1, mean)
 smmed_seqPPH1_mean = apply(smmed_seqPPH1, 1, mean)
 # PPH0
-plot(x = 1:numSeq, y = smmed_seqPPH0_mean, type = "l",
-     xlab = "# steps", ylab = "P(H0|Y)", ylim = c(0, 1), 
-     main = "Mean P(H0|Y)")
-lines(x = 1:numSeq, rand_seqPPH0_mean, col = 3, lty = 2)
-lines(x = 1:numSeq, dopt_seqPPH0_mean, col = 4, lty = 2)
-lines(x = 1:numSeq, fact_seqPPH0_mean, col = 6, lty = 2)
-points(x = numSeq, y = rand_seqPPH0_mean[numSeq], col = 3, pch = 16)
-points(x = numSeq, y = dopt_seqPPH0_mean[numSeq], col = 4, pch = 17)
-points(x = numSeq, y = fact_seqPPH0_mean[numSeq], col = 6, pch = 18)
-points(x = numSeq, y = smmed_seqPPH0_mean[numSeq])
+idxlast = numSeq + 1
+plot(x = 1:idxlast, y = smmed_seqPPH0_mean, type = "l",
+     xlab = "", ylab = "E[P(H0|Y,X)|X]", ylim = c(0, 1))
+lines(x = 1:idxlast, rand_seqPPH0_mean, col = 3, lty = 2)
+lines(x = 1:idxlast, dopt_seqPPH0_mean, col = 4, lty = 2)
+lines(x = 1:idxlast, fact_seqPPH0_mean, col = 6, lty = 2)
+points(x = idxlast, y = rand_seqPPH0_mean[idxlast], col = 3, pch = 16)
+points(x = idxlast, y = dopt_seqPPH0_mean[idxlast], col = 4, pch = 17)
+points(x = idxlast, y = fact_seqPPH0_mean[idxlast], col = 6, pch = 18)
+points(x = idxlast, y = smmed_seqPPH0_mean[idxlast])
 legend("bottomright", design_names, lty = c(1, rep(2, length(design_names) - 1)), 
        pch = c(1, 16, 17, 18), col = design_col, bg = "white")
 # PPH1
-plot(x = 1:numSeq, y = smmed_seqPPH1_mean, type = "l",
-     xlab = "steps 1:numSeq", ylab = "P(H1|Y)", ylim = c(0, 1), 
-     main = "Mean P(H1|Y)")
-lines(x = 1:numSeq, rand_seqPPH1_mean, col = 3, lty = 2)
-lines(x = 1:numSeq, dopt_seqPPH1_mean, col = 4, lty = 2)
-lines(x = 1:numSeq, fact_seqPPH1_mean, col = 6, lty = 2)
-points(x = numSeq, y = rand_seqPPH1_mean[numSeq], col = 3, pch = 16)
-points(x = numSeq, y = dopt_seqPPH1_mean[numSeq], col = 4, pch = 17)
-points(x = numSeq, y = fact_seqPPH1_mean[numSeq], col = 6, pch = 18)
-points(x = numSeq, y = smmed_seqPPH1_mean[numSeq])
+plot(x = 1:idxlast, y = smmed_seqPPH1_mean, type = "l",
+     xlab = "", ylab = "E[P(H1|Y,X)|X]", ylim = c(0, 1))
+lines(x = 1:idxlast, rand_seqPPH1_mean, col = 3, lty = 2)
+lines(x = 1:idxlast, dopt_seqPPH1_mean, col = 4, lty = 2)
+lines(x = 1:idxlast, fact_seqPPH1_mean, col = 6, lty = 2)
+points(x = idxlast, y = rand_seqPPH1_mean[idxlast], col = 3, pch = 16)
+points(x = idxlast, y = dopt_seqPPH1_mean[idxlast], col = 4, pch = 17)
+points(x = idxlast, y = fact_seqPPH1_mean[idxlast], col = 6, pch = 18)
+points(x = idxlast, y = smmed_seqPPH1_mean[idxlast])
 
-
-# median
-rand_seqPPH0_median = apply(rand_seqPPH0, 1, median)
-dopt_seqPPH0_median = apply(dopt_seqPPH0, 1, median)
-fact_seqPPH0_median = apply(fact_seqPPH0, 1, median)
-smmed_seqPPH0_median = apply(smmed_seqPPH0, 1, median)
-rand_seqPPH1_median = apply(rand_seqPPH1, 1, median)
-dopt_seqPPH1_median = apply(dopt_seqPPH1, 1, median)
-fact_seqPPH1_median = apply(fact_seqPPH1, 1, median)
-smmed_seqPPH1_median = apply(smmed_seqPPH1, 1, median)
-# PPH0
-plot(x = 1:numSeq, y = smmed_seqPPH0_median, type = "l",
-     xlab = "steps 1:numSeq", ylab = "P(H0|Y)", ylim = c(0, 1), 
-     main = "Median P(H0|Y)")
-lines(x = 1:numSeq, rand_seqPPH0_median, col = 3, lty = 2)
-lines(x = 1:numSeq, dopt_seqPPH0_median, col = 4, lty = 2)
-lines(x = 1:numSeq, fact_seqPPH0_median, col = 6, lty = 2)
-points(x = numSeq, y = rand_seqPPH0_median[numSeq], col = 3, pch = 16)
-points(x = numSeq, y = dopt_seqPPH0_median[numSeq], col = 4, pch = 17)
-points(x = numSeq, y = fact_seqPPH0_median[numSeq], col = 6, pch = 18)
-points(x = numSeq, y = smmed_seqPPH0_median[numSeq])
-# PPH1
-plot(x = 1:numSeq, y = smmed_seqPPH1_median, type = "l",
-     xlab = "steps 1:numSeq", ylab = "P(H1|Y)", ylim = c(0, 1), 
-     main = "Median P(H1|Y)")
-lines(x = 1:numSeq, rand_seqPPH1_median, col = 3, lty = 2)
-lines(x = 1:numSeq, dopt_seqPPH1_median, col = 4, lty = 2)
-lines(x = 1:numSeq, fact_seqPPH1_median, col = 6, lty = 2)
-points(x = numSeq, y = rand_seqPPH1_median[numSeq], col = 3, pch = 16)
-points(x = numSeq, y = dopt_seqPPH1_median[numSeq], col = 4, pch = 17)
-points(x = numSeq, y = fact_seqPPH1_median[numSeq], col = 6, pch = 18)
-points(x = numSeq, y = smmed_seqPPH1_median[numSeq])
+# 
+# # median
+# rand_seqPPH0_median = apply(rand_seqPPH0, 1, median)
+# dopt_seqPPH0_median = apply(dopt_seqPPH0, 1, median)
+# fact_seqPPH0_median = apply(fact_seqPPH0, 1, median)
+# smmed_seqPPH0_median = apply(smmed_seqPPH0, 1, median)
+# rand_seqPPH1_median = apply(rand_seqPPH1, 1, median)
+# dopt_seqPPH1_median = apply(dopt_seqPPH1, 1, median)
+# fact_seqPPH1_median = apply(fact_seqPPH1, 1, median)
+# smmed_seqPPH1_median = apply(smmed_seqPPH1, 1, median)
+# # PPH0
+# plot(x = 1:numSeq, y = smmed_seqPPH0_median, type = "l",
+#      xlab = "steps 1:numSeq", ylab = "P(H0|Y)", ylim = c(0, 1), 
+#      main = "Median P(H0|Y)")
+# lines(x = 1:numSeq, rand_seqPPH0_median, col = 3, lty = 2)
+# lines(x = 1:numSeq, dopt_seqPPH0_median, col = 4, lty = 2)
+# lines(x = 1:numSeq, fact_seqPPH0_median, col = 6, lty = 2)
+# points(x = numSeq, y = rand_seqPPH0_median[numSeq], col = 3, pch = 16)
+# points(x = numSeq, y = dopt_seqPPH0_median[numSeq], col = 4, pch = 17)
+# points(x = numSeq, y = fact_seqPPH0_median[numSeq], col = 6, pch = 18)
+# points(x = numSeq, y = smmed_seqPPH0_median[numSeq])
+# # PPH1
+# plot(x = 1:numSeq, y = smmed_seqPPH1_median, type = "l",
+#      xlab = "steps 1:numSeq", ylab = "P(H1|Y)", ylim = c(0, 1), 
+#      main = "Median P(H1|Y)")
+# lines(x = 1:numSeq, rand_seqPPH1_median, col = 3, lty = 2)
+# lines(x = 1:numSeq, dopt_seqPPH1_median, col = 4, lty = 2)
+# lines(x = 1:numSeq, fact_seqPPH1_median, col = 6, lty = 2)
+# points(x = numSeq, y = rand_seqPPH1_median[numSeq], col = 3, pch = 16)
+# points(x = numSeq, y = dopt_seqPPH1_median[numSeq], col = 4, pch = 17)
+# points(x = numSeq, y = fact_seqPPH1_median[numSeq], col = 6, pch = 18)
+# points(x = numSeq, y = smmed_seqPPH1_median[numSeq])
 
 
 
@@ -354,7 +346,7 @@ mseBn_dopt = getClosedMSE(x_doptimal, Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL,
 mseBn_fact = getClosedMSE(x_factorial, Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
 
 for(i in 1:length(betaT)){
-  barplot(c(mseBn_smmed[i], mseBn_rand[i], mseBn_dopt[i], mseBn_fact[i]), names.arg = design_names, main = paste("MSE(B", i, ")", sep = ""), las = 2)
+  barplot(c(mseBn_smmed[i], mseBn_rand[i], mseBn_dopt[i], mseBn_fact[i]), names.arg = design_names, las = 2)
 }
 
 
@@ -366,11 +358,18 @@ numBreaks = 8
 smmed = smmedvsH0
 Ntot = dim(smmed$D)[1]
 
+maxcounts = rep(NA, length(mu_full))
 for(i in 1:length(mu_full)){
   marginal = i
-  h1 = hist(smmed$D[ (initN + 1):Ntot, marginal], breaks = numBreaks, plot = FALSE)
-  h2 = hist(x_factorial[ (initN + 1):Ntot, marginal], breaks = numBreaks, plot = FALSE)
-  plot(h1, ylim = range(0, h1$counts, h2$counts), main = paste("SMMED, M", i, sep = ""))
+  h = hist(smmed$D[ (initN + 1):Ntot, marginal], breaks = numBreaks, plot = FALSE)
+  maxcounts[i] = max(h$counts)
+}
+
+for(i in 1:length(mu_full)){
+  marginal = i
+  h1 = hist(smmed$D[ (initN + 1):Ntot, marginal], breaks = numBreaks, 
+            ylim = range(0, maxcounts), main = "", 
+            xlab = paste("marginal ", i, sep = ""))
 }
 
 
@@ -473,8 +472,9 @@ EPPHs_fact = calcEPPH(x_factorial, Ntot, betaT, NULL, models, sigmasq, numSims_p
 EPPHs_smmed = calcEPPHseqdata(smmedvsH1$y, smmedvsH1$D, models, sigmasq, initN, numSeq, N_seq)
 
 #EPPHs for smmed sims
-EPPH0_smmedsims = matrix(NA, numSeq, numSimsH1)
-EPPH1_smmedsims = matrix(NA, numSeq, numSimsH1)
+idxlast = numSeq + 1
+EPPH0_smmedsims = matrix(NA, idxlast, numSimsH1)
+EPPH1_smmedsims = matrix(NA, idxlast, numSimsH1)
 for(i in 1:numSimsH1){
   simH1.temp = simsH1[[i]]
   EPPH_temp = calcEPPHseqdata(simH1.temp$y, simH1.temp$D, models, sigmasq, initN, numSeq, N_seq)
@@ -494,57 +494,25 @@ par(mfrow=c(1,length(models)))
 #mean
 for(k in 1:length(models)){
   if(k == 1){
-    plot(x = 1:numSeq, y = EPPH0_smmedsims_mean, type = "l", 
-         xlab = "steps 1:numSeq", ylab = paste("P(H", k - 1, "|Y)", sep = ""), 
+    plot(x = 1:idxlast, y = EPPH0_smmedsims_mean, type = "l", 
+         xlab = "", ylab = paste("E[P(H", k - 1, "|Y,X)|X]", sep = ""), 
          ylim = range(EPPHs_smmed[ k, ], EPPHs_rand[k], EPPHs_dopt[k], 0, 1))
-    points(x = numSeq, y = EPPH0_smmedsims_mean[numSeq])
+    points(x = idxlast, y = EPPH0_smmedsims_mean[idxlast])
   }
   if(k == 2){
-    plot(x = 1:numSeq, y = EPPH1_smmedsims_mean, type = "l", 
-         xlab = "steps 1:numSeq", ylab = paste("P(H", k - 1, "|Y)", sep = ""), 
+    plot(x = 1:idxlast, y = EPPH1_smmedsims_mean, type = "l", 
+         xlab = "", ylab = paste("E[P(H", k - 1, "|Y,X)|X]", sep = ""), 
          ylim = range(EPPHs_smmed[ k, ], EPPHs_rand[k], EPPHs_dopt[k], 0, 1))
-    points(x = numSeq, y = EPPH1_smmedsims_mean[numSeq])
+    points(x = idxlast, y = EPPH1_smmedsims_mean[idxlast])
   }
-  title(paste("P(H", k - 1, "|Y)", sep = ""))
-  # for(i in 1:numSimsH0){
-  #   if(k == 1) lines(x = 1:numSeq, y = EPPH0_smmedsims[ , i], col = rgb(0, 0, 0, 0.1))
-  #   if(k == 2) lines(x = 1:numSeq, y = EPPH1_smmedsims[ , i], col = rgb(0, 0, 0, 0.1))
-  # }
   abline(h = EPPHs_rand[k], col = 3, lty = 3)
   abline(h = EPPHs_dopt[k], col = 4, lty = 3)
   abline(h = EPPHs_fact[k], col = 6, lty = 3)
-  points(x = numSeq, y = EPPHs_rand[k], col = 3, pch = 16)
-  points(x = numSeq, y = EPPHs_dopt[k], col = 4, pch = 17)
-  points(x = numSeq, y = EPPHs_fact[k], col = 6, pch = 18)
-  if(k == 1) legend("topright", c("smmed mean", design_names[-1]), lty = c(1, rep(NA, 3)), pch = c(NA, 16:18), col = c(design_col), bg = "white")
+  points(x = idxlast, y = EPPHs_rand[k], col = 3, pch = 16)
+  points(x = idxlast, y = EPPHs_dopt[k], col = 4, pch = 17)
+  points(x = idxlast, y = EPPHs_fact[k], col = 6, pch = 18)
+  if(k == 1) legend("topright", design_names, lty = c(1, rep(3, 3)), pch = c(1, 16:18), col = design_col, bg = "white")
 }
-# median
-for(k in 1:length(models)){
-  if(k == 1){
-    plot(x = 1:numSeq, y = EPPH0_smmedsims_med, type = "l", 
-         xlab = "steps 1:numSeq", ylab = paste("P(H", k - 1, "|Y)", sep = ""), 
-         ylim = range(EPPHs_smmed[ k, ], EPPHs_rand[k], EPPHs_dopt[k], 0, 1))
-    points(x = numSeq, y = EPPH0_smmedsims_med[numSeq])
-  }
-  if(k == 2){
-    plot(x = 1:numSeq, y = EPPH1_smmedsims_med, type = "l", 
-         xlab = "steps 1:numSeq", ylab = paste("P(H", k - 1, "|Y)", sep = ""), 
-         ylim = range(EPPHs_smmed[ k, ], EPPHs_rand[k], EPPHs_dopt[k], 0, 1))
-    points(x = numSeq, y = EPPH1_smmedsims_med[numSeq])
-  }
-  title(paste("P(H", k - 1, "|Y)", sep = ""))
-  # for(i in 1:numSimsH0){
-  #   if(k == 1) lines(x = 1:numSeq, y = EPPH0_smmedsims[ , i], col = rgb(0, 0, 0, 0.1))
-  #   if(k == 2) lines(x = 1:numSeq, y = EPPH1_smmedsims[ , i], col = rgb(0, 0, 0, 0.1))
-  # }
-  abline(h = EPPHs_rand[k], col = 3, lty = 3)
-  abline(h = EPPHs_dopt[k], col = 4, lty = 3)
-  abline(h = EPPHs_fact[k], col = 6, lty = 3)
-  points(x = numSeq, y = EPPHs_rand[k], col = 3, pch = 16)
-  points(x = numSeq, y = EPPHs_dopt[k], col = 4, pch = 17)
-  points(x = numSeq, y = EPPHs_fact[k], col = 6, pch = 18)
-}
-
 
 
 
@@ -552,18 +520,23 @@ for(k in 1:length(models)){
 
 numSims_seqPPH = numSimsH1
 
-rand_seqPPH0 = matrix(NA, nrow = numSeq, ncol = numSims_seqPPH)
-dopt_seqPPH0 = matrix(NA, nrow = numSeq, ncol = numSims_seqPPH)
-fact_seqPPH0 = matrix(NA, nrow = numSeq, ncol = numSims_seqPPH)
-smmed_seqPPH0 = matrix(NA, nrow = numSeq, ncol = numSims_seqPPH)
+idxlast = numSeq + 1
+rand_seqPPH0 = matrix(NA, nrow = idxlast, ncol = numSims_seqPPH)
+dopt_seqPPH0 = matrix(NA, nrow = idxlast, ncol = numSims_seqPPH)
+fact_seqPPH0 = matrix(NA, nrow = idxlast, ncol = numSims_seqPPH)
+smmed_seqPPH0 = matrix(NA, nrow = idxlast, ncol = numSims_seqPPH)
 
-rand_seqPPH1 = matrix(NA, nrow = numSeq, ncol = numSims_seqPPH)
-dopt_seqPPH1 = matrix(NA, nrow = numSeq, ncol = numSims_seqPPH)
-fact_seqPPH1 = matrix(NA, nrow = numSeq, ncol = numSims_seqPPH)
-smmed_seqPPH1 = matrix(NA, nrow = numSeq, ncol = numSims_seqPPH)
+rand_seqPPH1 = matrix(NA, nrow = idxlast, ncol = numSims_seqPPH)
+dopt_seqPPH1 = matrix(NA, nrow = idxlast, ncol = numSims_seqPPH)
+fact_seqPPH1 = matrix(NA, nrow = idxlast, ncol = numSims_seqPPH)
+smmed_seqPPH1 = matrix(NA, nrow = idxlast, ncol = numSims_seqPPH)
 
 for(j in 1:numSims_seqPPH){
   set.seed(j + 50)
+  smmedsim = simsH1[[j]]
+  initD = smmedsim$initD
+  inity = smmedsim$y[1:initN]
+  
   # random design
   x_random = matrix(runif(n = pfull * Nnew, min = xmin, max = xmax), 
                     nrow = Nnew, ncol = pfull)
@@ -595,8 +568,6 @@ for(j in 1:numSims_seqPPH){
   x_factorial = rbind(initD, x_factorial)
   y_factorial = c(inity, y_factorial)
   
-  smmedsim = simsH1[[j]]
-  
   rand_seqPPH.temp = calcEPPHseqdata(y_random, x_random, models, sigmasq, initN, numSeq, N_seq)
   rand_seqPPH0[ , j] = rand_seqPPH.temp[1, ]
   rand_seqPPH1[ , j] = rand_seqPPH.temp[2, ]
@@ -611,7 +582,7 @@ for(j in 1:numSims_seqPPH){
   smmed_seqPPH1[ , j] = smmed_seqPPH.temp[2, ]
 }
 
-par(mfrow=c(1, 2))
+par(mfrow=c(1,2))
 
 #mean
 rand_seqPPH0_mean = apply(rand_seqPPH0, 1, mean)
@@ -623,62 +594,28 @@ dopt_seqPPH1_mean = apply(dopt_seqPPH1, 1, mean)
 fact_seqPPH1_mean = apply(fact_seqPPH1, 1, mean)
 smmed_seqPPH1_mean = apply(smmed_seqPPH1, 1, mean)
 # PPH0
-plot(x = 1:numSeq, y = smmed_seqPPH0_mean, type = "l",
-     xlab = "# steps", ylab = "P(H0|Y)", ylim = c(0, 1), 
-     main = "Mean P(H0|Y)")
-lines(x = 1:numSeq, rand_seqPPH0_mean, col = 3, lty = 2)
-lines(x = 1:numSeq, dopt_seqPPH0_mean, col = 4, lty = 2)
-lines(x = 1:numSeq, fact_seqPPH0_mean, col = 6, lty = 2)
-points(x = numSeq, y = rand_seqPPH0_mean[numSeq], col = 3, pch = 16)
-points(x = numSeq, y = dopt_seqPPH0_mean[numSeq], col = 4, pch = 17)
-points(x = numSeq, y = fact_seqPPH0_mean[numSeq], col = 6, pch = 18)
-points(x = numSeq, y = smmed_seqPPH0_mean[numSeq])
+idxlast = numSeq + 1
+plot(x = 1:idxlast, y = smmed_seqPPH0_mean, type = "l",
+     xlab = "", ylab = "E[P(H0|Y,X)|X]", ylim = c(0, 1))
+lines(x = 1:idxlast, rand_seqPPH0_mean, col = 3, lty = 2)
+lines(x = 1:idxlast, dopt_seqPPH0_mean, col = 4, lty = 2)
+lines(x = 1:idxlast, fact_seqPPH0_mean, col = 6, lty = 2)
+points(x = idxlast, y = rand_seqPPH0_mean[idxlast], col = 3, pch = 16)
+points(x = idxlast, y = dopt_seqPPH0_mean[idxlast], col = 4, pch = 17)
+points(x = idxlast, y = fact_seqPPH0_mean[idxlast], col = 6, pch = 18)
+points(x = idxlast, y = smmed_seqPPH0_mean[idxlast])
 legend("topright", design_names, lty = c(1, rep(2, length(design_names) - 1)), 
        pch = c(1, 16, 17, 18), col = design_col, bg = "white")
 # PPH1
-plot(x = 1:numSeq, y = smmed_seqPPH1_mean, type = "l",
-     xlab = "steps 1:numSeq", ylab = "P(H1|Y)", ylim = c(0, 1), 
-     main = "Mean P(H1|Y)")
-lines(x = 1:numSeq, rand_seqPPH1_mean, col = 3, lty = 2)
-lines(x = 1:numSeq, dopt_seqPPH1_mean, col = 4, lty = 2)
-lines(x = 1:numSeq, fact_seqPPH1_mean, col = 6, lty = 2)
-points(x = numSeq, y = rand_seqPPH1_mean[numSeq], col = 3, pch = 16)
-points(x = numSeq, y = dopt_seqPPH1_mean[numSeq], col = 4, pch = 17)
-points(x = numSeq, y = fact_seqPPH1_mean[numSeq], col = 6, pch = 18)
-points(x = numSeq, y = smmed_seqPPH1_mean[numSeq])
-
-
-# median
-rand_seqPPH0_median = apply(rand_seqPPH0, 1, median)
-dopt_seqPPH0_median = apply(dopt_seqPPH0, 1, median)
-fact_seqPPH0_median = apply(fact_seqPPH0, 1, median)
-smmed_seqPPH0_median = apply(smmed_seqPPH0, 1, median)
-rand_seqPPH1_median = apply(rand_seqPPH1, 1, median)
-dopt_seqPPH1_median = apply(dopt_seqPPH1, 1, median)
-fact_seqPPH1_median = apply(fact_seqPPH1, 1, median)
-smmed_seqPPH1_median = apply(smmed_seqPPH1, 1, median)
-# PPH0
-plot(x = 1:numSeq, y = smmed_seqPPH0_median, type = "l",
-     xlab = "steps 1:numSeq", ylab = "P(H0|Y)", ylim = c(0, 1), 
-     main = "Median P(H0|Y)")
-lines(x = 1:numSeq, rand_seqPPH0_median, col = 3, lty = 2)
-lines(x = 1:numSeq, dopt_seqPPH0_median, col = 4, lty = 2)
-lines(x = 1:numSeq, fact_seqPPH0_median, col = 6, lty = 2)
-points(x = numSeq, y = rand_seqPPH0_median[numSeq], col = 3, pch = 16)
-points(x = numSeq, y = dopt_seqPPH0_median[numSeq], col = 4, pch = 17)
-points(x = numSeq, y = fact_seqPPH0_median[numSeq], col = 6, pch = 18)
-points(x = numSeq, y = smmed_seqPPH0_median[numSeq])
-# PPH1
-plot(x = 1:numSeq, y = smmed_seqPPH1_median, type = "l",
-     xlab = "steps 1:numSeq", ylab = "P(H1|Y)", ylim = c(0, 1), 
-     main = "Median P(H1|Y)")
-lines(x = 1:numSeq, rand_seqPPH1_median, col = 3, lty = 2)
-lines(x = 1:numSeq, dopt_seqPPH1_median, col = 4, lty = 2)
-lines(x = 1:numSeq, fact_seqPPH1_median, col = 6, lty = 2)
-points(x = numSeq, y = rand_seqPPH1_median[numSeq], col = 3, pch = 16)
-points(x = numSeq, y = dopt_seqPPH1_median[numSeq], col = 4, pch = 17)
-points(x = numSeq, y = fact_seqPPH1_median[numSeq], col = 6, pch = 18)
-points(x = numSeq, y = smmed_seqPPH1_median[numSeq])
+plot(x = 1:idxlast, y = smmed_seqPPH1_mean, type = "l",
+     xlab = "", ylab = "E[P(H1|Y,X)|X]", ylim = c(0, 1))
+lines(x = 1:idxlast, rand_seqPPH1_mean, col = 3, lty = 2)
+lines(x = 1:idxlast, dopt_seqPPH1_mean, col = 4, lty = 2)
+lines(x = 1:idxlast, fact_seqPPH1_mean, col = 6, lty = 2)
+points(x = idxlast, y = rand_seqPPH1_mean[idxlast], col = 3, pch = 16)
+points(x = idxlast, y = dopt_seqPPH1_mean[idxlast], col = 4, pch = 17)
+points(x = idxlast, y = fact_seqPPH1_mean[idxlast], col = 6, pch = 18)
+points(x = idxlast, y = smmed_seqPPH1_mean[idxlast])
 
 
 
@@ -697,7 +634,7 @@ mseBn_dopt = getClosedMSE(x_doptimal, Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL,
 mseBn_fact = getClosedMSE(x_factorial, Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
 
 for(i in 1:length(betaT)){
-  barplot(c(mseBn_smmed[i], mseBn_rand[i], mseBn_dopt[i], mseBn_fact[i]), names.arg = design_names, main = paste("MSE(B", i, ")", sep = ""), las = 2)
+  barplot(c(mseBn_smmed[i], mseBn_rand[i], mseBn_dopt[i], mseBn_fact[i]), names.arg = design_names, las = 2)
 }
 
 
@@ -710,11 +647,17 @@ numBreaks = 8
 smmed = smmedvsH1
 Ntot = dim(smmed$D)[1]
 
+maxcounts = rep(NA, length(mu_full))
 for(i in 1:length(mu_full)){
   marginal = i
-  h1 = hist(smmed$D[ (initN + 1):Ntot, marginal], breaks = numBreaks, plot = FALSE)
-  h2 = hist(x_factorial[ (initN + 1):Ntot, marginal], breaks = numBreaks, plot = FALSE)
-  plot(h1, ylim = range(0, h1$counts, h2$counts), main = paste("SMMED, M", i, sep = ""))
+  h = hist(smmed$D[ (initN + 1):Ntot, marginal], breaks = numBreaks, plot = FALSE)
+  maxcounts[i] = max(h$counts)
 }
 
+for(i in 1:length(mu_full)){
+  marginal = i
+  h1 = hist(smmed$D[ (initN + 1):Ntot, marginal], breaks = numBreaks, 
+            ylim = range(0, maxcounts), main = "", 
+            xlab = paste("marginal ", i, sep = ""))
+}
 

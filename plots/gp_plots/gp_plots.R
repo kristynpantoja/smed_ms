@@ -21,6 +21,17 @@ library(mvtnorm)
 library(fields)
 library(knitr)
 
+# for plots
+library(ggplot2)
+library(ggpubr)
+library(reshape2)
+library(data.table)
+gg_color_hue = function(n) {
+  hues = seq(15, 275, length = n + 1)
+  hcl(h = hues, l = 65, c = 100)[1:n]
+}
+image_path = paste0(home, "/plots/gp_plots/gg")
+
 # --- Helper Functions for Evaluation Metrics --- #
 add_errorbands = function(xs, ys, MoE, color){
   y_lower = ys - MoE
@@ -142,7 +153,7 @@ H0_pred = getGPPredictive(newpts, x_train, y_train, type01[1], l01[1], nugget = 
 H1_pred = getGPPredictive(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
 postpredmu0 = H0_pred$pred_mean
 postpredmu1 = H1_pred$pred_mean
-plot(x_seq, y_seq, type = "l", ylim = c(-2.5, 2.5), ylab = "sample function",
+plot(x_seq, y_seq, type = "l", ylim = c(-2.5, 2.5), ylab = "y", xlab = "x",
      main = "Space-filling") # plot the function
 H0_predfn = getGPPredictive(x_seq, x_train, y_train, type01[1], l01[1], nugget = NULL)
 H1_predfn = getGPPredictive(x_seq, x_train, y_train, type01[2], l01[2], nugget = NULL)
@@ -171,8 +182,8 @@ H1_pred = getGPPredictive(newpts, x_train, y_train, type01[2], l01[2],
                           nugget = NULL)
 postpredmu0 = H0_pred$pred_mean
 postpredmu1 = H1_pred$pred_mean
-plot(x_seq, y_seq, type = "l", ylim = c(-2.5, 2.5), ylab = "sample function",
-     main = "M-MED") # plot the function
+plot(x_seq, y_seq, type = "l", ylim = c(-2.5, 2.5), ylab = "y", xlab = "x",
+     main = "SeqMED") # plot the function
 H0_predfn = getGPPredictive(x_seq, x_train, y_train, type01[1], l01[1],
                             nugget = NULL)
 H1_predfn = getGPPredictive(x_seq, x_train, y_train, type01[2], l01[2],
@@ -194,7 +205,7 @@ points(x = newpts, y = postpredmu1, col = 4, pch = 16)
 #        col = c(1:4), pch = rep(16,4))
 
 
-hist(mmed_gp$addD, main = "M-MED", xlab = "design points", breaks = 10)
+hist(mmed_gp$addD, main = "SeqMED", xlab = "design points", breaks = 10)
 
 # get w_seq
 Kinv0 = solve(getCov(x_train, x_train, type01[1], l01[1]))
@@ -207,6 +218,90 @@ plot(x_seq, w_seq, type = "l", ylim = c(0, 0.45), main = "Wasserstein(x)",
 points(mmed_gp$addD, w_seq[mmed_gp$indices], col = rgb(1, 0, 0, 1), pch = 16)
 text(mmed_gp$addD, w_seq[mmed_gp$indices], labels = 1:N2, pos = 3, 
      offset = 0.1, cex = 1, col = 4)
+
+
+#
+#
+#
+err0 = 2 * sqrt(diag(H0_predfn$pred_var))
+err1 = 2 * sqrt(diag(H1_predfn$pred_var))
+ggdata = data.table(
+  x = x_seq, 
+  `True Function` = y_seq, 
+  Wasserstein = w_seq, 
+  `H0 Predictive Mean` = H0_predfn$pred_mean, 
+  `H1 Predictive Mean` = H1_predfn$pred_mean,
+  lower0 = H0_predfn$pred_mean - err0, 
+  lower1 = H1_predfn$pred_mean - err1, 
+  upper0 = H0_predfn$pred_mean + err0,
+  upper1 = H1_predfn$pred_mean + err1
+)
+yrange = range(ggdata$lower0, ggdata$lower1, 
+               ggdata$upper0, ggdata$upper1)
+yrange[1] = yrange[1] - 1
+ggdata$Wasserstein = ggdata$Wasserstein - abs(yrange[1])
+ggdata$zero1 = NA
+ggdata$zero2 = NA
+ggdata.melted = melt(ggdata, id.vars = c("x"), 
+                     measure.vars = c("True Function", "Wasserstein", "H0 Predictive Mean", "H1 Predictive Mean"))
+ggdata.lower = melt(ggdata, id.vars = c("x"), 
+                    measure.vars = c("zero1", "zero2", "lower0", "lower1"))
+ggdata.upper = melt(ggdata, id.vars = c("x"), 
+                    measure.vars = c("zero1", "zero2", "upper0", "upper1"))
+ggdata.melted = cbind(ggdata.melted, 
+                      lower = ggdata.lower$value, 
+                      upper = ggdata.upper$value)
+ggdata_pts = data.table(
+  x = c(x_train, newpts), 
+  y = c(y_train, truey), 
+  color = c(rep("black", length(x_train)), 
+            rep("red", length(newpts))), 
+  shape = c(rep(8, length(x_train)), 
+            rep(16, length(newpts)))
+)
+ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable), 
+       linetype = 1) + 
+  geom_path() + 
+  geom_ribbon(aes(ymin = lower, ymax = upper, fill = variable), 
+              alpha = 0.1, linetype = 0) +
+  scale_linetype_manual(values = c(1, 1, 2, 2)) + 
+  scale_fill_manual(values = c(NA, NA, "#00BFC4", "#C77CFF")) + 
+  scale_color_manual(values = c(1, "gray", "#00BFC4", "#C77CFF")) + 
+  geom_point(data = ggdata_pts, mapping = aes(x = x, y = y), 
+             inherit.aes = FALSE, color = ggdata_pts$color, 
+             shape = ggdata_pts$shape, 
+             size = 3) +
+  geom_point(data = ggdata_pts, mapping = aes(x = x, y = yrange[1]), 
+             inherit.aes = FALSE, color = ggdata_pts$color, 
+             shape = ggdata_pts$shape, 
+             size = 3) +
+  scale_y_continuous(yrange) + 
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  labs(y = "y", x = "x")
+# ggsave("poster_gvm_h8.png",
+#        plot = last_plot(),
+#        device = "png",
+#        path = image_path,
+#        scale = 1,
+#        width = 13.5,
+#        height = 8,
+#        units = c("in")
+# )
+# ggsave("gvm.pdf",
+#        plot = last_plot(),
+#        device = "pdf",
+#        path = image_path,
+#        scale = 1,
+#        width = 8,
+#        height = 4,
+#        units = c("in")
+# )
+
+
+
+
 
 
 # --- Matern vs Periodic --- #
@@ -244,7 +339,7 @@ H0_pred = getGPPredictive(newpts, x_train, y_train, type01[1], l01[1], nugget = 
 H1_pred = getGPPredictive(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
 postpredmu0 = H0_pred$pred_mean
 postpredmu1 = H1_pred$pred_mean
-plot(x_seq, y_seq, type = "l", ylim = c(-2.5, 2.5), ylab = "sample function",
+plot(x_seq, y_seq, type = "l", ylim = c(-2.5, 2.5), ylab = "y", xlab = "x",
      main = "Space-filling") # plot the function
 H0_predfn = getGPPredictive(x_seq, x_train, y_train, type01[1], l01[1], nugget = NULL)
 H1_predfn = getGPPredictive(x_seq, x_train, y_train, type01[2], l01[2], nugget = NULL)
@@ -272,8 +367,8 @@ H0_pred = getGPPredictive(newpts, x_train, y_train, type01[1], l01[1], nugget = 
 H1_pred = getGPPredictive(newpts, x_train, y_train, type01[2], l01[2], nugget = NULL)
 postpredmu0 = H0_pred$pred_mean
 postpredmu1 = H1_pred$pred_mean
-plot(x_seq, y_seq, type = "l", ylim = c(-2.5, 2.5), ylab = "sample function",
-     main = "M-MED") # plot the function
+plot(x_seq, y_seq, type = "l", ylim = c(-2.5, 2.5), ylab = "y", xlab = "x", 
+     main = "SeqMED") # plot the function
 H0_predfn = getGPPredictive(x_seq, x_train, y_train, type01[1], l01[1], nugget = NULL)
 H1_predfn = getGPPredictive(x_seq, x_train, y_train, type01[2], l01[2], nugget = NULL)
 lines(x = x_seq, y = H0_predfn$pred_mean, col = 3, lty = 3)
@@ -302,6 +397,80 @@ points(mmed_gp$addD, w_seq[mmed_gp$indices], col = rgb(1, 0, 0, 1), pch = 16)
 text(mmed_gp$addD, w_seq[mmed_gp$indices], labels = 1:N2, pos = 3, offset = 0.1, cex = 1, col = 4)
 
 
+#
+#
+#
+err0 = 2 * sqrt(diag(H0_predfn$pred_var))
+err1 = 2 * sqrt(diag(H1_predfn$pred_var))
+ggdata = data.table(
+  x = x_seq, 
+  `True Function` = y_seq, 
+  Wasserstein = w_seq, 
+  `H0 Predictive Mean` = H0_predfn$pred_mean, 
+  `H1 Predictive Mean` = H1_predfn$pred_mean,
+  lower0 = H0_predfn$pred_mean - err0, 
+  lower1 = H1_predfn$pred_mean - err1, 
+  upper0 = H0_predfn$pred_mean + err0,
+  upper1 = H1_predfn$pred_mean + err1
+)
+yrange = range(ggdata$lower0, ggdata$lower1, 
+               ggdata$upper0, ggdata$upper1)
+yrange[1] = yrange[1] - 1
+ggdata$Wasserstein = ggdata$Wasserstein * 0.25 - abs(yrange[1])
+ggdata$zero1 = NA
+ggdata$zero2 = NA
+ggdata.melted = melt(ggdata, id.vars = c("x"), 
+                     measure.vars = c("True Function", "Wasserstein", "H0 Predictive Mean", "H1 Predictive Mean"))
+ggdata.lower = melt(ggdata, id.vars = c("x"), 
+                    measure.vars = c("zero1", "zero2", "lower0", "lower1"))
+ggdata.upper = melt(ggdata, id.vars = c("x"), 
+                    measure.vars = c("zero1", "zero2", "upper0", "upper1"))
+ggdata.melted = cbind(ggdata.melted, 
+                      lower = ggdata.lower$value, 
+                      upper = ggdata.upper$value)
+ggdata_pts = data.table(
+  x = c(x_train, newpts), 
+  y = c(y_train, truey), 
+  color = c(rep("black", length(x_train)), 
+            rep("red", length(newpts))), 
+  shape = c(rep(8, length(x_train)), 
+            rep(16, length(newpts)))
+)
+ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable), 
+       linetype = 1) + 
+  geom_path() + 
+  geom_ribbon(aes(ymin = lower, ymax = upper, fill = variable), 
+              alpha = 0.1, linetype = 0) +
+  scale_linetype_manual(values = c(1, 1, 2, 2)) + 
+  scale_fill_manual(values = c(NA, NA, "#00BFC4", "#C77CFF")) + 
+  scale_color_manual(values = c(1, "gray", "#00BFC4", "#C77CFF")) + 
+  geom_point(data = ggdata_pts, mapping = aes(x = x, y = y), 
+             inherit.aes = FALSE, color = ggdata_pts$color, 
+             shape = ggdata_pts$shape, 
+             size = 3) +
+  geom_point(data = ggdata_pts, mapping = aes(x = x, y = yrange[1]), 
+             inherit.aes = FALSE, color = ggdata_pts$color, 
+             shape = ggdata_pts$shape, 
+             size = 3) +
+  scale_y_continuous(yrange) + 
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  labs(y = "y", x = "x")
+# ggsave("mvp.pdf",
+#        plot = last_plot(),
+#        device = "pdf",
+#        path = image_path,
+#        scale = 1,
+#        width = 8,
+#        height = 4,
+#        units = c("in")
+# )
+
+
+
+
+
 
 ### --- SMMED --- ###
 
@@ -321,6 +490,47 @@ numSteps = 3
 stepN = 5
 
 
+# alternative plot
+
+par(mar=c(0,7,0,0))
+# make a list
+input_cases <- list("Random" = runif(N), "EvenCoverage" = x_train3, "IncSpread" = x_train2, "Extrapolation" = x_train1)
+
+stripchart(input_cases,
+           main="",
+           xlab="locations",
+           ylab="",
+           pch=16, cex = 2, las = 1,
+)
+
+#
+#
+#
+
+ggdata = data.table(
+  Extrapolation = x_train1, 
+  `Inc Spread` = x_train2, 
+  `Even Coverage` = x_train3, 
+  `Random` = runif(N)
+)
+ggdata = melt(ggdata, measure.vars = 1:4)
+ggdata$variable = factor(ggdata$variable)
+plt0 = ggplot(data = ggdata, aes(x = value, y = variable)) + 
+  geom_point(size = 3) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  labs(y = "", x = "x")
+plt0
+# ggsave("initial.pdf",
+#        plot = last_plot(),
+#        device = "pdf",
+#        path = image_path,
+#        scale = 1,
+#        width = 6,
+#        height = 4,
+#        units = c("in")
+# )
 
 # --- Gaussian vs Matern (gvm) Metrics --- #
 
@@ -369,6 +579,36 @@ axis(1, labels = rownames(medianLogRSS01_df), at = 1:4)
 legend("right", legend = colnames(medianLogRSS01_df), col = 1:3, lty = 1:3,
        pch = 16:18, lwd = rep(3, 3))
 
+#
+#
+#
+
+ggdata = data.table(
+  Extrapolation = case1_medianLogRSS01_vec,
+  `Inc Spread` = case2_medianLogRSS01_vec,
+  `Even Coverage` = case3_medianLogRSS01_vec,
+  `Random` = case4_medianLogRSS01_vec,
+  Design = c("SeqMED", "SpaceFilling", "Random")
+)
+ggdata = melt(ggdata, id.vars = c("Design"))
+plt_gvm1 = ggplot(ggdata, aes(x = variable, y = value, group = Design, 
+                   color = Design, linetype = Design)) + 
+  geom_point(size = 3) + 
+  geom_path() +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  labs(y = "Median Log(RSS0/RSS1)", x = "Initial Data")
+plt_gvm1
+# ggsave("gvm_medianlogrss01.pdf",
+#        plot = last_plot(),
+#        device = "pdf",
+#        path = image_path,
+#        scale = 1,
+#        width = 8,
+#        height = 4,
+#        units = c("in")
+# )
 
 # Log Predictive Density Ratio (0/1) --- not included
 
@@ -418,14 +658,136 @@ axis(1, labels = rownames(medianPPH1_df), at = 1:4)
 legend("bottomright", legend = colnames(medianPPH1_df), col = 1:3, lty = 1:3, 
        pch = 16:18, lwd = rep(3, 3))
 
+#
+#
+#
+
+ggdata = data.table(
+  Extrapolation = case1_medianPPH1_vec,
+  `Inc Spread` = case2_medianPPH1_vec,
+  `Even Coverage` = case3_medianPPH1_vec,
+  `Random` = case4_medianPPH1_vec,
+  Design = c("SeqMED", "SpaceFilling", "Random")
+)
+ggdata = melt(ggdata, id.vars = c("Design"))
+plt_gvm2 = ggplot(ggdata, aes(x = variable, y = value, group = Design, 
+                   color = Design, linetype = Design)) + 
+  geom_point(size = 3) + 
+  geom_path() +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  labs(y = "Median P(H1|X, Y)", x = "Initial Data")
+plt_gvm2
+# ggsave("gvm_medianpph1.pdf",
+#        plot = last_plot(),
+#        device = "pdf",
+#        path = image_path,
+#        scale = 1,
+#        width = 8,
+#        height = 4,
+#        units = c("in")
+# )
 
 
-# --- Matern vs Periodic (mvp) Metrics --- #
+
+#
+
+#
+
+#
+
+
+
+ggdata1 = data.table(
+  Extrapolation = case1_medianLogRSS01_vec,
+  `Inc Spread` = case2_medianLogRSS01_vec,
+  `Even Coverage` = case3_medianLogRSS01_vec,
+  `Random` = case4_medianLogRSS01_vec,
+  Design = c("SeqMED", "SpaceFilling", "Random")
+)
+ggdata1 = melt(ggdata1, id.vars = c("Design"))
+ggdata1$Metric = "Median Log(RSS0/RSS1)"
+ggdata2 = data.table(
+  Extrapolation = case1_medianPPH1_vec,
+  `Inc Spread` = case2_medianPPH1_vec,
+  `Even Coverage` = case3_medianPPH1_vec,
+  `Random` = case4_medianPPH1_vec,
+  Design = c("SeqMED", "SpaceFilling", "Random")
+)
+ggdata2 = melt(ggdata2, id.vars = c("Design"))
+ggdata2$Metric = "Median P(H1|X,Y)"
+ggdata3 = rbind(ggdata1, ggdata2)
+ggdata3$Metric = factor(ggdata3$Metric)
+plt_gvm3 = ggplot(ggdata3, aes(x = variable, y = value, group = Design, 
+                              color = Design, linetype = Design)) + 
+  facet_wrap(vars(Metric), scales = "free") + 
+  geom_point(size = 3) + 
+  geom_path() +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.title = element_blank(), 
+        axis.text.x = element_text(angle = 45, vjust = 0.5))
+plt_gvm3
+# ggsave("gvm_medianlogrss01pph1.pdf",
+#        plot = last_plot(),
+#        device = "pdf",
+#        path = image_path,
+#        scale = 1,
+#        width = 8,
+#        height = 4,
+#        units = c("in")
+# )
+# ggsave("poster_gvm_medianlogrss01pph1_h5.png",
+#        plot = last_plot(),
+#        device = "png",
+#        path = image_path,
+#        scale = 1,
+#        width = 13.5,
+#        height = 5,
+#        units = c("in")
+# )
+
+ggarrange(plt0, plt_gvm3, widths = c(1, 2.5))
+# ggsave("poster_gvm_all_h4.png",
+#        plot = last_plot(),
+#        device = "png",
+#        path = image_path,
+#        scale = 1,
+#        width = 13.5,
+#        height = 4,
+#        units = c("in")
+# )
+
+
+#
+#
+#
+#
+
+#
+
+#
+
+#
+
+#
+#
+#
+#
+
+
+
+
+
+
+# --- Matern vs Periodic (gvm) Metrics --- #
 
 # MMED parameters for testing
 l01= c(0.01, 0.1); type01 = c(4, 5); numCandidates = 1001; k = 4; p = 1; nugget = NULL; alpha = 1
-# mvp sim cases
-mvp1 = readRDS(paste(home, "/run_designs/gp/gpsims_seq/run_designs_v2/mvp_seq_train1sims.rds", sep = ""))
+# gvm sim cases
+gvm1 = readRDS(paste(home, "/run_designs/gp/gpsims_seq/run_designs_v2/mvp_seq_train1sims.rds", sep = ""))
 mvp2 = readRDS(paste(home, "/run_designs/gp/gpsims_seq/run_designs_v2/mvp_seq_train2sims.rds", sep = ""))
 mvp3 = readRDS(paste(home, "/run_designs/gp/gpsims_seq/run_designs_v2/mvp_seq_train3sims.rds", sep = ""))
 mvp4 = readRDS(paste(home, "/run_designs/gp/gpsims_seq/run_designs_v2/mvp_seq_train4sims.rds", sep = ""))
@@ -455,6 +817,36 @@ axis(1, labels = rownames(medianLogRSS01_df), at = 1:4)
 legend("topleft", legend = colnames(medianLogRSS01_df), col = 1:3, lty = 1:3, 
        pch = 16:18, lwd = rep(3, 3))
 
+#
+#
+#
+
+ggdata = data.table(
+  Extrapolation = case1_medianLogRSS01_vec,
+  `Inc Spread` = case2_medianLogRSS01_vec,
+  `Even Coverage` = case3_medianLogRSS01_vec,
+  `Random` = case4_medianLogRSS01_vec,
+  Design = c("SeqMED", "SpaceFilling", "Random")
+)
+ggdata = melt(ggdata, id.vars = c("Design"))
+plt_mvp1 = ggplot(ggdata, aes(x = variable, y = value, group = Design, 
+                              color = Design, linetype = Design)) + 
+  geom_point(size = 3) + 
+  geom_path() +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  labs(y = "Median Log(RSS0/RSS1)", x = "Initial Data")
+plt_mvp1
+# ggsave("mvp_medianlogrss01.pdf",
+#        plot = last_plot(),
+#        device = "pdf",
+#        path = image_path,
+#        scale = 1,
+#        width = 8,
+#        height = 4,
+#        units = c("in")
+# )
 
 # Log Predictive Density Ratio (0/1) --- not included
 
@@ -498,3 +890,94 @@ axis(1, labels = rownames(medianPPH1_df), at = 1:4)
 legend("bottomright", legend = colnames(medianPPH1_df), col = 1:3, lty = 1:3, 
        pch = 16:18, lwd = rep(3, 3))
 
+#
+#
+#
+
+ggdata = data.table(
+  Extrapolation = case1_medianPPH1_vec,
+  `Inc Spread` = case2_medianPPH1_vec,
+  `Even Coverage` = case3_medianPPH1_vec,
+  `Random` = case4_medianPPH1_vec,
+  Design = c("SeqMED", "SpaceFilling", "Random")
+)
+ggdata = melt(ggdata, id.vars = c("Design"))
+plt_mvp2 = ggplot(ggdata, aes(x = variable, y = value, group = Design, 
+                              color = Design, linetype = Design)) + 
+  geom_point(size = 3) + 
+  geom_path() +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  labs(y = "Median P(H1|X, Y)", x = "Initial Data")
+plt_mvp2
+# ggsave("mvp_medianpph1.pdf",
+#        plot = last_plot(),
+#        device = "pdf",
+#        path = image_path,
+#        scale = 1,
+#        width = 8,
+#        height = 4,
+#        units = c("in")
+# )
+
+
+
+
+#
+
+#
+
+#
+
+
+
+ggdata1 = data.table(
+  Extrapolation = case1_medianLogRSS01_vec,
+  `Inc Spread` = case2_medianLogRSS01_vec,
+  `Even Coverage` = case3_medianLogRSS01_vec,
+  `Random` = case4_medianLogRSS01_vec,
+  Design = c("SeqMED", "SpaceFilling", "Random")
+)
+ggdata1 = melt(ggdata1, id.vars = c("Design"))
+ggdata1$Metric = "Median Log(RSS0/RSS1)"
+ggdata2 = data.table(
+  Extrapolation = case1_medianPPH1_vec,
+  `Inc Spread` = case2_medianPPH1_vec,
+  `Even Coverage` = case3_medianPPH1_vec,
+  `Random` = case4_medianPPH1_vec,
+  Design = c("SeqMED", "SpaceFilling", "Random")
+)
+ggdata2 = melt(ggdata2, id.vars = c("Design"))
+ggdata2$Metric = "Median P(H1|X,Y)"
+ggdata3 = rbind(ggdata1, ggdata2)
+ggdata3$Metric = factor(ggdata3$Metric)
+plt_mvp3 = ggplot(ggdata3, aes(x = variable, y = value, group = Design, 
+                               color = Design, linetype = Design)) + 
+  facet_wrap(vars(Metric), scales = "free") + 
+  geom_point(size = 3) + 
+  geom_path() +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.title = element_blank(), 
+        axis.text.x = element_text(angle = 45, vjust = 0.5))
+plt_mvp3
+ggsave("mvp_medianlogrss01pph1.pdf",
+       plot = last_plot(),
+       device = "pdf",
+       path = image_path,
+       scale = 1,
+       width = 8,
+       height = 4,
+       units = c("in")
+)
+ggsave("poster_mvp_medianlogrss01pph1_h5.png",
+       plot = last_plot(),
+       device = "png",
+       path = image_path,
+       scale = 1,
+       width = 13.5,
+       height = 5,
+       units = c("in")
+)

@@ -19,6 +19,17 @@ library(matrixStats)
 library(MASS)
 library(mvtnorm)
 
+# for plots
+library(ggplot2)
+library(ggpubr)
+library(reshape2)
+library(data.table)
+gg_color_hue = function(n) {
+  hues = seq(15, 275, length = n + 1)
+  hcl(h = hues, l = 65, c = 100)[1:n]
+}
+image_path = paste0(home, "/plots/lmvs_plots/gg")
+
 # --- evaluations --- #
 
 source(paste(functions_home, "/postprob_hypotheses.R", sep = ""))
@@ -172,6 +183,49 @@ for(k in 1:length(models)){
   points(x = idxlast, y = EPPHs_fact[k], col = 6, pch = 18)
   if(k == 1) legend("bottomright", design_names, lty = c(1, rep(3, 3)), pch = c(1, 16:18), col = design_col, bg = "white")
 }
+
+#
+#
+#
+
+ggdata0 = data.table(
+  x = 1:idxlast, 
+  Random = rep(EPPHs_rand[1], idxlast), 
+  DOptimal = rep(EPPHs_dopt[1], idxlast), 
+  Factorial3 = rep(EPPHs_fact[1], idxlast), 
+  SeqMED = EPPH0_smmedsims_mean, 
+  Hypothesis = rep("H0", idxlast)
+)
+ggdata1 = data.table(
+  x = 1:idxlast, 
+  Random = rep(EPPHs_rand[2], idxlast), 
+  DOptimal = rep(EPPHs_dopt[2], idxlast), 
+  Factorial3 = rep(EPPHs_fact[2], idxlast), 
+  SeqMED = EPPH1_smmedsims_mean, 
+  Hypothesis = rep("H1", idxlast)
+)
+ggdata = rbind(ggdata0, ggdata1)
+ggdata.melted = melt(ggdata, id = c("x", "Hypothesis"), value.name = "epph", 
+                     variable.name = "Design")
+plt = ggplot(ggdata.melted, aes(x = x, y = epph, color = Design, linetype = Design)) +
+  facet_wrap(vars(Hypothesis)) + 
+  geom_path() + 
+  scale_linetype_manual(values=c(rep("dashed", 3), "solid")) + 
+  geom_point(data = ggdata.melted[x == 10], aes(x = x, y = epph)) + 
+  theme_bw() + 
+  theme(panel.grid.minor = element_blank()) + 
+  labs(y = "", x = "Stages")
+plt
+# ggsave("h0_epph.pdf",
+#        plot = last_plot(),
+#        device = "pdf",
+#        path = image_path,
+#        scale = 1,
+#        width = 8,
+#        height = 4,
+#        units = c("in")
+# )
+
 # # median
 # for(k in 1:length(models)){
 #   if(k == 1){
@@ -297,6 +351,71 @@ points(x = idxlast, y = dopt_seqPPH1_mean[idxlast], col = 4, pch = 17)
 points(x = idxlast, y = fact_seqPPH1_mean[idxlast], col = 6, pch = 18)
 points(x = idxlast, y = smmed_seqPPH1_mean[idxlast])
 
+#
+#
+#
+
+ggdata0 = data.table(
+  x = 1:idxlast, 
+  Random = rand_seqPPH0_mean, 
+  DOptimal = dopt_seqPPH0_mean, 
+  Factorial3 = fact_seqPPH0_mean, 
+  SeqMED = smmed_seqPPH0_mean, 
+  Hypothesis = rep("H0", idxlast)
+)
+ggdata1 = data.table(
+  x = 1:idxlast, 
+  Random = rand_seqPPH1_mean, 
+  DOptimal = dopt_seqPPH1_mean, 
+  Factorial3 = fact_seqPPH1_mean, 
+  SeqMED = smmed_seqPPH1_mean, 
+  Hypothesis = rep("H1", idxlast)
+)
+ggdata = rbind(ggdata0, ggdata1)
+ggdata.melted = melt(ggdata, id = c("x", "Hypothesis"), value.name = "epph", 
+                     variable.name = "Design")
+plt1 = ggplot(ggdata.melted, aes(x = x, y = epph, color = Design, linetype = Design)) +
+  facet_wrap(vars(Hypothesis)) + 
+  geom_path() + 
+  scale_linetype_manual(values=c(rep("dashed", 3), "solid")) + 
+  geom_point(data = ggdata.melted[x == 10], aes(x = x, y = epph)) + 
+  theme_bw() + 
+  theme(panel.grid.minor = element_blank()) + 
+  labs(y = "", x = "Stages")
+plt1
+# ggsave("h0_epph_seq.pdf",
+#        plot = last_plot(),
+#        device = "pdf",
+#        path = image_path,
+#        scale = 1,
+#        width = 8,
+#        height = 4,
+#        units = c("in")
+# )
+#####
+
+ggdata0.melted = melt(ggdata0[, 1:5], id = c("x"), value.name = "epph", 
+                     variable.name = "Design")
+plt1.0 = ggplot(ggdata0.melted, aes(x = x, y = epph, color = Design, linetype = Design)) +
+  geom_path() + 
+  scale_linetype_manual(values=c(rep("dashed", 3), "solid")) + 
+  geom_point(data = ggdata0.melted[x == 10], aes(x = x, y = epph)) + 
+  theme_bw() + 
+  theme(panel.grid.minor = element_blank()) + 
+  labs(y = "E[P(H0|X,Y)|X]", x = "Stages")
+plt1.0
+# ggsave("h0_epph0_seq_h3.png",
+#        plot = last_plot(),
+#        device = "png",
+#        path = image_path,
+#        scale = 1,
+#        width = 4,
+#        height = 3,
+#        units = c("in")
+# )
+
+#####
+
 # 
 # # median
 # rand_seqPPH0_median = apply(rand_seqPPH0, 1, median)
@@ -349,6 +468,34 @@ for(i in 1:length(betaT)){
   barplot(c(mseBn_smmed[i], mseBn_rand[i], mseBn_dopt[i], mseBn_fact[i]), names.arg = design_names, las = 2)
 }
 
+#
+#
+#
+b1 = c(mseBn_smmed[1], mseBn_rand[1], mseBn_dopt[1], mseBn_fact[1])
+b2 = c(mseBn_smmed[2], mseBn_rand[2], mseBn_dopt[2], mseBn_fact[2])
+
+ggdesigns = c("SeqMED", "Random", "Doptimal", "Factorial3")
+ggdata = data.frame(Designs = factor(rep(ggdesigns, 2), 
+                                     levels = ggdesigns[c(2, 1, 4, 3)]), 
+                    MSE = c(b1, b2), beta = rep(c("B1", "B2"), each = length(b1)))
+ggplot(ggdata, aes(x = Designs, y = MSE)) + 
+  geom_bar(stat = "identity") +
+  facet_wrap(vars(beta)) +
+  theme_bw() + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        axis.text.x = element_text(angle = 45, vjust = 0.5)) +
+  labs(y = NULL)
+# ggsave("h0_msebeta.pdf",
+#        plot = last_plot(),
+#        device = "pdf",
+#        path = image_path,
+#        scale = 1,
+#        width = 8,
+#        height = 4,
+#        units = c("in")
+# )
+
+
 
 # --- the design --- #
 
@@ -371,6 +518,54 @@ for(i in 1:length(mu_full)){
             ylim = range(0, maxcounts), main = "", 
             xlab = paste("marginal ", i, sep = ""))
 }
+
+#
+#
+#
+
+marginals = matrix(NA, nrow = length((initN + 1):Ntot), ncol = 3)
+for(i in 1:(dim(marginals)[2])) {
+  marginals[, i] = smmed$D[ (initN + 1):Ntot, i]
+}
+colnames(marginals) = paste("Marginal", 1:3, sep = " ")
+marginals = as.data.table(marginals)
+marginals.tall = melt(marginals, measure.vars = 1:3)
+ggplot(marginals.tall, aes(x = value)) + 
+  facet_wrap(vars(variable)) +
+  geom_histogram(binwidth = 0.12, closed = "right", aes(y = after_stat(density))) + 
+  theme_bw() + 
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank()) + 
+  labs(x = "x")
+# ggsave("h0_marginals.pdf",
+#        plot = last_plot(),
+#        device = "pdf",
+#        path = image_path,
+#        scale = 1,
+#        width = 8,
+#        height = 4,
+#        units = c("in")
+# )
+# ggsave("h0_marginals_h3.png",
+#        plot = last_plot(),
+#        device = "png",
+#        path = image_path,
+#        scale = 1,
+#        width = 8,
+#        height = 3,
+#        units = c("in")
+# )
+
+
+
+
+
+
+
+
+
+
+
 
 
 ###################
@@ -515,6 +710,48 @@ for(k in 1:length(models)){
 }
 
 
+#
+#
+#
+
+ggdata0 = data.table(
+  x = 1:idxlast, 
+  Random = rep(EPPHs_rand[1], idxlast), 
+  DOptimal = rep(EPPHs_dopt[1], idxlast), 
+  Factorial3 = rep(EPPHs_fact[1], idxlast), 
+  SeqMED = EPPH0_smmedsims_mean, 
+  Hypothesis = rep("H0", idxlast)
+)
+ggdata1 = data.table(
+  x = 1:idxlast, 
+  Random = rep(EPPHs_rand[2], idxlast), 
+  DOptimal = rep(EPPHs_dopt[2], idxlast), 
+  Factorial3 = rep(EPPHs_fact[2], idxlast), 
+  SeqMED = EPPH1_smmedsims_mean, 
+  Hypothesis = rep("H1", idxlast)
+)
+ggdata = rbind(ggdata0, ggdata1)
+ggdata.melted = melt(ggdata, id = c("x", "Hypothesis"), value.name = "epph", 
+                     variable.name = "Design")
+plt = ggplot(ggdata.melted, aes(x = x, y = epph, color = Design, linetype = Design)) +
+  facet_wrap(vars(Hypothesis)) + 
+  geom_path() + 
+  scale_linetype_manual(values=c(rep("dashed", 3), "solid")) + 
+  geom_point(data = ggdata.melted[x == 10], aes(x = x, y = epph)) + 
+  theme_bw() + 
+  theme(panel.grid.minor = element_blank()) + 
+  labs(y = "", x = "Stages")
+plt
+# ggsave("h1_epph.pdf",
+#        plot = last_plot(),
+#        device = "pdf",
+#        path = image_path,
+#        scale = 1,
+#        width = 8,
+#        height = 4,
+#        units = c("in")
+# )
+
 
 # --- EPPH sequential --- #
 
@@ -618,6 +855,109 @@ points(x = idxlast, y = fact_seqPPH1_mean[idxlast], col = 6, pch = 18)
 points(x = idxlast, y = smmed_seqPPH1_mean[idxlast])
 
 
+#
+#
+#
+
+ggdata0 = data.table(
+  x = 1:idxlast, 
+  Random = rand_seqPPH0_mean, 
+  DOptimal = dopt_seqPPH0_mean, 
+  Factorial3 = fact_seqPPH0_mean, 
+  SeqMED = smmed_seqPPH0_mean, 
+  Hypothesis = rep("H0", idxlast)
+)
+ggdata1 = data.table(
+  x = 1:idxlast, 
+  Random = rand_seqPPH1_mean, 
+  DOptimal = dopt_seqPPH1_mean, 
+  Factorial3 = fact_seqPPH1_mean, 
+  SeqMED = smmed_seqPPH1_mean, 
+  Hypothesis = rep("H1", idxlast)
+)
+ggdata = rbind(ggdata0, ggdata1)
+ggdata.melted = melt(ggdata, id = c("x", "Hypothesis"), value.name = "epph", 
+                     variable.name = "Design")
+plt1 = ggplot(ggdata.melted, aes(x = x, y = epph, color = Design, linetype = Design)) +
+  facet_wrap(vars(Hypothesis)) + 
+  geom_path() + 
+  scale_linetype_manual(values=c(rep("dashed", 3), "solid")) + 
+  geom_point(data = ggdata.melted[x == 10], aes(x = x, y = epph)) + 
+  theme_bw() + 
+  theme(panel.grid.minor = element_blank()) + 
+  labs(y = "", x = "Stages")
+plt1
+# ggsave("h1_epph_seq.pdf",
+#        plot = last_plot(),
+#        device = "pdf",
+#        path = image_path,
+#        scale = 1,
+#        width = 8,
+#        height = 4,
+#        units = c("in")
+# )
+#####
+
+ggdata1.melted = melt(ggdata1[, 1:5], id = c("x"), value.name = "epph", 
+                      variable.name = "Design")
+plt1.1 = ggplot(ggdata1.melted, aes(x = x, y = epph, color = Design, linetype = Design)) +
+  geom_path() + 
+  scale_linetype_manual(values=c(rep("dashed", 3), "solid")) + 
+  geom_point(data = ggdata1.melted[x == 10], aes(x = x, y = epph)) + 
+  theme_bw() + 
+  theme(panel.grid.minor = element_blank()) + 
+  labs(y = "E[P(H1|X,Y)|X]", x = "Stages")
+plt1.1
+# ggsave("h1_epph1_seq_h3.png",
+#        plot = last_plot(),
+#        device = "png",
+#        path = image_path,
+#        scale = 1,
+#        width = 4,
+#        height = 3,
+#        units = c("in")
+# )
+
+#####
+
+#####
+#####
+
+#####
+ggdata0.melted$True = "H0"
+ggdata1.melted$True = "H1"
+ggdata01comb = rbind(ggdata0.melted, ggdata1.melted)
+plt1.01 = ggplot(ggdata01comb, aes(x = x, y = epph, color = Design, linetype = Design)) +
+  facet_wrap(vars(True)) +
+  geom_path() + 
+  scale_linetype_manual(values=c(rep("dashed", 3), "solid")) + 
+  geom_point(data = ggdata1.melted[x == 10], aes(x = x, y = epph)) + 
+  theme_bw() + 
+  theme(panel.grid.minor = element_blank()) + 
+  labs(y = "E[P(H1|X,Y)|X]", x = "Stages")
+plt1.01
+# ggsave("epph_true_seq.pdf",
+#        plot = last_plot(),
+#        device = "pdf",
+#        path = image_path,
+#        scale = 1,
+#        width = 8,
+#        height = 4,
+#        units = c("in")
+# )
+# ggsave("epph_true_seq.png",
+#        plot = last_plot(),
+#        device = "png",
+#        path = image_path,
+#        scale = 1,
+#        width = 8,
+#        height = 4,
+#        units = c("in")
+# )
+
+#####
+
+
 
 # --- MSE(Bn) --- #
 
@@ -637,6 +977,34 @@ for(i in 1:length(betaT)){
   barplot(c(mseBn_smmed[i], mseBn_rand[i], mseBn_dopt[i], mseBn_fact[i]), names.arg = design_names, las = 2)
 }
 
+
+#
+#
+#
+b1 = c(mseBn_smmed[1], mseBn_rand[1], mseBn_dopt[1], mseBn_fact[1])
+b2 = c(mseBn_smmed[2], mseBn_rand[2], mseBn_dopt[2], mseBn_fact[2])
+b3 = c(mseBn_smmed[3], mseBn_rand[3], mseBn_dopt[3], mseBn_fact[3])
+
+ggdesigns = c("SeqMED", "Random", "Doptimal", "Factorial3")
+ggdata = data.frame(Designs = factor(rep(ggdesigns, 3), 
+                                     levels = ggdesigns[c(2, 1, 4, 3)]), 
+                    MSE = c(b1, b2, b3), beta = rep(c("B1", "B2", "B3"), each = length(b1)))
+ggplot(ggdata, aes(x = Designs, y = MSE)) + 
+  geom_bar(stat = "identity") +
+  facet_wrap(vars(beta)) +
+  theme_bw() + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        axis.text.x = element_text(angle = 45, vjust = 0.5)) +
+  labs(y = NULL)
+# ggsave("h1_msebeta.pdf",
+#        plot = last_plot(),
+#        device = "pdf",
+#        path = image_path,
+#        scale = 1,
+#        width = 8,
+#        height = 4,
+#        units = c("in")
+# )
 
 
 # --- the design --- #
@@ -660,4 +1028,43 @@ for(i in 1:length(mu_full)){
             ylim = range(0, maxcounts), main = "", 
             xlab = paste("marginal ", i, sep = ""))
 }
+
+
+#
+#
+#
+
+marginals = matrix(NA, nrow = length((initN + 1):Ntot), ncol = 3)
+for(i in 1:(dim(marginals)[2])) {
+  marginals[, i] = smmed$D[ (initN + 1):Ntot, i]
+}
+colnames(marginals) = paste("Marginal", 1:3, sep = " ")
+marginals = as.data.table(marginals)
+marginals.tall = melt(marginals, measure.vars = 1:3)
+ggplot(marginals.tall, aes(x = value)) + 
+  facet_wrap(vars(variable)) +
+  geom_histogram(binwidth = 0.12, closed = "right", aes(y = after_stat(density))) + 
+  theme_bw() + 
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank()) + 
+  labs(x = "x")
+ggsave("h1_marginals.pdf",
+       plot = last_plot(),
+       device = "pdf",
+       path = image_path,
+       scale = 1,
+       width = 8,
+       height = 4,
+       units = c("in")
+)
+ggsave("h1_marginals_h3.png",
+       plot = last_plot(),
+       device = "png",
+       path = image_path,
+       scale = 1,
+       width = 8,
+       height = 3,
+       units = c("in")
+)
+
 

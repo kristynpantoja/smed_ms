@@ -21,6 +21,17 @@ library(mvtnorm)
 library(fields)
 library(knitr)
 
+# for plots
+library(ggplot2)
+library(ggpubr)
+library(reshape2)
+library(data.table)
+gg_color_hue = function(n) {
+  hues = seq(15, 275, length = n + 1)
+  hcl(h = hues, l = 65, c = 100)[1:n]
+}
+image_path = paste0(home, "/plots/gpvs_plots/gg")
+
 # --- Helper Functions for Evaluation Metrics --- #
 add_errorbands = function(xs, ys, MoE, color){
   y_lower = ys - MoE
@@ -318,6 +329,77 @@ lines(1:(N2 + 1), x_at1_PPH1_median, col = 3)
 lines(1:(N2 + 1), x_sf_PPH1_median, col = 5)
 
 
+#
+#
+#
+
+ggdata0 = data.table(
+  x = 1:(N2 + 1), 
+  Random = rand_PPH0_avg, 
+  `X=1` = x_at1_PPH0_avg, 
+  Diagonal = x_diag_PPH0_avg, 
+  SpaceFilling = x_sf_PPH0_avg,
+  SeqMED = smmed_PPH0_avg, 
+  Hypothesis = rep("H0", idxlast)
+)
+ggdata1 = data.table(
+  x = 1:(N2 + 1), 
+  Random = rand_PPH1_avg, 
+  `X=1` = x_at1_PPH1_avg, 
+  Diagonal = x_diag_PPH1_avg, 
+  SpaceFilling = x_sf_PPH1_avg,
+  SeqMED = smmed_PPH1_avg, 
+  Hypothesis = rep("H1", idxlast)
+)
+ggdata = rbind(ggdata0, ggdata1)
+ggdata.melted = melt(ggdata, id = c("x", "Hypothesis"), value.name = "epph", 
+                     variable.name = "Design")
+plt = ggplot(ggdata.melted, aes(x = x, y = epph, color = Design, linetype = Design)) +
+  facet_wrap(vars(Hypothesis)) + 
+  geom_path() + 
+  scale_linetype_manual(values=c(rep("dashed", 4), "solid")) + 
+  geom_point(data = ggdata.melted[x == 10], aes(x = x, y = epph)) + 
+  theme_bw() + 
+  theme(panel.grid.minor = element_blank()) + 
+  labs(y = "", x = "Stages")
+plt
+ggsave("h0_epph.pdf",
+       plot = last_plot(),
+       device = "pdf",
+       path = image_path,
+       scale = 1,
+       width = 8,
+       height = 4,
+       units = c("in")
+)
+
+ggdata0.melted = melt(ggdata0[, 1:5], id = c("x"), value.name = "epph", 
+                      variable.name = "Design")
+plt2.0 = ggplot(ggdata0.melted, aes(x = x, y = epph, color = Design, linetype = Design)) +
+  geom_path() + 
+  scale_linetype_manual(values=c(rep("dashed", 3), "solid")) + 
+  geom_point(data = ggdata0.melted[x == 10], aes(x = x, y = epph)) + 
+  theme_bw() + 
+  theme(panel.grid.minor = element_blank()) + 
+  labs(y = "", x = "Stages")
+plt2.0
+# ggsave("h0_epph0_seq_h3.png",
+#        plot = last_plot(),
+#        device = "png",
+#        path = image_path,
+#        scale = 1,
+#        width = 4,
+#        height = 3,
+#        units = c("in")
+# )
+
+
+
+
+
+
+
+
 
 # --- 2d f simulations --- #
 
@@ -475,3 +557,69 @@ lines(1:(N2 + 1), rand_PPH1_median, col = 2)
 lines(1:(N2 + 1), x_at1_PPH1_median, col = 3)
 lines(1:(N2 + 1), x_sf_PPH1_median, col = 5)
 
+
+
+
+#
+#
+#
+
+ggdata0 = data.table(
+  x = 1:(N2 + 1), 
+  Random = rand_PPH0_avg, 
+  `X=1` = x_at1_PPH0_avg, 
+  Diagonal = x_diag_PPH0_avg, 
+  SpaceFilling = x_sf_PPH0_avg,
+  SeqMED = smmed_PPH0_avg, 
+  Hypothesis = rep("H0", idxlast)
+)
+ggdata1 = data.table(
+  x = 1:(N2 + 1), 
+  Random = rand_PPH1_avg, 
+  `X=1` = x_at1_PPH1_avg, 
+  Diagonal = x_diag_PPH1_avg, 
+  SpaceFilling = x_sf_PPH1_avg,
+  SeqMED = smmed_PPH1_avg, 
+  Hypothesis = rep("H1", idxlast)
+)
+ggdata = rbind(ggdata0, ggdata1)
+ggdata.melted = melt(ggdata, id = c("x", "Hypothesis"), value.name = "epph", 
+                     variable.name = "Design")
+plt2 = ggplot(ggdata.melted, aes(x = x, y = epph, color = Design, linetype = Design)) +
+  facet_wrap(vars(Hypothesis)) + 
+  geom_path() + 
+  scale_linetype_manual(values=c(rep("dashed", 4), "solid")) + 
+  geom_point(data = ggdata.melted[x == 10], aes(x = x, y = epph)) + 
+  theme_bw() + 
+  theme(panel.grid.minor = element_blank()) + 
+  labs(y = "", x = "Stages")
+plt2
+ggsave("h1_epph.pdf",
+       plot = last_plot(),
+       device = "pdf",
+       path = image_path,
+       scale = 1,
+       width = 8,
+       height = 4,
+       units = c("in")
+)
+
+ggdata1.melted = melt(ggdata1[, 1:5], id = c("x"), value.name = "epph", 
+                      variable.name = "Design")
+plt2.1 = ggplot(ggdata1.melted, aes(x = x, y = epph, color = Design, linetype = Design)) +
+  geom_path() + 
+  scale_linetype_manual(values=c(rep("dashed", 3), "solid")) + 
+  geom_point(data = ggdata1.melted[x == 10], aes(x = x, y = epph)) + 
+  theme_bw() + 
+  theme(panel.grid.minor = element_blank()) + 
+  labs(y = "", x = "Stages")
+plt2.1
+# ggsave("h1_epph1_seq_h3.png",
+#        plot = last_plot(),
+#        device = "png",
+#        path = image_path,
+#        scale = 1,
+#        width = 4,
+#        height = 3,
+#        units = c("in")
+# )

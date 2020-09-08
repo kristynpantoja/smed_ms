@@ -533,7 +533,7 @@ marginals.tall = melt(marginals, measure.vars = 1:3)
 ggplot(marginals.tall, aes(x = value)) + 
   facet_wrap(vars(variable)) +
   geom_histogram(binwidth = 0.12, closed = "right", aes(y = after_stat(density))) + 
-  theme_bw() + 
+  theme_bw(base_size = 20) + 
   theme(panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank()) + 
   labs(x = "x")
@@ -546,15 +546,15 @@ ggplot(marginals.tall, aes(x = value)) +
 #        height = 4,
 #        units = c("in")
 # )
-# ggsave("h0_marginals_h3.png",
-#        plot = last_plot(),
-#        device = "png",
-#        path = image_path,
-#        scale = 1,
-#        width = 8,
-#        height = 3,
-#        units = c("in")
-# )
+ggsave("h0_marginals_h3.png",
+       plot = last_plot(),
+       device = "png",
+       path = image_path,
+       scale = 1,
+       width = 8,
+       height = 3,
+       units = c("in")
+)
 
 
 
@@ -929,10 +929,10 @@ ggdata1.melted$True = "H1"
 ggdata01comb = rbind(ggdata0.melted, ggdata1.melted)
 plt1.01 = ggplot(ggdata01comb, aes(x = x, y = epph, color = Design, linetype = Design)) +
   facet_wrap(vars(True)) +
-  geom_path() + 
+  geom_path(size = 2) + 
   scale_linetype_manual(values=c(rep("dashed", 3), "solid")) + 
-  geom_point(data = ggdata1.melted[x == 10], aes(x = x, y = epph)) + 
-  theme_bw() + 
+  geom_point(data = ggdata01comb[x == 10], aes(x = x, y = epph), size = 3) + 
+  theme_bw(base_size = 20) + 
   theme(panel.grid.minor = element_blank()) + 
   labs(y = "E[P(H1|X,Y)|X]", x = "Stages")
 plt1.01
@@ -945,15 +945,15 @@ plt1.01
 #        height = 4,
 #        units = c("in")
 # )
-# ggsave("epph_true_seq.png",
-#        plot = last_plot(),
-#        device = "png",
-#        path = image_path,
-#        scale = 1,
-#        width = 8,
-#        height = 4,
-#        units = c("in")
-# )
+ggsave("epph_true_seq.png",
+       plot = last_plot(),
+       device = "png",
+       path = image_path,
+       scale = 1,
+       width = 8,
+       height = 4,
+       units = c("in")
+)
 
 #####
 

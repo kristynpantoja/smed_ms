@@ -94,7 +94,7 @@ numSeqMMED = length(smmed_data_list)
 ggdata = data.frame(x = smmed_data$D, y = smmed_data$y)
 plt1 = ggplot(ggdata) + 
   geom_histogram(binwidth = 0.12, closed = "right", aes(x =x, y = after_stat(density))) + 
-  theme_bw() + 
+  theme_bw(base_size = 20) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 plt2 = ggplot(ggdata) + 
   geom_point(aes(x, y)) +
@@ -262,11 +262,11 @@ ggdata = data.frame(x = smmed_data$D, y = smmed_data$y)
 yrange = range(smmed_data$y)
 plt1 = ggplot(ggdata) + 
   geom_histogram(binwidth = 0.12, closed = "right", aes(x =x, y = after_stat(density))) + 
-  theme_bw() + 
+  theme_bw(base_size = 20) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 plt2 = ggplot(ggdata) + 
-  geom_point(aes(x, y)) +
-  stat_function(fun = fT) + 
+  geom_point(aes(x, y), size = 2) +
+  stat_function(fun = fT, size = 2) + 
   scale_y_continuous(limits = yrange) + 
   theme_bw() + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
@@ -309,17 +309,17 @@ ggdata = data.frame(x = smmed_data$D, y = smmed_data$y)
 yrange = range(smmed_data$y)
 plt1 = ggplot(ggdata) + 
   geom_histogram(binwidth = 0.12, closed = "right", aes(x =x, y = after_stat(density))) + 
-  theme_bw() + 
+  theme_bw(base_size = 20) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 plt2 = ggplot(ggdata) + 
-  geom_point(aes(x, y)) +
+  geom_point(aes(x, y), size = 2) +
   scale_y_continuous(limits = yrange) + 
-  theme_bw() + 
+  theme_bw(base_size = 20) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 ggdata_est = data.table::data.table(
   x = x_seq, 
-  `Estimated Quadratic` = f1est_seq, 
-  `Estimated Line` = f2est_seq, 
+  `Est Quadratic` = f1est_seq, 
+  `Est Line` = f2est_seq, 
   `True Quadratic` = fT_seq
 )
 ggdata_est = data.table::melt(ggdata_est, id = c("x"), value.name = "y", variable.name = "Function")
@@ -329,23 +329,23 @@ ggdata_true = data.table::data.table(x = x_seq, y = fT_seq)
 plt3 = plt2 + 
   geom_path(data = ggdata_est, mapping = aes(x = x, y = y, 
                                              color = Function), 
-            inherit.aes = FALSE) + 
+            inherit.aes = FALSE, size = 2) + 
   scale_color_manual(values = c(gg_color_hue(3)[c(1, 3)], 1)) +
   # stat_function(fun = fT) +
-  theme_bw() + 
+  theme_bw(base_size = 20) + 
   theme(panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank())
-ggarrange(plt1, plt3, ncol = 2, widths = c(1, 1.5))
+ggarrange(plt1, plt3, ncol = 2, widths = c(1, 1.6))
 # height= 5, 6
-# ggsave("poster_seqmed_altogether_d2_h6.png",
-#        plot = last_plot(),
-#        device = "png",
-#        path = image_path,
-#        scale = 1,
-#        width = 13.5,
-#        height = 6,
-#        units = c("in")
-# )
+ggsave("poster_seqmed_altogether_d2_h6.png",
+       plot = last_plot(),
+       device = "png",
+       path = image_path,
+       scale = 1,
+       width = 13.5,
+       height = 6,
+       units = c("in")
+)
 ggarrange(plt3, plt1, ncol = 2, widths = c(1.5, 1))
 # ggsave("poster_seqmed_altogether2_d2_h6.png",
 #        plot = last_plot(),
@@ -519,10 +519,10 @@ ggdata.melted = melt(ggdata, id = c("x", "Hypothesis"), value.name = "epph",
                      variable.name = "Design")
 plt6 = ggplot(ggdata.melted, aes(x = x, y = epph, color = Design, linetype = Design)) +
   facet_wrap(vars(Hypothesis)) + 
-  geom_path() + 
+  geom_path(size = 2) + 
   scale_linetype_manual(values=c(rep("dashed", 3), "solid")) + 
-  geom_point(data = ggdata.melted[x == 10], aes(x = x, y = epph)) + 
-  theme_bw() + 
+  geom_point(data = ggdata.melted[x == 10], aes(x = x, y = epph), size = 2) + 
+  theme_bw(base_size = 20) + 
   theme(panel.grid.minor = element_blank()) + 
   labs(y = "", x = "Stages")
 plt6
@@ -592,41 +592,41 @@ ggdataEPPH1 = data.table(
 ggdataEPPH1 = melt(ggdataEPPH1, id = c("x"), value.name = "epph", 
                    variable.name = "Design")
 plt1 = ggplot(ggdataEPPH1, aes(x = x, y = epph, color = Design, linetype = Design)) +
-  geom_path() + 
+  geom_path(size = 2) + 
   scale_linetype_manual(values=c(rep("dashed", 3), "solid")) + 
-  geom_point(data = ggdataEPPH1[x == 10], aes(x = x, y = epph)) + 
-  theme_bw() + 
+  geom_point(data = ggdataEPPH1[x == 10], aes(x = x, y = epph), size = 2) + 
+  theme_bw(base_size = 20) + 
   theme(panel.grid.minor = element_blank()) + 
   labs(y = "", x = "Stages")
 plt2 = ggplot(ggdataMSEBn, aes(x = Designs, y = MSE)) + 
   geom_bar(stat = "identity") +
-  theme_bw() + 
+  theme_bw(base_size = 20) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         axis.text.x = element_text(angle = 45, vjust = 0.5)) +
   labs(y = NULL)
-ggarrange(plt2, plt1)
+ggarrange(plt2, plt1, widths = c(1, 1.5))
 # height = 3, 4
-# ggsave("poster_msebn_epph1_h4.png",
-#        plot = last_plot(),
-#        device = "png",
-#        path = image_path,
-#        scale = 1,
-#        width = 13.5,
-#        height = 4,
-#        units = c("in")
-# )
+ggsave("poster_msebn_epph1_h4.png",
+       plot = last_plot(),
+       device = "png",
+       path = image_path,
+       scale = 1,
+       width = 13.5,
+       height = 4,
+       units = c("in")
+)
 
 ggarrange(plt2, plt6, widths = c(1, 2))
 # height = 3, 4
-# ggsave("poster_msebn_epph_h3.png",
-#        plot = last_plot(),
-#        device = "png",
-#        path = image_path,
-#        scale = 1,
-#        width = 13.5,
-#        height = 3,
-#        units = c("in")
-# )
+ggsave("poster_msebn_epph_h4.png",
+       plot = last_plot(),
+       device = "png",
+       path = image_path,
+       scale = 1,
+       width = 13.5,
+       height = 4,
+       units = c("in")
+)
 
 
 
@@ -720,12 +720,12 @@ ggdata = data.frame(x = smmed_data2$D, y = smmed_data2$y)
 yrange = range(smmed_data2$y)
 plt1 = ggplot(ggdata) + 
   geom_histogram(binwidth = 0.12, closed = "right", aes(x =x, y = after_stat(density))) + 
-  theme_bw() + 
+  theme_bw(base_size = 20) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 plt2 = ggplot(ggdata) + 
-  geom_point(aes(x, y)) +
-  stat_function(fun = fT) + 
-  theme_bw() + 
+  geom_point(aes(x, y), size = 2) +
+  stat_function(fun = fT, size = 2) + 
+  theme_bw(base_size = 20) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 ggarrange(plt1, plt2)
 # ggsave("seqmed_d3.pdf",
@@ -803,9 +803,9 @@ fT_seq = sapply(x_seq, fT)
 
 ggdata_est = data.table::data.table(
   x = x_seq, 
-  `Estimated Line` = f1est_seq, 
-  `Estimated Quadratic` = f2est_seq, 
-  `Estimated Cubic` = fTest_seq
+  `Est Line` = f1est_seq, 
+  `Est Quadratic` = f2est_seq, 
+  `Est Cubic` = fTest_seq
 )
 ggdata_est = data.table::melt(ggdata_est, id = c("x"), value.name = "y", variable.name = "Function")
 
@@ -813,12 +813,12 @@ ggdata_true = data.table::data.table(x = x_seq, y = fT_seq)
 
 ggplot(ggdata_est) + 
   facet_wrap(facets = vars(Function)) +
-  geom_path(aes(x = x, y = y, color = Function)) + 
-  geom_path(data = ggdata_true, aes(x, y, color = "True Cubic")) + 
+  geom_path(aes(x = x, y = y, color = Function), size = 2) + 
+  geom_path(data = ggdata_true, aes(x, y, color = "True Cubic"), size = 2) + 
   scale_color_manual(values = c(gg_color_hue(3), "black")) +
   scale_y_continuous(limits = yrange) + 
   # stat_function(fun = fT) +
-  theme_bw() + 
+  theme_bw(base_size = 20) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 # ggsave("fits_d3.pdf",
 #        plot = last_plot(),
@@ -844,24 +844,24 @@ ggplot(ggdata_est) +
 
 plt1 = ggplot(ggdata) + 
   geom_histogram(binwidth = 0.12, closed = "right", aes(x =x, y = after_stat(density))) + 
-  theme_bw() + 
+  theme_bw(base_size = 20) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 plt2 = ggplot(ggdata) + 
   geom_point(aes(x, y)) +
-  stat_function(fun = fT) + 
-  theme_bw() + 
+  stat_function(fun = fT, size = 2) + 
+  theme_bw(base_size = 20) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 plt3 = ggplot(ggdata_est) + 
   facet_wrap(facets = vars(Function)) +
-  geom_path(aes(x = x, y = y, color = Function)) + 
-  geom_path(data = ggdata_true, aes(x, y, color = "True Quadratic")) + 
+  geom_path(aes(x = x, y = y, color = Function), size = 2) + 
+  geom_path(data = ggdata_true, aes(x, y, color = "True Quadratic"), size = 2) + 
   scale_color_manual(values = c(gg_color_hue(3), "black")) +
   scale_y_continuous(limits = yrange) + 
   # stat_function(fun = fT) +
-  theme_bw() + 
+  theme_bw(base_size = 20) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 ###
-ggarrange(plt2, plt3, nrow = 1, widths = c(1, 3))
+ggarrange(plt2, plt3, nrow = 1, widths = c(1, 3.5))
 # hegiht = 3, 4
 # ggsave("poster_data_fits_d3_h3.png",
 #        plot = last_plot(),
@@ -875,23 +875,23 @@ ggarrange(plt2, plt3, nrow = 1, widths = c(1, 3))
 ###
 plt3.1 = ggplot(ggdata_est) + 
   facet_wrap(facets = vars(Function)) +
-  geom_path(aes(x = x, y = y, color = Function)) + 
-  geom_path(data = ggdata_true, aes(x, y, color = "True Quadratic")) + 
+  geom_path(aes(x = x, y = y, color = Function), size = 2) + 
+  geom_path(data = ggdata_true, aes(x, y, color = "True Quadratic"), size = 2) + 
   scale_color_manual(values = c(gg_color_hue(3), "black")) +
   # stat_function(fun = fT) +
-  theme_bw() + 
+  theme_bw(base_size = 20) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 ggarrange(plt1, plt3.1, nrow = 1, widths = c(1,  3))
 # 12, 14 in
-# ggsave("poster_seqmed_fits_d3_h4.png",
-#        plot = last_plot(),
-#        device = "png",
-#        path = image_path,
-#        scale = 1,
-#        width = 13.5,
-#        height = 4,
-#        units = c("in")
-# )
+ggsave("poster_seqmed_fits_d3_h4.png",
+       plot = last_plot(),
+       device = "png",
+       path = image_path,
+       scale = 1,
+       width = 13.5,
+       height = 4,
+       units = c("in")
+)
 ###
 
 ggdata_est_plt4 = data.table::data.table(
@@ -904,27 +904,27 @@ ggdata_est_plt4 = data.table::data.table(
 ggdata_est_plt4 = data.table::melt(ggdata_est_plt4, id = c("x"), value.name = "y", variable.name = "Function")
 
 plt4 = ggplot(ggdata) + 
-  geom_point(aes(x, y)) +
+  geom_point(aes(x, y), size = 2) +
   geom_path(data = ggdata_est_plt4, 
             mapping = aes(x = x, y = y, color = Function), 
-            inherit.aes = FALSE) + 
+            inherit.aes = FALSE, size = 2) + 
   scale_color_manual(values = c(gg_color_hue(3), 1)) +
-  theme_bw() + 
+  theme_bw(base_size = 20) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-ggarrange(plt1, plt4, nrow = 1, ncol = 2, widths = c(1, 1.5))
+ggarrange(plt1, plt4, nrow = 1, ncol = 2, widths = c(1, 2))
 # heght = 3, 4
-ggsave("poster_datafitsaltogether_d3_h2.png",
-       plot = last_plot(),
-       device = "png",
-       path = image_path,
-       scale = 1,
-       width = 13.5,
-       height = 2,
-       units = c("in")
-)
+# ggsave("poster_datafitsaltogether_d3_h2.png",
+#        plot = last_plot(),
+#        device = "png",
+#        path = image_path,
+#        scale = 1,
+#        width = 13.5,
+#        height = 2,
+#        units = c("in")
+# )
 ###
 
-ggarrange(plt1, plt2, plt3, nrow = 1, widths = c(1, 1, 3))
+ggarrange(plt1, plt2, plt3, nrow = 1, widths = c(1, 1.1, 4))
 # heght = 3, 4
 # ggsave("poster_seqmeddatafits_d3_h4.png",
 #        plot = last_plot(),
@@ -1078,10 +1078,10 @@ ggdata.melted = melt(ggdata, id = c("x", "Hypothesis"), value.name = "epph",
                      variable.name = "Design")
 plt5 = ggplot(ggdata.melted, aes(x = x, y = epph, color = Design, linetype = Design)) +
   facet_wrap(vars(Hypothesis)) + 
-  geom_path() + 
+  geom_path(size = 2) + 
   scale_linetype_manual(values=c(rep("dashed", 3), "solid")) + 
-  geom_point(data = ggdata.melted[x == 10], aes(x = x, y = epph)) + 
-  theme_bw() + 
+  geom_point(data = ggdata.melted[x == 10], aes(x = x, y = epph), size = 2) + 
+  theme_bw(base_size = 20) + 
   theme(panel.grid.minor = element_blank()) + 
   labs(y = "", x = "Stages")
 plt5
@@ -1095,25 +1095,25 @@ plt5
 #        units = c("in")
 # )
 # heght = 3, 4
-ggsave("poster_epph_d3_h4.png",
-       plot = last_plot(),
-       device = "png",
-       path = image_path,
-       scale = 1,
-       width = 13.5,
-       height = 4,
-       units = c("in")
-)
-ggarrange(plt4, plt5, ncol = 2, widths = c(1, 3))
-ggsave("poster_seqmed_epph_d3_h3.png",
-       plot = last_plot(),
-       device = "png",
-       path = image_path,
-       scale = 1,
-       width = 13.5,
-       height = 3,
-       units = c("in")
-)
+# ggsave("poster_epph_d3_h4.png",
+#        plot = last_plot(),
+#        device = "png",
+#        path = image_path,
+#        scale = 1,
+#        width = 13.5,
+#        height = 4,
+#        units = c("in")
+# )
+ggarrange(plt4, plt5, ncol = 2, widths = c(3, 3))
+# ggsave("poster_seqmed_epph_d3_h3.png",
+#        plot = last_plot(),
+#        device = "png",
+#        path = image_path,
+#        scale = 1,
+#        width = 13.5,
+#        height = 3,
+#        units = c("in")
+# )
 
 # --- MSE(y-hat) --- #
 
@@ -1192,7 +1192,7 @@ ggdata = data.frame(Designs = rep(c("Dlinear", "Dquadratic", "SpaceFilling", "Se
 ggplot(ggdata, aes(x = Designs, y = MSE)) + 
   geom_bar(stat = "identity") +
   facet_wrap(vars(beta)) +
-  theme_bw() + 
+  theme_bw(base_size = 20) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         axis.text.x = element_text(angle = 45, vjust = 0.5)) +
   labs(y = NULL)
@@ -1232,23 +1232,23 @@ ggdataT = data.table(
   Dquadratic = rep(exppostprobs_dopt2[3], numSeq), 
   SpaceFilling = rep(exppostprobs_space[3], numSeq), 
   SeqMED = postprobs_means[ 3, ], 
-  Hypothesis = rep("True Hypothesis", numSeq)
+  Hypothesis = rep("True", numSeq)
 )
 ggdata = rbind(ggdata0, ggdata1, ggdataT)
 ggdata.melted = melt(ggdata, id = c("x", "Hypothesis"), value.name = "epph", 
                      variable.name = "Design")
 plt1 = ggplot(ggdata.melted, aes(x = x, y = epph, color = Design, linetype = Design)) +
   facet_wrap(vars(Hypothesis)) + 
-  geom_path() + 
+  geom_path(size = 2) + 
   scale_linetype_manual(values=c(rep("dashed", 3), "solid")) + 
-  geom_point(data = ggdata.melted[x == 10], aes(x = x, y = epph)) + 
-  theme_bw() + 
+  geom_point(data = ggdata.melted[x == 10], aes(x = x, y = epph), size = 2) + 
+  theme_bw(base_size = 20) + 
   theme(panel.grid.minor = element_blank()) + 
   labs(y = "", x = "Stages")
 
 plt2 = ggplot(ggdataMSEBn, aes(x = Designs, y = MSE)) + 
   geom_bar(stat = "identity") +
-  theme_bw() + 
+  theme_bw(base_size = 20) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         axis.text.x = element_text(angle = 45, vjust = 0.5)) +
   labs(y = NULL)

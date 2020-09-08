@@ -254,14 +254,14 @@ ggdata.melted = cbind(ggdata.melted,
 ggdata_pts = data.table(
   x = c(x_train, newpts), 
   y = c(y_train, truey), 
-  color = c(rep("black", length(x_train)), 
-            rep("red", length(newpts))), 
+  color = c(rep(gg_color_hue(2)[2], length(x_train)), 
+            rep(gg_color_hue(2)[1], length(newpts))), 
   shape = c(rep(8, length(x_train)), 
             rep(16, length(newpts)))
 )
 ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable), 
        linetype = 1) + 
-  geom_path() + 
+  geom_path(size = 2) + 
   geom_ribbon(aes(ymin = lower, ymax = upper, fill = variable), 
               alpha = 0.1, linetype = 0) +
   scale_linetype_manual(values = c(1, 1, 2, 2)) + 
@@ -269,26 +269,26 @@ ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable),
   scale_color_manual(values = c(1, "gray", "#00BFC4", "#C77CFF")) + 
   geom_point(data = ggdata_pts, mapping = aes(x = x, y = y), 
              inherit.aes = FALSE, color = ggdata_pts$color, 
-             shape = ggdata_pts$shape, 
+             shape = ggdata_pts$shape,
              size = 3) +
   geom_point(data = ggdata_pts, mapping = aes(x = x, y = yrange[1]), 
              inherit.aes = FALSE, color = ggdata_pts$color, 
              shape = ggdata_pts$shape, 
              size = 3) +
-  scale_y_continuous(yrange) + 
-  theme_bw() +
+  scale_y_continuous(limits = yrange) +
+  theme_bw(base_size = 20) + 
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
-  labs(y = "y", x = "x")
-# ggsave("poster_gvm_h8.png",
-#        plot = last_plot(),
-#        device = "png",
-#        path = image_path,
-#        scale = 1,
-#        width = 13.5,
-#        height = 8,
-#        units = c("in")
-# )
+  labs(y = "y", x = "x", fill = "Function", color = "Function")
+ggsave("poster_gvm_h8.png",
+       plot = last_plot(),
+       device = "png",
+       path = image_path,
+       scale = 1,
+       width = 13.5,
+       height = 8,
+       units = c("in")
+)
 # ggsave("gvm.pdf",
 #        plot = last_plot(),
 #        device = "pdf",
@@ -406,8 +406,8 @@ ggdata = data.table(
   x = x_seq, 
   `True Function` = y_seq, 
   Wasserstein = w_seq, 
-  `H0 Predictive Mean` = H0_predfn$pred_mean, 
-  `H1 Predictive Mean` = H1_predfn$pred_mean,
+  `H0 Pred Mean` = H0_predfn$pred_mean, 
+  `H1 Pred Mean` = H1_predfn$pred_mean,
   lower0 = H0_predfn$pred_mean - err0, 
   lower1 = H1_predfn$pred_mean - err1, 
   upper0 = H0_predfn$pred_mean + err0,
@@ -420,7 +420,7 @@ ggdata$Wasserstein = ggdata$Wasserstein * 0.25 - abs(yrange[1])
 ggdata$zero1 = NA
 ggdata$zero2 = NA
 ggdata.melted = melt(ggdata, id.vars = c("x"), 
-                     measure.vars = c("True Function", "Wasserstein", "H0 Predictive Mean", "H1 Predictive Mean"))
+                     measure.vars = 2:5)
 ggdata.lower = melt(ggdata, id.vars = c("x"), 
                     measure.vars = c("zero1", "zero2", "lower0", "lower1"))
 ggdata.upper = melt(ggdata, id.vars = c("x"), 
@@ -431,14 +431,14 @@ ggdata.melted = cbind(ggdata.melted,
 ggdata_pts = data.table(
   x = c(x_train, newpts), 
   y = c(y_train, truey), 
-  color = c(rep("black", length(x_train)), 
-            rep("red", length(newpts))), 
+  color = c(rep(gg_color_hue(2)[2], length(x_train)), 
+            rep(gg_color_hue(2)[1], length(newpts))), 
   shape = c(rep(8, length(x_train)), 
             rep(16, length(newpts)))
 )
-ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable), 
+mvp = ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable), 
        linetype = 1) + 
-  geom_path() + 
+  geom_path(size = 2) + 
   geom_ribbon(aes(ymin = lower, ymax = upper, fill = variable), 
               alpha = 0.1, linetype = 0) +
   scale_linetype_manual(values = c(1, 1, 2, 2)) + 
@@ -452,11 +452,12 @@ ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable),
              inherit.aes = FALSE, color = ggdata_pts$color, 
              shape = ggdata_pts$shape, 
              size = 3) +
-  scale_y_continuous(yrange) + 
-  theme_bw() +
+  scale_y_continuous(limits = yrange) + 
+  theme_bw(base_size = 20) +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
-  labs(y = "y", x = "x")
+  labs(y = "y", x = "x", fill = "Function", color = "Function")
+mvp
 # ggsave("mvp.pdf",
 #        plot = last_plot(),
 #        device = "pdf",
@@ -517,7 +518,7 @@ ggdata = melt(ggdata, measure.vars = 1:4)
 ggdata$variable = factor(ggdata$variable)
 plt0 = ggplot(data = ggdata, aes(x = value, y = variable)) + 
   geom_point(size = 3) +
-  theme_bw() +
+  theme_bw(base_size = 20) +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
   labs(y = "", x = "x")
@@ -594,8 +595,8 @@ ggdata = melt(ggdata, id.vars = c("Design"))
 plt_gvm1 = ggplot(ggdata, aes(x = variable, y = value, group = Design, 
                    color = Design, linetype = Design)) + 
   geom_point(size = 3) + 
-  geom_path() +
-  theme_bw() +
+  geom_path(size = 2) +
+  theme_bw(base_size = 20) +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
   labs(y = "Median Log(RSS0/RSS1)", x = "Initial Data")
@@ -673,8 +674,8 @@ ggdata = melt(ggdata, id.vars = c("Design"))
 plt_gvm2 = ggplot(ggdata, aes(x = variable, y = value, group = Design, 
                    color = Design, linetype = Design)) + 
   geom_point(size = 3) + 
-  geom_path() +
-  theme_bw() +
+  geom_path(size = 2) +
+  theme_bw(base_size = 20) +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
   labs(y = "Median P(H1|X, Y)", x = "Initial Data")
@@ -723,8 +724,8 @@ plt_gvm3 = ggplot(ggdata3, aes(x = variable, y = value, group = Design,
                               color = Design, linetype = Design)) + 
   facet_wrap(vars(Metric), scales = "free") + 
   geom_point(size = 3) + 
-  geom_path() +
-  theme_bw() +
+  geom_path(size = 2) +
+  theme_bw(base_size = 20) +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), 
         axis.title = element_blank(), 
@@ -749,16 +750,16 @@ plt_gvm3
 #        units = c("in")
 # )
 
-ggarrange(plt0, plt_gvm3, widths = c(1, 2.5))
-# ggsave("poster_gvm_all_h4.png",
-#        plot = last_plot(),
-#        device = "png",
-#        path = image_path,
-#        scale = 1,
-#        width = 13.5,
-#        height = 4,
-#        units = c("in")
-# )
+ggarrange(plt0, plt_gvm3, widths = c(1, 2))
+ggsave("poster_gvm_all_h3.png",
+       plot = last_plot(),
+       device = "png",
+       path = image_path,
+       scale = 1,
+       width = 13.5,
+       height = 3,
+       units = c("in")
+)
 
 
 #
@@ -787,7 +788,7 @@ ggarrange(plt0, plt_gvm3, widths = c(1, 2.5))
 # MMED parameters for testing
 l01= c(0.01, 0.1); type01 = c(4, 5); numCandidates = 1001; k = 4; p = 1; nugget = NULL; alpha = 1
 # gvm sim cases
-gvm1 = readRDS(paste(home, "/run_designs/gp/gpsims_seq/run_designs_v2/mvp_seq_train1sims.rds", sep = ""))
+mvp1 = readRDS(paste(home, "/run_designs/gp/gpsims_seq/run_designs_v2/mvp_seq_train1sims.rds", sep = ""))
 mvp2 = readRDS(paste(home, "/run_designs/gp/gpsims_seq/run_designs_v2/mvp_seq_train2sims.rds", sep = ""))
 mvp3 = readRDS(paste(home, "/run_designs/gp/gpsims_seq/run_designs_v2/mvp_seq_train3sims.rds", sep = ""))
 mvp4 = readRDS(paste(home, "/run_designs/gp/gpsims_seq/run_designs_v2/mvp_seq_train4sims.rds", sep = ""))
@@ -832,8 +833,8 @@ ggdata = melt(ggdata, id.vars = c("Design"))
 plt_mvp1 = ggplot(ggdata, aes(x = variable, y = value, group = Design, 
                               color = Design, linetype = Design)) + 
   geom_point(size = 3) + 
-  geom_path() +
-  theme_bw() +
+  geom_path(size = 2) +
+  theme_bw(base_size = 20) +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
   labs(y = "Median Log(RSS0/RSS1)", x = "Initial Data")
@@ -905,8 +906,8 @@ ggdata = melt(ggdata, id.vars = c("Design"))
 plt_mvp2 = ggplot(ggdata, aes(x = variable, y = value, group = Design, 
                               color = Design, linetype = Design)) + 
   geom_point(size = 3) + 
-  geom_path() +
-  theme_bw() +
+  geom_path(size = 2) +
+  theme_bw(base_size = 20) +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
   labs(y = "Median P(H1|X, Y)", x = "Initial Data")
@@ -940,7 +941,7 @@ ggdata1 = data.table(
   Design = c("SeqMED", "SpaceFilling", "Random")
 )
 ggdata1 = melt(ggdata1, id.vars = c("Design"))
-ggdata1$Metric = "Median Log(RSS0/RSS1)"
+ggdata1$Metric = "Log(RSS0/RSS1)"
 ggdata2 = data.table(
   Extrapolation = case1_medianPPH1_vec,
   `Inc Spread` = case2_medianPPH1_vec,
@@ -949,35 +950,47 @@ ggdata2 = data.table(
   Design = c("SeqMED", "SpaceFilling", "Random")
 )
 ggdata2 = melt(ggdata2, id.vars = c("Design"))
-ggdata2$Metric = "Median P(H1|X,Y)"
+ggdata2$Metric = "P(H1|X,Y)"
 ggdata3 = rbind(ggdata1, ggdata2)
 ggdata3$Metric = factor(ggdata3$Metric)
 plt_mvp3 = ggplot(ggdata3, aes(x = variable, y = value, group = Design, 
                                color = Design, linetype = Design)) + 
   facet_wrap(vars(Metric), scales = "free") + 
   geom_point(size = 3) + 
-  geom_path() +
-  theme_bw() +
+  geom_path(size = 2) +
+  theme_bw(base_size = 20) +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), 
         axis.title = element_blank(), 
         axis.text.x = element_text(angle = 45, vjust = 0.5))
 plt_mvp3
-ggsave("mvp_medianlogrss01pph1.pdf",
-       plot = last_plot(),
-       device = "pdf",
-       path = image_path,
-       scale = 1,
-       width = 8,
-       height = 4,
-       units = c("in")
-)
-ggsave("poster_mvp_medianlogrss01pph1_h5.png",
+# ggsave("mvp_medianlogrss01pph1.pdf",
+#        plot = last_plot(),
+#        device = "pdf",
+#        path = image_path,
+#        scale = 1,
+#        width = 8,
+#        height = 4,
+#        units = c("in")
+# )
+# ggsave("poster_mvp_medianlogrss01pph1_h5.png",
+#        plot = last_plot(),
+#        device = "png",
+#        path = image_path,
+#        scale = 1,
+#        width = 13.5,
+#        height = 5,
+#        units = c("in")
+# )
+
+ggarrange(mvp, plt_mvp3, widths = c(1.5, 1.5))
+ggsave("poster_mvp_all_h4.png",
        plot = last_plot(),
        device = "png",
        path = image_path,
        scale = 1,
        width = 13.5,
-       height = 5,
+       height = 4,
        units = c("in")
 )
+

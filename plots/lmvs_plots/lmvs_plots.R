@@ -527,7 +527,7 @@ marginals = matrix(NA, nrow = length((initN + 1):Ntot), ncol = 3)
 for(i in 1:(dim(marginals)[2])) {
   marginals[, i] = smmed$D[ (initN + 1):Ntot, i]
 }
-colnames(marginals) = paste("Marginal", 1:3, sep = " ")
+colnames(marginals) = paste("Variable", 1:3, sep = " ")
 marginals = as.data.table(marginals)
 marginals.tall = melt(marginals, measure.vars = 1:3)
 ggplot(marginals.tall, aes(x = value)) + 
@@ -537,24 +537,24 @@ ggplot(marginals.tall, aes(x = value)) +
   theme(panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank()) + 
   labs(x = "x")
-# ggsave("h0_marginals.pdf",
-#        plot = last_plot(),
-#        device = "pdf",
-#        path = image_path,
-#        scale = 1,
-#        width = 8,
-#        height = 4,
-#        units = c("in")
-# )
-ggsave("h0_marginals_h3.png",
+ggsave("h0_marginals2.pdf",
        plot = last_plot(),
-       device = "png",
+       device = "pdf",
        path = image_path,
        scale = 1,
        width = 8,
-       height = 3,
+       height = 4,
        units = c("in")
 )
+# ggsave("h0_marginals_h3.png",
+#        plot = last_plot(),
+#        device = "png",
+#        path = image_path,
+#        scale = 1,
+#        width = 8,
+#        height = 3,
+#        units = c("in")
+# )
 
 
 
@@ -934,7 +934,7 @@ plt1.01 = ggplot(ggdata01comb, aes(x = x, y = epph, color = Design, linetype = D
   geom_point(data = ggdata01comb[x == 10], aes(x = x, y = epph), size = 3) + 
   theme_bw(base_size = 20) + 
   theme(panel.grid.minor = element_blank()) + 
-  labs(y = "E[P(H1|X,Y)|X]", x = "Stages")
+  labs(y = "", x = "Stages")
 plt1.01
 # ggsave("epph_true_seq.pdf",
 #        plot = last_plot(),
@@ -945,7 +945,7 @@ plt1.01
 #        height = 4,
 #        units = c("in")
 # )
-ggsave("epph_true_seq.png",
+ggsave("epph_true_seq_h4.png",
        plot = last_plot(),
        device = "png",
        path = image_path,

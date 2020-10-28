@@ -280,15 +280,36 @@ ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable),
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
   labs(y = "y", x = "x", fill = "Function", color = "Function")
-ggsave("poster_gvm_h8.png",
-       plot = last_plot(),
-       device = "png",
-       path = image_path,
-       scale = 1,
-       width = 13.5,
-       height = 8,
-       units = c("in")
-)
+# ggsave("poster_gvm_h8.png",
+#        plot = last_plot(),
+#        device = "png",
+#        path = image_path,
+#        scale = 1,
+#        width = 13.5,
+#        height = 8,
+#        units = c("in")
+# )
+ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable), 
+       linetype = 1) + 
+  geom_path() + 
+  geom_ribbon(aes(ymin = lower, ymax = upper, fill = variable), 
+              alpha = 0.1, linetype = 0) +
+  scale_linetype_manual(values = c(1, 1, 2, 2)) + 
+  scale_fill_manual(values = c(NA, NA, "#00BFC4", "#C77CFF")) + 
+  scale_color_manual(values = c(1, "gray", "#00BFC4", "#C77CFF")) + 
+  geom_point(data = ggdata_pts, mapping = aes(x = x, y = y), 
+             inherit.aes = FALSE, color = ggdata_pts$color, 
+             shape = ggdata_pts$shape, 
+             size = 3) +
+  geom_point(data = ggdata_pts, mapping = aes(x = x, y = yrange[1]), 
+             inherit.aes = FALSE, color = ggdata_pts$color, 
+             shape = ggdata_pts$shape, 
+             size = 3) +
+  scale_y_continuous(limits = yrange) +
+  theme_bw() + 
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  labs(y = "y", x = "x", fill = "Function", color = "Function")
 # ggsave("gvm.pdf",
 #        plot = last_plot(),
 #        device = "pdf",
@@ -467,8 +488,36 @@ mvp
 #        height = 4,
 #        units = c("in")
 # )
-
-
+ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable), 
+       linetype = 1) + 
+  geom_path() + 
+  geom_ribbon(aes(ymin = lower, ymax = upper, fill = variable), 
+              alpha = 0.1, linetype = 0) +
+  scale_linetype_manual(values = c(1, 1, 2, 2)) + 
+  scale_fill_manual(values = c(NA, NA, "#00BFC4", "#C77CFF")) + 
+  scale_color_manual(values = c(1, "gray", "#00BFC4", "#C77CFF")) + 
+  geom_point(data = ggdata_pts, mapping = aes(x = x, y = y), 
+             inherit.aes = FALSE, color = ggdata_pts$color, 
+             shape = ggdata_pts$shape, 
+             size = 3) +
+  geom_point(data = ggdata_pts, mapping = aes(x = x, y = yrange[1]), 
+             inherit.aes = FALSE, color = ggdata_pts$color, 
+             shape = ggdata_pts$shape, 
+             size = 3) +
+  scale_y_continuous(limits = yrange) + 
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  labs(y = "y", x = "x", fill = "Function", color = "Function")
+# ggsave("mvp.pdf",
+#        plot = last_plot(),
+#        device = "pdf",
+#        path = image_path,
+#        scale = 1,
+#        width = 8,
+#        height = 4,
+#        units = c("in")
+# )
 
 
 
@@ -528,7 +577,22 @@ plt0
 #        device = "pdf",
 #        path = image_path,
 #        scale = 1,
-#        width = 6,
+#        width = 8,
+#        height = 4,
+#        units = c("in")
+# )
+ggplot(data = ggdata, aes(x = value, y = variable)) + 
+  geom_point(size = 3) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  labs(y = "", x = "x")
+# ggsave("initial.pdf",
+#        plot = last_plot(),
+#        device = "pdf",
+#        path = image_path,
+#        scale = 1,
+#        width = 8,
 #        height = 4,
 #        units = c("in")
 # )
@@ -610,6 +674,25 @@ plt_gvm1
 #        height = 4,
 #        units = c("in")
 # )
+ggplot(ggdata, aes(x = variable, y = value, group = Design, 
+                   color = Design, linetype = Design)) + 
+  geom_point(size = 3) + 
+  geom_path() +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  labs(y = "Median Log(RSS0/RSS1)", x = "Initial Data")
+# ggsave("gvm_medianlogrss01.pdf",
+#        plot = last_plot(),
+#        device = "pdf",
+#        path = image_path,
+#        scale = 1,
+#        width = 8,
+#        height = 4,
+#        units = c("in")
+# )
+
+
 
 # Log Predictive Density Ratio (0/1) --- not included
 
@@ -690,6 +773,24 @@ plt_gvm2
 #        units = c("in")
 # )
 
+
+ggplot(ggdata, aes(x = variable, y = value, group = Design, 
+                   color = Design, linetype = Design)) + 
+  geom_point(size = 3) + 
+  geom_path() +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  labs(y = "Median P(H1|X, Y)", x = "Initial Data")
+ggsave("gvm_medianpph1.pdf",
+       plot = last_plot(),
+       device = "pdf",
+       path = image_path,
+       scale = 1,
+       width = 8,
+       height = 4,
+       units = c("in")
+)
 
 
 #
@@ -964,15 +1065,15 @@ plt_mvp3 = ggplot(ggdata3, aes(x = variable, y = value, group = Design,
         axis.title = element_blank(), 
         axis.text.x = element_text(angle = 45, vjust = 0.5))
 plt_mvp3
-# ggsave("mvp_medianlogrss01pph1.pdf",
-#        plot = last_plot(),
-#        device = "pdf",
-#        path = image_path,
-#        scale = 1,
-#        width = 8,
-#        height = 4,
-#        units = c("in")
-# )
+ggsave("mvp_medianlogrss01pph1.pdf",
+       plot = last_plot(),
+       device = "pdf",
+       path = image_path,
+       scale = 1,
+       width = 8,
+       height = 4,
+       units = c("in")
+)
 # ggsave("poster_mvp_medianlogrss01pph1_h5.png",
 #        plot = last_plot(),
 #        device = "png",
@@ -984,13 +1085,13 @@ plt_mvp3
 # )
 
 ggarrange(mvp, plt_mvp3, widths = c(1.5, 1.5))
-ggsave("poster_mvp_all_h4.png",
-       plot = last_plot(),
-       device = "png",
-       path = image_path,
-       scale = 1,
-       width = 13.5,
-       height = 4,
-       units = c("in")
-)
+# ggsave("poster_mvp_all_h4.png",
+#        plot = last_plot(),
+#        device = "png",
+#        path = image_path,
+#        scale = 1,
+#        width = 13.5,
+#        height = 4,
+#        units = c("in")
+# )
 

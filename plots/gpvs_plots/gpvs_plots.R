@@ -336,7 +336,7 @@ lines(1:(N2 + 1), x_sf_PPH1_median, col = 5)
 ggdata0 = data.table(
   x = 1:(N2 + 1), 
   Random = rand_PPH0_avg, 
-  `X=1` = x_at1_PPH0_avg, 
+  `X2=1` = x_at1_PPH0_avg, 
   Diagonal = x_diag_PPH0_avg, 
   SpaceFilling = x_sf_PPH0_avg,
   SeqMED = smmed_PPH0_avg, 
@@ -345,7 +345,7 @@ ggdata0 = data.table(
 ggdata1 = data.table(
   x = 1:(N2 + 1), 
   Random = rand_PPH1_avg, 
-  `X=1` = x_at1_PPH1_avg, 
+  `X2=1` = x_at1_PPH1_avg, 
   Diagonal = x_diag_PPH1_avg, 
   SpaceFilling = x_sf_PPH1_avg,
   SeqMED = smmed_PPH1_avg, 
@@ -354,6 +354,7 @@ ggdata1 = data.table(
 ggdata = rbind(ggdata0, ggdata1)
 ggdata.melted = melt(ggdata, id = c("x", "Hypothesis"), value.name = "epph", 
                      variable.name = "Design")
+ggdata.gpvs.H0true = ggdata.melted
 plt = ggplot(ggdata.melted, aes(x = x, y = epph, color = Design, linetype = Design)) +
   facet_wrap(vars(Hypothesis)) + 
   geom_path() + 
@@ -576,8 +577,8 @@ ggdata0 = data.table(
 ggdata1 = data.table(
   x = 1:(N2 + 1), 
   Random = rand_PPH1_avg, 
-  `X=1` = x_at1_PPH1_avg, 
-  Diagonal = x_diag_PPH1_avg, 
+  `X=1` = x_at1_PPH1_avg,
+  Diagonal = x_diag_PPH1_avg,
   SpaceFilling = x_sf_PPH1_avg,
   SeqMED = smmed_PPH1_avg, 
   Hypothesis = rep("H1", idxlast)
@@ -585,6 +586,7 @@ ggdata1 = data.table(
 ggdata = rbind(ggdata0, ggdata1)
 ggdata.melted = melt(ggdata, id = c("x", "Hypothesis"), value.name = "epph", 
                      variable.name = "Design")
+ggdata.gpvs.H1true = ggdata.melted
 plt2 = ggplot(ggdata.melted, aes(x = x, y = epph, color = Design, linetype = Design)) +
   facet_wrap(vars(Hypothesis)) + 
   geom_path() + 
@@ -604,7 +606,74 @@ ggsave("h1_epph.pdf",
        units = c("in")
 )
 
-ggdata1.melted = melt(ggdata1[, 1:5], id = c("x"), value.name = "epph", 
+
+################################################################################
+# poster: H1 for both vs problems 
+ggdata.lmvs1 = ggdata01comb[True == "H1", ] # from lmvs_plots.R
+setnames(ggdata.lmvs1, old = "True", new = "Hypothesis")
+ggdata.lmvs1[, Type := "LM"]
+setcolorder(ggdata.lmvs1, c("x", "Hypothesis", "Design", "epph"))
+ggdata.gpvs1 = ggdata.gpvs.H1true[Hypothesis == "H1", ]
+ggdata.gpvs1[, Type := "GP"]
+
+ggdata.lmgpvs1 = rbindlist(list(ggdata.lmvs1, ggdata.gpvs1), use.names = TRUE)
+ggdata.lmgpvs1[, Type := factor(ggdata.lmgpvs1[, Type], levels = c("LM", "GP"))]
+ggplot(ggdata.lmgpvs1, aes(x = x, y = epph, color = Design)) + 
+  facet_wrap(vars(Type)) + 
+  geom_path(size = 2) + 
+  scale_linetype_manual(values=c(rep("dashed", 3), "solid")) + 
+  geom_point(data = ggdata.lmgpvs1[x == 10], aes(x = x, y = epph), size = 3) + 
+  theme_bw(base_size = 20) + 
+  theme(panel.grid.minor = element_blank()) + 
+  labs(y = "E[P(H1|X,Y)|X]", x = "Stages")
+ggsave("h1_epph_gplm_h4.png",
+       plot = last_plot(),
+       device = "png",
+       path = image_path,
+       scale = 1,
+       width = 8,
+       height = 4,
+       units = c("in")
+)
+################################################################################
+# poster: H0 for both vs problems 
+ggdata.lmvs0 = ggdata01comb[True == "H0", ] # from lmvs_plots.R
+setnames(ggdata.lmvs0, old = "True", new = "Hypothesis")
+ggdata.lmvs0[, Type := "LM"]
+setcolorder(ggdata.lmvs0, c("x", "Hypothesis", "Design", "epph"))
+ggdata.gpvs0 = ggdata.gpvs.H0true[Hypothesis == "H0", ]
+ggdata.gpvs0[, Type := "GP"]
+
+ggdata.lmgpvs0 = rbindlist(list(ggdata.lmvs0, ggdata.gpvs0), use.names = TRUE)
+ggdata.lmgpvs0[, Type := factor(ggdata.lmgpvs0[, Type], levels = c("LM", "GP"))]
+ggplot(ggdata.lmgpvs0, aes(x = x, y = epph, color = Design)) + 
+  facet_wrap(vars(Type)) + 
+  geom_path(size = 2) + 
+  scale_linetype_manual(values=c(rep("dashed", 3), "solid")) + 
+  geom_point(data = ggdata.lmgpvs0[x == 10], aes(x = x, y = epph), size = 3) + 
+  theme_bw(base_size = 20) + 
+  theme(panel.grid.minor = element_blank()) + 
+  labs(y = "E[P(H0|X,Y)|X]", x = "Stages")
+ggsave("h0_epph_gplm_h3.png",
+       plot = last_plot(),
+       device = "png",
+       path = image_path,
+       scale = 1,
+       width = 8,
+       height = 3,
+       units = c("in")
+)
+
+
+
+
+
+
+
+
+
+
+  ggdata1.melted = melt(ggdata1[, 1:5], id = c("x"), value.name = "epph", 
                       variable.name = "Design")
 plt2.1 = ggplot(ggdata1.melted, aes(x = x, y = epph, color = Design, linetype = Design)) +
   geom_path() + 

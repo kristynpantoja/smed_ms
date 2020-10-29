@@ -18,11 +18,17 @@ getEvidenceGP = function(
   return(evidence)
 }
 
-getKLGP(
-  model.i, 
-  model.j
+getKLMVN(
+  mu1, Sigma1, 
+  mu2, Sigma2
 ){
-  # assuming they have the same dimension, use KL for two MVNs
+  if(length(mu1) != length(mu2)) stop("Error in getKLMVN : mu1 and mu2 are not same length!")
+  if(length(mu1) != dim(Sigma1)) stop("Error in getKLMVN : mu1 and Sigma1 dimensions don't match!")
+  if(length(mu2) != dim(Sigma2)) stop("Error in getKLMVN : mu1 and Sigma1 dimensions don't match!")
+  d = length(mu1)
+  log.det.term = log(det(Sigma2)) - log(det(Sigma1))
+  tr.term = sum(diag(solve(Sigma2, Sigma1))) * solve(Sigma2, mu2 - mu1)
+  0.5 * (log.det.term - d + tr.term + quadratic.term)
 }
 
 BHDgp_pair = function(
@@ -53,8 +59,10 @@ BHDgp_pair = function(
   Pi.i = new.prior.probs[1]
   Pi.j = new.prior.probs[2]
   # evaluate criterion D
-  KLij = getKLGP(model.i, model.j)
-  KLji = getKLGP(model.j, model.i)
+  KLij = getKLGP(pred.i$pred_mean, pred.i$pred_var, 
+                 pred.j$pred_mean, pred.j$pred_var)
+  KLji = getKLGP(pred.j$pred_mean, pred.j$pred_var, 
+                 pred.i$pred_mean, pred.i$pred_var)
   BHD = Pi.i * Pi.j * KLij + KLji
   return(BHD)
 }

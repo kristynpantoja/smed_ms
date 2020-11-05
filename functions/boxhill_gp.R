@@ -40,9 +40,9 @@ getKLN1 = function(
   KL = log(sigma2) - log(sigma1) + ((sigma1^2 + (mu1 - mu2)^2) / (2 * sigma2^2)) - 0.5
 }
 
-BHDgp_pair = function(
+BHDgp_m2 = function(
   y, # observed response, at points x
-  prior.probs,
+  post.probs,
   x, # vector of observed points (with data y)
   x.n, # new point (no y.n observed yet)
   # since these points don't have special covariates like in linear case, 
@@ -63,10 +63,9 @@ BHDgp_pair = function(
     getEvidenceGP(y, x, model.i), 
     getEvidenceGP(y, x, model.j)
   )
-  # posterior probs : Pi.i, Pi.j
-  new.prior.probs = getPosteriorProbs(prior.probs, evidences)
-  Pi.i = new.prior.probs[1]
-  Pi.j = new.prior.probs[2]
+  # posterior probs: Pi_{ni}, Pi_{nj}
+  #   (called "prior probability," or, "probability of current data")
+  # post.probs = getPosteriorProbs(prior.probs, evidences)
   # evaluate criterion D
   KLij = rep(NA, length(x.n))
   KLji = rep(NA, length(x.n))
@@ -76,6 +75,93 @@ BHDgp_pair = function(
     KLji[k] = getKLN1(pred.j$pred_mean[k], diag(pred.j$pred_var)[k], 
                     pred.i$pred_mean[k], diag(pred.i$pred_var)[k])
   }
-  BHD = Pi.i * Pi.j * (KLij + KLji)
+  BHD = prod(post.probs) * (KLij + KLji)
   return(BHD)
+}
+
+add1_BHgp_m2 = function(
+  y, 
+  post.probs,
+  x, 
+  model0, # H0 type of covariance function, length-scale parameter l
+  model1, # H1 type of covariance function, length-scale parameter l
+  domain, 
+  nugget = NULL
+  ){
+  
+  # make sure number of elements in initD matches number of elements in y
+  if(length(y) != length(y)) stop("Error in add1_BHgp_m2() : length of y does not match length of initial input data, initD!!")
+  
+  # calculate posterior probabilities, given current data
+  # posterior probs: Pi_{ni}, Pi_{nj}
+  #   (called "prior probability," or, "probability of current data")
+  # post.probs = getPosteriorProbs(prior.probs, evidences)
+  
+  # evaluate criterion over x_seq
+  BHD_seq = BHDgp_m2(y, post.probs, x, domain, model0, model1, nugget)
+  if(!all(!is.nan(BHD_seq))) warning("Warning in BHDgp_m2() : There were NaNs in Box & Hill criterion evaluation over the candidate set!!")
+  # which(is.nan(BHD_seq))
+  
+  # get new point
+  x.new.idx = which.max(BHD_seq)
+  x.new = x_seq[x.new.idx]
+  
+  return(list(
+    x.new = x.new,
+    x.new.idx = x.new.idx
+    ))
+}
+
+getBHgp_m2 = function(
+  y, # preliminary data response
+  prior.probs = rep(1 / 2, 2), # prior probabilities for H0 and H1
+  x, # preliminary data
+  model0, 
+  model1, 
+  domain, 
+  function.values, # true function values, evaluated over the domain
+  n, # number of new points
+  nugget = NULL
+){
+  # posterior probabilities of H0, H1 using preliminary data
+  post.probs0 = getPosteriorProbs( # posterior probability with current data
+    prior.probs = prior.probs, 
+    evidences = c(
+      getEvidenceGP(y, x, model0),
+      getEvidenceGP(y, x, model1)
+    )
+  )
+  
+  # get new data
+  x.new.idx = rep(NA, n)
+  x.new = rep(NA, n)
+  y.new = rep(NA, n)
+  post.probs.mat = matrix(rep(post.probs0, n + 1), nrow = n + 1, ncol = 2, byrow = TRUE)
+  post.probs.cur = post.probs0
+  y.cur = y
+  x.cur = x
+  for(i in 1:n){
+    BHrun = add1_BHgp_m2(y.cur, post.probs.cur, x.cur, model0, model1, domain, nugget)
+    x.new.idx[i] = BHrun$x.new.idx
+    x.new[i] = BHrun$x.new
+    y.new[i] = function.values[x.new.idx[i]]
+    # update current information
+    x.cur = c(x.cur, x.new[i])
+    y.cur = c(y.cur, y.new[i])
+    post.probs.cur = getPosteriorProbs(
+      prior.probs = post.probs.cur, 
+      evidences = c(
+        getEvidenceGP(y.cur, x.cur, model0),
+        getEvidenceGP(y.cur, x.cur, model1)
+      )
+    )
+    post.probs.mat[i + 1, ] = post.probs.cur
+  }
+  
+  return(list(
+    x.new.idx = x.new.idx,
+    x.new = x.new,
+    y.new = y.new,
+    post.probs = post.probs.mat
+  ))
 }

@@ -1,28 +1,33 @@
-# require("wasserstein_distance.R")
 # require("charge_function_q.R")
-# require("variance_marginal_y.R")
 # require("construct_design_matrix.R")
-# require("posterior_mean.R")
-# require("posterior_variance.R")
+# require("wasserstein_distance.R")
+# require("posterior_parameters.R")
+# require("add_MMED.R")
 # require("simulate_y.R")
-# require("generate_MED_oneatatime.R")  
+
+################################################################################
+# simulate SeqMED, using preliminary data (or, if none, generate some)
+################################################################################
 
 
 # simulate_seqMED
-generate_SMMED = function(D1 = NULL, y1 = NULL, true_beta, true_type, mean_beta0, mean_beta1, 
-                          var_beta0, var_beta1, var_e, f0 = NULL, f1 = NULL, 
-                          type = NULL, numCandidates = 10^5, k = 4, xmin = 0, xmax = 1, 
-                          p = 1, numSeq = 5, N_seq = 10, alpha_seq = NULL, buffer_seq = 0, 
-                          wasserstein0 = 1, genCandidates = 1, candidates = NULL, seed = NULL){
+SeqMED = function(
+  D1 = NULL, y1 = NULL, Nprelim, true_beta, true_type, mean_beta0, mean_beta1, 
+  var_beta0, var_beta1, var_e, f0 = NULL, f1 = NULL, type = NULL, 
+  numCandidates = 10^5, k = 4, xmin = 0, xmax = 1, p = 1, 
+  numSeq = 5, N_seq = 10, alpha_seq = NULL, 
+  buffer_seq = 0, wasserstein0 = 1, genCandidates = 1, candidates = NULL, 
+  seed = NULL
+  ){
   if(is.null(D1)){
     if(is.null(alpha_seq)){ # generate space-filling design for first step
-      D1 = generate_MMED_nodata_oneatatime(mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, f0, f1, type, N_seq[1], 
-                                           numCandidates, k, xmin, xmax, p, alpha = 0, buffer_seq[1], 
-                                           genCandidates = 1, initialpt = 1)
+      D1 = MMED(mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, f0, f1, type, N_seq[1], 
+                numCandidates, k, xmin, xmax, p, alpha = 0, buffer_seq[1], 
+                genCandidates = 1, initialpt = 1)
     } else{
-      D1 = generate_MMED_nodata_oneatatime(mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, f0, f1, type, N_seq[1], 
-                                           numCandidates, k, xmin, xmax, p, alpha_seq[1], buffer_seq[1], 
-                                           genCandidates = 1, initialpt = 1)
+      D1 = MMED(mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, f0, f1, type, N_seq[1], 
+                numCandidates, k, xmin, xmax, p, alpha_seq[1], buffer_seq[1], 
+                genCandidates = 1, initialpt = 1)
     }
   }
   
@@ -62,10 +67,10 @@ generate_SMMED = function(D1 = NULL, y1 = NULL, true_beta, true_type, mean_beta0
   print(paste("finished ", 1, " out of ", numSeq, " steps", sep = ""))
   for(t in 2:numSeq){
     
-    Dt = add_MMED_oneatatime(D, y, mean_beta0, mean_beta1, 
-                             var_beta0, var_beta1, var_e,  f0, f1, type, N_seq[t], 
-                             numCandidates, k, xmin, xmax, p, alpha_seq[t], buffer_seq[t],
-                             wasserstein0, genCandidates, candidates)
+    Dt = SeqMED_batch(D, y, mean_beta0, mean_beta1, 
+                      var_beta0, var_beta1, var_e,  f0, f1, type, N_seq[t], 
+                      numCandidates, k, xmin, xmax, p, alpha_seq[t], buffer_seq[t],
+                      wasserstein0, genCandidates, candidates)
     
     yt = as.vector(simulateY(Dt$addD, N_seq[t], true_beta, sigmasq, 1, true_type))
     

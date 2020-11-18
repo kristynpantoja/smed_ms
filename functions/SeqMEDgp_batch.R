@@ -15,8 +15,8 @@ f_min_gp = function(candidate, D, Kinv0, Kinv1, initD, y, var_e, type, l, p, alp
   return(result)
 }
 
-# old name: add_MED_ms_oneatatime_data_gp
-add_MMEDgp_oneatatime = function(initD, y, type, l, var_e, N2 = 11, numCandidates = 10^5, k = 4, p = 1, 
+# old name: add_MED_ms_oneatatime_data_gp, add_MMEDgp_oneatatime
+MMED_gp_batch = function(initD, y, type, l, var_e, N2 = 11, numCandidates = 10^5, k = 4, p = 1, 
                                          xmin = 0, xmax = 1, nugget = NULL, alpha = NULL, buffer = 0, 
                                          genCandidates = 1, candidates = NULL){
   if(is.null(dim(initD))){
@@ -115,10 +115,10 @@ add_MMEDgp_oneatatime = function(initD, y, type, l, var_e, N2 = 11, numCandidate
 
 # meant to be able to handle 2d dimensional input, for variable selection problem
 
-f_min_gpvs = function(candidate, D, Kinv0, Kinv1, indices0, indices1, initD0, initD1, y, var_e, type, l, p, alpha, buffer){
-  result = q_gpvs(candidate, Kinv0, Kinv1, indices0, indices1, initD0, initD1, y, var_e, type, l, p, 
+f_min_gp_vs = function(candidate, D, Kinv0, Kinv1, indices0, indices1, initD0, initD1, y, var_e, type, l, p, alpha, buffer){
+  result = q_gp_vs(candidate, Kinv0, Kinv1, indices0, indices1, initD0, initD1, y, var_e, type, l, p, 
                   alpha, buffer)^k * 
-    sum(apply(D, 1, function(x_i) (q_gpvs(x_i, Kinv0, Kinv1, indices0, indices1, initD0, initD1, y, var_e, type, l, p, 
+    sum(apply(D, 1, function(x_i) (q_gp_vs(x_i, Kinv0, Kinv1, indices0, indices1, initD0, initD1, y, var_e, type, l, p, 
                                           alpha, buffer) / sqrt(sum((x_i - candidate)^2)))^k))
   return(result)
 }
@@ -198,7 +198,7 @@ add_MMEDgpvs_oneatatime = function(initD, y, type = c(1, 1), l = c(0.1, 0.1), in
   if(N2 > 1){
     for(i in 2:N2){
       # Find f_opt: minimum of f_min
-      f_min_candidates = apply(candidates, 1, function(x) f_min_gpvs(x, D[1:(i - 1), , drop = FALSE], Kinv0, Kinv1, indices0, indices1, initD0, initD1, y, var_e, type, l, p, alpha, buffer))
+      f_min_candidates = apply(candidates, 1, function(x) f_min_gp_vs(x, D[1:(i - 1), , drop = FALSE], Kinv0, Kinv1, indices0, indices1, initD0, initD1, y, var_e, type, l, p, alpha, buffer))
       f_opt = which.min(f_min_candidates)
       xnew = candidates[f_opt, ]
       # Update set of design points (D) and plot new point

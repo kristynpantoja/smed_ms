@@ -80,25 +80,25 @@ getDevianceSq = function(postmean_beta, true_beta){
   return((postmean_beta - true_beta)^2)
 }
 
-calcExpPostMeanMSE = function(D, N, true_beta, beta_prior_mean, beta_prior_var, var_e, type, numSims, diagPrior = TRUE, seed = 123){
-  # assumes true_beta and beta_prior_mean have the same model type (linear or quadratic)
-  set.seed(seed)
-  Ysims = simulateY(D, N, true_beta, var_e, numSims, type, seed)
-  # calculating posterior mean
-  post_means = apply(Ysims, 2, FUN = function(y) getPostMean(y, D, N, beta_prior_mean, beta_prior_var, 
-                                                             var_e, type, diagPrior))
-  # calculate squared deviances for each parameter Bni in Bn = (Bn1, ..., Bnp) from the true Bi in B = (B1, ..., Bp)
-  empMSEs = apply(post_means, 2, FUN = function(x) getDevianceSq(x, true_beta))
-  # get the mean squared deviances
-  expEmpiricalMSE = apply(empMSEs, 1, mean)
-  
-  # to look at the variance of posterior mean:
-  # var_postmeans = apply(post_means, 1, var)
-  # and their means, to see if they're centered, i.e. to see if I calculated Bn correctly
-  # avg_postmeans = apply(post_means, 1, mean)
-  # return(list("expEmpiricalMSE" = expEmpiricalMSE, "var_postmeans" = var_postmeans, "avg_postmeans" = avg_postmeans))
-  return("expEmpiricalMSE" = expEmpiricalMSE)
-}
+# calcExpPostMeanMSE = function(D, N, true_beta, beta_prior_mean, beta_prior_var, var_e, type, numSims, diagPrior = TRUE, seed = 123){
+#   # assumes true_beta and beta_prior_mean have the same model type (linear or quadratic)
+#   set.seed(seed)
+#   Ysims = simulateY(D, N, true_beta, var_e, numSims, type, seed)
+#   # calculating posterior mean
+#   post_means = apply(Ysims, 2, FUN = function(y) getPostMean(y, D, N, beta_prior_mean, beta_prior_var, 
+#                                                              var_e, type, diagPrior))
+#   # calculate squared deviances for each parameter Bni in Bn = (Bn1, ..., Bnp) from the true Bi in B = (B1, ..., Bp)
+#   empMSEs = apply(post_means, 2, FUN = function(x) getDevianceSq(x, true_beta))
+#   # get the mean squared deviances
+#   expEmpiricalMSE = apply(empMSEs, 1, mean)
+#   
+#   # to look at the variance of posterior mean:
+#   # var_postmeans = apply(post_means, 1, var)
+#   # and their means, to see if they're centered, i.e. to see if I calculated Bn correctly
+#   # avg_postmeans = apply(post_means, 1, mean)
+#   # return(list("expEmpiricalMSE" = expEmpiricalMSE, "var_postmeans" = var_postmeans, "avg_postmeans" = avg_postmeans))
+#   return("expEmpiricalMSE" = expEmpiricalMSE)
+# }
 
 # calcExpPostMeanMSE_old = function(D, N, true_beta, beta_prior_mean0, beta_prior_mean1, 
 #                               beta_prior_var0, beta_prior_var1, var_e,

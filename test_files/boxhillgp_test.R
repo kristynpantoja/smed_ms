@@ -16,6 +16,7 @@ source(paste(functions_home, "/SMMEDgp.R", sep = ""))
 ###
 source(paste(functions_home, "/boxhill.R", sep = ""))
 source(paste(functions_home, "/boxhill_gp.R", sep = ""))
+source(paste(functions_home, "/kl_divergence.R", sep = ""))
 
 library(expm)
 library(matrixStats)
@@ -77,7 +78,22 @@ model1 = list(type = type01[2], l = l01[2])
 # calculate prior probabilities using preliminary data (input data)
 prior_probs = rep(1 / 2, 2)
 
-BHres = getBHgp_m2(y_input, prior_probs, x_input, model0, model1, x_seq, y_seq, N.new, nugget)
+BHres = BHgp_m2(y_input, prior_probs, x_input, model0, model1, x_seq, y_seq, N.new, nugget)
+################################################################################
+### checking that bhd_seq in BHgp_m2 is doing what it's supposed to...
+# what it's doing:
+post.probs0 = getHypothesesPosteriors( # posterior probability with current data
+  prior.probs = prior_probs, 
+  evidences = c(
+    Evidence_gp(y_input, x_input, model0),
+    Evidence_gp(y_input, x_input, model1)
+  )
+)
+bhd_seq = BHDgp_m2(y_input, post.probs0, x_input, x_seq, model0, model1, nugget)
+# what it's supposed to be doing:
+bhd_seq_true = sapply(x_seq, FUN = function(x) BHDgp_m2(y_input, post.probs0, x_input, x, model0, model1, nugget))
+all.equal(bhd_seq, bhd_seq_true) # true
+################################################################################
 x_new_idx = BHres$x.new.idx
 x_new = BHres$x.new
 y_new = y_seq[x_new_idx]
@@ -149,15 +165,6 @@ ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable),
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
   labs(y = "y", x = "x", fill = "Function", color = "Function")
-# ggsave("BHgp_110520.pdf",
-#        plot = last_plot(),
-#        device = "pdf",
-#        path = image_path,
-#        scale = 1,
-#        width = 6,
-#        height = 4,
-#        units = c("in")
-# )
 
 post.probs.gg = data.frame(
   x = 1:dim(BHres$post.probs)[1],
@@ -171,26 +178,13 @@ ggplot(post.probs.ggm, aes(x = x, y = value)) +
   geom_path() + 
   theme_bw() + 
   ylab("posterior probability of hypothesis")
-# ggsave("BHgp_pph_110520.pdf",
-#        plot = last_plot(),
-#        device = "pdf",
-#        path = image_path,
-#        scale = 1,
-#        width = 6,
-#        height = 4,
-#        units = c("in")
-# )
 
 # plot criterion for first point
-BHcrit1 = BHDgp_m2(y_input, post_probs0, x_input, x_seq, model0, model1, nugget)
+BHcrit1 = BHDgp_m2(y_input, prior_probs, x_input, x_seq, model0, model1, nugget)
 BHD.gg = data.frame(
   x = x_seq, 
   y = BHcrit1
 )
-ggplot(BHD.gg, aes(x = x, y = y)) + 
-  geom_path() + 
-  theme_bw() + 
-  ylab("posterior probability of hypothesis")
 ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable), 
        linetype = 1) + 
   geom_path() + 
@@ -216,12 +210,3 @@ ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable),
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
   labs(y = "y", x = "x", fill = "Function", color = "Function")
-# ggsave("BHDgp_110520.pdf",
-#        plot = last_plot(),
-#        device = "pdf",
-#        path = image_path,
-#        scale = 1,
-#        width = 6,
-#        height = 4,
-#        units = c("in")
-# )

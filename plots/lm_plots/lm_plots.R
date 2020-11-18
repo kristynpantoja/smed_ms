@@ -29,7 +29,7 @@ source(paste(functions_home, "/generate_MMED_nodata.R", sep = ""))
 
 source(paste(functions_home, "/posterior_mean.R", sep = ""))
 source(paste(functions_home, "/construct_design_matrix.R", sep = ""))
-source(paste(functions_home, "/posterior_variance.R", sep = ""))
+source(paste(functions_home, "/posterior_parameters.R", sep = ""))
 source(paste(functions_home, "/add_MMED.R", sep = ""))
 source(paste(functions_home, "/SMMED.R", sep = ""))
 
@@ -37,7 +37,7 @@ source(paste(functions_home, "/SMMED.R", sep = ""))
 source(paste(functions_home, "/simulate_y.R", sep = ""))
 source(paste(functions_home, "/postprob_hypotheses.R", sep = ""))
 source(paste(functions_home, "/posterior_mean_mse.R", sep = ""))
-source(paste(functions_home, "/plot_utils.R", sep = ""))
+# source(paste(functions_home, "/plot_utils.R", sep = ""))
 source(paste(functions_home, "/predictive_yhat_mse.R", sep = ""))
 
 mu0 = c(0, 0)

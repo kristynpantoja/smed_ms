@@ -59,6 +59,14 @@ mu1 = c(0, 0, 0)
 sigmasq01 = 0.25
 V0 = diag(rep(sigmasq01,length(mu0)))
 V1 = diag(rep(sigmasq01,length(mu1)))
+desX0 = function(x){
+  n = length(x)
+  return(cbind(rep(1, n), x))
+}
+desX1 = function(x){
+  n = length(x)
+  return(cbind(rep(1, n), x, x^2))
+}
 
 f0 = function(x) mu0[1] + mu0[2] * x
 f1 = function(x) mu1[1] + mu1[2] * x + mu1[3] * x^2
@@ -74,11 +82,11 @@ x_input = runif(N, xmin, xmax)
 ################################################################################
 # Scenario 1: True function is quadratic
 ################################################################################
-
 fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2
 typeT = 3
 y_input = fT(x_input) + rnorm(N, 0, sqrt(sigmasq))
 
+################################################################################
 # seqmed
 seqmed.res = SeqMED(
   D1 = x_input, y1 = y_input, true_beta = betaT, true_type = typeT, 
@@ -90,22 +98,19 @@ plot(x_input, y_input, ylim = c(-2, 2), xlim = c(-2, 2))
 curve(fT, add = TRUE)
 points(seqmed.res$D, seqmed.res$y, col = 2, cex = 0.5)
 
-# boxhill
+################################################################################
+# box and hill method
+model0 = list(designMat = desX0, beta.mean = mu0, beta.var = V0)
+model1 = list(designMat = desX1, beta.mean = mu1, beta.var = V1)
+
+# calculate prior probabilities using preliminary data (input data)
 prior_probs = rep(1 / 2, 2)
-model0 = list(
-  X = constructDesignX(x_input, N, type = type01[1]), 
-  X.n = constructDesignX(candidates, numCandidates, type = type01[1]),
-  beta.mean = mu0, 
-  beta.var = V0
-)
-model1 = list(
-  X = constructDesignX(x_input, N, type = type01[2]), 
-  X.n = constructDesignX(candidates, numCandidates, type = type01[2]),
-  beta.mean = mu1, 
-  beta.var = V1
-)
-BH_m2(y = y_input, prior.probs = prior_probs, error.var = sigmasq, 
-      model.i = model0, model.j = model1)
+
+BHres = BH_m2(y_input, x_input, prior_probs, model0, model1, N.new, x_seq, fT, sigmasq)
+plot(x_input, y_input, ylim = c(-2, 2), xlim = c(-2, 2))
+points(BHres$x.new, BHres$y.new, col = 2, cex = 0.5)
+################################################################################
+
   
 
 

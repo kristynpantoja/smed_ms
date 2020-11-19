@@ -8,6 +8,7 @@
 # }
 
 # get (joint) evidence
+# should I be using posterior predictive for evidence, instead? ##############################################################################
 Evidence_gp = function(y, x, model){
   evidence = dmvnorm(
     y, mean = rep(0, length(y)), 
@@ -17,10 +18,10 @@ Evidence_gp = function(y, x, model){
 
 # compute Box-Hill discrimination criterion, D, for GP case
 BHDgp_m2 = function(
-  y, # observed response, at points x
-  post.probs,
+  y, # vector observed responses, at points x
   x, # vector of observed points (with data y)
-  x.n, # new point (no y.n observed yet)
+  post.probs,
+  candidate, # new point (potentially next point x.n, where no y.n is observed yet)
   # since these points don't have special covariates like in linear case, 
   #   they are the same for both model.i and model.j
   model.i, # type of covariance function type.i, 
@@ -30,63 +31,40 @@ BHDgp_m2 = function(
   nugget = NULL
 ){
   # posterior predictive distributions
-  pred.i = getGPPredictive(x.n, x, y, model.i$type, model.i$l, nugget)
-  pred.j = getGPPredictive(x.n, x, y, model.j$type, model.j$l, nugget)
+  pred.i = getGPPredictive(candidate, x, y, model.i$type, model.i$l, nugget)
+  pred.j = getGPPredictive(candidate, x, y, model.j$type, model.j$l, nugget)
   # evaluate criterion D
-  KLij = rep(NA, length(x.n))
-  KLji = rep(NA, length(x.n))
-  for(k in 1:length(x.n)){
-    KLij[k] = KLN(pred.i$pred_mean[k], diag(pred.i$pred_var)[k], 
-                    pred.j$pred_mean[k], diag(pred.j$pred_var)[k], dim = 1)
-    KLji[k] = KLN(pred.j$pred_mean[k], diag(pred.j$pred_var)[k], 
-                    pred.i$pred_mean[k], diag(pred.i$pred_var)[k], dim = 1)
+  KLij = rep(NA, length(candidate))
+  KLji = rep(NA, length(candidate))
+  for(k in 1:length(candidate)){
+    KLij[k] = KLN(pred.i$pred_mean[k], pred.i$pred_var[k], 
+                    pred.j$pred_mean[k], pred.j$pred_var[k], dim = 1)
+    KLji[k] = KLN(pred.j$pred_mean[k], pred.j$pred_var[k], 
+                    pred.i$pred_mean[k], pred.i$pred_var[k], dim = 1)
   }
   bhd = prod(post.probs) * (KLij + KLji)
   return(bhd)
 }
 
-# obtain the next design point
-BHgp_m2_add1 = function(
-  y, 
-  post.probs,
-  x, 
-  model.i, # H0 type of covariance function, length-scale parameter l
-  model.j, # H1 type of covariance function, length-scale parameter l
-  domain, 
-  nugget = NULL
-  ){
-  # evaluate criterion over x_seq
-  bhd_seq = BHDgp_m2(y, post.probs, x, domain, model.i, model.j, nugget)
-  if(!all(!is.nan(bhd_seq))) warning("Warning in BHDgp_m2() : There were NaNs in Box & Hill criterion evaluation over the candidate set!!")
-  # which(is.nan(BHD_seq))
-  # get new point
-  x.new.idx = which.max(bhd_seq)
-  x.new = x_seq[x.new.idx]
-  return(list(
-    x.new = x.new,
-    x.new.idx = x.new.idx
-    ))
-}
-
 # obtain the next n design points (fully sequential)
 BHgp_m2 = function(
   y, # preliminary data response
+  x, # preliminary data input
   prior.probs = rep(1 / 2, 2), # prior probabilities for H0 and H1
-  x, # preliminary data
   model0, 
   model1, 
-  domain, 
-  function.values, # true function values, evaluated over the domain
   n, # number of new points
+  candidates, # domain over which the function is evaluated 
+  function.values, # true function values, evaluated over the domain
   nugget = NULL
 ){
   # make sure number of elements in initD matches number of elements in y
   if(length(x) != length(y)){
-    stop("Error in BHgp_m2_add1() : length of y input doesn't match 
-         length of x input!!")
+    stop("Error in BHgp_m2() : length of y input doesn't match length of x 
+         input!!")
   }
   # posterior probabilities of H0, H1 using preliminary data
-  post.probs0 = getHypothesesPosteriors( # posterior probability with current data
+  post.probs0 = getHypothesesPosteriors( # posterior prob with current data
     prior.probs = prior.probs, 
     evidences = c(
       Evidence_gp(y, x, model0),
@@ -104,14 +82,15 @@ BHgp_m2 = function(
   x.cur = x
   for(i in 1:n){
     # evaluate criterion over x_seq
-    bhd_seq = BHDgp_m2(y.cur, post.probs.cur, x.cur, domain, model0, model1, nugget)
+    bhd_seq = BHDgp_m2(
+      y.cur, x.cur, post.probs.cur, candidates, model0, model1, nugget)
     if(!all(!is.nan(bhd_seq))){
-      warning("Warning in BHDgp_m2() : There were NaNs in Box & Hill criterion 
+      warning("Warning in BHgp_m2() : There were NaNs in Box & Hill criterion 
               evaluation over the candidate set!!")
     }
     # get new point
     x.new.idx[i] = which.max(bhd_seq)
-    x.new[i] = x_seq[x.new.idx[i]]
+    x.new[i] = candidates[x.new.idx[i]]
     y.new[i] = function.values[x.new.idx[i]]
     # update current information
     x.cur = c(x.cur, x.new[i])

@@ -7,12 +7,12 @@ home = "/home/kristyn/Documents/research/seqmed/smed_ms"
 
 # --- Sources/Libraries --- #
 functions_home = paste(home, "/functions", sep="")
-source(paste(functions_home, "/add_MMEDgp.R", sep = ""))
+source(paste(functions_home, "/SeqMEDgp.R", sep = ""))
 source(paste(functions_home, "/wasserstein_distance.R", sep = ""))
 source(paste(functions_home, "/charge_function_q.R", sep = ""))
 source(paste(functions_home, "/covariance_functions.R", sep = ""))
 source(paste(functions_home, "/gp_predictive.R", sep = ""))
-source(paste(functions_home, "/SMMEDgp.R", sep = ""))
+source(paste(functions_home, "/SeqMEDgp_batch.R", sep = ""))
 ###
 source(paste(functions_home, "/boxhill.R", sep = ""))
 source(paste(functions_home, "/boxhill_gp.R", sep = ""))
@@ -78,7 +78,7 @@ model1 = list(type = type01[2], l = l01[2])
 # calculate prior probabilities using preliminary data (input data)
 prior_probs = rep(1 / 2, 2)
 
-BHres = BHgp_m2(y_input, prior_probs, x_input, model0, model1, x_seq, y_seq, N.new, nugget)
+BHres = BHgp_m2(y_input, x_input, prior_probs, model0, model1, N.new, x_seq, y_seq, nugget)
 ################################################################################
 ### checking that bhd_seq in BHgp_m2 is doing what it's supposed to...
 # what it's doing:
@@ -89,9 +89,9 @@ post.probs0 = getHypothesesPosteriors( # posterior probability with current data
     Evidence_gp(y_input, x_input, model1)
   )
 )
-bhd_seq = BHDgp_m2(y_input, post.probs0, x_input, x_seq, model0, model1, nugget)
+bhd_seq = BHDgp_m2(y_input, x_input, post.probs0, x_seq, model0, model1, nugget)
 # what it's supposed to be doing:
-bhd_seq_true = sapply(x_seq, FUN = function(x) BHDgp_m2(y_input, post.probs0, x_input, x, model0, model1, nugget))
+bhd_seq_true = sapply(x_seq, FUN = function(x) BHDgp_m2(y_input, x_input, post.probs0, x, model0, model1, nugget))
 all.equal(bhd_seq, bhd_seq_true) # true
 ################################################################################
 x_new_idx = BHres$x.new.idx
@@ -166,6 +166,7 @@ ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable),
         panel.grid.minor = element_blank()) +
   labs(y = "y", x = "x", fill = "Function", color = "Function")
 
+# post probs #
 post.probs.gg = data.frame(
   x = 1:dim(BHres$post.probs)[1],
   H0 = BHres$post.probs[, 1], 
@@ -179,7 +180,7 @@ ggplot(post.probs.ggm, aes(x = x, y = value)) +
   theme_bw() + 
   ylab("posterior probability of hypothesis")
 
-# plot criterion for first point
+# plot criterion for first point #
 BHcrit1 = BHDgp_m2(y_input, prior_probs, x_input, x_seq, model0, model1, nugget)
 BHD.gg = data.frame(
   x = x_seq, 

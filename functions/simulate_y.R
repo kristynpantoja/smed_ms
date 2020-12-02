@@ -22,15 +22,16 @@ simulateYvs = function(D, N, true_beta, var_e, numSims, seed = NULL){
   simulateY(D, N, true_beta, var_e, numSims, type = NULL, seed = NULL)
 }
 
-# X = constructDesignX(x_random2[ , indicesT], Ntot2, NULL)
-# y1 = as.vector(rmvnorm(1, X %*% betaT, sigmasq * diag(Ntot2)))
-# y2 = X %*% betaT + sqrt(sigmasq) * rnorm(Ntot2, 0, 1)
-# y3 = X %*% betaT + rnorm(Ntot2, 0, sqrt(sigmasq))
-# lm(y1 ~ -1 + X)
-# lm(y2 ~ -1 + X)
-# lm(y3 ~ -1 + X)
-# microbenchmark(
-#   as.vector(rmvnorm(1, X %*% betaT, sigmasq * diag(Ntot2))),
-#   X %*% betaT + sqrt(sigmasq) * rnorm(Ntot2, 0, 1),
-#   X %*% betaT + rnorm(Ntot2, 0, sqrt(sigmasq))
-# )
+simulateYN = function(X, true_beta, var_e, numSims, seed = NULL){
+  if(!is.null(seed)) set.seed(seed)
+  if(dim(X)[2] != length(true_beta)) stop("simulateYN : X and true_beta aren't compatible!")
+  Y = matrix(rep(NA, N * numSims), N, numSims) # each column is a separate simulation
+  # N x numSims -- each row is a simulation of N data points, 
+  # where N is the number of rows in design matrix X
+  Y = rmvnorm(numSims, X %*% true_beta, var_e * diag(N))
+}
+
+simulateY_fromfunction = function(x, f, var_e, numSims, seed = NULL){
+  if(!is.null(seed)) set.seed(seed)
+  Y = f(x) + rnorm(length(x), 0, sqrt(var_e))
+}

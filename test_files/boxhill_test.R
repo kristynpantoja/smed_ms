@@ -3,10 +3,10 @@
 ################################################################################
 
 # --- Working Directory --- #
-home = "/home/kristyn/Documents/research/seqmed/smed_ms"
+# home = "/home/kristyn/Documents/research/seqmed/smed_ms"
 
 # --- Sources/Libraries --- #
-functions_home = paste(home, "/functions", sep="")
+functions_home = "functions"
 # for seqmed design
 source(paste(functions_home, "/SeqMED.R", sep = ""))
 source(paste(functions_home, "/SeqMED_batch.R", sep = ""))
@@ -48,12 +48,11 @@ N.new = 40
 numSeq = 5; N_seq = 10
 xmin = -1
 xmax = 1
-numCandidates = 10^3
+numCandidates = 10^3 + 1
 candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
 
 type01 = c(2, 3)
 sigmasq = 0.1
-betaT = c(-0.2, -0.4, 0.4)
 mu0 = c(0, 0)
 mu1 = c(0, 0, 0)
 sigmasq01 = 0.25
@@ -78,10 +77,13 @@ f1 = function(x) mu1[1] + mu1[2] * x + mu1[3] * x^2
 # input points : randomly-selected points
 set.seed(1997)
 x_input = runif(N, xmin, xmax)
+# x_input = c(rep(-1, N / 2), rep(1, N / 2))
+# x_input = rep(0, N)
 
 ################################################################################
 # Scenario 1: True function is quadratic
 ################################################################################
+betaT = c(-0.2, -0.4, 0.4)
 fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2
 typeT = 3
 y_input = fT(x_input) + rnorm(N, 0, sqrt(sigmasq))
@@ -92,7 +94,8 @@ seqmed.res = SeqMED(
   D1 = x_input, y1 = y_input, true_beta = betaT, true_type = typeT, 
   mean_beta0 = mu0, mean_beta1 = mu1, var_beta0 = V0, var_beta1 = V1, 
   var_e = sigmasq, f0 = f0, f1 = f1, type = type01, 
-  candidates = candidates, numSeq = numSeq, N_seq = N_seq
+  candidates = candidates, numSeq = numSeq, seqN = N_seq, 
+  seed = 1
 )
 plot(x_input, y_input, ylim = c(-2, 2), xlim = c(-2, 2))
 curve(fT, add = TRUE)
@@ -106,13 +109,56 @@ model1 = list(designMat = desX1, beta.mean = mu1, beta.var = V1)
 # calculate prior probabilities using preliminary data (input data)
 prior_probs = rep(1 / 2, 2)
 
-BHres = BH_m2(y_input, x_input, prior_probs, model0, model1, N.new, x_seq, fT, sigmasq)
+BHres = BH_m2(y_input, x_input, prior_probs, model0, model1, N.new, candidates, 
+              fT, sigmasq, 
+              seed = 1)
 plot(x_input, y_input, ylim = c(-2, 2), xlim = c(-2, 2))
+curve(fT, add = TRUE)
 points(BHres$x.new, BHres$y.new, col = 2, cex = 0.5)
+BHres$x.new
+
+length(which(BHres$x.new < -0.5))
+length(which(BHres$x.new > 0.5))
+length(which(BHres$x.new >= -0.5 & BHres$x.new <= 0.5))
+
 ################################################################################
+# Scenario 2: True function is cubic
+################################################################################
+betaT = c(0, -0.75, 0, 1)
+fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2 + betaT[4] * x^3
+typeT = 4
+y_input = fT(x_input) + rnorm(N, 0, sqrt(sigmasq))
 
-  
+################################################################################
+# seqmed
+seqmed.res = SeqMED(
+  D1 = x_input, y1 = y_input, true_beta = betaT, true_type = typeT, 
+  mean_beta0 = mu0, mean_beta1 = mu1, var_beta0 = V0, var_beta1 = V1, 
+  var_e = sigmasq, f0 = f0, f1 = f1, type = type01, 
+  candidates = candidates, numSeq = numSeq, seqN = N_seq, 
+  seed = 1
+)
+plot(x_input, y_input, ylim = c(-2, 2), xlim = c(-2, 2))
+curve(fT, add = TRUE)
+points(seqmed.res$D, seqmed.res$y, col = 2, cex = 0.5)
 
+################################################################################
+# box and hill method
+model0 = list(designMat = desX0, beta.mean = mu0, beta.var = V0)
+model1 = list(designMat = desX1, beta.mean = mu1, beta.var = V1)
 
+# calculate prior probabilities using preliminary data (input data)
+prior_probs = rep(1 / 2, 2)
 
+BHres = BH_m2(y_input, x_input, prior_probs, model0, model1, N.new, candidates, 
+              fT, sigmasq, 
+              seed = 1)
+plot(x_input, y_input, ylim = c(-2, 2), xlim = c(-2, 2))
+curve(fT, add = TRUE)
+points(BHres$x.new, BHres$y.new, col = 2, cex = 0.5)
+BHres$x.new
+
+length(which(BHres$x.new < -0.5))
+length(which(BHres$x.new > 0.5))
+length(which(BHres$x.new >= -0.5 & BHres$x.new <= 0.5))
 

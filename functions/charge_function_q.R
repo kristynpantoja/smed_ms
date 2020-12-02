@@ -19,7 +19,6 @@ q_mmed = function(x, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, f0, f1
 q_seqmed = function(x, postmean0, postmean1, postvar0, postvar1, var_e, type, p, alpha = NULL, buffer = 0){
   if(length(type) != 2) stop("type should be vector with length == 2")
   if(is.null(alpha)) alpha = 1
-  
   W = WNlm(x, postmean0, postmean1, postvar0, postvar1, var_e, type)
   q_exponent = alpha / (2 * p)
   return(1.0 / (W + buffer)^q_exponent)
@@ -27,7 +26,6 @@ q_seqmed = function(x, postmean0, postmean1, postvar0, postvar1, var_e, type, p,
 
 q_vs = function(x, indices0, indices1, postmean0, postmean1, postvar0, postvar1, var_e, p, alpha = NULL, buffer = 0){
   if(is.null(alpha)) alpha = 1
-  
   W = WNlmvs(x, indices0, indices1, postmean0, postmean1, postvar0, postvar1, var_e)
   q_exponent = alpha / (2 * p)
   return(1.0 / (W + buffer)^q_exponent)

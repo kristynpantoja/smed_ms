@@ -81,8 +81,8 @@ dopt_quadratic = c(rep(1,floor(N/3)),rep(0,ceiling(N/3)),rep(-1,N - floor(N/3) -
 # --- case 1: quadratic --- #
 #############################
 
-smmed_data = readRDS(paste(home, "/run_designs/smmed/designs/smmed1.rds", sep = ""))
-smmed_data_list = readRDS(paste(home, "/run_designs/smmed/designs/case1smmeds.rds", sep = ""))
+smmed_data = readRDS("run_designs/smmed/designs/smmed1.rds")
+smmed_data_list = readRDS("run_designs/smmed/designs/case1smmeds.rds")
 numSeqMMED = length(smmed_data_list)
 
 # par(mfrow = c(1,2))
@@ -441,17 +441,17 @@ exppostprobs_dopt1 = calcExpPostProbH(dopt_linear, N, betaT, mu0, mu1, V0, V1, s
 exppostprobs_dopt2 = calcExpPostProbH(dopt_quadratic, N, betaT, mu0, mu1, V0, V1, sigmasq, numSims = 100, typeT, type01, seed = 123)
 
 changing_postprobs = list()
-postprobs0 = rep(NA, numSeq)
-postprobs1 = rep(NA, numSeq)
-BF01s = rep(NA, numSeq)
-for(i in 1:numSeq){
-  changing_postprobs[[i]] = calcExpPostProbH_data(smmed_data$y[1:(N_seq * i)], 
-                                                  smmed_data$D[1:(N_seq * i)], 
-                                                  N = N_seq * i, mu0, V0, mu1, V1, sigmasq, type01)
-  postprobs0[i] = changing_postprobs[[i]][1]
-  postprobs1[i] = changing_postprobs[[i]][2]
-  BF01s[i] = changing_postprobs[[i]][3]
-}
+# postprobs0 = rep(NA, numSeq)
+# postprobs1 = rep(NA, numSeq)
+# BF01s = rep(NA, numSeq)
+# for(i in 1:numSeq){
+#   changing_postprobs[[i]] = calcExpPostProbH_data(smmed_data$y[1:(N_seq * i)], 
+#                                                   smmed_data$D[1:(N_seq * i)], 
+#                                                   N = N_seq * i, mu0, V0, mu1, V1, sigmasq, type01)
+#   postprobs0[i] = changing_postprobs[[i]][1]
+#   postprobs1[i] = changing_postprobs[[i]][2]
+#   BF01s[i] = changing_postprobs[[i]][3]
+# }
 
 # calculate posterior probabilities of hypotheses based on this data
 postprobs0seq = matrix(NA, numSeq, numSeqMMED)

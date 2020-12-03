@@ -96,6 +96,7 @@ for(i in 1:numSims){
 saveRDS(seqmed_list, paste(output_home, "/scenario2_seqmed_simulations",
                            "_numSeq", numSeq,
                            "_seqN", seqN,
+                           "_numSims", numSims, 
                            ".rds", sep = ""))
 
 

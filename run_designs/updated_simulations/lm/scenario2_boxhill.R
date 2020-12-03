@@ -109,5 +109,6 @@ saveRDS(list(input_list = input_list, bh_list = bh_list),
         paste(output_home, "/scenario2_boxhill_simulations", 
               "_N", N, 
               "_Nnew", N.new,
+              "_numSims", numSims, 
               ".rds", sep = ""))
 

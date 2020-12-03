@@ -69,7 +69,6 @@ Evidence_lm = function(y, x, model, error.var){
   if(dim(X)[1] > 1){ # if X is a matrix of inputs
     marginaly_var = diag(rep(error.var, n)) + (X %*% model$beta.var %*% t(X))
   } else{ # if X is a vector for one input
-    warning("X is a vector, not a matrix - is that what you expected?")
     marginaly_var = error.var + (X %*% model$beta.var %*% t(X))
   }
   evidence = dmvnorm(y, mean = marginaly_mean, sigma = marginaly_var)
@@ -152,19 +151,18 @@ BH_m2 = function(
     x.new.idx = which.max(bhd_seq)
     x.new[i] = candidates[x.new.idx]
     # y.new[i] = true.function(x.new[i])
-    y.new[i] = simulateY_fromfunction(x.new[i], true.function, error.var, 
-                                      numSims = 1)
+    y.new[i] = simulateY_fromfunction(x.new[i], true.function, error.var, 1)
     # update current information
     x.cur = c(x.cur, x.new[i])
     y.cur = c(y.cur, y.new[i])
     post.probs.cur = getHypothesesPosteriors(
-      prior.probs = post.probs.cur, 
+      prior.probs = prior.probs, 
       evidences = c(
         Evidence_lm(y.cur, x.cur, model0, error.var),
         Evidence_lm(y.cur, x.cur, model1, error.var)
       )
     )
-    post.probs.mat[i + 1, ] = post.probs.cur
+    post.probs.mat[i + 1, ] = post.probs.cur # for checking
   }
   return(list(
     x.new = x.new,

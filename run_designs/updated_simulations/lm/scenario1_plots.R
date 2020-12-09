@@ -333,7 +333,8 @@ epph.plt = ggplot(ggdata.melted, aes(x = x, y = epph, color = Design, linetype =
   geom_point(data = ggdata.melted[x == numSeq], aes(x = x, y = epph), size = 2) + 
   theme_bw(base_size = 20) + 
   theme(panel.grid.minor = element_blank()) + 
-  labs(y = "", x = "Stages")
+  labs(y = "", x = "Stages") + 
+  ylim(0, 1)
 epph.plt
 
 ################################################################################

@@ -306,7 +306,8 @@ epph.plt = ggplot(ggdata.melted, aes(x = x, y = epph, color = Design, linetype =
   geom_point(data = ggdata.melted[x == numSeq], aes(x = x, y = epph), size = 2) + 
   theme_bw(base_size = 20) + 
   theme(panel.grid.minor = element_blank()) + 
-  labs(y = "", x = "Stages")
+  labs(y = "", x = "Stages") + 
+  ylim(0, 1)
 epph.plt
 
 ################################################################################
@@ -343,13 +344,14 @@ b3 = c(MSEbetahat_doptlin[4], MSEbetahat_doptquad[4], MSEbetahat_space[4],
 ggdata = data.frame(
   Designs = rep(c("Dlinear", "Dquadratic", "SpaceFilling", "SeqMED", "BH"), 4), 
   MSE = c(b0, b1, b2, b3), beta = rep(c("B0", "B1", "B2", "B3"), each = length(b0)))
-ggplot(ggdata, aes(x = Designs, y = MSE)) + 
+mseb.plt = ggplot(ggdata, aes(x = Designs, y = MSE)) + 
   geom_bar(stat = "identity") +
   facet_wrap(vars(beta)) +
   theme_bw() + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         axis.text.x = element_text(angle = 45, vjust = 0.5)) +
   labs(y = NULL)
+mseb.plt
 
 ################################################################################
 # plot the MSE of beta-hat (posterior mean) of the hypotheses

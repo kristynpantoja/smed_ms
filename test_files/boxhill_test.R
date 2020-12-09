@@ -101,12 +101,22 @@ plot(x_input, y_input, ylim = c(-2, 2), xlim = c(-2, 2))
 curve(fT, add = TRUE)
 points(seqmed.res$D, seqmed.res$y, col = 2, cex = 0.5)
 
+# seqmed without input data
+seqmed.res = SeqMED(
+  D1 = NULL, y1 = NULL, true_beta = betaT, true_type = typeT, 
+  mean_beta0 = mu0, mean_beta1 = mu1, var_beta0 = V0, var_beta1 = V1, 
+  var_e = sigmasq, f0 = f0, f1 = f1, type = type01, 
+  candidates = candidates, numSeq = numSeq, seqN = N_seq, 
+  seed = 1
+)
+plot(x_input, y_input, ylim = c(-2, 2), xlim = c(-2, 2))
+curve(fT, add = TRUE)
+points(seqmed.res$D, seqmed.res$y, col = 2, cex = 0.5)
+
 ################################################################################
 # box and hill method
 model0 = list(designMat = desX0, beta.mean = mu0, beta.var = V0)
 model1 = list(designMat = desX1, beta.mean = mu1, beta.var = V1)
-
-# calculate prior probabilities using preliminary data (input data)
 prior_probs = rep(1 / 2, 2)
 
 BHres = BH_m2(y_input, x_input, prior_probs, model0, model1, N.new, candidates, 
@@ -120,6 +130,14 @@ BHres$x.new
 length(which(BHres$x.new < -0.5))
 length(which(BHres$x.new > 0.5))
 length(which(BHres$x.new >= -0.5 & BHres$x.new <= 0.5))
+
+# box hill without preliminary data
+BHres = BH_m2(NULL, NULL, prior_probs, model0, model1, N + N.new, candidates, 
+              fT, sigmasq, 
+              seed = 1)
+plot(BHres$x, BHres$y, ylim = c(-2, 2), xlim = c(-2, 2))
+curve(fT, add = TRUE)
+points(BHres$x.new, BHres$y.new, col = 2, cex = 0.5)
 
 ################################################################################
 # Scenario 2: True function is cubic
@@ -161,4 +179,12 @@ BHres$x.new
 length(which(BHres$x.new < -0.5))
 length(which(BHres$x.new > 0.5))
 length(which(BHres$x.new >= -0.5 & BHres$x.new <= 0.5))
+
+# box hill without preliminary data
+BHres = BH_m2(NULL, NULL, prior_probs, model0, model1, N + N.new, candidates, 
+              fT, sigmasq, 
+              seed = 1)
+plot(BHres$x, BHres$y, ylim = c(-2, 2), xlim = c(-2, 2))
+curve(fT, add = TRUE)
+points(BHres$x.new, BHres$y.new, col = 2, cex = 0.5)
 

@@ -1,0 +1,175 @@
+
+R version 4.0.3 (2020-10-10) -- "Bunny-Wunnies Freak Out"
+Copyright (C) 2020 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> ################################################################################
+> # last updated: 12/01/20
+> # purpose: to create a list of boxhill simulations for scenario 2:
+> #   linear vs. quadratic,
+> #   where the true function is quadratic
+> 
+> ################################################################################
+> # Sources/Libraries
+> ################################################################################
+> # tamu cluster
+> # home = "/scratch/user/kristynp/smed_ms/"
+> # output_home = paste(home,"run_designs/",sep="")
+> output_home = "run_designs/updated_simulations/lm"
+> functions_home = "functions"
+> 
+> # for seqmed design
+> source(paste(functions_home, "/SeqMED.R", sep = ""))
+> source(paste(functions_home, "/SeqMED_batch.R", sep = ""))
+> source(paste(functions_home, "/charge_function_q.R", sep = ""))
+> source(paste(functions_home, "/construct_design_matrix.R", sep = ""))
+> source(paste(functions_home, "/wasserstein_distance.R", sep = ""))
+> source(paste(functions_home, "/posterior_parameters.R", sep = ""))
+> source(paste(functions_home, "/simulate_y.R", sep = ""))
+> 
+> # for generating initial data
+> source(paste(functions_home, "/MMED.R", sep = ""))
+> source(paste(functions_home, "/variance_marginal_y.R", sep = ""))
+> 
+> # for box-hill deisign
+> source(paste(functions_home, "/boxhill.R", sep = ""))
+> 
+> library(expm)
+Loading required package: Matrix
+
+Attaching package: ‘expm’
+
+The following object is masked from ‘package:Matrix’:
+
+    expm
+
+> library(matrixStats)
+> library(MASS)
+> library(mvtnorm)
+> library(knitr)
+> 
+> ################################################################################
+> # simulation settings, shared for both scenarios (linear vs. quadratic)
+> ################################################################################
+> 
+> # simulations settings
+> numSims = 25
+> 
+> # simulation settings
+> numSeq = 10
+> seqN = 10
+> N = numSeq * seqN
+> xmin = -1
+> xmax = 1
+> numCandidates = 10^3 + 1
+> candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
+> 
+> # SeqMED settings
+> type01 = c(2, 3)
+> sigmasq = 0.1
+> mu0 = c(0, 0)
+> mu1 = c(0, 0, 0)
+> sigmasq01 = 0.25
+> V0 = diag(rep(sigmasq01,length(mu0)))
+> V1 = diag(rep(sigmasq01,length(mu1)))
+> f0 = function(x) mu0[1] + mu0[2] * x
+> f1 = function(x) mu1[1] + mu1[2] * x + mu1[3] * x^2
+> 
+> # boxhill settings
+> MMEDinputdata = FALSE
+> desX0 = function(x){
++   n = length(x)
++   return(cbind(rep(1, n), x))
++ }
+> desX1 = function(x){
++   n = length(x)
++   return(cbind(rep(1, n), x, x^2))
++ }
+> model0 = list(designMat = desX0, beta.mean = mu0, beta.var = V0)
+> model1 = list(designMat = desX1, beta.mean = mu1, beta.var = V1)
+> prior_probs = rep(1 / 2, 2)
+> 
+> ################################################################################
+> # Scenario 1: True function is quadratic
+> ################################################################################
+> betaT = c(-0.2, -0.4, 0.4)
+> fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2
+> 
+> # seqmed settings
+> typeT = 3
+> 
+> # generate boxhills
+> bh_list = list()
+> for(i in 1:numSims){
++   print(paste0("starting simulation ", i, " out of ", numSims))
++   if(MMEDinputdata){
++     N.new = (numSeq - 1) * seqN
++     seqmed.res = SeqMED(
++       D1 = NULL, y1 = NULL, true_beta = betaT, true_type = typeT, 
++       mean_beta0 = mu0, mean_beta1 = mu1, var_beta0 = V0, var_beta1 = V1, 
++       var_e = sigmasq, f0 = f0, f1 = f1, type = type01, 
++       candidates = candidates, numSeq = 1, seqN = seqN, seed = 123 + i
++     )
++     x_input = seqmed.res$D
++     y_input = seqmed.res$y
++     bh.res = BH_m2(y_input, x_input, prior_probs, model0, model1, N.new, 
++                    candidates, fT, sigmasq, seed = 1995 + i)
++   } else{
++     bh.res = BH_m2(NULL, NULL, prior_probs, model0, model1, N, 
++                    candidates, fT, sigmasq, seed = 1995 + i)
++   }
++   bh_list[[i]] = bh.res
++ }
+[1] "starting simulation 1 out of 25"
+[1] "starting simulation 2 out of 25"
+[1] "starting simulation 3 out of 25"
+[1] "starting simulation 4 out of 25"
+[1] "starting simulation 5 out of 25"
+[1] "starting simulation 6 out of 25"
+[1] "starting simulation 7 out of 25"
+[1] "starting simulation 8 out of 25"
+[1] "starting simulation 9 out of 25"
+[1] "starting simulation 10 out of 25"
+[1] "starting simulation 11 out of 25"
+[1] "starting simulation 12 out of 25"
+[1] "starting simulation 13 out of 25"
+[1] "starting simulation 14 out of 25"
+[1] "starting simulation 15 out of 25"
+[1] "starting simulation 16 out of 25"
+[1] "starting simulation 17 out of 25"
+[1] "starting simulation 18 out of 25"
+[1] "starting simulation 19 out of 25"
+[1] "starting simulation 20 out of 25"
+[1] "starting simulation 21 out of 25"
+[1] "starting simulation 22 out of 25"
+[1] "starting simulation 23 out of 25"
+[1] "starting simulation 24 out of 25"
+[1] "starting simulation 25 out of 25"
+> saveRDS(list(bh_list = bh_list), 
++         paste(output_home, "/scenario1_boxhill_simulations", 
++               "_N", N, 
++               "MMEDinput", as.numeric(MMEDinputdata), 
++               "_numSims", numSims, 
++               ".rds", sep = ""))
+> 
+> 
+> 
+> 
+> 
+> proc.time()
+   user  system elapsed 
+405.960   0.431 406.547 

@@ -46,7 +46,6 @@ numSims = 25
 numSeq = 10
 seqN = 10
 N = numSeq * seqN
-N.new = numSeq * seqN - N
 xmin = -1
 xmax = 1
 numCandidates = 10^3 + 1
@@ -64,6 +63,7 @@ f0 = function(x) mu0[1] + mu0[2] * x
 f1 = function(x) mu1[1] + mu1[2] * x + mu1[3] * x^2
 
 # boxhill settings
+MMEDinputdata = FALSE
 desX0 = function(x){
   n = length(x)
   return(cbind(rep(1, n), x))
@@ -72,6 +72,9 @@ desX1 = function(x){
   n = length(x)
   return(cbind(rep(1, n), x, x^2))
 }
+model0 = list(designMat = desX0, beta.mean = mu0, beta.var = V0)
+model1 = list(designMat = desX1, beta.mean = mu1, beta.var = V1)
+prior_probs = rep(1 / 2, 2)
 
 ################################################################################
 # Scenario 1: True function is quadratic

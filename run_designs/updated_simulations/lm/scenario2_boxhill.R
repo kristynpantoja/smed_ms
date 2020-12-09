@@ -46,7 +46,6 @@ numSims = 25
 numSeq = 10
 seqN = 10
 N = numSeq * seqN
-N.new = (numSeq - 1) * seqN
 xmin = -1
 xmax = 1
 numCandidates = 10^3 + 1
@@ -64,6 +63,7 @@ f0 = function(x) mu0[1] + mu0[2] * x
 f1 = function(x) mu1[1] + mu1[2] * x + mu1[3] * x^2
 
 # boxhill settings
+MMEDinputdata = FALSE
 desX0 = function(x){
   n = length(x)
   return(cbind(rep(1, n), x))
@@ -72,6 +72,9 @@ desX1 = function(x){
   n = length(x)
   return(cbind(rep(1, n), x, x^2))
 }
+model0 = list(designMat = desX0, beta.mean = mu0, beta.var = V0)
+model1 = list(designMat = desX1, beta.mean = mu1, beta.var = V1)
+prior_probs = rep(1 / 2, 2)
 
 ################################################################################
 # Scenario 2: True function is cubic
@@ -79,36 +82,34 @@ desX1 = function(x){
 betaT = c(0, -0.75, 0, 1)
 fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2 + betaT[4] * x^3
 
-# boxhill settings
-model0 = list(designMat = desX0, beta.mean = mu0, beta.var = V0)
-model1 = list(designMat = desX1, beta.mean = mu1, beta.var = V1)
-prior_probs = rep(1 / 2, 2)
-
 # seqmed settings
 typeT = 4
 
 # generate boxhills
-input_list = list()
 bh_list = list()
 for(i in 1:numSims){
   print(paste0("starting simulation ", i, " out of ", numSims))
-  seqmed.res = SeqMED(
-    D1 = NULL, y1 = NULL, true_beta = betaT, true_type = typeT, 
-    mean_beta0 = mu0, mean_beta1 = mu1, var_beta0 = V0, var_beta1 = V1, 
-    var_e = sigmasq, f0 = f0, f1 = f1, type = type01, 
-    candidates = candidates, numSeq = 1, seqN = seqN, seed = 123 + i
-  )
-  x_input = seqmed.res$D
-  y_input = seqmed.res$y
-  input_list[[i]] = list(x_input = x_input, y_input = y_input)
-  bh.res = BH_m2(y_input, x_input, prior_probs, model0, model1, N.new, 
-                 candidates, fT, sigmasq, seed = 1995 + i)
+  if(MMEDinputdata){
+    N.new = (numSeq - 1) * seqN
+    seqmed.res = SeqMED(
+      D1 = NULL, y1 = NULL, true_beta = betaT, true_type = typeT, 
+      mean_beta0 = mu0, mean_beta1 = mu1, var_beta0 = V0, var_beta1 = V1, 
+      var_e = sigmasq, f0 = f0, f1 = f1, type = type01, 
+      candidates = candidates, numSeq = 1, seqN = seqN, seed = 123 + i
+    )
+    x_input = seqmed.res$D
+    y_input = seqmed.res$y
+    bh.res = BH_m2(y_input, x_input, prior_probs, model0, model1, N.new, 
+                   candidates, fT, sigmasq, seed = 1995 + i)
+  } else{
+    bh.res = BH_m2(NULL, NULL, prior_probs, model0, model1, N, 
+                   candidates, fT, sigmasq, seed = 1995 + i)
+  }
   bh_list[[i]] = bh.res
 }
-saveRDS(list(input_list = input_list, bh_list = bh_list), 
+saveRDS(list(bh_list = bh_list), 
         paste(output_home, "/scenario2_boxhill_simulations", 
               "_N", N, 
-              "_Nnew", N.new,
               "_numSims", numSims, 
               ".rds", sep = ""))
 

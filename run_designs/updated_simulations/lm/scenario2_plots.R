@@ -1,5 +1,5 @@
 ################################################################################
-# last updated: 12/02/20
+# last updated: 12/09/20
 # purpose: to calculate and plot metrics for scenario 1 simulations
 
 ################################################################################
@@ -20,13 +20,6 @@ source(paste(functions_home, "/wasserstein_distance.R", sep = ""))
 source(paste(functions_home, "/posterior_parameters.R", sep = ""))
 source(paste(functions_home, "/simulate_y.R", sep = ""))
 
-# for generating initial data
-source(paste(functions_home, "/MMED.R", sep = ""))
-source(paste(functions_home, "/variance_marginal_y.R", sep = ""))
-
-# for box-hill design
-source(paste(functions_home, "/boxhill.R", sep = ""))
-
 # for evaluating designs
 source(paste(functions_home, "/simulate_y.R", sep = ""))
 source(paste(functions_home, "/postprob_hypotheses.R", sep = ""))
@@ -34,24 +27,18 @@ source(paste(functions_home, "/posterior_mean_mse.R", sep = ""))
 # source(paste(functions_home, "/plot_utils.R", sep = ""))
 source(paste(functions_home, "/predictive_yhat_mse.R", sep = ""))
 
-# libraries
+# for generating initial data
+source(paste(functions_home, "/MMED.R", sep = ""))
+source(paste(functions_home, "/variance_marginal_y.R", sep = ""))
+
+# for box-hill deisign
+source(paste(functions_home, "/boxhill.R", sep = ""))
+
 library(expm)
 library(matrixStats)
 library(MASS)
 library(mvtnorm)
 library(knitr)
-# for plots
-library(ggplot2)
-library(ggpubr)
-library(reshape2)
-library(data.table)
-
-# helper functions
-gg_color_hue = function(n) {
-  hues = seq(15, 275, length = n + 1)
-  hcl(h = hues, l = 65, c = 100)[1:n]
-}
-image_path = paste0(output_home, "/plots")
 
 ################################################################################
 # simulation settings, shared for both scenarios (linear vs. quadratic)
@@ -61,10 +48,9 @@ image_path = paste0(output_home, "/plots")
 numSims = 25
 
 # simulation settings
-numSeq = 5
-seqN = 5
+numSeq = 10
+seqN = 10
 N = numSeq * seqN
-N.new = (numSeq - 1) * seqN
 xmin = -1
 xmax = 1
 numCandidates = 10^3 + 1
@@ -82,6 +68,7 @@ f0 = function(x) mu0[1] + mu0[2] * x
 f1 = function(x) mu1[1] + mu1[2] * x + mu1[3] * x^2
 
 # boxhill settings
+MMEDinputdata = FALSE
 desX0 = function(x){
   n = length(x)
   return(cbind(rep(1, n), x))
@@ -90,6 +77,9 @@ desX1 = function(x){
   n = length(x)
   return(cbind(rep(1, n), x, x^2))
 }
+model0 = list(designMat = desX0, beta.mean = mu0, beta.var = V0)
+model1 = list(designMat = desX1, beta.mean = mu1, beta.var = V1)
+prior_probs = rep(1 / 2, 2)
 
 ################################################################################
 # non-sequential designs
@@ -107,11 +97,6 @@ dopt_quadratic = c(rep(1, floor(N / 3)),
 betaT = c(0, -0.75, 0, 1)
 fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2 + betaT[4] * x^3
 
-# boxhill settings
-model0 = list(designMat = desX0, beta.mean = mu0, beta.var = V0)
-model1 = list(designMat = desX1, beta.mean = mu1, beta.var = V1)
-prior_probs = rep(1 / 2, 2)
-
 # seqmed settings
 typeT = 4
 
@@ -121,29 +106,30 @@ seqmeds = readRDS(paste0(output_home, "/scenario2_seqmed_simulations",
                          "_seqN", seqN,
                          "_numSims", numSims,
                          ".rds", sep = ""))
-bhs.rds = readRDS(paste0(output_home, "/scenario2_boxhill_simulations", 
+bhs = readRDS(paste0(output_home, "/scenario2_boxhill_simulations", 
                      "_N", N, 
-                     "_Nnew", N.new,
+                     "_MMEDinput", as.numeric(MMEDinputdata),
                      "_numSims", numSims, 
                      ".rds", sep = ""))
-bhs_inputs = bhs.rds$input_list
-bhs = bhs.rds$bh_list
+bhs = bhs$bh_list
 
-# check if preliminary data are the same
-seqmed_x_input = c()
-seqmed_y_input = c()
-bh_x_input = c()
-bh_y_input = c()
-for(k in 1:numSims){
-  seqmed.temp = seqmeds[[k]]
-  bh_input.temp = bhs_inputs[[k]]
-  seqmed_x_input = c(seqmed_x_input, seqmed.temp$D[1:seqN])
-  seqmed_y_input = c(seqmed_y_input, seqmed.temp$y[1:seqN])
-  bh_x_input = c(bh_x_input, bh_input.temp$x_input)
-  bh_y_input = c(bh_y_input, bh_input.temp$y_input)
+if(MMEDinputdata){
+  # check if preliminary data are the same
+  seqmed_x_input = c()
+  seqmed_y_input = c()
+  bh_x_input = c()
+  bh_y_input = c()
+  for(k in 1:numSims){
+    seqmed.temp = seqmeds[[k]]
+    bh_input.temp = bhs_inputs[[k]]
+    seqmed_x_input = c(seqmed_x_input, seqmed.temp$D[1:seqN])
+    seqmed_y_input = c(seqmed_y_input, seqmed.temp$y[1:seqN])
+    bh_x_input = c(bh_x_input, bh_input.temp$x_input)
+    bh_y_input = c(bh_y_input, bh_input.temp$y_input)
+  }
+  all.equal(seqmed_x_input, bh_x_input) # true
+  all.equal(seqmed_y_input, bh_y_input) # true
 }
-all.equal(seqmed_x_input, bh_x_input) # true
-all.equal(seqmed_y_input, bh_y_input) # true
 
 ################################################################################
 # plot the designs
@@ -180,8 +166,8 @@ data.seqmed = ggplot(ggdata) +
 bh1 = bhs[[which.sim]]
 bh1_input = bhs_inputs[[which.sim]]
 ggdata = data.frame(
-  x = c(bh1_input$x_input , bh1$x.new), 
-  y = c(bh1_input$y_input , bh1$y.new))
+  x = c(bh1$x , bh1$x.new), 
+  y = c(bh1$y, bh1$y.new))
 design.bh.includeinit = ggplot(ggdata) + 
   geom_histogram(binwidth = 0.12, closed = "right", aes(x =x, y = after_stat(density))) + 
   theme_bw(base_size = 20) + 
@@ -251,10 +237,9 @@ epphs_seqmed = apply(pphs_seqmed, c(1,2), mean)
 bhs.format = list()
 for(k in 1:numSims){
   bh.temp = bhs[[k]]
-  bh_input.temp = bhs_inputs[[k]]
   bhs.format[[k]] = list(
-    D = c(bh_input.temp$x_input, bh.temp$x.new),
-    y = c(bh_input.temp$y_input, bh.temp$y.new),
+    D = c(bh.temp$x, bh.temp$x.new),
+    y = c(bh.temp$y, bh.temp$y.new),
     post.probs = bh.temp$post.probs
   )
 }
@@ -354,7 +339,7 @@ mseb.plt = ggplot(ggdata, aes(x = Designs, y = MSE)) +
 mseb.plt
 
 ################################################################################
-# plot the MSE of beta-hat (posterior mean) of the hypotheses
+# plot the MSE of y-hat (posterior mean) of the hypotheses
 ################################################################################
 
 # given H2

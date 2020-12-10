@@ -1,5 +1,5 @@
 ################################################################################
-# last updated: 12/01/20
+# last updated: 12/09/20
 # purpose: to create a list of boxhill simulations for scenario 2:
 #   linear vs. quadratic,
 #   where the true function is cubic
@@ -43,8 +43,8 @@ library(knitr)
 numSims = 25
 
 # simulation settings
-numSeq = 10
-seqN = 10
+numSeq = 100
+seqN = 1
 N = numSeq * seqN
 xmin = -1
 xmax = 1
@@ -107,9 +107,9 @@ for(i in 1:numSims){
   }
   bh_list[[i]] = bh.res
 }
-saveRDS(list(bh_list = bh_list), 
+saveRDS(bh_list, 
         paste(output_home, "/scenario2_boxhill_simulations", 
               "_N", N, 
+              "_MMEDinput", as.numeric(MMEDinputdata), 
               "_numSims", numSims, 
               ".rds", sep = ""))
-

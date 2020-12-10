@@ -153,7 +153,8 @@ SeqMED_batch= function(
   # other variables and checks
   initN = length(initD)
   ttlN = initN + N2
-  if(is.null(type) & is.null(f0) & is.null(f1) & is.null(var_margy0) & is.null(var_margy0)) stop("must specify model type and/or model")
+  if(is.null(type) & is.null(f0) & is.null(f1) & is.null(var_margy0) & 
+     is.null(var_margy0)) stop("must specify model type and/or model")
   
   # Create hypothesized models
   if(is.null(f0)){

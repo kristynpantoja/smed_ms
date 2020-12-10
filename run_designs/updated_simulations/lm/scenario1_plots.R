@@ -48,8 +48,8 @@ library(knitr)
 numSims = 25
 
 # simulation settings
-numSeq = 10
-seqN = 10
+numSeq = 100
+seqN = 1
 N = numSeq * seqN
 xmin = -1
 xmax = 1

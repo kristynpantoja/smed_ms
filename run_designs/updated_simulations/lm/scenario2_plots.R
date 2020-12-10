@@ -164,7 +164,6 @@ data.seqmed = ggplot(ggdata) +
 
 # plot a bh
 bh1 = bhs[[which.sim]]
-bh1_input = bhs_inputs[[which.sim]]
 ggdata = data.frame(
   x = c(bh1$x , bh1$x.new), 
   y = c(bh1$y, bh1$y.new))
@@ -254,6 +253,7 @@ for(k in 1:numSims){
 }
 epphs_bh = apply(pphs_bh, c(1,2), mean)
 
+# plot 1
 ggdata0 = data.table(
   x = 1:numSeq, 
   Dlinear = rep(epphs_dopt1[1], numSeq), 
@@ -294,6 +294,93 @@ epph.plt = ggplot(ggdata.melted, aes(x = x, y = epph, color = Design, linetype =
   labs(y = "", x = "Stages") + 
   ylim(0, 1)
 epph.plt
+
+# plot 2
+pphs_bh = array(NA, dim = c(numModels, N, numSims))
+for(k in 1:numSims){
+  bh_data_k = bhs.format[[k]]
+  for(i in 1:N){
+    pphs_bh[ , i, k] = calcEPPHdata(bh_data_k$y[1:i], 
+                                    bh_data_k$D[1:i], 
+                                    N = i, models, sigmasq)
+  }
+}
+epphs_bh2 = apply(pphs_bh, c(1,2), mean)
+ggdata00 = data.table(
+  x = 1:numSeq, 
+  Dlinear = rep(epphs_dopt1[1], numSeq), 
+  Dquadratic = rep(epphs_dopt2[1], numSeq), 
+  SpaceFilling = rep(epphs_space[1], numSeq), 
+  SeqMED = epphs_seqmed[ 1, ], 
+  Hypothesis = rep("H0", numSeq), 
+  key = "x"
+)
+ggdata01 = data.table(
+  x = seq(1, numSeq, length.out = N), 
+  BH = epphs_bh2[ 1, ], 
+  Hypothesis = rep("H0", N), 
+  key = "x"
+)
+ggdata10 = data.table(
+  x = 1:numSeq, 
+  Dlinear = rep(epphs_dopt1[2], numSeq), 
+  Dquadratic = rep(epphs_dopt2[2], numSeq), 
+  SpaceFilling = rep(epphs_space[2], numSeq), 
+  SeqMED = epphs_seqmed[ 2, ],
+  Hypothesis = rep("H1", numSeq), 
+  key = "x"
+)
+ggdata11 = data.table(
+  x = seq(1, numSeq, length.out = N), 
+  BH = epphs_bh2[ 2, ], 
+  Hypothesis = rep("H1", N), 
+  key = c("x")
+)
+ggdataT0 = data.table(
+  x = 1:numSeq, 
+  Dlinear = rep(epphs_dopt1[2], numSeq), 
+  Dquadratic = rep(epphs_dopt2[2], numSeq), 
+  SpaceFilling = rep(epphs_space[2], numSeq), 
+  SeqMED = epphs_seqmed[ 3, ],
+  Hypothesis = rep("HT", numSeq), 
+  key = "x"
+)
+ggdataT1 = data.table(
+  x = seq(1, numSeq, length.out = N), 
+  BH = epphs_bh2[ 3, ], 
+  Hypothesis = rep("HT", N), 
+  key = c("x")
+)
+ggdata.woBH = merge(ggdata00, ggdata10, all = TRUE, 
+                    by = names(ggdata00))
+ggdata.woBH = merge(ggdata.woBH, ggdataT0, all = TRUE, 
+                    by = names(ggdata00))
+ggdata.BH = merge(ggdata01, ggdata11, all = TRUE, 
+                  by = names(ggdata01))
+ggdata.BH = merge(ggdata.BH, ggdataT1, all = TRUE, 
+                  by = names(ggdata01))
+ggdata.tog = merge(ggdata.woBH, ggdata.BH, all = TRUE, 
+                   by = c("x", "Hypothesis"))
+ggdata.m2 = melt(ggdata.tog, id = c("x", "Hypothesis"), value.name = "epph", 
+                 variable.name = "Design")
+ggdata0.m2 = melt(ggdata.woBH, id = c("x", "Hypothesis"), value.name = "epph", 
+                  variable.name = "Design")
+ggdata1.m2 = melt(ggdata.BH, id = c("x", "Hypothesis"), value.name = "epph", 
+                  variable.name = "Design")
+ggplot(ggdata0.m2, aes(x = x, y = epph, color = Design, linetype = Design)) +
+  facet_wrap(vars(Hypothesis)) + 
+  geom_path(size = 1) + 
+  scale_linetype_manual(values=c("solid", "dashed", "dashed", "solid", "dashed")) +
+  geom_point(data = ggdata0.m2[x == numSeq], aes(x = x, y = epph), size = 2) + 
+  theme_bw(base_size = 20) + 
+  theme(panel.grid.minor = element_blank()) + 
+  labs(y = "", x = "Stages") + 
+  ylim(0, 1) + 
+  geom_path(data = ggdata1.m2, mapping = aes(x = x, y = epph, color = Design, 
+                                             linetype = Design), 
+            inherit.aes = FALSE, size = 1) + 
+  geom_point(data = ggdata1.m2[x == numSeq], aes(x = x, y = epph), size = 2)
+
 
 ################################################################################
 # plot the MSE of beta-hat (posterior mean) of the hypotheses
@@ -377,8 +464,6 @@ ggdata = data.table(
 ggdata = melt(ggdata, id = c("x"), value.name = "yhatmse", variable.name = "Design")
 msey.plt = ggplot(ggdata, aes(x = x, y = yhatmse, color = Design)) +
   coord_cartesian(ylim = ylimarg, xlim = c(-1, 1)) +
-  # scale_y_continuous(limits = ylimarg) + 
-  # scale_x_continuous(limits = c(-1, 1)) +
   geom_path() + 
   theme_bw() +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 

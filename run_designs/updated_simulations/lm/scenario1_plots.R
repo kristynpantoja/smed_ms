@@ -48,8 +48,8 @@ library(knitr)
 numSims = 25
 
 # simulation settings
-numSeq = 100
-seqN = 1
+numSeq = 10
+seqN = 10
 N = numSeq * seqN
 xmin = -1
 xmax = 1
@@ -252,22 +252,6 @@ for(k in 1:numSims){
 #   fully sequential, only for convenience!!!!!!!!!!!!!!! ######################
 # checking whether the posterior probabilities match,
 #   using calcExpPostProbH -- they do!
-# postprobs0seq = matrix(NA, N - seqN, numSims)
-# postprobs1seq = matrix(NA, N - seqN, numSims)
-# BF01seq = matrix(NA, N - seqN, numSims)
-# for(k in 1:numSims){
-#   bh_data_k = bhs.format[[k]]
-#   for(i in 1:(N - seqN)){
-#     changing_postprobs = suppressWarnings(calcExpPostProbH_data(
-#       bh_data_k$y[1:(seqN + i)], bh_data_k$D[1:(seqN + i)], 
-#       N = seqN + i, mu0, V0, mu1, V1, sigmasq, type01))
-#     postprobs0seq[i, k] = changing_postprobs[1]
-#     postprobs1seq[i, k] = changing_postprobs[2]
-#     BF01seq[i, k] = changing_postprobs[3]
-#     print(all.equal(as.numeric(changing_postprobs[c(1, 2)]), 
-#                     bh_data_k$post.probs[i + 1, ]))
-#   }
-# }
 postprobs0seq = matrix(NA, numSeq, numSims)
 postprobs1seq = matrix(NA, numSeq, numSims)
 BF01seq = matrix(NA, numSeq, numSims)
@@ -287,7 +271,7 @@ epph0seq_bh = apply(postprobs0seq, 1, mean)
 epph1seq_bh = apply(postprobs1seq, 1, mean)
 BF01seq_bh = apply(BF01seq, 1, mean)
 
-# plot
+# plot 1
 ggdata0 = data.table(
   x = 1:numSeq, 
   Dlinear = rep(epphs_dopt1[1], numSeq), 
@@ -319,6 +303,81 @@ epph.plt = ggplot(ggdata.melted, aes(x = x, y = epph, color = Design, linetype =
   labs(y = "", x = "Stages") + 
   ylim(0, 1)
 epph.plt
+
+# plot 2
+postprobs0seq = matrix(NA, N, numSims)
+postprobs1seq = matrix(NA, N, numSims)
+BF01seq = matrix(NA, N, numSims)
+for(k in 1:numSims){
+  bh_data_k = bhs.format[[k]]
+  for(i in 1:N){
+    changing_postprobs = suppressWarnings(calcExpPostProbH_data(
+      bh_data_k$y[1:i], bh_data_k$D[1:i], 
+      N = i, mu0, V0, mu1, V1, sigmasq, type01))
+    postprobs0seq[i, k] = changing_postprobs[1]
+    postprobs1seq[i, k] = changing_postprobs[2]
+    BF01seq[i, k] = changing_postprobs[3]
+  }
+}
+# get expected value (average)
+epph0seq_bh2 = apply(postprobs0seq, 1, mean)
+epph1seq_bh2 = apply(postprobs1seq, 1, mean)
+BF01seq_bh2 = apply(BF01seq, 1, mean)
+ggdata00 = data.table(
+  x = 1:numSeq, 
+  Dlinear = rep(epphs_dopt1[1], numSeq), 
+  Dquadratic = rep(epphs_dopt2[1], numSeq), 
+  SpaceFilling = rep(epphs_space[1], numSeq), 
+  SeqMED = epph0seq_seqmed,
+  Hypothesis = rep("H0", numSeq), 
+  key = "x"
+)
+ggdata01 = data.table(
+  x = seq(1, numSeq, length.out = N), 
+  BH = epph0seq_bh2, 
+  Hypothesis = rep("H0", N), 
+  key = "x"
+)
+ggdata10 = data.table(
+  x = 1:numSeq, 
+  Dlinear = rep(epphs_dopt1[2], numSeq), 
+  Dquadratic = rep(epphs_dopt2[2], numSeq), 
+  SpaceFilling = rep(epphs_space[2], numSeq), 
+  SeqMED = epph1seq_seqmed,
+  Hypothesis = rep("H1", numSeq), 
+  key = "x"
+)
+ggdata11 = data.table(
+  x = seq(1, numSeq, length.out = N), 
+  BH = epph1seq_bh2, 
+  Hypothesis = rep("H1", N), 
+  key = c("x")
+)
+ggdata.woBH = merge(ggdata00, ggdata10, all = TRUE, 
+                    by = names(ggdata00))
+ggdata.BH = merge(ggdata01, ggdata11, all = TRUE, 
+                  by = names(ggdata01))
+ggdata.tog = merge(ggdata.woBH, ggdata.BH, all = TRUE, 
+                   by = c("x", "Hypothesis"))
+ggdata.m2 = melt(ggdata.tog, id = c("x", "Hypothesis"), value.name = "epph", 
+                     variable.name = "Design")
+ggdata0.m2 = melt(ggdata.woBH, id = c("x", "Hypothesis"), value.name = "epph", 
+                  variable.name = "Design")
+ggdata1.m2 = melt(ggdata.BH, id = c("x", "Hypothesis"), value.name = "epph", 
+                  variable.name = "Design")
+ggplot(ggdata0.m2, aes(x = x, y = epph, color = Design, linetype = Design)) +
+  facet_wrap(vars(Hypothesis)) + 
+  geom_path(size = 1) + 
+  scale_linetype_manual(values=c("solid", "dashed", "dashed", "solid", "dashed")) +
+  geom_point(data = ggdata0.m2[x == numSeq], aes(x = x, y = epph), size = 2) + 
+  theme_bw(base_size = 20) + 
+  theme(panel.grid.minor = element_blank()) + 
+  labs(y = "", x = "Stages") + 
+  ylim(0, 1) + 
+  geom_path(data = ggdata1.m2, mapping = aes(x = x, y = epph, color = Design, 
+                                      linetype = Design), 
+            inherit.aes = FALSE, size = 1) + 
+  geom_point(data = ggdata1.m2[x == numSeq], aes(x = x, y = epph), size = 2)
 
 ################################################################################
 # plot the MSE of beta-hat (posterior mean) of the hypotheses
@@ -386,8 +445,6 @@ ggdata = data.table(
 ggdata = melt(ggdata, id = c("x"), value.name = "yhatmse", variable.name = "Design")
 msey.plt = ggplot(ggdata, aes(x = x, y = yhatmse, color = Design)) +
   coord_cartesian(ylim = ylimarg, xlim = c(-1, 1)) +
-  # scale_y_continuous(limits = ylimarg) + 
-  # scale_x_continuous(limits = c(-1, 1)) +
   geom_path() + 
   theme_bw() +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 

@@ -186,7 +186,6 @@ BH_m2 = function(
       Evidence_lm(y, x, model1, error.var)
     )
   )
-  
   # get new data
   x.new = rep(NA, n)
   y.new = rep(NA, n)
@@ -195,35 +194,37 @@ BH_m2 = function(
   post.probs.cur = post.probs0
   y.cur = y
   x.cur = x
-  for(i in 1:n){
-    # evaluate criterion over x_seq
-    bhd_seq = sapply(
-      candidates, 
-      FUN = function(x) BHD_m2(y.cur, x.cur, post.probs.cur, x, model0, model1, 
-                               error.var))
-    # bhd_seq = BHD_m2(
-    #   y.cur, x.cur, post.probs.cur, candidates, model0, model1, error.var)
-    if(!all(!is.nan(bhd_seq))){
-      warning("Warning in BHDgp_m2() : There were NaNs in Box & Hill criterion 
+  if(n > 0){
+    for(i in 1:n){
+      # evaluate criterion over x_seq
+      bhd_seq = sapply(
+        candidates, 
+        FUN = function(x) BHD_m2(y.cur, x.cur, post.probs.cur, x, model0, model1, 
+                                 error.var))
+      # bhd_seq = BHD_m2(
+      #   y.cur, x.cur, post.probs.cur, candidates, model0, model1, error.var)
+      if(!all(!is.nan(bhd_seq))){
+        warning("Warning in BHDgp_m2() : There were NaNs in Box & Hill criterion 
               evaluation over the candidate set!!")
-    }
-    # get new point
-    x.new.idx = which.max(bhd_seq)
-    x.new[i] = candidates[x.new.idx]
-    # get y
-    y.new[i] = simulateY_fromfunction(x.new[i], true.function, error.var, 1, 
-                                      NULL)
-    # update current information
-    x.cur = c(x.cur, x.new[i])
-    y.cur = c(y.cur, y.new[i])
-    post.probs.cur = getHypothesesPosteriors(
-      prior.probs = prior.probs, 
-      evidences = c(
-        Evidence_lm(y.cur, x.cur, model0, error.var),
-        Evidence_lm(y.cur, x.cur, model1, error.var)
+      }
+      # get new point
+      x.new.idx = which.max(bhd_seq)
+      x.new[i] = candidates[x.new.idx]
+      # get y
+      y.new[i] = simulateY_fromfunction(x.new[i], true.function, error.var, 1, 
+                                        NULL)
+      # update current information
+      x.cur = c(x.cur, x.new[i])
+      y.cur = c(y.cur, y.new[i])
+      post.probs.cur = getHypothesesPosteriors(
+        prior.probs = prior.probs, 
+        evidences = c(
+          Evidence_lm(y.cur, x.cur, model0, error.var),
+          Evidence_lm(y.cur, x.cur, model1, error.var)
+        )
       )
-    )
-    post.probs.mat[i + 1, ] = post.probs.cur # for checking
+      post.probs.mat[i + 1, ] = post.probs.cur
+    }
   }
   
   return(list(

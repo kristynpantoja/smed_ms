@@ -138,7 +138,39 @@ BHres = BH_m2(NULL, NULL, prior_probs, model0, model1, N + N.new, candidates,
 plot(BHres$x, BHres$y, ylim = c(-2, 2), xlim = c(-2, 2))
 curve(fT, add = TRUE)
 points(BHres$x.new, BHres$y.new, col = 2, cex = 0.5)
+which.max(abs(BHres$x.new[which(BHres$x.new >= -0.5 & BHres$x.new <= 0.5)] - 0)) # 3
 
+set.seed(1)
+BHres1 = BH_m2(NULL, NULL, prior_probs, model0, model1, 6, candidates, 
+               fT, sigmasq)
+BHres1$x == BHres$x
+all.equal(BHres1$x.new, BHres$x.new[1:5])
+BHD1_fun = function(cand, idx){
+  BHD_m2(
+    y = c(BHres1$y, BHres1$y.new[1:(idx - 1)]),
+    x = c(BHres1$x, BHres1$x.new[1:(idx - 1)]),
+    probs = BHres1$post.probs[idx - 2, ],
+    candidate = cand,
+    model.i = model0,
+    model.j = model1,
+    error.var = sigmasq
+  )
+}
+BHD1 = sapply(candidates, FUN = function(x) BHD1_fun(x, 5))
+which0 = which(candidates == 0)
+BHDat0 = BHD1[which0]
+argmaxBHD = candidates[which.max(BHD1)]
+maxBHD = max(BHD1)
+candidates[which.max(BHD1)]
+plot(x = candidates, y = BHD1, type = "l")
+points(x = argmaxBHD, y = maxBHD)
+text(x = argmaxBHD, y = maxBHD - 0.001, pos = 2, cex = 1.5,
+     labels = paste0("(", x = argmaxBHD, ", ", y = round(maxBHD, 3), ")"))
+abline(v = argmaxBHD, lty = 2)
+points(x = candidates[which0], BHDat0)
+text(x = candidates[which0], BHDat0 - 0.001, pos = 4, cex = 1.5, 
+     labels = paste0("(", candidates[which0], ", ", round(BHDat0, 3), ")"))
+abline(v = 0, lty = 2)
 ################################################################################
 # Scenario 2: True function is cubic
 ################################################################################

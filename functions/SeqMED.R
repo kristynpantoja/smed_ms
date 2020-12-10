@@ -17,7 +17,7 @@ SeqMED = function(
   numCandidates = 10^5, k = 4, xmin = 0, xmax = 1, p = 1, 
   numSeq = 5, seqN = 10, alpha_seq = NULL, 
   buffer_seq = 0, wasserstein0 = 1, genCandidates = 1, candidates = NULL, 
-  seed = NULL
+  prints = FALSE, seed = NULL
   ){
   if(!is.null(seed)) set.seed(seed)
   # some checks
@@ -38,7 +38,8 @@ SeqMED = function(
   if(numSeq > 1 & length(alpha_seq) == 1) alpha_seq = rep(alpha_seq, numSeq)
   
   # get y1
-  if(is.null(y1)) y1 = as.vector(simulateY(D1, seqN[1], true_beta, var_e, 1, true_type))
+  if(is.null(y1)) y1 = as.vector(
+    simulateY(D1, seqN[1], true_beta, var_e, 1, true_type))
   Nttl = sum(seqN)
   D = D1
   y = y1
@@ -65,7 +66,9 @@ SeqMED = function(
     if(genCandidates == 2) candidates = sort(runif(numCandidates, min = xmin, max = xmax))
   }
   
-  print(paste("finished ", 1, " out of ", numSeq, " steps", sep = ""))
+  if(prints){
+    print(paste("finished ", 1, " out of ", numSeq, " steps", sep = ""))
+  }
   for(t in 2:numSeq){
     
     Dt = SeqMED_batch(D, y, mean_beta0, mean_beta1, 
@@ -85,7 +88,9 @@ SeqMED = function(
     postvar1[ , t] = diag(postvar(D, length(D), var_e, var_beta1, type[2]))
     postmean1[ , t] = postmean(y, D, length(D), mean_beta1, var_beta1, var_e, type[2])
     
-    print(paste("finished ", t, " out of ", numSeq, " steps", sep = ""))
+    if(prints){
+      print(paste("finished ", t, " out of ", numSeq, " steps", sep = ""))
+    }
   }
   return(list("D" = D, "y" = y, "postvar0" = postvar0, "postmean0" = postmean0, 
               "postvar1" = postvar1, "postmean1" = postmean1))

@@ -37,7 +37,6 @@ MMED = function(
   f0 = NULL, f1 = NULL, type = NULL, N = 11, numCandidates = 10^5, k = 4, 
   xmin = 0, xmax = 1, p = 2, alpha = NULL, buffer = 0, 
   genCandidates = 1, initialpt = 1, var_margy0 = NULL, var_margy1 = NULL, 
-  jitter = FALSE, jittertype = 1, softmax = FALSE, threshold = FALSE, 
   log_space = FALSE){
   # buffer = 0; genCandidates = 1; initialpt = 1; var_margy0 = NULL; var_margy1 = NULL 
   # jitter = FALSE; jittertype = 1; softmax = FALSE; threshold = FALSE; log_space = FALSE
@@ -72,34 +71,14 @@ MMED = function(
     D[1] = optimal_q
   }
   
-  for(i in 2:N){
-    # Find f_opt: minimum of f_min
-    if(jitter == TRUE){
-      candidates = old_candidates
-      max_uniform = (xmax - xmin) / (numCandidates - 1)
-      which_jitter_ind = 2:(numCandidates - 1)
-      if(jittertype == 1) jitter_by = runif(length(which_jitter_ind), min = 0, max = max_uniform)
-      if(jittertype == 2) jitter_by = runif(length(which_jitter_ind), min = 0, max = max_uniform / 2)
-      candidates[which_jitter_ind] = candidates[which_jitter_ind] + jitter_by
-    }
-    # calculate cumulative TPE
-    f_min_candidates = sapply(candidates, function(x) f_min_mmed(x, D[1:(i - 1)], k, mean_beta0, mean_beta1, 
+  if(N > 1){
+    for(i in 2:N){
+      # Find f_opt: minimum of f_min
+      # calculate cumulative TPE
+      f_min_candidates = sapply(candidates, function(x) f_min_mmed(x, D[1:(i - 1)], k, mean_beta0, mean_beta1, 
                                                                    var_beta0, var_beta1, var_e, f0, f1, 
                                                                    type, var_margy0, var_margy1, p, alpha, buffer, log_space))
-    f_opt = which.min(f_min_candidates)
-    if(softmax == TRUE){
-      # randomly select the new point
-      # the probability is higher for candidates with lower TPEs
-      sum_f_min_candidates = sum(f_min_candidates)
-      softmax_candidates = 1 - (f_min_candidates / sum_f_min_candidates)
-      D[i] = sample(candidates, 1, prob = softmax_candidates)
-    } else if(threshold == TRUE){
-      # randomly select from candidates with 5% of lowest cumulative TPEs
-      order_ind_f_min_candidates = order(f_min_candidates)
-      five_percent_smallest_ind = order(f_min_candidates)[1:(ceiling(numCandidates * 0.05))]
-      xnew_ind = sample(five_percent_smallest_ind, 1)
-      D[i] = candidates[xnew_ind]
-    } else{
+      f_opt = which.min(f_min_candidates)
       D[i] = candidates[f_opt]
     }
   }

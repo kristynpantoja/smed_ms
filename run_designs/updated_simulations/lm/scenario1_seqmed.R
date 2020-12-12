@@ -40,11 +40,11 @@ library(knitr)
 ################################################################################
 
 # simulations settings
-numSims = 25
+numSims = 100
 
 # simulation settings
-numSeq = 100
-seqN = 1
+numSeq = 10
+seqN = 10
 N = numSeq * seqN
 xmin = -1
 xmax = 1

@@ -5,3 +5,4 @@
 .Rapp.history
 generate_designs
 .DS_Store
+plots/manuscript_plots

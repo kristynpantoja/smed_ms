@@ -1,6 +1,6 @@
 # source files for evaluations
 
-home = "/home/kristyn/Documents/smed_ms"
+home = "/home/kristyn/Documents/research/seqmed/smed_ms"
 
 library(ggplot2)
 library(ggpubr)
@@ -25,13 +25,13 @@ functions_home = paste(home, "/functions", sep="")
 source(paste(functions_home, "/wasserstein_distance.R", sep = ""))
 source(paste(functions_home, "/charge_function_q.R", sep = ""))
 source(paste(functions_home, "/variance_marginal_y.R", sep = ""))
-source(paste(functions_home, "/generate_MMED_nodata.R", sep = ""))
+# source(paste(functions_home, "/generate_MMED_nodata.R", sep = ""))
 
-source(paste(functions_home, "/posterior_mean.R", sep = ""))
+# source(paste(functions_home, "/posterior_mean.R", sep = ""))
 source(paste(functions_home, "/construct_design_matrix.R", sep = ""))
 source(paste(functions_home, "/posterior_parameters.R", sep = ""))
-source(paste(functions_home, "/add_MMED.R", sep = ""))
-source(paste(functions_home, "/SMMED.R", sep = ""))
+# source(paste(functions_home, "/add_MMED.R", sep = ""))
+# source(paste(functions_home, "/SMMED.R", sep = ""))
 
 # --- Sources to evaluate designs : MSE(Bn), E[P(H1|Y,D)] --- #
 source(paste(functions_home, "/simulate_y.R", sep = ""))
@@ -398,8 +398,9 @@ ggarrange(plt3, plt1, ncol = 2, widths = c(1.5, 1))
 
 
 
-w_seq = sapply(x_seq, function(x) Wasserstein_distance_postpred(x, smmed_data$postmean0[,10], smmed_data$postmean1[,10], 
-                                                                     diag(smmed_data$postvar0[,10]), diag(smmed_data$postvar1[,10]), sigmasq, type01))
+w_seq = sapply(x_seq, function(x) Wasserstein_distance_postpred(
+  x, smmed_data$postmean0[,10], smmed_data$postmean1[,10], 
+  diag(smmed_data$postvar0[,10]), diag(smmed_data$postvar1[,10]), sigmasq, type01))
 
 ggdata = data.table::data.table(
   x = x_seq, 

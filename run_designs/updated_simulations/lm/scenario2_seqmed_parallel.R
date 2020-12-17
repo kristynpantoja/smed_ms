@@ -43,14 +43,14 @@ nworkers = detectCores()
 plan(multisession, workers = nworkers)
 
 library(doRNG)
-registerDoRNG(rep.seed)
+registerDoRNG(1995)
 
 ################################################################################
 # simulation settings, shared for both scenarios (linear vs. quadratic)
 ################################################################################
 
 # simulations settings
-numSims = 25
+numSims = 100
 
 # simulation settings
 numSeq = 100

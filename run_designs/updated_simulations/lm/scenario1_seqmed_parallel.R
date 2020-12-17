@@ -26,7 +26,7 @@ source(paste(functions_home, "/simulate_y.R", sep = ""))
 source(paste(functions_home, "/MMED.R", sep = ""))
 source(paste(functions_home, "/variance_marginal_y.R", sep = ""))
 
-# for box-hill deisign
+# for box-hill design
 source(paste(functions_home, "/boxhill.R", sep = ""))
 
 library(expm)
@@ -34,6 +34,16 @@ library(matrixStats)
 library(MASS)
 library(mvtnorm)
 library(knitr)
+
+# set up parallelization
+library(doFuture)
+library(parallel)
+registerDoFuture()
+nworkers = detectCores()
+plan(multisession, workers = nworkers)
+
+library(doRNG)
+registerDoRNG(rep.seed)
 
 ################################################################################
 # simulation settings, shared for both scenarios (linear vs. quadratic)
@@ -86,20 +96,19 @@ fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2
 typeT = 3
 
 # generate seqmeds
-seqmed_list = list()
-for(i in 1:numSims){
+seqmed_list = foreach(i = 1:numSims) %dorng% {
   print(paste0("starting simulation ", i, " out of ", numSims))
-  seqmed_list[[i]] = SeqMED(
+  SeqMED(
     D1 = NULL, y1 = NULL, true_beta = betaT, true_type = typeT, 
     mean_beta0 = mu0, mean_beta1 = mu1, var_beta0 = V0, var_beta1 = V1, 
     var_e = sigmasq, f0 = f0, f1 = f1, type = type01, xmin = xmin, xmax = xmax, 
-    candidates = candidates, numSeq = numSeq, seqN = seqN, seed = 123 + i
-  )
+    candidates = candidates, numSeq = numSeq, seqN = seqN)
 }
 saveRDS(seqmed_list, paste(output_home, "/scenario1_seqmed_simulations", 
                            "_numSeq", numSeq, 
                            "_seqN", seqN,
                            "_numSims", numSims, 
+                           "_parallel",
                            ".rds", sep = ""))
 
 

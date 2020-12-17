@@ -40,11 +40,11 @@ library(knitr)
 ################################################################################
 
 # simulations settings
-numSims = 100
+numSims = 25
 
 # simulation settings
-numSeq = 10
-seqN = 10
+numSeq = 100
+seqN = 1
 N = numSeq * seqN
 xmin = -1
 xmax = 1
@@ -92,7 +92,7 @@ for(i in 1:numSims){
   seqmed_list[[i]] = SeqMED(
     D1 = NULL, y1 = NULL, true_beta = betaT, true_type = typeT, 
     mean_beta0 = mu0, mean_beta1 = mu1, var_beta0 = V0, var_beta1 = V1, 
-    var_e = sigmasq, f0 = f0, f1 = f1, type = type01, 
+    var_e = sigmasq, f0 = f0, f1 = f1, type = type01, xmin = xmin, xmax = xmax, 
     candidates = candidates, numSeq = numSeq, seqN = seqN, seed = 123 + i
   )
 }

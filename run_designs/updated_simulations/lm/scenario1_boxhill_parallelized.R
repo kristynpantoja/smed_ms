@@ -1,6 +1,6 @@
 ################################################################################
 # last updated: 12/09/20
-# purpose: to create a list of seqmed simulations for scenario 2:
+# purpose: to create a list of boxhill simulations for scenario 2:
 #   linear vs. quadratic,
 #   where the true function is quadratic
 
@@ -35,6 +35,16 @@ library(MASS)
 library(mvtnorm)
 library(knitr)
 
+# set up parallelization
+library(doFuture)
+library(parallel)
+registerDoFuture()
+nworkers = detectCores()
+plan(multisession, workers = nworkers)
+
+library(doRNG)
+registerDoRNG(rep.seed)
+
 ################################################################################
 # simulation settings, shared for both scenarios (linear vs. quadratic)
 ################################################################################
@@ -43,8 +53,8 @@ library(knitr)
 numSims = 25
 
 # simulation settings
-numSeq = 100
-seqN = 1
+numSeq = 10
+seqN = 10
 N = numSeq * seqN
 xmin = -1
 xmax = 1
@@ -85,23 +95,31 @@ fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2
 # seqmed settings
 typeT = 3
 
-# generate seqmeds
-seqmed_list = list()
-for(i in 1:numSims){
+# generate boxhills
+bh_list = foreach(i = 1:numSims) %dorng% {
   print(paste0("starting simulation ", i, " out of ", numSims))
-  seqmed_list[[i]] = SeqMED(
-    D1 = NULL, y1 = NULL, true_beta = betaT, true_type = typeT, 
-    mean_beta0 = mu0, mean_beta1 = mu1, var_beta0 = V0, var_beta1 = V1, 
-    var_e = sigmasq, f0 = f0, f1 = f1, type = type01, xmin = xmin, xmax = xmax, 
-    candidates = candidates, numSeq = numSeq, seqN = seqN, seed = 123 + i
-  )
+  if(MMEDinputdata){
+    N.new = (numSeq - 1) * seqN
+    seqmed.res = SeqMED(
+      D1 = NULL, y1 = NULL, true_beta = betaT, true_type = typeT, 
+      mean_beta0 = mu0, mean_beta1 = mu1, var_beta0 = V0, var_beta1 = V1, 
+      var_e = sigmasq, f0 = f0, f1 = f1, type = type01, xmin = xmin, xmax = xmax,
+      candidates = candidates, numSeq = 1, seqN = seqN, 
+    )
+    x_input = seqmed.res$D
+    y_input = seqmed.res$y
+    bh.res = BH_m2(y_input, x_input, prior_probs, model0, model1, N.new, 
+                   candidates, fT, sigmasq)
+  } else{
+    bh.res = BH_m2(NULL, NULL, prior_probs, model0, model1, N, 
+                   candidates, fT, sigmasq)
+  }
+  bh.res
 }
-saveRDS(seqmed_list, paste(output_home, "/scenario1_seqmed_simulations", 
-                           "_numSeq", numSeq, 
-                           "_seqN", seqN,
-                           "_numSims", numSims, 
-                           ".rds", sep = ""))
-
-
-
-
+saveRDS(bh_list, 
+        paste(output_home, "/scenario1_boxhill_simulations", 
+              "_N", N, 
+              "_MMEDinput", as.numeric(MMEDinputdata), 
+              "_numSims", numSims, 
+              "_parallel",
+              ".rds", sep = ""))

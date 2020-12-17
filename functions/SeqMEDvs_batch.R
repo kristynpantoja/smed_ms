@@ -23,7 +23,7 @@ f_min_vs = function(candidate, D, indices0, indices1, postmean0, postmean1, post
 add_MMEDvs_oneatatime = function(initD, inity, mean_beta_full, beta_true = NULL, indices_true = NULL, 
                                  indices0, indices1, mean_beta0 = NULL, mean_beta1 = NULL, 
                                  var_e = 1, var_beta = NULL, var_beta0 = NULL, var_beta1 = NULL,
-                                 N2 = 11, xmin = 0, xmax = 1, numCandidates = 10^5, k = 4, p = 1, 
+                                 N2 = 11, xmin = -1, xmax = 1, numCandidates = 10^5, k = 4, p = 1, 
                                  alpha = 1, buffer = 0, candidates = NULL,
                                  wasserstein0 = 1, genCandidates = 1, log_space = FALSE){
   initN = dim(initD)[1]

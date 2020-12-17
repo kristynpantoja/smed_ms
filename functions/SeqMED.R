@@ -14,7 +14,7 @@
 SeqMED = function(
   D1 = NULL, y1 = NULL, Nprelim, true_beta, true_type, mean_beta0, mean_beta1, 
   var_beta0, var_beta1, var_e, f0 = NULL, f1 = NULL, type = NULL, 
-  numCandidates = 10^5, k = 4, xmin = 0, xmax = 1, p = 1, 
+  numCandidates = 10^5, k = 4, xmin = -1, xmax = 1, p = 1, 
   numSeq = 5, seqN = 10, alpha_seq = NULL, 
   buffer_seq = 0, wasserstein0 = 1, genCandidates = 1, candidates = NULL, 
   prints = FALSE, seed = NULL

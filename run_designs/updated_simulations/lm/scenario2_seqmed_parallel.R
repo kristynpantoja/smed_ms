@@ -2,7 +2,7 @@
 # last updated: 12/09/20
 # purpose: to create a list of seqmed simulations for scenario 2:
 #   linear vs. quadratic,
-#   where the true function is quadratic
+#   where the true function is cubic
 
 ################################################################################
 # Sources/Libraries
@@ -34,6 +34,16 @@ library(matrixStats)
 library(MASS)
 library(mvtnorm)
 library(knitr)
+
+# set up parallelization
+library(doFuture)
+library(parallel)
+registerDoFuture()
+nworkers = detectCores()
+plan(multisession, workers = nworkers)
+
+library(doRNG)
+registerDoRNG(rep.seed)
 
 ################################################################################
 # simulation settings, shared for both scenarios (linear vs. quadratic)
@@ -77,31 +87,28 @@ model1 = list(designMat = desX1, beta.mean = mu1, beta.var = V1)
 prior_probs = rep(1 / 2, 2)
 
 ################################################################################
-# Scenario 1: True function is quadratic
+# Scenario 2: True function is cubic
 ################################################################################
-betaT = c(-0.2, -0.4, 0.4)
-fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2
+betaT = c(0, -0.75, 0, 1)
+fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2 + betaT[4] * x^3
 
 # seqmed settings
-typeT = 3
+typeT = 4
 
 # generate seqmeds
-seqmed_list = list()
-for(i in 1:numSims){
+seqmed_list = foreach(i = 1:numSims) %dopar% {
   print(paste0("starting simulation ", i, " out of ", numSims))
-  seqmed_list[[i]] = SeqMED(
+  SeqMED(
     D1 = NULL, y1 = NULL, true_beta = betaT, true_type = typeT, 
     mean_beta0 = mu0, mean_beta1 = mu1, var_beta0 = V0, var_beta1 = V1, 
     var_e = sigmasq, f0 = f0, f1 = f1, type = type01, xmin = xmin, xmax = xmax, 
-    candidates = candidates, numSeq = numSeq, seqN = seqN, seed = 123 + i
-  )
+    candidates = candidates, numSeq = numSeq, seqN = seqN)
 }
-saveRDS(seqmed_list, paste(output_home, "/scenario1_seqmed_simulations", 
-                           "_numSeq", numSeq, 
+saveRDS(seqmed_list, paste(output_home, "/scenario2_seqmed_simulations",
+                           "_numSeq", numSeq,
                            "_seqN", seqN,
                            "_numSims", numSims, 
+                           "_parallel",
                            ".rds", sep = ""))
-
-
 
 

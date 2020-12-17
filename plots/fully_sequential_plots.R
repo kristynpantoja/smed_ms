@@ -1,5 +1,5 @@
 ################################################################################
-# last updated: 12/15/20
+# last updated: 12/17/20
 # purpose: to calculate and plot metrics for scenario 1 simulations
 
 
@@ -62,11 +62,12 @@ image_path = "plots"
 ################################################################################
 
 # simulations settings
-numSims = 100
+numSims = 25
+isParallelized = TRUE
 
 # simulation settings
-numSeq = 10
-seqN = 10
+numSeq = 100
+seqN = 1
 N = numSeq * seqN
 xmin = -1
 xmax = 1
@@ -118,16 +119,27 @@ fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2
 typeT = 3
 
 # import the simulations
-seqmeds = readRDS(paste0(output_home, "/scenario1_seqmed_simulations", 
-                         "_numSeq", numSeq, 
-                         "_seqN", seqN,
-                         "_numSims", numSims,
-                         ".rds", sep = ""))
-bhs = readRDS(paste0(output_home, "/scenario1_boxhill_simulations", 
-                     "_N", N, 
-                     "_MMEDinput", as.numeric(MMEDinputdata),
-                     "_numSims", numSims, 
-                     ".rds", sep = ""))
+seqmed_file0 = paste0(output_home, "/scenario1_seqmed_simulations", 
+                     "_numSeq", numSeq, 
+                     "_seqN", seqN,
+                     "_numSims", numSims)
+bh_file0 = paste0(output_home, "/scenario1_boxhill_simulations", 
+                  "_N", N, 
+                  "_MMEDinput", as.numeric(MMEDinputdata),
+                  "_numSims", numSims)
+if(isParallelized){
+  seqmeds = readRDS(paste0(seqmed_file0, 
+                           "_parallel",
+                           ".rds"))
+  bhs = readRDS(paste0(bh_file0, 
+                       "_parallel", 
+                       ".rds"))
+} else{
+  seqmeds = readRDS(paste0(seqmed_file0, 
+                           ".rds"))
+  bhs = readRDS(paste0(bh_file0, 
+                       ".rds"))
+}
 
 if(MMEDinputdata){
   # check if preliminary data are the same
@@ -182,38 +194,38 @@ numseq = 1e2
 x_seq = seq(from = xmin, to = xmax, length.out = numseq)
 
 w_seq = sapply(x_seq, function(x) WNlm(
-  x, seqmed1$postmean0[, numSeq], seqmed1$postmean1[, numSeq], 
-  diag(seqmed1$postvar0[, numSeq]), diag(seqmed1$postvar1[, numSeq]), 
+  x, seqmed1$postmean0[, numSeq], seqmed1$postmean1[, numSeq],
+  diag(seqmed1$postvar0[, numSeq]), diag(seqmed1$postvar1[, numSeq]),
   sigmasq, type01))
-f1est = function(x) seqmed1$postmean1[1, numSeq] + 
+f1est = function(x) seqmed1$postmean1[1, numSeq] +
   seqmed1$postmean1[2, numSeq] * x + seqmed1$postmean1[3, numSeq] * x^2
-f2est = function(x) seqmed1$postmean0[1, numSeq] + 
+f2est = function(x) seqmed1$postmean0[1, numSeq] +
   seqmed1$postmean0[2, numSeq] * x
 f1est_seq = sapply(x_seq, f1est)
 f2est_seq = sapply(x_seq, f2est)
 fT_seq = sapply(x_seq, fT)
 
 ggdata = data.table::data.table(
-  x = x_seq, 
-  `Estimated Quadratic` = f1est_seq, 
-  `Estimated Line` = f2est_seq, 
-  `True Quadratic` = fT_seq, 
+  x = x_seq,
+  `Estimated Quadratic` = f1est_seq,
+  `Estimated Line` = f2est_seq,
+  `True Quadratic` = fT_seq,
   `Wasserstein` = w_seq
 )
 ggdata = data.table::melt(ggdata, id = c("x"), value.name = "y", variable.name = "Function")
 
 ggdata_ribbon = data.table::data.table(
-  x = x_seq, 
-  ymin = apply(cbind(f1est_seq, f2est_seq), 1, min), 
+  x = x_seq,
+  ymin = apply(cbind(f1est_seq, f2est_seq), 1, min),
   ymax = apply(cbind(f1est_seq, f2est_seq), 1, max)
 )
-ggplot(ggdata, aes(x = x, y = y, color = Function, linetype = Function)) + 
+ggplot(ggdata, aes(x = x, y = y, color = Function, linetype = Function)) +
   scale_linetype_manual(values = c(2, 2, 1, 1)) +
-  scale_color_manual(values = c(gg_color_hue(3)[c(1, 3)], "black", gg_color_hue(3)[2])) + 
+  scale_color_manual(values = c(gg_color_hue(3)[c(1, 3)], "black", gg_color_hue(3)[2])) +
   geom_path() +
-  geom_ribbon(data = ggdata_ribbon, mapping = aes(x = x, ymin = ymin, ymax = ymax), alpha = 0.2, 
+  geom_ribbon(data = ggdata_ribbon, mapping = aes(x = x, ymin = ymin, ymax = ymax), alpha = 0.2,
               inherit.aes = FALSE) +
-  theme_bw() + 
+  theme_bw() +
   theme(panel.grid.minor = element_blank())
 # ggsave("w_d2.pdf",
 #        plot = last_plot(),
@@ -224,6 +236,46 @@ ggplot(ggdata, aes(x = x, y = y, color = Function, linetype = Function)) +
 #        height = 2,
 #        units = c("in")
 # )
+
+# point by point ###############################################################
+for(i in 1:numSeq){
+  w_seq = sapply(x_seq, function(x) WNlm(
+    x, seqmed1$postmean0[, i], seqmed1$postmean1[, i],
+    diag(seqmed1$postvar0[, i]), diag(seqmed1$postvar1[, i]),
+    sigmasq, type01))
+  f1est = function(x) seqmed1$postmean1[1, i] +
+    seqmed1$postmean1[2, i] * x + seqmed1$postmean1[3, i] * x^2
+  f2est = function(x) seqmed1$postmean0[1, i] +
+    seqmed1$postmean0[2, i] * x
+  f1est_seq = sapply(x_seq, f1est)
+  f2est_seq = sapply(x_seq, f2est)
+  fT_seq = sapply(x_seq, fT)
+  
+  ggdata = data.table::data.table(
+    x = x_seq,
+    `Estimated Quadratic` = f1est_seq,
+    `Estimated Line` = f2est_seq,
+    `True Quadratic` = fT_seq,
+    `Wasserstein` = w_seq
+  )
+  ggdata = data.table::melt(ggdata, id = c("x"), value.name = "y", variable.name = "Function")
+  
+  ggdata_ribbon = data.table::data.table(
+    x = x_seq,
+    ymin = apply(cbind(f1est_seq, f2est_seq), 1, min),
+    ymax = apply(cbind(f1est_seq, f2est_seq), 1, max)
+  )
+  ggplot(ggdata, aes(x = x, y = y, color = Function, linetype = Function)) +
+    scale_linetype_manual(values = c(2, 2, 1, 1)) +
+    scale_color_manual(values = c(gg_color_hue(3)[c(1, 3)], "black", gg_color_hue(3)[2])) +
+    geom_path() +
+    geom_ribbon(data = ggdata_ribbon, mapping = aes(x = x, ymin = ymin, ymax = ymax), alpha = 0.2,
+                inherit.aes = FALSE) +
+    theme_bw() +
+    theme(panel.grid.minor = element_blank())
+}
+
+
 
 ################################################################################
 # plot the posterior probabilities of the hypotheses
@@ -273,30 +325,7 @@ for(k in 1:numSims){
     post.probs = bh.temp$post.probs
   )
 }
-# then calculate, like seqmeds -- this is done in batches, even though it's
-#   fully sequential, only for convenience!!!!!!!!!!!!!!! ######################
-# checking whether the posterior probabilities match,
-# #   using calcExpPostProbH -- they do!
-# postprobs0seq = matrix(NA, numSeq, numSims)
-# postprobs1seq = matrix(NA, numSeq, numSims)
-# BF01seq = matrix(NA, numSeq, numSims)
-# for(k in 1:numSims){
-#   bh_data_k = bhs.format[[k]]
-#   for(i in 1:numSeq){
-#     changing_postprobs = calcExpPostProbH_data(
-#       bh_data_k$y[1:(seqN * i)], bh_data_k$D[1:(seqN * i)], 
-#       N = seqN * i, mu0, V0, mu1, V1, sigmasq, type01)
-#     postprobs0seq[i, k] = changing_postprobs[1]
-#     postprobs1seq[i, k] = changing_postprobs[2]
-#     BF01seq[i, k] = changing_postprobs[3]
-#   }
-# }
-# # get expected value (average)
-# epph0seq_bh = apply(postprobs0seq, 1, mean)
-# epph1seq_bh = apply(postprobs1seq, 1, mean)
-# BF01seq_bh = apply(BF01seq, 1, mean)
 
-# plot 2
 postprobs0seq = matrix(NA, N, numSims)
 postprobs1seq = matrix(NA, N, numSims)
 BF01seq = matrix(NA, N, numSims)

@@ -116,7 +116,7 @@ f_min_seqmed = function(candidate, D, postmean0, postmean1, postvar0, postvar1, 
 SeqMED_batch= function(
   initD, y, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
   f0 = NULL, f1 = NULL, type = NULL, N2 = 11, numCandidates = 10^5, k = 4, 
-  xmin = 0, xmax = 1, p = 1, alpha = NULL, buffer = 0, 
+  xmin = -1, xmax = 1, p = 1, alpha = NULL, buffer = 0, 
   wasserstein0 = 1, genCandidates = 1, candidates = NULL, 
   var_margy0 = NULL, var_margy1 = NULL, log_space = FALSE
 ){

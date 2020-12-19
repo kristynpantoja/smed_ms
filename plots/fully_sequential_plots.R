@@ -28,6 +28,8 @@ functions_home = "functions"
 # for seqmed design
 source(paste(functions_home, "/SeqMED.R", sep = ""))
 source(paste(functions_home, "/SeqMED_batch.R", sep = ""))
+source(paste(functions_home, "/MMED.R", sep = ""))
+source(paste(functions_home, "/variance_marginal_y.R", sep = ""))
 source(paste(functions_home, "/charge_function_q.R", sep = ""))
 source(paste(functions_home, "/construct_design_matrix.R", sep = ""))
 source(paste(functions_home, "/wasserstein_distance.R", sep = ""))
@@ -238,41 +240,94 @@ ggplot(ggdata, aes(x = x, y = y, color = Function, linetype = Function)) +
 # )
 
 # point by point ###############################################################
-for(i in 1:numSeq){
-  w_seq = sapply(x_seq, function(x) WNlm(
-    x, seqmed1$postmean0[, i], seqmed1$postmean1[, i],
-    diag(seqmed1$postvar0[, i]), diag(seqmed1$postvar1[, i]),
-    sigmasq, type01))
-  f1est = function(x) seqmed1$postmean1[1, i] +
-    seqmed1$postmean1[2, i] * x + seqmed1$postmean1[3, i] * x^2
-  f2est = function(x) seqmed1$postmean0[1, i] +
-    seqmed1$postmean0[2, i] * x
-  f1est_seq = sapply(x_seq, f1est)
-  f2est_seq = sapply(x_seq, f2est)
-  fT_seq = sapply(x_seq, fT)
-  
-  ggdata = data.table::data.table(
-    x = x_seq,
-    `Estimated Quadratic` = f1est_seq,
-    `Estimated Line` = f2est_seq,
-    `True Quadratic` = fT_seq,
-    `Wasserstein` = w_seq
-  )
-  ggdata = data.table::melt(ggdata, id = c("x"), value.name = "y", variable.name = "Function")
-  
-  ggdata_ribbon = data.table::data.table(
-    x = x_seq,
-    ymin = apply(cbind(f1est_seq, f2est_seq), 1, min),
-    ymax = apply(cbind(f1est_seq, f2est_seq), 1, max)
-  )
-  ggplot(ggdata, aes(x = x, y = y, color = Function, linetype = Function)) +
-    scale_linetype_manual(values = c(2, 2, 1, 1)) +
-    scale_color_manual(values = c(gg_color_hue(3)[c(1, 3)], "black", gg_color_hue(3)[2])) +
-    geom_path() +
-    geom_ribbon(data = ggdata_ribbon, mapping = aes(x = x, ymin = ymin, ymax = ymax), alpha = 0.2,
-                inherit.aes = FALSE) +
-    theme_bw() +
-    theme(panel.grid.minor = element_blank())
+for(i in 1:(numSeq + 1)){
+  if(i == 1){
+    wassfn = function(x){
+      mu1.temp = f0(x) # mean of marginal dist of y | H0
+      mu2.temp = f1(x) # mean of marginal dist of y | H1
+      var1.temp = var_marginaly(x, V0, sigmasq, type = type01[1]) # variance of marginal dist of y | H0
+      var2.temp = var_marginaly(x, V1, sigmasq, type = type01[2]) # variance of marginal dist of y | H1
+      WN(mu1.temp, mu2.temp, var1.temp, var2.temp)
+    }
+    # q_seq = sapply(x_seq, function(x) q_mmed(
+    #   x, mu0, mu1, V0, V1, sigmasq, f0, f1, type01, 
+    #   var_margy0 = NULL, var_margy1 = NULL, p = 1, alpha = 1, buffer = 0))
+    w_seq = sapply(x_seq, wassfn)
+    f1est = function(x) mu1[1] + mu1[2] * x + mu1[3] * x^2
+    f2est = function(x) mu0[1] + mu0[2] * x
+    f1est_seq = sapply(x_seq, f1est)
+    f2est_seq = sapply(x_seq, f2est)
+    fT_seq = sapply(x_seq, fT)
+    
+    ggdata = data.table::data.table(
+      x = x_seq,
+      `Estimated Quadratic` = f1est_seq,
+      `Estimated Line` = f2est_seq,
+      `True Quadratic` = fT_seq,
+      `Wasserstein` = w_seq
+    )
+    ggdata = data.table::melt(
+      ggdata, id = c("x"), value.name = "y", variable.name = "Function")
+    
+    ggdata_ribbon = data.table::data.table(
+      x = x_seq,
+      ymin = apply(cbind(f1est_seq, f2est_seq), 1, min),
+      ymax = apply(cbind(f1est_seq, f2est_seq), 1, max)
+    )
+    ggplot(ggdata, aes(x = x, y = y, color = Function, linetype = Function)) +
+      scale_linetype_manual(values = c(2, 2, 1, 1)) +
+      scale_color_manual(values = c(gg_color_hue(3)[c(1, 3)], "black", gg_color_hue(3)[2])) +
+      geom_path() +
+      geom_ribbon(data = ggdata_ribbon, mapping = aes(x = x, ymin = ymin, ymax = ymax), alpha = 0.2,
+                  inherit.aes = FALSE) +
+      geom_point(data.frame(x = seqmed1$D[i], y = seqmed1$y[i]), 
+                 mapping = aes(x = x, y = y), inherit.aes = FALSE, color = 2) +
+      theme_bw() +
+      theme(panel.grid.minor = element_blank())
+  } else{
+    prev.idx = i - 1
+    w_seq = sapply(x_seq, function(x) WNlm(
+      x, seqmed1$postmean0[, prev.idx], seqmed1$postmean1[, prev.idx],
+      diag(seqmed1$postvar0[, prev.idx]), diag(seqmed1$postvar1[, prev.idx]),
+      sigmasq, type01))
+    # w_seq = sapply(x_seq, function (x) f_min_seqmed(
+    #   x, seqmed1$D[1:prev.idx], seqmed1$postmean0[, prev.idx], seqmed1$postmean1[, prev.idx],
+    #   diag(seqmed1$postvar0[, prev.idx]), diag(seqmed1$postvar1[, prev.idx]), sigmasq,
+    #   type01, p = 1, k = 4, alpha = 1, buffer = 0))
+    f1est = function(x) seqmed1$postmean1[1, prev.idx] +
+      seqmed1$postmean1[2, prev.idx] * x + seqmed1$postmean1[3, prev.idx] * x^2
+    f2est = function(x) seqmed1$postmean0[1, prev.idx] +
+      seqmed1$postmean0[2, prev.idx] * x
+    f1est_seq = sapply(x_seq, f1est)
+    f2est_seq = sapply(x_seq, f2est)
+    fT_seq = sapply(x_seq, fT)
+    
+    ggdata = data.table::data.table(
+      x = x_seq,
+      `Estimated Quadratic` = f1est_seq,
+      `Estimated Line` = f2est_seq,
+      `True Quadratic` = fT_seq,
+      `Wasserstein` = w_seq
+    )
+    ggdata = data.table::melt(
+      ggdata, id = c("x"), value.name = "y", variable.name = "Function")
+    
+    ggdata_ribbon = data.table::data.table(
+      x = x_seq,
+      ymin = apply(cbind(f1est_seq, f2est_seq), 1, min),
+      ymax = apply(cbind(f1est_seq, f2est_seq), 1, max)
+    )
+    ggplot(ggdata, aes(x = x, y = y, color = Function, linetype = Function)) +
+      scale_linetype_manual(values = c(2, 2, 1, 1)) +
+      scale_color_manual(values = c(gg_color_hue(3)[c(1, 3)], "black", gg_color_hue(3)[2])) +
+      geom_path() +
+      geom_ribbon(data = ggdata_ribbon, mapping = aes(x = x, ymin = ymin, ymax = ymax), alpha = 0.2,
+                  inherit.aes = FALSE) +
+      geom_point(data.frame(x = seqmed1$D[i], y = seqmed1$y[i]), 
+                 mapping = aes(x = x, y = y), inherit.aes = FALSE, color = 2) +
+      theme_bw() +
+      theme(panel.grid.minor = element_blank())
+  }
 }
 
 

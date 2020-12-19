@@ -116,7 +116,7 @@ f_min_seqmed = function(candidate, D, postmean0, postmean1, postvar0, postvar1, 
 SeqMED_batch= function(
   initD, y, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, 
   f0 = NULL, f1 = NULL, type = NULL, N2 = 11, numCandidates = 10^5, k = 4, 
-  xmin = -1, xmax = 1, p = 1, alpha = NULL, buffer = 0, 
+  xmin = -1, xmax = 1, p = 1, alpha = 1, buffer = 0, 
   wasserstein0 = 1, genCandidates = 1, candidates = NULL, 
   var_margy0 = NULL, var_margy1 = NULL, log_space = FALSE
 ){
@@ -134,7 +134,8 @@ SeqMED_batch= function(
   postmean1 = postmean(y, initD, initN, mean_beta1, var_beta1, var_e, type[2])
   
   if(wasserstein0 == 1){
-    w_initD = sapply(initD, FUN = function(x) WNlm(x, postmean0, postmean1, postvar0, postvar1, var_e, type))
+    w_initD = sapply(initD, FUN = function(x) WNlm(
+      x, postmean0, postmean1, postvar0, postvar1, var_e, type))
     if(length(which(w_initD == 0)) != 0){
       initD = initD[-which(w_initD == 0)]
       y = y[-which(w_initD == 0)]
@@ -178,9 +179,16 @@ SeqMED_batch= function(
   
   # -- Initialize 1st additional design point-- #
   D = rep(NA, N2)
-  optimal_q = optimize(function(x) q_seqmed(x, postmean0, postmean1, postvar0, postvar1, var_e, type, p,
-                                           alpha, buffer), interval = c(xmin, xmax))$minimum
-  xopt = optimal_q
+  # optimal_q = optimize(function(x) q_seqmed(
+  #   x, postmean0, postmean1, postvar0, postvar1, var_e, type, p, alpha, buffer),
+  #   interval = c(xmin, xmax))$minimum
+  w_vec = sapply(candidates, function(x) WNlm(
+    x, postmean0, postmean1, postvar0, postvar1, var_e, type))
+  # optimal_w = optimize(function(x) WNlm(
+  #   x, postmean0, postmean1, postvar0, postvar1, var_e, type),
+  #   interval = c(xmin, xmax), maximum = TRUE)$maximum
+  xopt.idx = which.max(w_vec)
+  xopt = candidates[xopt.idx]
   is_x_max_in_initD = any(sapply(initD, function(x) x == xopt)) # give tolerance?
   if(is_x_max_in_initD){
     # Find f_opt: minimum of f_min

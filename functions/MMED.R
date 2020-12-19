@@ -66,9 +66,19 @@ MMED = function(
   # -- Initialize 1st Design Point in D -- #
   D = rep(NA, N)
   if(initialpt == 1){
-    optimal_q = optimize(function(x) q_mmed(x, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, f0, f1, 
-                                              type, var_margy0, var_margy1, p, alpha, buffer), interval = c(xmin, xmax))$minimum
-    D[1] = optimal_q
+    # optimal_q = optimize(function(x) q_mmed(x, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, f0, f1, 
+    #                                           type, var_margy0, var_margy1, p, alpha, buffer), interval = c(xmin, xmax))$minimum
+    # D[1] = optimal_q
+    wassfn = function(x){
+      mu1.temp = f0(x) # mean of marginal dist of y | H0
+      mu2.temp = f1(x) # mean of marginal dist of y | H1
+      var1.temp = var_marginaly(x, V0, sigmasq, type = type01[1]) # variance of marginal dist of y | H0
+      var2.temp = var_marginaly(x, V1, sigmasq, type = type01[2]) # variance of marginal dist of y | H1
+      WN(mu1.temp, mu2.temp, var1.temp, var2.temp)
+    }
+    w_vec = sapply(candidates, wassfn)
+    xopt.idx = which.max(w_vec)
+    D[1] = candidates[xopt.idx]
   }
   
   if(N > 1){

@@ -133,22 +133,23 @@ SeqMED_batch= function(
   postvar1 = postvar(initD, initN, var_e, var_beta1, type[2])
   postmean1 = postmean(y, initD, initN, mean_beta1, var_beta1, var_e, type[2])
   
-  if(wasserstein0 == 1){
-    w_initD = sapply(initD, FUN = function(x) WNlm(
-      x, postmean0, postmean1, postvar0, postvar1, var_e, type))
-    if(length(which(w_initD == 0)) != 0){
-      initD = initD[-which(w_initD == 0)]
-      y = y[-which(w_initD == 0)]
-      w_initD = w_initD[-which(w_initD == 0)]
-      postvar0 = postvar(initD, initN, var_e, var_beta0, type[1])
-      postmean0 = postmean(y, initD, initN, mean_beta0, var_beta0, var_e, type[1])
-      postvar1 = postvar(initD, initN, var_e, var_beta1, type[2])
-      postmean1 = postmean(y, initD, initN, mean_beta1, var_beta1, var_e, type[2])
+  if(!is.null(wasserstein0)){
+    if(wasserstein0 == 1){
+      w_initD = sapply(initD, FUN = function(x) WNlm(
+        x, postmean0, postmean1, postvar0, postvar1, var_e, type))
+      if(length(which(w_initD == 0)) != 0){
+        initD = initD[-which(w_initD == 0)]
+        y = y[-which(w_initD == 0)]
+        w_initD = w_initD[-which(w_initD == 0)]
+        postvar0 = postvar(initD, initN, var_e, var_beta0, type[1])
+        postmean0 = postmean(y, initD, initN, mean_beta0, var_beta0, var_e, type[1])
+        postvar1 = postvar(initD, initN, var_e, var_beta1, type[2])
+        postmean1 = postmean(y, initD, initN, mean_beta1, var_beta1, var_e, type[2])
+      }
+    } else if(wasserstein0 == 2){
+      if(buffer == 0) warning("Buffer = 0, but wasserstein0 = 2; will assign Buffer = 0.0001")
+      buffer == 0.0001
     }
-  }
-  if(wasserstein0 == 2){
-    if(buffer == 0) warning("Buffer = 0, but wasserstein0 = 2; will assign Buffer = 0.0001")
-    buffer == 0.0001
   }
   
   # other variables and checks

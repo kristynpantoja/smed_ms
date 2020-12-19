@@ -16,7 +16,7 @@ SeqMED = function(
   var_beta0, var_beta1, var_e, f0 = NULL, f1 = NULL, type = NULL, 
   numCandidates = 10^5, k = 4, xmin = -1, xmax = 1, p = 1, 
   numSeq = 5, seqN = 10, alpha_seq = 1, 
-  buffer_seq = 0, wasserstein0 = 1, genCandidates = 1, candidates = NULL, 
+  buffer_seq = 0, wasserstein0 = NULL, genCandidates = 1, candidates = NULL, 
   prints = FALSE, seed = NULL
   ){
   if(!is.null(seed)) set.seed(seed)

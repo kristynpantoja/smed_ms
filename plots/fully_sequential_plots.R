@@ -64,7 +64,7 @@ image_path = "plots"
 ################################################################################
 
 # simulations settings
-numSims = 25
+numSims = 100
 isParallelized = TRUE
 
 # simulation settings
@@ -229,15 +229,15 @@ ggplot(ggdata, aes(x = x, y = y, color = Function, linetype = Function)) +
               inherit.aes = FALSE) +
   theme_bw() +
   theme(panel.grid.minor = element_blank())
-# ggsave("w_d2.pdf",
-#        plot = last_plot(),
-#        device = "pdf",
-#        path = image_path,
-#        scale = 1,
-#        width = 4.5,
-#        height = 2,
-#        units = c("in")
-# )
+ggsave("w_d2.pdf",
+       plot = last_plot(),
+       device = "pdf",
+       path = image_path,
+       scale = 1,
+       width = 4.5,
+       height = 2,
+       units = c("in")
+)
 
 # point by point ###############################################################
 for(i in 1:(numSeq + 1)){
@@ -455,15 +455,15 @@ ggplot(ggdata0.m2, aes(x = x, y = epph, color = Design, linetype = Design)) +
                                              linetype = Design), 
             inherit.aes = FALSE) + 
   geom_point(data = ggdata1.m2[x == numSeq], aes(x = x, y = epph))
-# ggsave("epph_d2.pdf",
-#        plot = last_plot(),
-#        device = "pdf",
-#        path = image_path,
-#        scale = 1,
-#        width = 4.5,
-#        height = 2,
-#        units = c("in")
-# )
+ggsave("epph_d2.pdf",
+       plot = last_plot(),
+       device = "pdf",
+       path = image_path,
+       scale = 1,
+       width = 4.5,
+       height = 2,
+       units = c("in")
+)
 
 ################################################################################
 # plot the MSE of beta-hat (posterior mean) of the hypotheses

@@ -102,7 +102,7 @@ seqmed_list = foreach(i = 1:numSims) %dorng% {
     D1 = NULL, y1 = NULL, true_beta = betaT, true_type = typeT, 
     mean_beta0 = mu0, mean_beta1 = mu1, var_beta0 = V0, var_beta1 = V1, 
     var_e = sigmasq, f0 = f0, f1 = f1, type = type01, xmin = xmin, xmax = xmax, 
-    candidates = candidates, numSeq = numSeq, seqN = seqN)
+    candidates = candidates, numSeq = numSeq, seqN = seqN, wasserstein0 = NULL)
 }
 saveRDS(seqmed_list, paste(output_home, "/scenario1_seqmed_simulations", 
                            "_numSeq", numSeq, 

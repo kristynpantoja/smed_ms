@@ -574,14 +574,14 @@ for(k in 1:numSeq){
 
 seqmed1.postmean2.1 = postmean(seqmed1$y, seqmed1$D, N,
                                    c(0, 0, 0, 0), diag(rep(sigmasq01, 4)), sigmasq, 4)
-fTest = function(x) seqmed1.postmean2[1, seqN] + 
-  seqmed1.postmean2[2, seqN] * x + 
-  seqmed1.postmean2[3, seqN] * x^2 + 
-  seqmed1.postmean2[4, seqN] * x^3
-f2est = function(x) seqmed1$postmean1[1, seqN] + 
-  seqmed1$postmean1[2, seqN] * x + 
-  seqmed1$postmean1[3, seqN] * x^2
-f1est = function(x) seqmed1$postmean0[1, seqN] + 
+fTest = function(x) seqmed1.postmean2[1, numSeq] + 
+  seqmed1.postmean2[2, numSeq] * x + 
+  seqmed1.postmean2[3, numSeq] * x^2 + 
+  seqmed1.postmean2[4, numSeq] * x^3
+f2est = function(x) seqmed1$postmean1[1, numSeq] + 
+  seqmed1$postmean1[2, numSeq] * x + 
+  seqmed1$postmean1[3, numSeq] * x^2
+f1est = function(x) seqmed1$postmean0[1, numSeq] + 
   seqmed1$postmean0[2, seqN] * x
 
 f1est_seq = sapply(x_seq, f1est)

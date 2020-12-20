@@ -104,11 +104,17 @@
 ### with data (uses posterior predictive distribution of y) ###
 ###############################################################
 
-f_min_seqmed = function(candidate, D, postmean0, postmean1, postvar0, postvar1, var_e, type, p, k, alpha, buffer){
-  result = q_seqmed(candidate, postmean0, postmean1, postvar0, postvar1, var_e, type, p, 
-                  alpha, buffer)^k * 
-    sum(sapply(D, function(x_i) (q_seqmed(x_i, postmean0, postmean1, postvar0, postvar1, var_e, type, p, 
-                                        alpha, buffer) / sqrt((x_i - candidate)^2))^k))
+f_min_seqmed = function(
+  candidate, D, postmean0, postmean1, postvar0, postvar1, var_e, type, 
+  p = 1, k = 4, alpha = 1, buffer = 0){
+  result = q_seqmed(
+    candidate, postmean0, postmean1, postvar0, postvar1, var_e, type, p, 
+    alpha, buffer)^k * 
+    sum(sapply(
+      D, 
+      function(x_i) (q_seqmed(x_i, postmean0, postmean1, postvar0, postvar1, 
+                              var_e, type, p, alpha, buffer) / 
+                       sqrt((x_i - candidate)^2))^k))
   return(result)
 }
 
@@ -147,8 +153,8 @@ SeqMED_batch= function(
         postmean1 = postmean(y, initD, initN, mean_beta1, var_beta1, var_e, type[2])
       }
     } else if(wasserstein0 == 2){
-      if(buffer == 0) warning("Buffer = 0, but wasserstein0 = 2; will assign Buffer = 0.0001")
-      buffer == 0.0001
+      if(buffer == 0) warning("Buffer = 0, but wasserstein0 = 2; will assign Buffer = 1e-4")
+      buffer == 1e-4
     }
   }
   
@@ -183,17 +189,20 @@ SeqMED_batch= function(
   # optimal_q = optimize(function(x) q_seqmed(
   #   x, postmean0, postmean1, postvar0, postvar1, var_e, type, p, alpha, buffer),
   #   interval = c(xmin, xmax))$minimum
-  w_vec = sapply(candidates, function(x) WNlm(
-    x, postmean0, postmean1, postvar0, postvar1, var_e, type))
   # optimal_w = optimize(function(x) WNlm(
   #   x, postmean0, postmean1, postvar0, postvar1, var_e, type),
   #   interval = c(xmin, xmax), maximum = TRUE)$maximum
-  xopt.idx = which.max(w_vec)
-  xopt = candidates[xopt.idx]
-  is_x_max_in_initD = any(sapply(initD, function(x) x == xopt)) # give tolerance?
+  w_candidates = sapply(candidates, function(x) WNlm(
+    x, postmean0, postmean1, postvar0, postvar1, var_e, type))
+  w_opt = which.max(w_candidates)
+  xopt = candidates[w_opt]
+  is_x_max_in_initD = any(sapply(initD, function(x) x == xopt))
   if(is_x_max_in_initD){
     # Find f_opt: minimum of f_min
-    f_min_candidates = sapply(candidates, function(x) f_min_seqmed(x, initD, postmean0, postmean1, postvar0, postvar1, var_e, type, p, k, alpha, buffer))
+    f_min_candidates = sapply(
+      candidates, 
+      function(x) f_min_seqmed(x, initD, postmean0, postmean1, postvar0, 
+                               postvar1, var_e, type, p, k, alpha, buffer))
     f_opt = which.min(f_min_candidates)
     xnew = candidates[f_opt]
     # Update set of design points (D) and plot new point
@@ -205,7 +214,11 @@ SeqMED_batch= function(
   if(N2 > 1){
     for(i in 2:N2){
       # Find f_opt: minimum of f_min
-      f_min_candidates = sapply(candidates, function(x) f_min_seqmed(x, c(initD, D[1:(i - 1)]), postmean0, postmean1, postvar0, postvar1, var_e, type, p, k, alpha, buffer))
+      f_min_candidates = sapply(
+        candidates, 
+        function(x) f_min_seqmed(x, c(initD, D[1:(i - 1)]), postmean0, 
+                                 postmean1, postvar0, postvar1, var_e, type, 
+                                 p, k, alpha, buffer))
       f_opt = which.min(f_min_candidates)
       xnew = candidates[f_opt]
       # Update set of design points (D) and plot new point

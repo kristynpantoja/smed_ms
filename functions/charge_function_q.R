@@ -4,9 +4,8 @@
 ### 1D ###
 ##########
 
-q_mmed = function(x, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, f0, f1, type, var_margy0, var_margy1, p, alpha = NULL, buffer = 0){
+q_mmed = function(x, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, f0, f1, type, var_margy0, var_margy1, p, alpha = 1, buffer = 0){
   if(length(type) != 2) stop("type should be vector with length == 2")
-  if(is.null(alpha)) alpha = 1
   mu1.temp = f0(x) # mean of marginal dist of y | H0
   mu2.temp = f1(x) # mean of marginal dist of y | H1
   var1.temp = var_marginaly(x, var_beta0, var_e, type = type[1], var_margy0) # variance of marginal dist of y | H0
@@ -16,16 +15,16 @@ q_mmed = function(x, mean_beta0, mean_beta1, var_beta0, var_beta1, var_e, f0, f1
   return(1.0 / (W + buffer)^q_exponent)
 }
 
-q_seqmed = function(x, postmean0, postmean1, postvar0, postvar1, var_e, type, p, alpha = NULL, buffer = 0){
+q_seqmed = function(
+  x, postmean0, postmean1, postvar0, postvar1, var_e, type, p = 1, alpha = 1, 
+  buffer = 0){
   if(length(type) != 2) stop("type should be vector with length == 2")
-  if(is.null(alpha)) alpha = 1
   W = WNlm(x, postmean0, postmean1, postvar0, postvar1, var_e, type)
   q_exponent = alpha / (2 * p)
   return(1.0 / (W + buffer)^q_exponent)
 }
 
-q_vs = function(x, indices0, indices1, postmean0, postmean1, postvar0, postvar1, var_e, p, alpha = NULL, buffer = 0){
-  if(is.null(alpha)) alpha = 1
+q_vs = function(x, indices0, indices1, postmean0, postmean1, postvar0, postvar1, var_e, p, alpha = 1, buffer = 0){
   W = WNlmvs(x, indices0, indices1, postmean0, postmean1, postvar0, postvar1, var_e)
   q_exponent = alpha / (2 * p)
   return(1.0 / (W + buffer)^q_exponent)
@@ -39,9 +38,8 @@ q_vs = function(x, indices0, indices1, postmean0, postmean1, postvar0, postvar1,
 #   return(1.0 / (Wass_dist + buffer)^q_exponent)
 # }
 
-q_gp = function(x, Kinv0, Kinv1, initD, y, var_e, type, l, p, alpha = NULL, buffer = 0){
+q_gp = function(x, Kinv0, Kinv1, initD, y, var_e, type, l, p, alpha = 1, buffer = 0){
   if(length(type) != 2) stop("type should be vector with length == 2")
-  if(is.null(alpha)) alpha = 1
   W = WNgp(x, Kinv0, Kinv1, initD, y, var_e, type, l)
   q_exponent = alpha / (2 * p)
   return(1.0 / (W + buffer)^q_exponent)
@@ -54,9 +52,8 @@ q_gp = function(x, Kinv0, Kinv1, initD, y, var_e, type, l, p, alpha = NULL, buff
 #   q_exponent = alpha / (2 * p)
 #   return(1.0 / (Wass_dist + buffer)^q_exponent)
 # }
-q_gpvs = function(x, Kinv0, Kinv1, indices0, indices1, initD0, initD1, y, var_e, type, l, p, alpha = NULL, buffer = 0){
+q_gpvs = function(x, Kinv0, Kinv1, indices0, indices1, initD0, initD1, y, var_e, type, l, p, alpha = 1, buffer = 0){
   if(length(type) != 2) stop("type should be vector with length == 2")
-  if(is.null(alpha)) alpha = 1
   W = WNgpvs(x, Kinv0, Kinv1, indices0, indices1, initD0, initD1, y, var_e, type, l)
   q_exponent = alpha / (2 * p)
   return(1.0 / (W + buffer)^q_exponent)

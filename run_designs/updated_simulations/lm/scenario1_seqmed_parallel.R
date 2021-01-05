@@ -50,7 +50,7 @@ registerDoRNG(1995)
 ################################################################################
 
 # simulations settings
-numSims = 100
+numSims = 500
 
 # simulation settings
 numSeq = 100

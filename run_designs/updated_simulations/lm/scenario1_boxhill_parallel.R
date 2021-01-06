@@ -121,5 +121,4 @@ saveRDS(bh_list,
               "_N", N, 
               "_MMEDinput", as.numeric(MMEDinputdata), 
               "_numSims", numSims, 
-              "_parallel",
               ".rds", sep = ""))

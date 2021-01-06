@@ -64,7 +64,7 @@ image_path = "plots"
 ################################################################################
 
 # simulations settings
-numSims = 100
+numSims = 500
 isParallelized = TRUE
 
 # simulation settings
@@ -121,27 +121,18 @@ fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2
 typeT = 3
 
 # import the simulations
-seqmed_file0 = paste0(output_home, "/seqmed/scenario1_seqmed_simulations", 
+seqmed_file = paste0(output_home, "/seqmed/scenario1_seqmed_simulations", 
                      "_numSeq", numSeq, 
                      "_seqN", seqN,
-                     "_numSims", numSims)
-bh_file0 = paste0(output_home, "/boxhill/scenario1_boxhill_simulations", 
-                  "_N", N, 
-                  "_MMEDinput", as.numeric(MMEDinputdata),
-                  "_numSims", numSims)
-if(isParallelized){
-  seqmeds = readRDS(paste0(seqmed_file0, 
-                           "_parallel",
-                           ".rds"))
-  bhs = readRDS(paste0(bh_file0, 
-                       "_parallel", 
-                       ".rds"))
-} else{
-  seqmeds = readRDS(paste0(seqmed_file0, 
-                           ".rds"))
-  bhs = readRDS(paste0(bh_file0, 
-                       ".rds"))
-}
+                     "_numSims", numSims, 
+                     ".rds")
+bh_file = paste0(output_home, "/boxhill/scenario1_boxhill_simulations", 
+                 "_N", N, 
+                 "_MMEDinput", as.numeric(MMEDinputdata),
+                 "_numSims", numSims, 
+                 ".rds")
+seqmeds = readRDS(seqmed_file)
+bhs = readRDS(bh_file)
 
 if(MMEDinputdata){
   # check if preliminary data are the same

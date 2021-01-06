@@ -107,8 +107,7 @@ seqmed_list = foreach(i = 1:numSims) %dopar% {
 saveRDS(seqmed_list, paste(output_home, "/scenario2_seqmed_simulations",
                            "_numSeq", numSeq,
                            "_seqN", seqN,
-                           "_numSims", numSims, 
-                           "_parallel",
+                           "_numSims", numSims,
                            ".rds", sep = ""))
 
 

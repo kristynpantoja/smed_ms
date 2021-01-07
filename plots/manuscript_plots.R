@@ -62,11 +62,12 @@ image_path = "plots"
 ################################################################################
 
 # simulations settings
-numSims = 100
+numSims = 500
+isParallelized = TRUE
 
 # simulation settings
-numSeq = 10
-seqN = 10
+numSeq = 100
+seqN = 1
 N = numSeq * seqN
 xmin = -1
 xmax = 1
@@ -118,16 +119,18 @@ fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2
 typeT = 3
 
 # import the simulations
-seqmeds = readRDS(paste0(output_home, "/scenario1_seqmed_simulations", 
-                         "_numSeq", numSeq, 
-                         "_seqN", seqN,
-                         "_numSims", numSims,
-                         ".rds", sep = ""))
-bhs = readRDS(paste0(output_home, "/scenario1_boxhill_simulations", 
-                     "_N", N, 
-                     "_MMEDinput", as.numeric(MMEDinputdata),
+seqmed_file = paste0(output_home, "/seqmed/scenario1_seqmed_simulations", 
+                     "_numSeq", numSeq, 
+                     "_seqN", seqN,
                      "_numSims", numSims, 
-                     ".rds", sep = ""))
+                     ".rds")
+bh_file = paste0(output_home, "/boxhill/scenario1_boxhill_simulations", 
+                 "_N", N, 
+                 "_MMEDinput", as.numeric(MMEDinputdata),
+                 "_numSims", numSims, 
+                 ".rds")
+seqmeds = readRDS(seqmed_file)
+bhs = readRDS(bh_file)
 
 if(MMEDinputdata){
   # check if preliminary data are the same
@@ -150,7 +153,7 @@ if(MMEDinputdata){
 ################################################################################
 # plot the designs
 ################################################################################
-which.sim = 1
+which.sim = 25
 
 # plot a seqmed
 seqmed1 = seqmeds[[which.sim]]
@@ -182,38 +185,38 @@ numseq = 1e2
 x_seq = seq(from = xmin, to = xmax, length.out = numseq)
 
 w_seq = sapply(x_seq, function(x) WNlm(
-  x, seqmed1$postmean0[, numSeq], seqmed1$postmean1[, numSeq], 
-  diag(seqmed1$postvar0[, numSeq]), diag(seqmed1$postvar1[, numSeq]), 
+  x, seqmed1$postmean0[, numSeq], seqmed1$postmean1[, numSeq],
+  diag(seqmed1$postvar0[, numSeq]), diag(seqmed1$postvar1[, numSeq]),
   sigmasq, type01))
-f1est = function(x) seqmed1$postmean1[1, numSeq] + 
+f1est = function(x) seqmed1$postmean1[1, numSeq] +
   seqmed1$postmean1[2, numSeq] * x + seqmed1$postmean1[3, numSeq] * x^2
-f2est = function(x) seqmed1$postmean0[1, numSeq] + 
+f2est = function(x) seqmed1$postmean0[1, numSeq] +
   seqmed1$postmean0[2, numSeq] * x
 f1est_seq = sapply(x_seq, f1est)
 f2est_seq = sapply(x_seq, f2est)
 fT_seq = sapply(x_seq, fT)
 
 ggdata = data.table::data.table(
-  x = x_seq, 
-  `Estimated Quadratic` = f1est_seq, 
-  `Estimated Line` = f2est_seq, 
-  `True Quadratic` = fT_seq, 
+  x = x_seq,
+  `Estimated Quadratic` = f1est_seq,
+  `Estimated Line` = f2est_seq,
+  `True Quadratic` = fT_seq,
   `Wasserstein` = w_seq
 )
 ggdata = data.table::melt(ggdata, id = c("x"), value.name = "y", variable.name = "Function")
 
 ggdata_ribbon = data.table::data.table(
-  x = x_seq, 
-  ymin = apply(cbind(f1est_seq, f2est_seq), 1, min), 
+  x = x_seq,
+  ymin = apply(cbind(f1est_seq, f2est_seq), 1, min),
   ymax = apply(cbind(f1est_seq, f2est_seq), 1, max)
 )
-ggplot(ggdata, aes(x = x, y = y, color = Function, linetype = Function)) + 
+ggplot(ggdata, aes(x = x, y = y, color = Function, linetype = Function)) +
   scale_linetype_manual(values = c(2, 2, 1, 1)) +
-  scale_color_manual(values = c(gg_color_hue(3)[c(1, 3)], "black", gg_color_hue(3)[2])) + 
+  scale_color_manual(values = c(gg_color_hue(3)[c(1, 3)], "black", gg_color_hue(3)[2])) +
   geom_path() +
-  geom_ribbon(data = ggdata_ribbon, mapping = aes(x = x, ymin = ymin, ymax = ymax), alpha = 0.2, 
+  geom_ribbon(data = ggdata_ribbon, mapping = aes(x = x, ymin = ymin, ymax = ymax), alpha = 0.2,
               inherit.aes = FALSE) +
-  theme_bw() + 
+  theme_bw() +
   theme(panel.grid.minor = element_blank())
 # ggsave("w_d2.pdf",
 #        plot = last_plot(),
@@ -233,13 +236,13 @@ ggplot(ggdata, aes(x = x, y = y, color = Function, linetype = Function)) +
 
 # for the non-sequential methods;
 epphs_space = calcExpPostProbH(
-  space_filling, N, betaT, mu0, mu1, V0, V1, sigmasq, numSims = 100, 
+  space_filling, N, betaT, mu0, mu1, V0, V1, sigmasq, numSims, 
   typeT, type01, seed = 123)
 epphs_dopt1 = calcExpPostProbH(
-  dopt_linear, N, betaT, mu0, mu1, V0, V1, sigmasq, numSims = 100, 
+  dopt_linear, N, betaT, mu0, mu1, V0, V1, sigmasq, numSims, 
   typeT, type01, seed = 123)
 epphs_dopt2 = calcExpPostProbH(
-  dopt_quadratic, N, betaT, mu0, mu1, V0, V1, sigmasq, numSims = 100, 
+  dopt_quadratic, N, betaT, mu0, mu1, V0, V1, sigmasq, numSims, 
   typeT, type01, seed = 123)
 
 # seqmed posterior probabilities
@@ -273,30 +276,7 @@ for(k in 1:numSims){
     post.probs = bh.temp$post.probs
   )
 }
-# then calculate, like seqmeds -- this is done in batches, even though it's
-#   fully sequential, only for convenience!!!!!!!!!!!!!!! ######################
-# checking whether the posterior probabilities match,
-# #   using calcExpPostProbH -- they do!
-# postprobs0seq = matrix(NA, numSeq, numSims)
-# postprobs1seq = matrix(NA, numSeq, numSims)
-# BF01seq = matrix(NA, numSeq, numSims)
-# for(k in 1:numSims){
-#   bh_data_k = bhs.format[[k]]
-#   for(i in 1:numSeq){
-#     changing_postprobs = calcExpPostProbH_data(
-#       bh_data_k$y[1:(seqN * i)], bh_data_k$D[1:(seqN * i)], 
-#       N = seqN * i, mu0, V0, mu1, V1, sigmasq, type01)
-#     postprobs0seq[i, k] = changing_postprobs[1]
-#     postprobs1seq[i, k] = changing_postprobs[2]
-#     BF01seq[i, k] = changing_postprobs[3]
-#   }
-# }
-# # get expected value (average)
-# epph0seq_bh = apply(postprobs0seq, 1, mean)
-# epph1seq_bh = apply(postprobs1seq, 1, mean)
-# BF01seq_bh = apply(BF01seq, 1, mean)
 
-# plot 2
 postprobs0seq = matrix(NA, N, numSims)
 postprobs1seq = matrix(NA, N, numSims)
 BF01seq = matrix(NA, N, numSims)
@@ -363,7 +343,7 @@ ggplot(ggdata0.m2, aes(x = x, y = epph, color = Design, linetype = Design)) +
   scale_linetype_manual(values=c("solid", "dashed", "dashed", "solid", "dashed")) +
   geom_point(data = ggdata0.m2[x == numSeq], aes(x = x, y = epph)) + 
   theme_bw() + 
-  scale_x_continuous(breaks = 1:10) +
+  scale_x_continuous(breaks = c(0, 25, 50, 75, 100)) +
   theme(panel.grid.minor = element_blank(), axis.text.x = element_text(size = 5)) + 
   labs(y = "", x = "Stages") + 
   ylim(0, 1) + 
@@ -384,7 +364,6 @@ ggplot(ggdata0.m2, aes(x = x, y = epph, color = Design, linetype = Design)) +
 ################################################################################
 # plot the MSE of beta-hat (posterior mean) of the hypotheses
 ################################################################################
-sim.idx = 1
 
 MSEbetahat_doptlin = getClosedMSE(
   dopt_linear, N, betaT, mu1, V1, sigmasq, typeT)$MSE_postmean
@@ -393,9 +372,9 @@ MSEbetahat_doptquad = getClosedMSE(
 MSEbetahat_space = getClosedMSE(
   space_filling, N, betaT, mu1, V1, sigmasq, typeT)$MSE_postmean
 MSEbetahat_seqmed = getClosedMSE(
-  seqmeds[[sim.idx]]$D, N, betaT, mu1, V1, sigmasq, typeT)$MSE_postmean
+  seqmeds[[which.sim]]$D, N, betaT, mu1, V1, sigmasq, typeT)$MSE_postmean
 MSEbetahat_bh = getClosedMSE(
-  bhs.format[[sim.idx]]$D, N, betaT, mu1, V1, sigmasq, typeT)$MSE_postmean
+  bhs.format[[which.sim]]$D, N, betaT, mu1, V1, sigmasq, typeT)$MSE_postmean
 
 b0 = c(MSEbetahat_doptlin[1], MSEbetahat_doptquad[1], MSEbetahat_space[1], 
        MSEbetahat_seqmed[1], MSEbetahat_bh[1])
@@ -428,7 +407,6 @@ mseb.plt
 ################################################################################
 # plot the MSE of y-hat (posterior mean) of the hypotheses
 ################################################################################
-sim.idx = 1
 x_seq2 = seq(from = -1.25, to = 1.25, length.out = 1e4)
 
 yhatmse_space = getClosedMSEyhat_seq(
@@ -438,9 +416,9 @@ yhatmse_doptquad = getClosedMSEyhat_seq(
 yhatmse_doptlin = getClosedMSEyhat_seq(
   x_seq2, dopt_linear, N, betaT, typeT, mu1, V1, sigmasq, type01[2])
 yhatmse_seqmed = getClosedMSEyhat_seq(
-  x_seq2, seqmeds[[1]]$D, N, betaT, typeT, mu1, V1, sigmasq, type01[2])
+  x_seq2, seqmeds[[which.sim]]$D, N, betaT, typeT, mu1, V1, sigmasq, type01[2])
 yhatmse_bh = getClosedMSEyhat_seq(
-  x_seq2, bhs.format[[1]]$D, N, betaT, typeT, mu1, V1, sigmasq, type01[2])
+  x_seq2, bhs.format[[which.sim]]$D, N, betaT, typeT, mu1, V1, sigmasq, type01[2])
 
 ylimarg = range(
   0, yhatmse_space$MSEyhat, yhatmse_doptquad$MSEyhat, yhatmse_seqmed$MSEyhat, 
@@ -502,17 +480,18 @@ fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2 + betaT[4] * x^3
 typeT = 4
 
 # import the simulations
-seqmeds = readRDS(paste0(output_home, "/scenario2_seqmed_simulations", 
-                         "_numSeq", numSeq, 
-                         "_seqN", seqN,
-                         "_numSims", numSims,
-                         ".rds", sep = ""))
-bhs = readRDS(paste0(output_home, "/scenario2_boxhill_simulations", 
-                     "_N", N, 
-                     "_MMEDinput", as.numeric(MMEDinputdata),
+seqmed_file = paste0(output_home, "/seqmed/scenario2_seqmed_simulations", 
+                     "_numSeq", numSeq, 
+                     "_seqN", seqN,
                      "_numSims", numSims, 
-                     ".rds", sep = ""))
-# bhs = bhs$bh_list
+                     ".rds")
+bh_file = paste0(output_home, "/boxhill/scenario2_boxhill_simulations", 
+                 "_N", N, 
+                 "_MMEDinput", as.numeric(MMEDinputdata),
+                 "_numSims", numSims, 
+                 ".rds")
+seqmeds = readRDS(seqmed_file)
+bhs = readRDS(bh_file)
 
 if(MMEDinputdata){
   # check if preliminary data are the same
@@ -535,7 +514,7 @@ if(MMEDinputdata){
 ################################################################################
 # plot the designs
 ################################################################################
-which.sim = 2
+which.sim = 25
 
 # plot a seqmed
 seqmed1 = seqmeds[[which.sim]]
@@ -573,16 +552,22 @@ for(k in 1:numSeq){
 }
 
 seqmed1.postmean2.1 = postmean(seqmed1$y, seqmed1$D, N,
-                                   c(0, 0, 0, 0), diag(rep(sigmasq01, 4)), sigmasq, 4)
-fTest = function(x) seqmed1.postmean2[1, numSeq] + 
-  seqmed1.postmean2[2, numSeq] * x + 
-  seqmed1.postmean2[3, numSeq] * x^2 + 
-  seqmed1.postmean2[4, numSeq] * x^3
-f2est = function(x) seqmed1$postmean1[1, numSeq] + 
-  seqmed1$postmean1[2, numSeq] * x + 
-  seqmed1$postmean1[3, numSeq] * x^2
-f1est = function(x) seqmed1$postmean0[1, numSeq] + 
-  seqmed1$postmean0[2, seqN] * x
+                               c(0, 0, 0, 0), diag(rep(sigmasq01, 4)), sigmasq, 4)
+fTest = function(x){
+  seqmed1.postmean2[1, numSeq] + 
+    seqmed1.postmean2[2, numSeq] * x + 
+    seqmed1.postmean2[3, numSeq] * x^2 + 
+    seqmed1.postmean2[4, numSeq] * x^3
+}
+f2est = function(x){
+  seqmed1$postmean1[1, numSeq] + 
+    seqmed1$postmean1[2, numSeq] * x + 
+    seqmed1$postmean1[3, numSeq] * x^2
+}
+f1est = function(x){
+  seqmed1$postmean0[1, numSeq] + 
+    seqmed1$postmean0[2, numSeq] * x
+}
 
 f1est_seq = sapply(x_seq, f1est)
 f2est_seq = sapply(x_seq, f2est)
@@ -631,11 +616,11 @@ models = list("H0" = list(mu0, V0, 2),
 
 # non-sequential methods
 epphs_space = calcEPPH(
-  space_filling, N, betaT, typeT, models, sigmasq, numSims = 100, seed = 123)
+  space_filling, N, betaT, typeT, models, sigmasq, numSims, seed = 123)
 epphs_dopt1 = calcEPPH(
-  dopt_linear,  N, betaT, typeT, models, sigmasq, numSims = 100, seed = 123)
+  dopt_linear,  N, betaT, typeT, models, sigmasq, numSims, seed = 123)
 epphs_dopt2 = calcEPPH(
-  dopt_quadratic, N, betaT, typeT, models, sigmasq, numSims = 100, seed = 123)
+  dopt_quadratic, N, betaT, typeT, models, sigmasq, numSims, seed = 123)
 
 numModels = length(models)
 
@@ -661,18 +646,6 @@ for(k in 1:numSims){
     post.probs = bh.temp$post.probs
   )
 }
-pphs_bh = array(NA, dim = c(numModels, numSeq, numSims))
-for(k in 1:numSims){
-  bh_data_k = bhs.format[[k]]
-  for(i in 1:numSeq){
-    pphs_bh[ , i, k] = calcEPPHdata(bh_data_k$y[1:(seqN * i)], 
-                                    bh_data_k$D[1:(seqN * i)], 
-                                    N = seqN * i, models, sigmasq)
-  }
-}
-epphs_bh = apply(pphs_bh, c(1,2), mean)
-
-# plot
 pphs_bh = array(NA, dim = c(numModels, N, numSims))
 for(k in 1:numSims){
   bh_data_k = bhs.format[[k]]
@@ -682,7 +655,9 @@ for(k in 1:numSims){
                                     N = i, models, sigmasq)
   }
 }
-epphs_bh2 = apply(pphs_bh, c(1,2), mean)
+epphs_bh = apply(pphs_bh, c(1,2), mean)
+
+# plot
 ggdata00 = data.table(
   x = 1:numSeq, 
   Dlinear = rep(epphs_dopt1[1], numSeq), 
@@ -694,7 +669,7 @@ ggdata00 = data.table(
 )
 ggdata01 = data.table(
   x = seq(1, numSeq, length.out = N), 
-  BoxHill = epphs_bh2[ 1, ], 
+  BoxHill = epphs_bh[ 1, ], 
   Hypothesis = rep("H0", N), 
   key = "x"
 )
@@ -709,22 +684,22 @@ ggdata10 = data.table(
 )
 ggdata11 = data.table(
   x = seq(1, numSeq, length.out = N), 
-  BoxHill = epphs_bh2[ 2, ], 
+  BoxHill = epphs_bh[ 2, ], 
   Hypothesis = rep("H1", N), 
   key = c("x")
 )
 ggdataT0 = data.table(
   x = 1:numSeq, 
-  Dlinear = rep(epphs_dopt1[2], numSeq), 
-  Dquadratic = rep(epphs_dopt2[2], numSeq), 
-  SpaceFill = rep(epphs_space[2], numSeq), 
+  Dlinear = rep(epphs_dopt1[3], numSeq), 
+  Dquadratic = rep(epphs_dopt2[3], numSeq), 
+  SpaceFill = rep(epphs_space[3], numSeq), 
   SeqMED = epphs_seqmed[ 3, ],
   Hypothesis = rep("HT", numSeq), 
   key = "x"
 )
 ggdataT1 = data.table(
   x = seq(1, numSeq, length.out = N), 
-  BoxHill = epphs_bh2[ 3, ], 
+  BoxHill = epphs_bh[ 3, ], 
   Hypothesis = rep("HT", N), 
   key = c("x")
 )
@@ -749,7 +724,7 @@ epph.plt = ggplot(ggdata0.m2, aes(x = x, y = epph, color = Design, linetype = De
   geom_path() + 
   scale_linetype_manual(values=c("solid", "dashed", "dashed", "solid", "dashed")) +
   geom_point(data = ggdata0.m2[x == numSeq], aes(x = x, y = epph)) + 
-  scale_x_continuous(breaks = 1:10) +
+  scale_x_continuous(breaks = c(0, 25, 50, 75, 100)) +
   theme_bw() + 
   theme(panel.grid.minor = element_blank(), axis.text.x = element_text(size = 5)) + 
   labs(y = "", x = "Stages") + 
@@ -773,7 +748,6 @@ epph.plt
 # plot the MSE of beta-hat (posterior mean) of the hypotheses
 ################################################################################
 # given H2
-sim.idx = 1
 
 # define new priors
 mu2 = rep(0, 4)
@@ -786,9 +760,9 @@ MSEbetahat_doptquad = getClosedMSE(
 MSEbetahat_space = getClosedMSE(
   space_filling, N, betaT, mu2, V2, sigmasq, typeT)$MSE_postmean
 MSEbetahat_seqmed = getClosedMSE(
-  seqmeds[[sim.idx]]$D, N, betaT, mu2, V2, sigmasq, typeT)$MSE_postmean
+  seqmeds[[which.sim]]$D, N, betaT, mu2, V2, sigmasq, typeT)$MSE_postmean
 MSEbetahat_bh = getClosedMSE(
-  bhs.format[[sim.idx]]$D, N, betaT, mu2, V2, sigmasq, typeT)$MSE_postmean
+  bhs.format[[which.sim]]$D, N, betaT, mu2, V2, sigmasq, typeT)$MSE_postmean
 
 b0 = c(MSEbetahat_doptlin[1], MSEbetahat_doptquad[1], MSEbetahat_space[1], 
        MSEbetahat_seqmed[1], MSEbetahat_bh[1])
@@ -823,9 +797,7 @@ mseb.plt
 ################################################################################
 # plot the MSE of y-hat (posterior mean) of the hypotheses
 ################################################################################
-
 # given H2
-sim.idx = 1
 x_seq2 = seq(from = -1.25, to = 1.25, length.out = 1e4)
 
 # define new priors
@@ -839,9 +811,9 @@ yhatmse_doptquad = getClosedMSEyhat_seq(
 yhatmse_doptlin = getClosedMSEyhat_seq(
   x_seq2, dopt_linear, N, betaT, typeT, mu2, V2, sigmasq, typeT)
 yhatmse_seqmed = getClosedMSEyhat_seq(
-  x_seq2, seqmeds[[sim.idx]]$D, N, betaT, typeT, mu2, V2, sigmasq, typeT)
+  x_seq2, seqmeds[[which.sim]]$D, N, betaT, typeT, mu2, V2, sigmasq, typeT)
 yhatmse_bh = getClosedMSEyhat_seq(
-  x_seq2, bhs.format[[sim.idx]]$D, N, betaT, typeT, mu2, V2, sigmasq, typeT)
+  x_seq2, bhs.format[[which.sim]]$D, N, betaT, typeT, mu2, V2, sigmasq, typeT)
 
 ylimarg = range(
   0, yhatmse_space$MSEyhat, yhatmse_doptquad$MSEyhat, yhatmse_seqmed$MSEyhat, 

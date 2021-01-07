@@ -159,26 +159,6 @@ which.sim = 25
 
 # plot a seqmed
 seqmed1 = seqmeds[[which.sim]]
-ggdata = data.frame(x = seqmed1$D, y = seqmed1$y)
-design.seqmed = ggplot(ggdata) + 
-  geom_histogram(binwidth = 0.12, closed = "right", aes(x =x, y = after_stat(density))) +
-  theme_bw() +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-data.seqmed = ggplot(ggdata) + 
-  geom_point(aes(x, y), color = gg_color_hue(1)) +
-  stat_function(fun = fT) + 
-  theme_bw() + 
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-ggarrange(design.seqmed, data.seqmed)
-# ggsave("seqmed_d2.pdf",
-#        plot = last_plot(),
-#        device = "pdf",
-#        path = image_path,
-#        scale = 1,
-#        width = 4.5,
-#        height = 2,
-#        units = c("in")
-# )
 
 ################################################################################
 # plot the wasserstein distance and model fits
@@ -198,38 +178,6 @@ f1est_seq = sapply(x_seq, f1est)
 f2est_seq = sapply(x_seq, f2est)
 fT_seq = sapply(x_seq, fT)
 
-ggdata = data.table::data.table(
-  x = x_seq,
-  `Estimated Quadratic` = f1est_seq,
-  `Estimated Line` = f2est_seq,
-  `True Quadratic` = fT_seq,
-  `Wasserstein` = w_seq
-)
-ggdata = data.table::melt(ggdata, id = c("x"), value.name = "y", variable.name = "Function")
-
-ggdata_ribbon = data.table::data.table(
-  x = x_seq,
-  ymin = apply(cbind(f1est_seq, f2est_seq), 1, min),
-  ymax = apply(cbind(f1est_seq, f2est_seq), 1, max)
-)
-ggplot(ggdata, aes(x = x, y = y, color = Function, linetype = Function)) +
-  scale_linetype_manual(values = c(2, 2, 1, 1)) +
-  scale_color_manual(values = c(gg_color_hue(3)[c(1, 3)], "black", gg_color_hue(3)[2])) +
-  geom_path() +
-  geom_ribbon(data = ggdata_ribbon, mapping = aes(x = x, ymin = ymin, ymax = ymax), alpha = 0.2,
-              inherit.aes = FALSE) +
-  theme_bw() +
-  theme(panel.grid.minor = element_blank())
-# ggsave("w_d2.pdf",
-#        plot = last_plot(),
-#        device = "pdf",
-#        path = image_path,
-#        scale = 1,
-#        width = 4.5,
-#        height = 2,
-#        units = c("in")
-# )
-
 ################################################################################
 # plot the posterior probabilities of the hypotheses
 ################################################################################
@@ -239,13 +187,28 @@ ggplot(ggdata, aes(x = x, y = y, color = Function, linetype = Function)) +
 # for the non-sequential methods;
 epphs_space = calcExpPostProbH(
   space_filling, N, betaT, mu0, mu1, V0, V1, sigmasq, numSims, 
-  typeT, type01, seed = 123)
+  typeT, type01, seed = 123, saveSims = T)
 epphs_dopt1 = calcExpPostProbH(
   dopt_linear, N, betaT, mu0, mu1, V0, V1, sigmasq, numSims, 
-  typeT, type01, seed = 123)
+  typeT, type01, seed = 123, saveSims = T)
 epphs_dopt2 = calcExpPostProbH(
   dopt_quadratic, N, betaT, mu0, mu1, V0, V1, sigmasq, numSims, 
-  typeT, type01, seed = 123)
+  typeT, type01, seed = 123, saveSims = T)
+# save H0sims and H1sims
+epphsH0sims = as.data.frame(
+  cbind(
+    SpaceFill = epphs_space$H0sims, 
+    Dlinear = epphs_dopt1$H0sims, 
+    Dquadratic = epphs_dopt2$H0sims
+  )
+)
+epphsH1sims = as.data.frame(
+  cbind(
+    SpaceFill = epphs_space$H1sims, 
+    Dlinear = epphs_dopt1$H1sims, 
+    Dquadratic = epphs_dopt2$H1sims
+  )
+)
 
 # seqmed posterior probabilities
 postprobs0seq = matrix(NA, numSeq, numSims)
@@ -262,6 +225,9 @@ for(k in 1:numSims){
     BF01seq[i, k] = changing_postprobs[3]
   }
 }
+# save H0sims and H1sims (at last stage)
+epphsH0sims$SeqMED = postprobs0seq[numSeq, ]
+epphsH1sims$SeqMED = postprobs1seq[numSeq, ]
 # get expected value (average)
 epph0seq_seqmed = apply(postprobs0seq, 1, mean)
 epph1seq_seqmed = apply(postprobs1seq, 1, mean)
@@ -293,15 +259,18 @@ for(k in 1:numSims){
     BF01seq[i, k] = changing_postprobs[3]
   }
 }
+# save H0sims and H1sims (at last stage)
+epphsH0sims$BoxHill = postprobs0seq[numSeq, ]
+epphsH1sims$BoxHill = postprobs1seq[numSeq, ]
 # get expected value (average)
 epph0seq_bh2 = apply(postprobs0seq, 1, mean)
 epph1seq_bh2 = apply(postprobs1seq, 1, mean)
 BF01seq_bh2 = apply(BF01seq, 1, mean)
 ggdata00 = data.table(
   x = 1:numSeq, 
-  Dlinear = rep(epphs_dopt1[1], numSeq), 
-  Dquadratic = rep(epphs_dopt2[1], numSeq), 
-  SpaceFill = rep(epphs_space[1], numSeq), 
+  Dlinear = rep(epphs_dopt1[[1]], numSeq), 
+  Dquadratic = rep(epphs_dopt2[[1]], numSeq), 
+  SpaceFill = rep(epphs_space[[1]], numSeq), 
   SeqMED = epph0seq_seqmed,
   Hypothesis = rep("H0", numSeq), 
   key = "x"
@@ -314,9 +283,9 @@ ggdata01 = data.table(
 )
 ggdata10 = data.table(
   x = 1:numSeq, 
-  Dlinear = rep(epphs_dopt1[2], numSeq), 
-  Dquadratic = rep(epphs_dopt2[2], numSeq), 
-  SpaceFill = rep(epphs_space[2], numSeq), 
+  Dlinear = rep(epphs_dopt1[[2]], numSeq), 
+  Dquadratic = rep(epphs_dopt2[[2]], numSeq), 
+  SpaceFill = rep(epphs_space[[2]], numSeq), 
   SeqMED = epph1seq_seqmed,
   Hypothesis = rep("H1", numSeq), 
   key = "x"
@@ -353,104 +322,26 @@ ggplot(ggdata0.m2, aes(x = x, y = epph, color = Design, linetype = Design)) +
                                              linetype = Design), 
             inherit.aes = FALSE) + 
   geom_point(data = ggdata1.m2[x == numSeq], aes(x = x, y = epph))
-# ggsave("epph_d2.pdf",
-#        plot = last_plot(),
-#        device = "pdf",
-#        path = image_path,
-#        scale = 1,
-#        width = 4.5,
-#        height = 2,
-#        units = c("in")
-# )
 
-################################################################################
-# plot the MSE of beta-hat (posterior mean) of the hypotheses
-################################################################################
-
-MSEbetahat_doptlin = getClosedMSE(
-  dopt_linear, N, betaT, mu1, V1, sigmasq, typeT)$MSE_postmean
-MSEbetahat_doptquad = getClosedMSE(
-  dopt_quadratic, N, betaT, mu1, V1, sigmasq, typeT)$MSE_postmean
-MSEbetahat_space = getClosedMSE(
-  space_filling, N, betaT, mu1, V1, sigmasq, typeT)$MSE_postmean
-MSEbetahat_seqmed = getClosedMSE(
-  seqmeds[[which.sim]]$D, N, betaT, mu1, V1, sigmasq, typeT)$MSE_postmean
-MSEbetahat_bh = getClosedMSE(
-  bhs.format[[which.sim]]$D, N, betaT, mu1, V1, sigmasq, typeT)$MSE_postmean
-
-b0 = c(MSEbetahat_doptlin[1], MSEbetahat_doptquad[1], MSEbetahat_space[1], 
-       MSEbetahat_seqmed[1], MSEbetahat_bh[1])
-b1 = c(MSEbetahat_doptlin[2], MSEbetahat_doptquad[2], MSEbetahat_space[2], 
-       MSEbetahat_seqmed[2], MSEbetahat_bh[2])
-b2 = c(MSEbetahat_doptlin[3], MSEbetahat_doptquad[3], MSEbetahat_space[3], 
-       MSEbetahat_seqmed[3], MSEbetahat_bh[3])
-
-ggdata = data.frame(
-  Designs = rep(c("Dlinear", "Dquadratic", "SpaceFill", "SeqMED", "BoxHill"), 3), 
-  MSE = c(b0, b1, b2), beta = rep(c("B0", "B1", "B2"), each = length(b0)))
-mseb.plt = ggplot(ggdata, aes(x = Designs, y = MSE)) + 
-  geom_bar(stat = "identity") +
-  facet_wrap(vars(beta)) +
-  theme_bw() + 
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        axis.text.x = element_text(angle = 45, vjust = 0.5)) +
-  labs(y = NULL)
-mseb.plt
-# ggsave("mseb_d2.pdf",
-#        plot = last_plot(),
-#        device = "pdf",
-#        path = image_path,
-#        scale = 1,
-#        width = 4.5,
-#        height = 2,
-#        units = c("in")
-# )
-
-################################################################################
-# plot the MSE of y-hat (posterior mean) of the hypotheses
-################################################################################
-x_seq2 = seq(from = -1.25, to = 1.25, length.out = 1e4)
-
-yhatmse_space = getClosedMSEyhat_seq(
-  x_seq2, space_filling, N, betaT, typeT, mu1, V1, sigmasq, type01[2])
-yhatmse_doptquad = getClosedMSEyhat_seq(
-  x_seq2, dopt_quadratic, N, betaT, typeT, mu1, V1, sigmasq, type01[2])
-yhatmse_doptlin = getClosedMSEyhat_seq(
-  x_seq2, dopt_linear, N, betaT, typeT, mu1, V1, sigmasq, type01[2])
-yhatmse_seqmed = getClosedMSEyhat_seq(
-  x_seq2, seqmeds[[which.sim]]$D, N, betaT, typeT, mu1, V1, sigmasq, type01[2])
-yhatmse_bh = getClosedMSEyhat_seq(
-  x_seq2, bhs.format[[which.sim]]$D, N, betaT, typeT, mu1, V1, sigmasq, type01[2])
-
-ylimarg = range(
-  0, yhatmse_space$MSEyhat, yhatmse_doptquad$MSEyhat, yhatmse_seqmed$MSEyhat, 
-  yhatmse_bh$MSEyhat)
-
-ggdata = data.table(
-  x = x_seq2, 
-  Dlinear = yhatmse_doptlin$MSEyhat, 
-  Dquadratic = yhatmse_doptquad$MSEyhat, 
-  SpaceFill = yhatmse_space$MSEyhat, 
-  SeqMED = yhatmse_seqmed$MSEyhat,
-  BoxHill = yhatmse_bh$MSEyhat
+# calculate standard errors
+dim(epphsH0sims)
+dim(epphsH1sims)
+H0stats = data.frame(
+  mean = apply(epphsH0sims, MARGIN = 2, FUN = mean),
+  sd = apply(epphsH0sims, MARGIN = 2, FUN = sd),
+  se = apply(epphsH0sims, MARGIN = 2, FUN = sd) / numSims
 )
-ggdata = melt(ggdata, id = c("x"), value.name = "yhatmse", variable.name = "Design")
-msey.plt = ggplot(ggdata, aes(x = x, y = yhatmse, color = Design)) +
-  coord_cartesian(ylim = ylimarg, xlim = c(-1, 1)) +
-  geom_path() + 
-  theme_bw() +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
-  labs(y = "", x = "x")
-msey.plt
-# ggsave("msey_d2.pdf",
-#        plot = last_plot(),
-#        device = "pdf",
-#        path = image_path,
-#        scale = 1,
-#        width = 4.5,
-#        height = 2,
-#        units = c("in")
-# )
+H0stats$lower = H0stats$mean - 2 * H0stats$se
+H0stats$upper = H0stats$mean + 2 * H0stats$se
+round(H0stats, 5)
+H1stats = data.frame(
+  mean = apply(epphsH1sims, MARGIN = 2, FUN = mean),
+  sd = apply(epphsH1sims, MARGIN = 2, FUN = sd),
+  se = apply(epphsH1sims, MARGIN = 2, FUN = sd) / numSims
+)
+H1stats$lower = H1stats$mean - 2 * H1stats$se
+H1stats$upper = H1stats$mean + 2 * H1stats$se
+round(H1stats, 5)
 
 #
 ##
@@ -520,26 +411,6 @@ which.sim = 25
 
 # plot a seqmed
 seqmed1 = seqmeds[[which.sim]]
-ggdata = data.frame(x = seqmed1$D, y = seqmed1$y)
-design.seqmed = ggplot(ggdata) + 
-  geom_histogram(binwidth = 0.12, closed = "right", aes(x =x, y = after_stat(density))) + 
-  theme_bw() + 
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-data.seqmed = ggplot(ggdata) + 
-  geom_point(aes(x, y), color = gg_color_hue(1)) +
-  stat_function(fun = fT) + 
-  theme_bw() + 
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-ggarrange(design.seqmed, data.seqmed)
-# ggsave("seqmed_d3.pdf",
-#        plot = last_plot(),
-#        device = "pdf",
-#        path = image_path,
-#        scale = 1,
-#        width = 4.5,
-#        height = 2,
-#        units = c("in")
-# )
 
 ################################################################################
 # plot the fits
@@ -576,36 +447,6 @@ f2est_seq = sapply(x_seq, f2est)
 fTest_seq = sapply(x_seq, fTest)
 fT_seq = sapply(x_seq, fT)
 
-ggdata_est = data.table::data.table(
-  x = x_seq, 
-  `Est Line` = f1est_seq, 
-  `Est Quadratic` = f2est_seq, 
-  `Est Cubic` = fTest_seq
-)
-ggdata_est = data.table::melt(ggdata_est, id = c("x"), value.name = "y", variable.name = "Function")
-
-ggdata_true = data.table::data.table(x = x_seq, y = fT_seq)
-
-yrange = range(seqmed1$y)
-ggplot(ggdata_est) + 
-  facet_wrap(facets = vars(Function)) +
-  geom_path(aes(x = x, y = y, color = Function)) + 
-  geom_path(data = ggdata_true, aes(x, y, color = "True Cubic")) + 
-  scale_color_manual(values = c(gg_color_hue(3), "black")) +
-  ylim(range(seqmed1$y)) +
-  theme_bw() + 
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        axis.text.x = element_text(size = 5))
-# ggsave("fits_d3.pdf",
-#        plot = last_plot(),
-#        device = "pdf",
-#        path = image_path,
-#        scale = 1,
-#        width = 4.5,
-#        height = 1.5,
-#        units = c("in")
-# )
-
 ################################################################################
 # plot the posterior probabilities of the hypotheses
 ################################################################################
@@ -615,17 +456,37 @@ ggplot(ggdata_est) +
 models = list("H0" = list(mu0, V0, 2),
               "H1" = list(mu1, V1, 3),
               "H2" = list(betaT, diag(rep(sigmasq01, 4)), 4))
+numModels = length(models)
 
 # non-sequential methods
 epphs_space = calcEPPH(
-  space_filling, N, betaT, typeT, models, sigmasq, numSims, seed = 123)
+  space_filling, N, betaT, typeT, models, sigmasq, numSims, seed = 123, saveSims = TRUE)
 epphs_dopt1 = calcEPPH(
-  dopt_linear,  N, betaT, typeT, models, sigmasq, numSims, seed = 123)
+  dopt_linear,  N, betaT, typeT, models, sigmasq, numSims, seed = 123, saveSims = TRUE)
 epphs_dopt2 = calcEPPH(
-  dopt_quadratic, N, betaT, typeT, models, sigmasq, numSims, seed = 123)
-
-numModels = length(models)
-
+  dopt_quadratic, N, betaT, typeT, models, sigmasq, numSims, seed = 123, saveSims = TRUE)
+# save H0sims and H1sims
+epphsH0sims = as.data.frame(
+  cbind(
+    SpaceFill = epphs_space$sims[1, ], 
+    Dlinear = epphs_dopt1$sims[1, ], 
+    Dquadratic = epphs_dopt2$sims[1, ]
+  )
+)
+epphsH1sims = as.data.frame(
+  cbind(
+    SpaceFill = epphs_space$sims[2, ], 
+    Dlinear = epphs_dopt1$sims[2, ], 
+    Dquadratic = epphs_dopt2$sims[2, ]
+  )
+)
+epphsHTsims = as.data.frame(
+  cbind(
+    SpaceFill = epphs_space$sims[3, ], 
+    Dlinear = epphs_dopt1$sims[3, ], 
+    Dquadratic = epphs_dopt2$sims[3, ]
+  )
+)
 # seqmed
 pphs_seqmed= array(NA, dim = c(numModels, numSeq, numSims))
 for(k in 1:numSims){
@@ -636,6 +497,11 @@ for(k in 1:numSims){
                                         N = seqN * i, models, sigmasq)
   }
 }
+# save H0sims and H1sims (at last stage)
+epphsH0sims$SeqMED = pphs_seqmed[1, numSeq, ]
+epphsH1sims$SeqMED = pphs_seqmed[2, numSeq, ]
+epphsHTsims$SeqMED = pphs_seqmed[3, numSeq, ]
+# get expected value (average)
 epphs_seqmed = apply(pphs_seqmed, c(1,2), mean)
 
 # box-hill
@@ -648,18 +514,6 @@ for(k in 1:numSims){
     post.probs = bh.temp$post.probs
   )
 }
-pphs_bh = array(NA, dim = c(numModels, numSeq, numSims))
-for(k in 1:numSims){
-  bh_data_k = bhs.format[[k]]
-  for(i in 1:numSeq){
-    pphs_bh[ , i, k] = calcEPPHdata(bh_data_k$y[1:(seqN * i)], 
-                                    bh_data_k$D[1:(seqN * i)], 
-                                    N = seqN * i, models, sigmasq)
-  }
-}
-epphs_bh = apply(pphs_bh, c(1,2), mean)
-
-# plot
 pphs_bh = array(NA, dim = c(numModels, N, numSims))
 for(k in 1:numSims){
   bh_data_k = bhs.format[[k]]
@@ -669,49 +523,56 @@ for(k in 1:numSims){
                                     N = i, models, sigmasq)
   }
 }
-epphs_bh2 = apply(pphs_bh, c(1,2), mean)
+# save H0sims and H1sims (at last stage)
+epphsH0sims$BoxHill = pphs_bh[1, numSeq, ]
+epphsH1sims$BoxHill = pphs_bh[2, numSeq, ]
+epphsHTsims$BoxHill = pphs_bh[3, numSeq, ]
+# get expected value (average)
+epphs_bh = apply(pphs_bh, c(1,2), mean)
+
+# plot
 ggdata00 = data.table(
   x = 1:numSeq, 
-  Dlinear = rep(epphs_dopt1[1], numSeq), 
-  Dquadratic = rep(epphs_dopt2[1], numSeq), 
-  SpaceFill = rep(epphs_space[1], numSeq), 
+  Dlinear = rep(epphs_dopt1[[1]][1], numSeq), 
+  Dquadratic = rep(epphs_dopt2[[1]][1], numSeq), 
+  SpaceFill = rep(epphs_space[[1]][1], numSeq), 
   SeqMED = epphs_seqmed[ 1, ], 
   Hypothesis = rep("H0", numSeq), 
   key = "x"
 )
 ggdata01 = data.table(
   x = seq(1, numSeq, length.out = N), 
-  BoxHill = epphs_bh2[ 1, ], 
+  BoxHill = epphs_bh[ 1, ], 
   Hypothesis = rep("H0", N), 
   key = "x"
 )
 ggdata10 = data.table(
   x = 1:numSeq, 
-  Dlinear = rep(epphs_dopt1[2], numSeq), 
-  Dquadratic = rep(epphs_dopt2[2], numSeq), 
-  SpaceFill = rep(epphs_space[2], numSeq), 
+  Dlinear = rep(epphs_dopt1[[1]][2], numSeq), 
+  Dquadratic = rep(epphs_dopt2[[1]][2], numSeq), 
+  SpaceFill = rep(epphs_space[[1]][2], numSeq), 
   SeqMED = epphs_seqmed[ 2, ],
   Hypothesis = rep("H1", numSeq), 
   key = "x"
 )
 ggdata11 = data.table(
   x = seq(1, numSeq, length.out = N), 
-  BoxHill = epphs_bh2[ 2, ], 
+  BoxHill = epphs_bh[ 2, ], 
   Hypothesis = rep("H1", N), 
   key = c("x")
 )
 ggdataT0 = data.table(
   x = 1:numSeq, 
-  Dlinear = rep(epphs_dopt1[3], numSeq), 
-  Dquadratic = rep(epphs_dopt2[3], numSeq), 
-  SpaceFill = rep(epphs_space[3], numSeq), 
+  Dlinear = rep(epphs_dopt1[[1]][3], numSeq), 
+  Dquadratic = rep(epphs_dopt2[[1]][3], numSeq), 
+  SpaceFill = rep(epphs_space[[1]][3], numSeq), 
   SeqMED = epphs_seqmed[ 3, ],
   Hypothesis = rep("HT", numSeq), 
   key = "x"
 )
 ggdataT1 = data.table(
   x = seq(1, numSeq, length.out = N), 
-  BoxHill = epphs_bh2[ 3, ], 
+  BoxHill = epphs_bh[ 3, ], 
   Hypothesis = rep("HT", N), 
   key = c("x")
 )
@@ -746,114 +607,32 @@ epph.plt = ggplot(ggdata0.m2, aes(x = x, y = epph, color = Design, linetype = De
             inherit.aes = FALSE) + 
   geom_point(data = ggdata1.m2[x == numSeq], aes(x = x, y = epph))
 epph.plt
-# ggsave("epph_d3.pdf",
-#        plot = last_plot(),
-#        device = "pdf",
-#        path = image_path,
-#        scale = 1,
-#        width = 4.5,
-#        height = 2,
-#        units = c("in")
-# )
 
-################################################################################
-# plot the MSE of beta-hat (posterior mean) of the hypotheses
-################################################################################
-# given H2
-
-# define new priors
-mu2 = rep(0, 4)
-V2 = diag(rep(sigmasq01, length(mu2)))
-
-MSEbetahat_doptlin = getClosedMSE(
-  dopt_linear, N, betaT, mu2, V2, sigmasq, typeT)$MSE_postmean
-MSEbetahat_doptquad = getClosedMSE(
-  dopt_quadratic, N, betaT, mu2, V2, sigmasq, typeT)$MSE_postmean
-MSEbetahat_space = getClosedMSE(
-  space_filling, N, betaT, mu2, V2, sigmasq, typeT)$MSE_postmean
-MSEbetahat_seqmed = getClosedMSE(
-  seqmeds[[which.sim]]$D, N, betaT, mu2, V2, sigmasq, typeT)$MSE_postmean
-MSEbetahat_bh = getClosedMSE(
-  bhs.format[[which.sim]]$D, N, betaT, mu2, V2, sigmasq, typeT)$MSE_postmean
-
-b0 = c(MSEbetahat_doptlin[1], MSEbetahat_doptquad[1], MSEbetahat_space[1], 
-       MSEbetahat_seqmed[1], MSEbetahat_bh[1])
-b1 = c(MSEbetahat_doptlin[2], MSEbetahat_doptquad[2], MSEbetahat_space[2], 
-       MSEbetahat_seqmed[2], MSEbetahat_bh[2])
-b2 = c(MSEbetahat_doptlin[3], MSEbetahat_doptquad[3], MSEbetahat_space[3], 
-       MSEbetahat_seqmed[3], MSEbetahat_bh[3])
-b3 = c(MSEbetahat_doptlin[4], MSEbetahat_doptquad[4], MSEbetahat_space[4], 
-       MSEbetahat_seqmed[4], MSEbetahat_bh[4])
-
-ggdata = data.frame(
-  Designs = rep(c("Dlinear", "Dquadratic", "SpaceFill", "SeqMED", "BoxHill"), 4), 
-  MSE = c(b0, b1, b2, b3), beta = rep(c("B0", "B1", "B2", "B3"), each = length(b0)))
-mseb.plt = ggplot(ggdata, aes(x = Designs, y = MSE)) + 
-  geom_bar(stat = "identity") +
-  facet_wrap(vars(beta)) +
-  theme_bw() + 
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        axis.text.x = element_text(angle = 45, vjust = 0.5)) +
-  labs(y = NULL)
-mseb.plt
-# ggsave("mseb_d3.pdf",
-#        plot = last_plot(),
-#        device = "pdf",
-#        path = image_path,
-#        scale = 1,
-#        width = 4.5,
-#        height = 3,
-#        units = c("in")
-# )
-
-################################################################################
-# plot the MSE of y-hat (posterior mean) of the hypotheses
-################################################################################
-# given H2
-x_seq2 = seq(from = -1.25, to = 1.25, length.out = 1e4)
-
-# define new priors
-mu2 = rep(0, 4)
-V2 = diag(rep(sigmasq01, length(mu2)))
-
-yhatmse_space = getClosedMSEyhat_seq(
-  x_seq2, space_filling, N, betaT, typeT, mu2, V2, sigmasq, typeT)
-yhatmse_doptquad = getClosedMSEyhat_seq(
-  x_seq2, dopt_quadratic, N, betaT, typeT, mu2, V2, sigmasq, typeT)
-yhatmse_doptlin = getClosedMSEyhat_seq(
-  x_seq2, dopt_linear, N, betaT, typeT, mu2, V2, sigmasq, typeT)
-yhatmse_seqmed = getClosedMSEyhat_seq(
-  x_seq2, seqmeds[[which.sim]]$D, N, betaT, typeT, mu2, V2, sigmasq, typeT)
-yhatmse_bh = getClosedMSEyhat_seq(
-  x_seq2, bhs.format[[which.sim]]$D, N, betaT, typeT, mu2, V2, sigmasq, typeT)
-
-ylimarg = range(
-  0, yhatmse_space$MSEyhat, yhatmse_doptquad$MSEyhat, yhatmse_seqmed$MSEyhat, 
-  yhatmse_bh$MSEyhat)
-ylimarg = c(0, 0.12)
-
-ggdata = data.table(
-  x = x_seq2, 
-  Dlinear = yhatmse_doptlin$MSEyhat, 
-  Dquadratic = yhatmse_doptquad$MSEyhat, 
-  SpaceFill = yhatmse_space$MSEyhat, 
-  SeqMED = yhatmse_seqmed$MSEyhat, 
-  BoxHill = yhatmse_bh$MSEyhat
+# calculate standard errors
+dim(epphsH0sims)
+dim(epphsH1sims)
+dim(epphsHTsims)
+H0stats = data.frame(
+  mean = apply(epphsH0sims, MARGIN = 2, FUN = mean),
+  sd = apply(epphsH0sims, MARGIN = 2, FUN = sd),
+  se = apply(epphsH0sims, MARGIN = 2, FUN = sd) / numSims
 )
-ggdata = melt(ggdata, id = c("x"), value.name = "yhatmse", variable.name = "Design")
-msey.plt = ggplot(ggdata, aes(x = x, y = yhatmse, color = Design)) +
-  coord_cartesian(ylim = ylimarg, xlim = c(-1, 1)) +
-  geom_path() + 
-  theme_bw() +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
-  labs(y = "", x = "x")
-msey.plt
-# ggsave("msey_d3.pdf",
-#        plot = last_plot(),
-#        device = "pdf",
-#        path = image_path,
-#        scale = 1,
-#        width = 4.5,
-#        height = 2,
-#        units = c("in")
-# )
+H0stats$lower = H0stats$mean - 2 * H0stats$se
+H0stats$upper = H0stats$mean + 2 * H0stats$se
+round(H0stats, 5)
+H1stats = data.frame(
+  mean = apply(epphsH1sims, MARGIN = 2, FUN = mean),
+  sd = apply(epphsH1sims, MARGIN = 2, FUN = sd),
+  se = apply(epphsH1sims, MARGIN = 2, FUN = sd) / numSims
+)
+H1stats$lower = H1stats$mean - 2 * H1stats$se
+H1stats$upper = H1stats$mean + 2 * H1stats$se
+round(H1stats, 5)
+HTstats = data.frame(
+  mean = apply(epphsHTsims, MARGIN = 2, FUN = mean),
+  sd = apply(epphsHTsims, MARGIN = 2, FUN = sd),
+  se = apply(epphsHTsims, MARGIN = 2, FUN = sd) / numSims
+)
+HTstats$lower = HTstats$mean - 2 * HTstats$se
+HTstats$upper = HTstats$mean + 2 * HTstats$se
+round(HTstats, 5)

@@ -40,11 +40,11 @@ library(knitr)
 ################################################################################
 
 # simulations settings
-numSims = 25
+numSims = 100
 
 # simulation settings
-numSeq = 10
-seqN = 10
+numSeq = 100
+seqN = 1
 N = numSeq * seqN
 xmin = -1
 xmax = 1
@@ -93,8 +93,8 @@ for(i in 1:numSims){
     N.new = (numSeq - 1) * seqN
     seqmed.res = SeqMED(
       D1 = NULL, y1 = NULL, true_beta = betaT, true_type = typeT, 
-      mean_beta0 = mu0, mean_beta1 = mu1, var_beta0 = V0, var_beta1 = V1, 
-      var_e = sigmasq, f0 = f0, f1 = f1, type = type01, xmin = xmin, xmax = xmax,
+      beta.mean0 = mu0, beta.mean1 = mu1, beta.var0 = V0, beta.var1 = V1, 
+      error.var = sigmasq, f0 = f0, f1 = f1, type = type01, xmin = xmin, xmax = xmax, 
       candidates = candidates, numSeq = 1, seqN = seqN, seed = 123 + i
     )
     x_input = seqmed.res$D
@@ -108,7 +108,7 @@ for(i in 1:numSims){
   bh_list[[i]] = bh.res
 }
 saveRDS(bh_list, 
-        paste(output_home, "/scenario1_boxhill_simulations", 
+        paste(output_home, "/boxhill/scenario1_boxhill_simulations", 
               "_N", N, 
               "_MMEDinput", as.numeric(MMEDinputdata), 
               "_numSims", numSims, 

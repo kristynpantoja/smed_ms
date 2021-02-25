@@ -43,9 +43,9 @@ image_path = "/home/kristyn/Pictures"
 # --- simulations --- #
 
 # settings: Squared Exponential vs. Matern
-N = 10
-N.new = 40
-numSeq = 5; N_seq = 10
+N = 5
+numSeq = 5; N_seq = 5
+N.new = (numSeq - 1) * N_seq
 xmin = -1
 xmax = 1
 numCandidates = 10^3 + 1

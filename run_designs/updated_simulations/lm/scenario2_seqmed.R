@@ -91,12 +91,13 @@ for(i in 1:numSims){
   print(paste0("starting simulation ", i, " out of ", numSims))
   seqmed_list[[i]] = SeqMED(
     D1 = NULL, y1 = NULL, true_beta = betaT, true_type = typeT, 
-    mean_beta0 = mu0, mean_beta1 = mu1, var_beta0 = V0, var_beta1 = V1, 
-    var_e = sigmasq, f0 = f0, f1 = f1, type = type01, xmin = xmin, xmax = xmax, 
+    beta.mean0 = mu0, beta.mean1 = mu1, beta.var0 = V0, beta.var1 = V1, 
+    error.var = sigmasq, f0 = f0, f1 = f1, type = type01, xmin = xmin, xmax = xmax, 
     candidates = candidates, numSeq = numSeq, seqN = seqN, seed = 123 + i
   )
+  # hist(seqmed_list[[i]]$D)
 }
-saveRDS(seqmed_list, paste(output_home, "/scenario2_seqmed_simulations",
+saveRDS(seqmed_list, paste(output_home, "/seqmed/scenario2_seqmed_simulations",
                            "_numSeq", numSeq,
                            "_seqN", seqN,
                            "_numSims", numSims, 

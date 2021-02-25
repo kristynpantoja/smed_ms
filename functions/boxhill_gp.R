@@ -1,14 +1,5 @@
-# logjointlik = function(x.new, y.new, x.old, y.old, type_arg, l_arg){
-#   Sigma11 = getCov(x.old, x.old, type_arg, l_arg)
-#   Sigma22 = getCov(x.new, x.new, type_arg, l_arg)
-#   Sigma21 = getCov(x.old, x.new, type_arg, l_arg)
-#   joint_var = rbind(cbind(Sigma11, Sigma21), cbind(t(Sigma21), Sigma22))
-#   y = c(y.old, y.new)
-#   return(dmvnorm(y, mean = rep(0, length(y)), sigma = joint_var, log = TRUE))
-# }
-
-# get (joint) evidence
-# should I be using posterior predictive for evidence, instead? ##############################################################################
+# using joint distribution of y | x 
+#   -- should I be using the posterior predictive, instead?
 Evidence_gp = function(y, x, model){
   evidence = dmvnorm(
     y, mean = rep(0, length(y)), 

@@ -1,4 +1,3 @@
-
 constructDesignX = function(D, N, type = NULL){
   if(is.null(type)){ # multidim (multiple linear regression) implementation
     X = D

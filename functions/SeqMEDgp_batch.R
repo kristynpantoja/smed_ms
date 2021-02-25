@@ -6,7 +6,6 @@
 ### MMED GP, one-at-a-time greedy algorithm ###
 ###############################################
 
-# old name: f_min_data_gp
 f_min_gp = function(candidate, D, Kinv0, Kinv1, initD, y, var_e, type, l, p, alpha, buffer){
   result = q_gp(candidate, Kinv0, Kinv1, initD, y, var_e, type, l, p, 
                      alpha, buffer)^k * 
@@ -15,7 +14,6 @@ f_min_gp = function(candidate, D, Kinv0, Kinv1, initD, y, var_e, type, l, p, alp
   return(result)
 }
 
-# old name: add_MED_ms_oneatatime_data_gp, add_MMEDgp_oneatatime
 MMED_gp_batch = function(initD, y, type, l, var_e, N2 = 11, numCandidates = 10^5, k = 4, p = 1, 
                                          xmin = 0, xmax = 1, nugget = NULL, alpha = NULL, buffer = 0, 
                                          genCandidates = 1, candidates = NULL){
@@ -38,23 +36,7 @@ MMED_gp_batch = function(initD, y, type, l, var_e, N2 = 11, numCandidates = 10^5
     Kinv1 = solve(getCov(initD, initD, type[2], l[2]) + diag(rep(nugget, initN)))
   }
   
-  # check for any bad initial points in initD
-  # w_initD = sapply(initD, FUN = function(x) Wasserstein_distance_postpred_gp(x, Kinv0, Kinv1, initD, y, var_e, type, l))
-  # if(length(which(w_initD == 0)) != 0){
-  #   initD = initD[-which(w_initD == 0)]
-  #   y = y[-which(w_initD == 0)]
-  #   w_initD = w_initD[-which(w_initD == 0)]
-  #   if(is.null(nugget)){
-  #     Kinv0 = solve(getCov(initD, initD, type[1], l[1]))
-  #     Kinv1 = solve(getCov(initD, initD, type[2], l[2]))
-  #   } else{
-  #     Kinv0 = solve(getCov(initD, initD, type[1], l[1]) + diag(rep(nugget, length(initD))))
-  #     Kinv1 = solve(getCov(initD, initD, type[2], l[2]) + diag(rep(nugget, length(initD))))
-  #   }
-  # }
-  
   ttlN = initN + N2
-  
   
   # -- Generate Candidate Points -- #
   if(!is.null(candidates)){

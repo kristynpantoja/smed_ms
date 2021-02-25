@@ -45,11 +45,11 @@ library(knitr)
 ################################################################################
 
 # simulations settings
-numSims = 25
+numSims = 500
 
 # simulation settings
-numSeq = 10
-seqN = 10
+numSeq = 100
+seqN = 1
 N = numSeq * seqN
 xmin = -1
 xmax = 1
@@ -101,17 +101,17 @@ fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2
 typeT = 3
 
 # import the simulations
-seqmeds = readRDS(paste0(output_home, "/scenario1_seqmed_simulations", 
+seqmeds = readRDS(paste0(output_home, "/seqmed/scenario1_seqmed_simulations", 
                          "_numSeq", numSeq, 
                          "_seqN", seqN,
                          "_numSims", numSims,
                          ".rds", sep = ""))
-bhs = readRDS(paste0(output_home, "/scenario1_boxhill_simulations", 
+bhs = readRDS(paste0(output_home, "/boxhill/scenario1_boxhill_simulations", 
                      "_N", N, 
                      "_MMEDinput", as.numeric(MMEDinputdata),
                      "_numSims", numSims, 
                      ".rds", sep = ""))
-bhs = bhs$bh_list
+# bhs = bhs$bh_list
 
 if(MMEDinputdata){
   # check if preliminary data are the same

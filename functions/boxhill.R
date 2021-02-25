@@ -7,8 +7,8 @@
 getBetaPosterior = function(
   y, 
   X, 
-  beta_prior_mean, 
-  beta_prior_var, 
+  beta.mean, 
+  beta.var, 
   error.var, 
   diagPrior = TRUE
 ){
@@ -16,21 +16,21 @@ getBetaPosterior = function(
   # X : design matrix
   
   # calculate the posterior variance (a matrix)
-  # beta.var.inv = solve(beta_prior_var)
+  # beta.var.inv = solve(beta.var)
   beta.var.inv = NA
   if(diagPrior == TRUE){
     if(is.null(dim(X)) | (dim(X)[2] == 1)){
-      beta.var.inv = (1 / beta_prior_var)
+      beta.var.inv = (1 / beta.var)
     } else{
-      beta.var.inv = diag(1 / diag(beta_prior_var))
+      beta.var.inv = diag(1 / diag(beta.var))
     }
   } else{
-    beta.var.inv = solve(beta_prior_var)
+    beta.var.inv = solve(beta.var)
   }
   postvar = error.var * solve(crossprod(X) + error.var * beta.var.inv)
   postmean = (1 / error.var) * 
     postvar %*% (t(X) %*% y + error.var * 
-                   solve(beta_prior_var, beta_prior_mean))
+                   solve(beta.var, beta.mean))
   return(list(
     mean = postmean, 
     var = postvar))
@@ -41,13 +41,13 @@ getLMPredictive = function(
   X.n, 
   y, 
   X, 
-  beta_prior_mean, 
-  beta_prior_var, 
+  beta.mean, 
+  beta.var, 
   error.var, 
   diagPrior = TRUE
 ){
   postbeta = getBetaPosterior(
-    y, X, beta_prior_mean, beta_prior_var, error.var, diagPrior = TRUE)
+    y, X, beta.mean, beta.var, error.var, diagPrior = TRUE)
   predmean = X.n %*% postbeta$mean
   predvar = X.n %*% postbeta$var %*% t(X.n) + error.var
   return(list( # posterior predictive
@@ -58,16 +58,16 @@ getLMPredictive = function(
 
 getLMMarginal = function(
   X, 
-  beta_prior_mean, 
-  beta_prior_var, 
+  beta.mean, 
+  beta.var, 
   error.var
 ){
-  marginaly_mean = X %*% beta_prior_mean
+  marginaly_mean = X %*% beta.mean
   if(dim(X)[1] > 1){ # if X is a matrix of inputs
     n = dim(X)[1]
-    marginaly_var = diag(rep(error.var, n)) + (X %*% beta_prior_var %*% t(X))
+    marginaly_var = diag(rep(error.var, n)) + (X %*% beta.var %*% t(X))
   } else{ # if X is a vector for one input
-    marginaly_var = error.var + (X %*% beta_prior_var %*% t(X))
+    marginaly_var = error.var + (X %*% beta.var %*% t(X))
   }
   return(list(
     mean = marginaly_mean, 

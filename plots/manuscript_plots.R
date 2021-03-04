@@ -1006,7 +1006,7 @@ null_mean = rep(0, numx)
 gaussianvsmatern_train4sims = readRDS(
   paste0(
     output_home, 
-    "/gpsims/gaussianvsmatern_train4sims.rds"))
+    "/gp_demo/gaussianvsmatern_train4sims.rds"))
 
 # get sim info
 sim_ind = 1
@@ -1151,19 +1151,19 @@ ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable),
 gvm1 = readRDS(
     paste0(
       output_home, 
-      "/gpsims_seq/run_designs_v2/gvm_seq_train1sims.rds"))
+      "/gpsims_seq/gp_sims/gvm_seq_train1sims.rds"))
 gvm2 = readRDS(
   paste0(
     output_home, 
-    "/gpsims_seq/run_designs_v2/gvm_seq_train2sims.rds"))
+    "/gpsims_seq/gp_sims/gvm_seq_train2sims.rds"))
 gvm3 = readRDS(
   paste0(
     output_home, 
-    "/gpsims_seq/run_designs_v2/gvm_seq_train3sims.rds"))
+    "/gpsims_seq/gp_sims/gvm_seq_train3sims.rds"))
 gvm4 = readRDS(
   paste0(
     output_home, 
-    "/gpsims_seq/run_designs_v2/gvm_seq_train4sims.rds"))
+    "/gpsims_seq/gp_sims/gvm_seq_train4sims.rds"))
 simcases = list(gvm1, gvm2, gvm3, gvm4)
 
 # RSS Ratio (0/1)
@@ -1313,7 +1313,7 @@ null_mean = rep(0, numx)
 maternvsperiodic_train4sims = readRDS(
   paste0(
     output_home, 
-    "/gpsims/maternvsperiodic_train4sims.rds"))
+    "/gp_demo/maternvsperiodic_train4sims.rds"))
 
 # get sim info
 sim_ind = 1
@@ -1414,19 +1414,19 @@ l01= c(0.01, 0.1); type01 = c(4, 5); numCandidates = 1001; k = 4; p = 1; nugget 
 mvp1 = readRDS(
   paste0(
     output_home, 
-    "/gpsims_seq/run_designs_v2/mvp_seq_train1sims.rds"))
+    "/gpsims_seq/gp_sims/mvp_seq_train1sims.rds"))
 mvp2 = readRDS(
   paste0(
     output_home, 
-    "/gpsims_seq/run_designs_v2/mvp_seq_train2sims.rds"))
+    "/gpsims_seq/gp_sims/mvp_seq_train2sims.rds"))
 mvp3 = readRDS(
   paste0(
     output_home, 
-    "/gpsims_seq/run_designs_v2/mvp_seq_train3sims.rds"))
+    "/gpsims_seq/gp_sims/mvp_seq_train3sims.rds"))
 mvp4 = readRDS(
   paste0(
     output_home, 
-    "/gpsims_seq/run_designs_v2/mvp_seq_train4sims.rds"))
+    "/gpsims_seq/gp_sims/mvp_seq_train4sims.rds"))
 simcases = list(mvp1, mvp2, mvp3, mvp4)
 
 
@@ -1598,7 +1598,7 @@ plt_mvp3
 # Sources/Libraries
 ################################################################################
 # tamu cluster
-output_home = "run_designs/smmed/run_designs_lmvs3"
+output_home = "run_designs/smmed/lmvs_sims"
 
 # --- Sources/Libraries --- #
 source(paste(functions_home, "/SeqMEDvs.R", sep = ""))
@@ -2360,7 +2360,7 @@ ggplot(ggdata, aes(x = Designs, y = MSE)) +
 # Sources/Libraries
 ################################################################################
 # tamu cluster
-output_home = "run_designs/gp/gpsims_vs"
+output_home = "run_designs/gp/gpvs_sims"
 
 # --- Sources/Libraries --- #
 source(paste(functions_home, "/SeqMEDvs.R", sep = ""))
@@ -2470,7 +2470,7 @@ x_input = x_grid[x_input_ind, ]
 order_x = order(x_grid[ , 1])
 
 # read in simulations
-gpvs_sims = readRDS(paste0(output_home, "/run_designs_gpvs6/gpvs_sims.rds"))
+gpvs_sims = readRDS(paste0(output_home, "/gpvs_sims/gpvs_sims.rds"))
 mmedgpf1d_sims = gpvs_sims$mmedgp_f1dsims
 smmedgpf1d_sims = gpvs_sims$smmedgp_f1dsims
 mmedgpf2d_sims = gpvs_sims$mmedgp_f2dsims

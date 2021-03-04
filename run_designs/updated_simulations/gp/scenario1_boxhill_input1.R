@@ -23,6 +23,8 @@ source(paste(functions_home, "/boxhill.R", sep = ""))
 source(paste(functions_home, "/boxhill_gp.R", sep = ""))
 source(paste(functions_home, "/kl_divergence.R", sep = ""))
 
+library(mvtnorm)
+
 # set up parallelization
 library(doFuture)
 library(parallel)

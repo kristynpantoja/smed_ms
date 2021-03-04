@@ -6,17 +6,22 @@
 ### MMED GP, one-at-a-time greedy algorithm ###
 ###############################################
 
-f_min_gp = function(candidate, D, Kinv0, Kinv1, initD, y, var_e, type, l, p, alpha, buffer){
+f_min_gp = function(
+  candidate, D, Kinv0, Kinv1, initD, y, var_e, type, l, p, alpha, buffer
+){
   result = q_gp(candidate, Kinv0, Kinv1, initD, y, var_e, type, l, p, 
-                     alpha, buffer)^k * 
+                alpha, buffer)^k * 
     sum(sapply(D, function(x_i) (q_gp(x_i, Kinv0, Kinv1, initD, y, var_e, type, l, p, 
-                                           alpha, buffer) / sqrt((x_i - candidate)^2))^k))
+                                      alpha, buffer) / sqrt((x_i - candidate)^2))^k))
   return(result)
 }
 
-MMED_gp_batch = function(initD, y, type, l, var_e, N2 = 11, numCandidates = 10^5, k = 4, p = 1, 
-                                         xmin = 0, xmax = 1, nugget = NULL, alpha = NULL, buffer = 0, 
-                                         genCandidates = 1, candidates = NULL){
+# MMED_gp_batch, add_MED_ms_oneatatime_data_gp, add_MMEDgp_oneatatime
+SeqMED_gp_batch = function(
+  initD, y, type, l, var_e, N2 = 11, numCandidates = 10^5, k = 4, p = 1, 
+  xmin = 0, xmax = 1, nugget = NULL, alpha = NULL, buffer = 0, 
+  genCandidates = 1, candidates = NULL, batch.idx = 1
+){
   if(is.null(dim(initD))){
     initN = length(initD)
   } else{
@@ -92,22 +97,27 @@ MMED_gp_batch = function(initD, y, type, l, var_e, N2 = 11, numCandidates = 10^5
 
 
 ################################################
-### MMED GP for Variable Selection, 1D vs 2D ###
+### SeqMED GP for Variable Selection, 1D vs 2D ###
 ################################################
 
 # meant to be able to handle 2d dimensional input, for variable selection problem
 
-f_min_gp_vs = function(candidate, D, Kinv0, Kinv1, indices0, indices1, initD0, initD1, y, var_e, type, l, p, alpha, buffer){
+f_min_gp_vs = function(
+  candidate, D, Kinv0, Kinv1, indices0, indices1, initD0, initD1, y, var_e, 
+  type, l, p, alpha, buffer
+){
   result = q_gp_vs(candidate, Kinv0, Kinv1, indices0, indices1, initD0, initD1, y, var_e, type, l, p, 
-                  alpha, buffer)^k * 
+                   alpha, buffer)^k * 
     sum(apply(D, 1, function(x_i) (q_gp_vs(x_i, Kinv0, Kinv1, indices0, indices1, initD0, initD1, y, var_e, type, l, p, 
-                                          alpha, buffer) / sqrt(sum((x_i - candidate)^2)))^k))
+                                           alpha, buffer) / sqrt(sum((x_i - candidate)^2)))^k))
   return(result)
 }
 
-add_MMEDgpvs_oneatatime = function(initD, y, type = c(1, 1), l = c(0.1, 0.1), indices0, indices1, var_e = 1, N2 = 11, numCandidates = 10^5, k = 4, p = 1, 
-                                   xmin = 0, xmax = 1, nugget = NULL, alpha = NULL, buffer = 0, 
-                                   genCandidates = 1, candidates = NULL){
+add_MMEDgpvs_oneatatime = function(
+  initD, y, type = c(1, 1), l = c(0.1, 0.1), indices0, indices1, var_e = 1, 
+  N2 = 11, numCandidates = 10^5, k = 4, p = 1, xmin = 0, xmax = 1, 
+  nugget = NULL, alpha = NULL, buffer = 0, genCandidates = 1, candidates = NULL
+){
   if(typeof(initD) == "list") initD = as.matrix(initD)
   initN = dim(initD)[1]
   if(length(y) != initN) stop("length of y does not match length of initial input data, initD")
@@ -196,13 +206,16 @@ add_MMEDgpvs_oneatatime = function(initD, y, type = c(1, 1), l = c(0.1, 0.1), in
               "indices" = D_ind))
 }
 
-add_MMEDgpvs = function(initD, y, type = c(1, 1), l = c(0.1, 0.1), indices0, indices1, var_e = 1, N2 = 11, numCandidates = 10^5, k = 4, p = 1, 
-                        xmin = 0, xmax = 1, nugget = NULL, alpha = NULL, buffer = 0, 
-                        genCandidates = 1, candidates = NULL, algorithm = 1){
+add_MMEDgpvs = function(
+  initD, y, type = c(1, 1), l = c(0.1, 0.1), indices0, indices1, var_e = 1, N2 = 11, numCandidates = 10^5, k = 4, p = 1, 
+  xmin = 0, xmax = 1, nugget = NULL, alpha = NULL, buffer = 0, 
+  genCandidates = 1, candidates = NULL, algorithm = 1
+){
   if(algorithm == 1){
-    add_MMEDgpvs_oneatatime(initD, y, type, l, indices0, indices1, var_e, N2, numCandidates, k, p, 
-                            xmin, xmax, nugget, alpha, buffer, 
-                            genCandidates, candidates )
+    add_MMEDgpvs_oneatatime(
+      initD, y, type, l, indices0, indices1, var_e, N2, numCandidates, k, p, 
+      xmin, xmax, nugget, alpha, buffer, 
+      genCandidates, candidates )
   } else{
     stop("invalid algorithm")
   }

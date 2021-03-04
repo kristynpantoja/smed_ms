@@ -9,7 +9,7 @@ generate_SMMEDgpvs = function(true_y, type_true = NULL, l_true = NULL,
                               xmin = 0, xmax = 1, nugget = NULL, 
                               numSeq = 5, N_seq = 3, alpha_seq = 1, buffer_seq = 0, 
                               genCandidates = 1, candidates = NULL, numDims = NULL, 
-                              seed = NULL, algorithm = 1){
+                              seed = NULL, algorithm = 1, prints = FALSE){
 # (type_true = NULL, l_true = NULL, 
 #  indices_true = NULL, true_y = NULL, 
 #  type_hypotheses, l_hypotheses, indices0, indices1, 
@@ -17,7 +17,7 @@ generate_SMMEDgpvs = function(true_y, type_true = NULL, l_true = NULL,
 #  initN = NULL, initD = NULL, initD_indices = NULL, inity = NULL, numSeq = 5, N_seq = 10, 
 #  alpha_seq = 1, buffer_seq = 0, numDimsMax = NULL, 
 #  genCandidates = 1, candidates = NULL, algorithm = 1, seed = NULL){
-  
+  if(!is.null(seed)) set.seed(seed)
   
   # check candidates
   if(is.null(candidates)){
@@ -61,17 +61,20 @@ generate_SMMEDgpvs = function(true_y, type_true = NULL, l_true = NULL,
   y = y1
   D = D1
   indices = c()
-  # print(paste("finished ", 0, " out of ", numSeq, " steps", sep = ""))
+  if(prints){
+    print(paste("finished ", 1, " out of ", numSeq, " steps", sep = ""))
+  }
+  
   for(t in 1:numSeq){
-    seed = seed + t
-    set.seed(seed)
+    
+    batch.idx = t - 1
     Dt = add_MMEDgpvs(initD = D, y = y, type = type_hypotheses, l = l_hypotheses, 
                       indices0 = indices0, indices1 = indices1, var_e = var_e, 
                       N2 = N_seq[t], numCandidates = NULL, k = k, p = p, 
                       xmin = xmin, xmax = xmax, nugget = nugget, 
                       alpha = alpha_seq[t], buffer = buffer_seq[t], 
                       genCandidates = genCandidates, candidates = candidates, 
-                      algorithm = algorithm)
+                      algorithm = algorithm, batch.idx = batch.idx)
     
     indt = Dt$indices
     yt = true_y[indt]
@@ -80,7 +83,10 @@ generate_SMMEDgpvs = function(true_y, type_true = NULL, l_true = NULL,
     D = rbind(D, Dt$addD)
     y = c(y, yt)
     indices = c(indices, indt)
-    # print(paste("finished ", t, " out of ", numSeq, " steps", sep = ""))
+    
+    if(prints){
+      print(paste("finished ", t, " out of ", numSeq, " steps", sep = ""))
+    }
   }
   return(list("initD" = initD, 
               "addD" = D, 

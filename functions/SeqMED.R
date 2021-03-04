@@ -60,11 +60,6 @@ SeqMED = function(
   }
   for(t in 2:numSeq){
     
-    # if(t == 2){
-    #   batch.idx = 1
-    # } else{
-    #   batch.idx = 2
-    # }
     batch.idx = t - 1
     Dt = SeqMED_batch(
       D, y, beta.mean0, beta.mean1, beta.var0, beta.var1, error.var, f0, f1, type, 

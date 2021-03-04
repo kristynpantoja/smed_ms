@@ -62,7 +62,7 @@ image_path = "plots"
 ################################################################################
 
 # simulations settings
-numSims = 500
+numSims = 100
 isParallelized = TRUE
 
 # simulation settings
@@ -2197,7 +2197,17 @@ for(j in 1:numSims_seqPPH){
   smmed_seqPPH1[ , j] = smmed_seqPPH.temp[2, ]
 }
 
+# mean
+rand_seqPPH0_mean = apply(rand_seqPPH0, 1, mean)
+dopt_seqPPH0_mean = apply(dopt_seqPPH0, 1, mean)
+fact_seqPPH0_mean = apply(fact_seqPPH0, 1, mean)
+smmed_seqPPH0_mean = apply(smmed_seqPPH0, 1, mean)
+rand_seqPPH1_mean = apply(rand_seqPPH1, 1, mean)
+dopt_seqPPH1_mean = apply(dopt_seqPPH1, 1, mean)
+fact_seqPPH1_mean = apply(fact_seqPPH1, 1, mean)
+smmed_seqPPH1_mean = apply(smmed_seqPPH1, 1, mean)
 
+#plot
 ggdata0 = data.table(
   x = 1:idxlast, 
   Random = rand_seqPPH0_mean, 

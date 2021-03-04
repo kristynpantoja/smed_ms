@@ -39,7 +39,6 @@ gg_color_hue = function(n) {
 }
 
 ################################################################################
-################################################################################
 # simulation settings, shared for both scenarios (sqexp vs. matern)
 ################################################################################
 
@@ -80,8 +79,8 @@ x_spacefill1 = x_seq[x_spacefill1_idx]
 # all.equal(space_filling, c(x_in1, x_spacefill1))
 
 # input set 2 (increasing spread)
-x_in2_ind = space_filling_idx[c(1, 2, 4, 7, 12, 21)]
-x_in2 = x_seq[x_in2_ind]
+x_in2_idx = space_filling_idx[c(1, 2, 4, 7, 12, 21)]
+x_in2 = x_seq[x_in2_idx]
 x_spacefill2_idx = space_filling_idx[-c(1, 2, 4, 7, 12, 21)]
 x_spacefill2 = x_seq[x_spacefill2_idx]
 # all.equal(space_filling, sort(c(x_in2, x_spacefill2)))

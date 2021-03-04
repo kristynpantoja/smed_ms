@@ -1,3 +1,4 @@
+# objective function
 objective_seqmed = function(
   candidate, D, postmean0, postmean1, postvar0, postvar1, error.var, type, 
   p = 1, k = 4, alpha = 1){
@@ -12,6 +13,7 @@ objective_seqmed = function(
   return(result)
 }
 
+# batch of seqN new points
 SeqMED_batch = function(
   initD, y, beta.mean0, beta.mean1, beta.var0, beta.var1, error.var, 
   f0 = NULL, f1 = NULL, type = NULL, N2 = 11, numCandidates = 10^5, k = 4, 
@@ -24,7 +26,7 @@ SeqMED_batch = function(
   # check if any points in initD give Wasserstein distance of 0 (in which case we don't want to use it since 1/0 in q)
   old_initD = initD
   
-  # posterior distribution of beta
+  # posterior distributions of beta
   postvar0 = postvar(initD, initN, error.var, beta.var0, type[1])
   postmean0 = postmean(y, initD, initN, beta.mean0, beta.var0, error.var, type[1])
   postvar1 = postvar(initD, initN, error.var, beta.var1, type[2])
@@ -37,13 +39,12 @@ SeqMED_batch = function(
     initD = initD[-which(w_initD == 0)]
     y = y[-which(w_initD == 0)]
     w_initD = w_initD[-which(w_initD == 0)]
+    # recalculate posterior distributions of beta
     postvar0 = postvar(initD, initN, error.var, beta.var0, type[1])
     postmean0 = postmean(y, initD, initN, beta.mean0, beta.var0, error.var, type[1])
     postvar1 = postvar(initD, initN, error.var, beta.var1, type[2])
     postmean1 = postmean(y, initD, initN, beta.mean1, beta.var1, error.var, type[2])
   }
-  
-  # other variables and checks
   initN = length(initD)
   ttlN = initN + N2
   
@@ -83,7 +84,7 @@ SeqMED_batch = function(
     f_min_candidates = sapply(
       candidates, 
       function(x) objective_seqmed(x, initD, postmean0, postmean1, postvar0, 
-                               postvar1, error.var, type, p, k, alpha))
+                                   postvar1, error.var, type, p, k, alpha))
     f_opt = which.min(f_min_candidates)
     xnew = candidates[f_opt]
     # Update set of design points (D) and plot new point
@@ -98,8 +99,8 @@ SeqMED_batch = function(
       f_min_candidates = sapply(
         candidates, 
         function(x) objective_seqmed(x, c(initD, D[1:(i - 1)]), postmean0, 
-                                 postmean1, postvar0, postvar1, error.var, type, 
-                                 p, k, alpha))
+                                     postmean1, postvar0, postvar1, error.var, type, 
+                                     p, k, alpha))
       f_opt = which.min(f_min_candidates)
       xnew = candidates[f_opt]
       # Update set of design points (D) and plot new point
@@ -107,5 +108,9 @@ SeqMED_batch = function(
     }
   }
   
-  return(list("initD" = old_initD, "addD" = D, "updatedD" = c(old_initD, D), "q_initD" = initD))
+  return(list(
+    "initD" = old_initD, 
+    "addD" = D, 
+    "updatedD" = c(old_initD, D), 
+    "q_initD" = initD))
 }

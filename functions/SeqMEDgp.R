@@ -1,22 +1,80 @@
-# variable selection case
+SeqMEDgp = function(
+  y0 = NULL, x0 = NULL, x0.idx = NULL, candidates, function.values, nugget = NULL,
+  type, l, error.var = 1, xmin = 0, xmax = 1, k = 4, p = 1, numSeq = 5, seqN = 3, 
+  alpha_seq = 1, prints = FALSE, seed = NULL
+){
+  if(!is.null(seed)) set.seed(seed)
+  if(numSeq > 1 & length(seqN) == 1) seqN = rep(seqN, numSeq)
+  if(numSeq > 1 & is.null(alpha_seq)) alpha_seq = rep(1, numSeq)
+  if(numSeq > 1 & length(alpha_seq) == 1) alpha_seq = rep(alpha_seq, numSeq)
+  
+  # check preliminary data
+  if(is.null(x0) & !is.null(y0)){ # x0 is null, y0 is not null
+    stop("SeqMEDgp : preliminary y0  is given, but not corresponding x0")
+  } else if(is.null(y0) & !is.null(x0)){ # x is not null, y0 is null (get y0)
+    y0 = function.values[x0.idx]
+  } else if(is.null(x0) & is.null(y0)){ # both x0 and y0 are null, then us BH method
+    stop("SeqMEDgp: need input data, at least x0!")
+  } else{
+    if(length(x0) != length(y0)){
+      stop("SeqMEDgp : length of preliminary x0 and y0 don't match!")
+    }
+  }
+  Nttl = sum(seqN)
+  D = x0
+  D.idx = x0.idx
+  y = y0
+  
+  if(numSeq == 1){
+    return(list("D" = D, "D.idx" = D.idx, "y" = y))
+  }
+  
+  if(prints){
+    print(paste("finished ", 1, " out of ", numSeq, " steps", sep = ""))
+  }
+  for(t in 2:numSeq){
+    
+    batch.idx = t - 1
+    Dt = SeqMEDgp_batch(
+      initD = D, y = y, type = type, l = l, var_e = error.var, N2 = seqN[t],
+      k = k, p = p, xmin = xmin, xmax = xmax, nugget = nugget, 
+      alpha = alpha_seq[t], candidates = candidates, batch.idx = batch.idx)
+    
+    yt = function.values[Dt$indices]
+    
+    # update D and y with new data
+    D = c(D, Dt$addD)
+    D.idx = c(D.idx, Dt$indices)
+    y = c(y, yt)
+    
+    if(prints){
+      print(paste("finished ", t, " out of ", numSeq, " steps", sep = ""))
+    }
+  }
+  return(list("D" = D, "D.idx" = D.idx, "y" = y))
+}
 
-generate_SMMEDgpvs = function(true_y, type_true = NULL, l_true = NULL, 
-                              indices_true = NULL, initD = NULL, initD_indices = NULL, 
-                              inity = NULL, 
-                              type_hypotheses = c(1, 1), l_hypotheses = c(0.1, 0.1), 
-                              indices0, indices1, var_e = 1, N2 = 11, 
-                              numCandidates = 10^5, k = 4, p = 1, 
-                              xmin = 0, xmax = 1, nugget = NULL, 
-                              numSeq = 5, N_seq = 3, alpha_seq = 1, buffer_seq = 0, 
-                              genCandidates = 1, candidates = NULL, numDims = NULL, 
-                              seed = NULL, algorithm = 1, prints = FALSE){
-# (type_true = NULL, l_true = NULL, 
-#  indices_true = NULL, true_y = NULL, 
-#  type_hypotheses, l_hypotheses, indices0, indices1, 
-#  var_e = 1, xmin = 0, xmax = 1, nugget = 1e-1, numCandidates = NULL, k = 4, p = 1, 
-#  initN = NULL, initD = NULL, initD_indices = NULL, inity = NULL, numSeq = 5, N_seq = 10, 
-#  alpha_seq = 1, buffer_seq = 0, numDimsMax = NULL, 
-#  genCandidates = 1, candidates = NULL, algorithm = 1, seed = NULL){
+# variable selection case
+# generate_SMMEDgpvs
+SeqMEDgpvs = function(
+  true_y, type_true = NULL, l_true = NULL, 
+  indices_true = NULL, initD = NULL, initD_indices = NULL, 
+  inity = NULL, 
+  type_hypotheses = c(1, 1), l_hypotheses = c(0.1, 0.1), 
+  indices0, indices1, var_e = 1, N2 = 11, 
+  numCandidates = 10^5, k = 4, p = 1, 
+  xmin = 0, xmax = 1, nugget = NULL, 
+  numSeq = 5, N_seq = 3, alpha_seq = 1, buffer_seq = 0, 
+  genCandidates = 1, candidates = NULL, numDims = NULL, 
+  seed = NULL, algorithm = 1, prints = FALSE
+){
+  # (type_true = NULL, l_true = NULL, 
+  #  indices_true = NULL, true_y = NULL, 
+  #  type_hypotheses, l_hypotheses, indices0, indices1, 
+  #  var_e = 1, xmin = 0, xmax = 1, nugget = 1e-1, numCandidates = NULL, k = 4, p = 1, 
+  #  initN = NULL, initD = NULL, initD_indices = NULL, inity = NULL, numSeq = 5, N_seq = 10, 
+  #  alpha_seq = 1, buffer_seq = 0, numDimsMax = NULL, 
+  #  genCandidates = 1, candidates = NULL, algorithm = 1, seed = NULL){
   if(!is.null(seed)) set.seed(seed)
   
   # check candidates

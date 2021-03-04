@@ -1,6 +1,6 @@
 ################################################################################
 # last updated: 12/09/20
-# purpose: to create a list of seqmed simulations for scenario 2:
+# purpose: to create a list of seqmed simulations for scenario 1:
 #   linear vs. quadratic,
 #   where the true function is quadratic
 

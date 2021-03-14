@@ -7,18 +7,18 @@
 ###############################################
 
 obj_gp = function(
-  candidate, D, Kinv0, Kinv1, initD, y, var_e, type, l, p = 1, k = 4, alpha = 1
+  candidate, D, Kinv0, Kinv1, initD, y, error.var, type, l, p = 1, k = 4, alpha = 1
 ){
-  result = q_gp(candidate, Kinv0, Kinv1, initD, y, var_e, type, l, p, 
+  result = q_gp(candidate, Kinv0, Kinv1, initD, y, error.var, type, l, p, 
                 alpha)^k * 
-    sum(sapply(D, function(x_i) (q_gp(x_i, Kinv0, Kinv1, initD, y, var_e, type, l, p, 
+    sum(sapply(D, function(x_i) (q_gp(x_i, Kinv0, Kinv1, initD, y, error.var, type, l, p, 
                                       alpha) / sqrt((x_i - candidate)^2))^k))
   return(result)
 }
 
 # MMED_gp_batch, add_MED_ms_oneatatime_data_gp, add_MMEDgp_oneatatime
 SeqMEDgp_batch = function(
-  initD, y, type, l, var_e = 1, N2 = 11, numCandidates = 10^5, k = 4, p = 1, 
+  initD, y, type, l, error.var = 1, N2 = 11, numCandidates = 10^5, k = 4, p = 1, 
   xmin = 0, xmax = 1, nugget = NULL, alpha = NULL, genCandidates = 1, 
   candidates = NULL, batch.idx = 1
 ){
@@ -37,22 +37,23 @@ SeqMEDgp_batch = function(
     Kinv1 = solve(getCov(initD, initD, type[2], l[2]) + diag(rep(nugget, initN)))
   }
   
-  w_initD = sapply(initD, FUN = function(x) WNgp(
-    x, Kinv0, Kinv1, initD, y, var_e, type, l))
-  # take out the values with wasserstein distance equal to 0
-  if(length(which(w_initD == 0)) != 0){
-    initD = initD[-which(w_initD == 0)]
-    y = y[-which(w_initD == 0)]
-    w_initD = w_initD[-which(w_initD == 0)]
-    # recalculate Kinv0 and Kinv1
-    if(is.null(nugget)){
-      Kinv0 = solve(getCov(initD, initD, type[1], l[1]))
-      Kinv1 = solve(getCov(initD, initD, type[2], l[2]))
-    } else{
-      Kinv0 = solve(getCov(initD, initD, type[1], l[1]) + diag(rep(nugget, initN)))
-      Kinv1 = solve(getCov(initD, initD, type[2], l[2]) + diag(rep(nugget, initN)))
-    }
-  }
+  # w_initD = sapply(initD, FUN = function(x) WNgp(
+  #   x, Kinv0, Kinv1, initD, y, error.var, type, l))
+  # # take out the values with wasserstein distance equal to 0
+  # if(length(which(w_initD == 0)) != 0){
+  #   initD = initD[-which(w_initD == 0)]
+  #   y = y[-which(w_initD == 0)]
+  #   w_initD = w_initD[-which(w_initD == 0)]
+  #   initN = length(initD)
+  #   # recalculate Kinv0 and Kinv1
+  #   if(is.null(nugget)){
+  #     Kinv0 = solve(getCov(initD, initD, type[1], l[1]))
+  #     Kinv1 = solve(getCov(initD, initD, type[2], l[2]))
+  #   } else{
+  #     Kinv0 = solve(getCov(initD, initD, type[1], l[1]) + diag(rep(nugget, initN)))
+  #     Kinv1 = solve(getCov(initD, initD, type[2], l[2]) + diag(rep(nugget, initN)))
+  #   }
+  # }
   initN = length(initD)
   ttlN = initN + N2
   
@@ -67,7 +68,7 @@ SeqMEDgp_batch = function(
   if(batch.idx == 1){
     # -- Initialize 1st additional design point-- #
     w_candidates = sapply(candidates, FUN = function(x) WNgp(
-      x, Kinv0, Kinv1, initD, y, var_e, type, l))
+      x, Kinv0, Kinv1, initD, y, error.var, type, l))
     w_opt = which.max(w_candidates)
     xopt = candidates[w_opt]
     is_x_max_in_initD = any(sapply(initD, function(x) x == xopt))
@@ -78,7 +79,7 @@ SeqMEDgp_batch = function(
     # Find f_opt: minimum of f_min
     f_min_candidates = sapply(
       candidates, 
-      function(x) obj_gp(x, initD, Kinv0, Kinv1, initD, y, var_e, type, l, p, k, alpha))
+      function(x) obj_gp(x, initD, Kinv0, Kinv1, initD, y, error.var, type, l, p, k, alpha))
     f_opt = which.min(f_min_candidates)
     xnew = candidates[f_opt]
     # Update set of design points (D) and plot new point
@@ -92,7 +93,7 @@ SeqMEDgp_batch = function(
   if(N2 > 1){
     for(i in 2:N2){
       # Find f_opt: minimum of f_min
-      f_min_candidates = sapply(candidates, function(x) obj_gp(x, D[1:(i - 1)], Kinv0, Kinv1, initD, y, var_e, type, l, p, k, alpha))
+      f_min_candidates = sapply(candidates, function(x) obj_gp(x, D[1:(i - 1)], Kinv0, Kinv1, initD, y, error.var, type, l, p, k, alpha))
       f_opt = which.min(f_min_candidates)
       xnew = candidates[f_opt]
       # Update set of design points (D) and plot new point
@@ -122,20 +123,20 @@ SeqMEDgp_batch = function(
 # meant to be able to handle 2d dimensional input, for variable selection problem
 
 obj_gpvs = function(
-  candidate, D, Kinv0, Kinv1, indices0, indices1, initD0, initD1, y, var_e, 
+  candidate, D, Kinv0, Kinv1, indices0, indices1, initD0, initD1, y, error.var, 
   type, l, p = 1, k = 4, alpha = 1
 ){
   result = q_gpvs(
-    candidate, Kinv0, Kinv1, indices0, indices1, initD0, initD1, y, var_e, 
+    candidate, Kinv0, Kinv1, indices0, indices1, initD0, initD1, y, error.var, 
     type, l, p, alpha)^k * 
-    sum(apply(D, 1, function(x_i) (q_gpvs(x_i, Kinv0, Kinv1, indices0, indices1, initD0, initD1, y, var_e, type, l, p, 
+    sum(apply(D, 1, function(x_i) (q_gpvs(x_i, Kinv0, Kinv1, indices0, indices1, initD0, initD1, y, error.var, type, l, p, 
                                            alpha) / sqrt(sum((x_i - candidate)^2)))^k))
   return(result)
 }
 
 #add_MMEDgpvs_oneatatime
 SeqMEDgpvs_batch_oneatatime = function(
-  initD, y, type = c(1, 1), l = c(0.1, 0.1), indices0, indices1, var_e = 1, 
+  initD, y, type = c(1, 1), l = c(0.1, 0.1), indices0, indices1, error.var = 1, 
   N2 = 11, numCandidates = 10^5, k = 4, p = 1, xmin = 0, xmax = 1, 
   nugget = NULL, alpha = NULL, genCandidates = 1, candidates = NULL, 
   batch.idx = 1
@@ -201,7 +202,7 @@ SeqMEDgpvs_batch_oneatatime = function(
   # -- Initialize 1st additional design point-- #
   D = matrix(rep(NA, N2 * 2), N2, 2)
   D_ind = rep(NA, N2)
-  w_evals = apply(candidates, 1, FUN = function(x) WNgpvs(x, Kinv0, Kinv1, indices0, indices1, initD0, initD1, y, var_e, type, l))
+  w_evals = apply(candidates, 1, FUN = function(x) WNgpvs(x, Kinv0, Kinv1, indices0, indices1, initD0, initD1, y, error.var, type, l))
   xoptindex = which.max(w_evals)
   xopt = candidates[xoptindex, ]
   # I'm just gonna assume (and I think this is a safe assumption based on how Wasserstein was defined)
@@ -212,7 +213,7 @@ SeqMEDgpvs_batch_oneatatime = function(
   if(N2 > 1){
     for(i in 2:N2){
       # Find f_opt: minimum of f_min
-      f_min_candidates = apply(candidates, 1, function(x) obj_gpvs(x, D[1:(i - 1), , drop = FALSE], Kinv0, Kinv1, indices0, indices1, initD0, initD1, y, var_e, type, l, p, k, alpha))
+      f_min_candidates = apply(candidates, 1, function(x) obj_gpvs(x, D[1:(i - 1), , drop = FALSE], Kinv0, Kinv1, indices0, indices1, initD0, initD1, y, error.var, type, l, p, k, alpha))
       f_opt = which.min(f_min_candidates)
       xnew = candidates[f_opt, ]
       # Update set of design points (D) and plot new point
@@ -230,14 +231,14 @@ SeqMEDgpvs_batch_oneatatime = function(
 
 # add_MMEDgpvs
 SeqMEDgpvs_batch = function(
-  initD, y, type = c(1, 1), l = c(0.1, 0.1), indices0, indices1, var_e = 1, 
+  initD, y, type = c(1, 1), l = c(0.1, 0.1), indices0, indices1, error.var = 1, 
   N2 = 11, numCandidates = 10^5, k = 4, p = 1, 
   xmin = 0, xmax = 1, nugget = NULL, alpha = NULL, 
   genCandidates = 1, candidates = NULL, algorithm = 1, batch.idx = 1
 ){
   if(algorithm == 1){
     SeqMEDgpvs_batch_oneatatime(
-      initD, y, type, l, indices0, indices1, var_e, N2, numCandidates, k, p, 
+      initD, y, type, l, indices0, indices1, error.var, N2, numCandidates, k, p, 
       xmin, xmax, nugget, alpha, genCandidates, candidates, batch.idx)
   } else{
     stop("invalid algorithm")

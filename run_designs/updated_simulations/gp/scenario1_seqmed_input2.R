@@ -123,15 +123,15 @@ x_input_idx = x_in2_idx
 #   y_seq = y_seq_mat[ , i]
 #   y_input = y_seq[x_input_idx]
 #   seqmed_list[[i]] = SeqMEDgp(
-#     y0 = y_input, x0 = x_input, x0.idx = x_input_idx, candidates = x_seq, 
-#     function.values = y_seq, nugget = nuggetSM, type = type01, l = l01, 
+#     y0 = y_input, x0 = x_input, x0.idx = x_input_idx, candidates = x_seq,
+#     function.values = y_seq, nugget = nuggetSM, type = type01, l = l01,
 #     numSeq = numSeq, seqN = seqN, prints = TRUE)
-#   
+# 
 #   ### plot!
 #   # x_new_idx = seqmed_list[[i]]$D.idx[-c(1:N0)]
 #   # x_new = seqmed_list[[i]]$D[-c(1:N0)]
 #   # y_new = seqmed_list[[i]]$y[-c(1:N0)]
-#   # 
+#   #
 #   # # plot
 #   # x_input.gg = x_input
 #   # y_input.gg = y_input
@@ -144,58 +144,58 @@ x_input_idx = x_in2_idx
 #   # err0 = 2 * sqrt(diag(H0_predfn$pred_var))
 #   # err1 = 2 * sqrt(diag(H1_predfn$pred_var))
 #   # ggdata = data.table(
-#   #   x = x_seq, 
-#   #   `True Function` = y_seq, 
-#   #   `H0 Predictive Mean` = H0_predfn$pred_mean, 
+#   #   x = x_seq,
+#   #   `True Function` = y_seq,
+#   #   `H0 Predictive Mean` = H0_predfn$pred_mean,
 #   #   `H1 Predictive Mean` = H1_predfn$pred_mean,
-#   #   lower0 = H0_predfn$pred_mean - err0, 
-#   #   lower1 = H1_predfn$pred_mean - err1, 
+#   #   lower0 = H0_predfn$pred_mean - err0,
+#   #   lower1 = H1_predfn$pred_mean - err1,
 #   #   upper0 = H0_predfn$pred_mean + err0,
 #   #   upper1 = H1_predfn$pred_mean + err1
 #   # )
-#   # yrange = range(ggdata$lower0, ggdata$lower1, 
-#   #                ggdata$upper0, ggdata$upper1, 
+#   # yrange = range(ggdata$lower0, ggdata$lower1,
+#   #                ggdata$upper0, ggdata$upper1,
 #   #                na.rm = TRUE)
 #   # yrange[1] = yrange[1] - 1
 #   # ggdata$zero1 = NA
-#   # ggdata.melted = melt(ggdata, id.vars = c("x"), 
+#   # ggdata.melted = melt(ggdata, id.vars = c("x"),
 #   #                      measure.vars = c("True Function", "H0 Predictive Mean", "H1 Predictive Mean"))
-#   # ggdata.lower = melt(ggdata, id.vars = c("x"), 
+#   # ggdata.lower = melt(ggdata, id.vars = c("x"),
 #   #                     measure.vars = c("zero1", "lower0", "lower1"))
-#   # ggdata.upper = melt(ggdata, id.vars = c("x"), 
+#   # ggdata.upper = melt(ggdata, id.vars = c("x"),
 #   #                     measure.vars = c("zero1", "upper0", "upper1"))
-#   # ggdata.melted = cbind(ggdata.melted, 
-#   #                       lower = ggdata.lower$value, 
+#   # ggdata.melted = cbind(ggdata.melted,
+#   #                       lower = ggdata.lower$value,
 #   #                       upper = ggdata.upper$value)
 #   # ggdata_pts = data.table(
-#   #   x = c(x_input.gg, x_new.gg), 
-#   #   y = c(y_input.gg, y_new.gg), 
-#   #   color = c(rep(gg_color_hue(2)[2], length(x_input.gg)), 
-#   #             rep(gg_color_hue(2)[1], length(x_new.gg))), 
-#   #   shape = c(rep(8, length(x_input.gg)), 
+#   #   x = c(x_input.gg, x_new.gg),
+#   #   y = c(y_input.gg, y_new.gg),
+#   #   color = c(rep(gg_color_hue(2)[2], length(x_input.gg)),
+#   #             rep(gg_color_hue(2)[1], length(x_new.gg))),
+#   #   shape = c(rep(8, length(x_input.gg)),
 #   #             rep(16, length(x_new.gg)))
 #   # )
-#   # ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable), 
-#   #        linetype = 1) + 
-#   #   geom_path() + 
-#   #   geom_ribbon(aes(ymin = lower, ymax = upper, fill = variable), 
+#   # ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable),
+#   #        linetype = 1) +
+#   #   geom_path() +
+#   #   geom_ribbon(aes(ymin = lower, ymax = upper, fill = variable),
 #   #               alpha = 0.1, linetype = 0) +
-#   #   scale_linetype_manual(values = c(1, 1, 2, 2)) + 
-#   #   scale_fill_manual(values = c(NA, "#00BFC4", "#C77CFF")) + 
-#   #   scale_color_manual(values = c(1, "#00BFC4", "#C77CFF")) + 
-#   #   geom_point(data = ggdata_pts, mapping = aes(x = x, y = y), 
-#   #              inherit.aes = FALSE, color = ggdata_pts$color, 
-#   #              shape = ggdata_pts$shape, 
+#   #   scale_linetype_manual(values = c(1, 1, 2, 2)) +
+#   #   scale_fill_manual(values = c(NA, "#00BFC4", "#C77CFF")) +
+#   #   scale_color_manual(values = c(1, "#00BFC4", "#C77CFF")) +
+#   #   geom_point(data = ggdata_pts, mapping = aes(x = x, y = y),
+#   #              inherit.aes = FALSE, color = ggdata_pts$color,
+#   #              shape = ggdata_pts$shape,
 #   #              size = 3, alpha = 0.25) +
-#   #   geom_label(label = c(rep(NA, length(x_input.gg)), c(1:length(x_new.gg))), 
-#   #              data = ggdata_pts, mapping = aes(x = x, y = y + 0.3), 
+#   #   geom_label(label = c(rep(NA, length(x_input.gg)), c(1:length(x_new.gg))),
+#   #              data = ggdata_pts, mapping = aes(x = x, y = y + 0.3),
 #   #              inherit.aes = FALSE, alpha = 0.25) +
-#   #   geom_point(data = ggdata_pts, mapping = aes(x = x, y = yrange[1]), 
-#   #              inherit.aes = FALSE, color = ggdata_pts$color, 
-#   #              shape = ggdata_pts$shape, 
-#   #              size = 3, alpha = 0.25) + 
+#   #   geom_point(data = ggdata_pts, mapping = aes(x = x, y = yrange[1]),
+#   #              inherit.aes = FALSE, color = ggdata_pts$color,
+#   #              shape = ggdata_pts$shape,
+#   #              size = 3, alpha = 0.25) +
 #   #   scale_y_continuous(limits = yrange) +
-#   #   theme_bw() + 
+#   #   theme_bw() +
 #   #   theme(panel.grid.major = element_blank(),
 #   #         panel.grid.minor = element_blank()) +
 #   #   labs(y = "y", x = "x", fill = "Function", color = "Function")

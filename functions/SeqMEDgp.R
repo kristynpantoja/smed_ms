@@ -36,7 +36,7 @@ SeqMEDgp = function(
     
     batch.idx = t - 1
     Dt = SeqMEDgp_batch(
-      initD = D, y = y, type = type, l = l, var_e = error.var, N2 = seqN[t],
+      initD = D, y = y, type = type, l = l, error.var = error.var, N2 = seqN[t],
       k = k, p = p, xmin = xmin, xmax = xmax, nugget = nugget, 
       alpha = alpha_seq[t], candidates = candidates, batch.idx = batch.idx)
     
@@ -53,6 +53,8 @@ SeqMEDgp = function(
   }
   return(list("D" = D, "D.idx" = D.idx, "y" = y))
 }
+
+
 
 # variable selection case
 # generate_SMMEDgpvs

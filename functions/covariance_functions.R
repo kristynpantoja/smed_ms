@@ -28,7 +28,7 @@ phi_periodic = function(Xi, Xj, l, p = pi / 24){
 
 ### covariance matrix ---
 
-getCov = function(X1, X2, type = 1, l = 1){
+getCov = function(X1, X2, type, l = 1){
   phi = NULL
   if(type == 1 | type == "squaredexponential" | type == "sqexp" | type == "gaussian" | type == "s" | type == "g") phi = phi_sqexp
   else if(type == 2) phi = phi_matern

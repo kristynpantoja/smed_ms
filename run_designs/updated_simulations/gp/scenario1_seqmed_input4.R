@@ -119,7 +119,7 @@ model1 = list(type = type01[2], l = l01[2])
 #   print(paste0("starting simulation ", i, " out of ", numSims))
 #   y_seq = y_seq_mat[ , i]
 #   ### randomly select input 4
-#   x_input_idx = sample(1:numx, N2)
+#   x_input_idx = sample(1:numx, N0)
 #   x_input = x_seq[x_input_idx]
 #   ###
 #   y_input = y_seq[x_input_idx]
@@ -211,7 +211,7 @@ seqmed_list = foreach(i = 1:numSims) %dorng% {
   print(paste0("starting simulation ", i, " out of ", numSims))
   y_seq = y_seq_mat[ , i]
   ### randomly select input set 4
-  x_input_idx = sample(1:numx, N2)
+  x_input_idx = sample(1:numx, N0)
   x_input = x_seq[x_input_idx]
   ###
   y_input = y_seq[x_input_idx]
@@ -222,7 +222,7 @@ seqmed_list = foreach(i = 1:numSims) %dorng% {
 }
 
 saveRDS(seqmed_list, paste(output_home, "/scenario1_seqmed_simulations", 
-                           "_input3", 
+                           "_input4", 
                            "_N0", N0, 
                            "_Nnew", Nnew,
                            "_numSims", numSims, 

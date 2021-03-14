@@ -119,7 +119,7 @@ boxhill_list = list()
 #   print(paste0("starting simulation ", i, " out of ", numSims))
 #   y_seq = y_seq_mat[ , i]
 #   ### randomly select input 4
-#   x_input_idx = sample(1:numx, N2)
+#   x_input_idx = sample(1:numx, N0)
 #   x_input = x_seq[x_input_idx]
 #   ###
 #   y_input = y_seq[x_input_idx]
@@ -209,7 +209,7 @@ boxhill_list = foreach(i = 1:numSims) %dorng% {
   print(paste0("starting simulation ", i, " out of ", numSims))
   y_seq = y_seq_mat[ , i]
   ### randomly select input set 4
-  x_input_idx = sample(1:numx, N2)
+  x_input_idx = sample(1:numx, N0)
   x_input = x_seq[x_input_idx]
   ###
   y_input = y_seq[x_input_idx]

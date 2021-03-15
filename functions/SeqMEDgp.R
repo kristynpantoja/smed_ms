@@ -24,6 +24,9 @@ SeqMEDgp = function(
   D = x0
   D.idx = x0.idx
   y = y0
+  x.new = c()
+  x.new.idx = c()
+  y.new = c()
   
   if(numSeq == 1){
     return(list("D" = D, "D.idx" = D.idx, "y" = y))
@@ -39,22 +42,6 @@ SeqMEDgp = function(
       initD = D, y = y, type = type, l = l, error.var = error.var, N2 = seqN[t],
       k = k, p = p, xmin = xmin, xmax = xmax, nugget = nugget, 
       alpha = alpha_seq[t], candidates = candidates, batch.idx = batch.idx)
-    #### SeqMEDgp_batch args : BEGIN ####
-    # initD = D
-    # # y
-    # # type
-    # # l
-    # # error.var
-    # N2 = seqN[t]
-    # # k
-    # # p
-    # # xmin
-    # # xmax
-    # # nugget
-    # alpha = alpha_seq[t]
-    # # candidates
-    # # batch.idx
-    #### SeqMED gp_batch() args : END ####
     
     yt = function.values[Dt$indices]
     
@@ -62,12 +49,27 @@ SeqMEDgp = function(
     D = c(D, Dt$addD)
     D.idx = c(D.idx, Dt$indices)
     y = c(y, yt)
+    x.new = c(x.new, Dt$addD)
+    x.new.idx = c(x.new.idx, Dt$indices)
+    y.new = c(y.new, yt)
     
     if(prints){
       print(paste("finished ", t, " out of ", numSeq, " steps", sep = ""))
     }
   }
-  return(list("D" = D, "D.idx" = D.idx, "y" = y))
+  return(list(
+    x = x0, 
+    x.idx = x0.idx, 
+    y = y0, 
+    x.new = x.new,
+    x.new.idx = x.new.idx,
+    y.new = y.new,
+    function.values = function.values, 
+    # old outputs, in case they're needed
+    D = D, 
+    D.idx = D.idx, 
+    y = y
+  ))
 }
 
 
@@ -164,9 +166,11 @@ SeqMEDgpvs = function(
       print(paste("finished ", t, " out of ", numSeq, " steps", sep = ""))
     }
   }
-  return(list("initD" = initD, 
+  return(list(
+    "initD" = initD, 
               "addD" = D, 
               "D" = c(initD, D),
               "candidates" = candidates, 
-              "indices" = indices))
+              "indices" = indices
+    ))
 }

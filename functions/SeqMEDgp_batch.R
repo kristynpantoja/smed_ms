@@ -85,20 +85,6 @@ SeqMEDgp_batch = function(
       function(x) obj_gp(
         x, initD, Kinv0, Kinv1, initD, y, error.var, type, l, p, k, alpha))
     f_opt = which.min(f_min_candidates)
-    #### obj_gp args : BEGIN ####
-    # candidate = candidates[1]
-    # D = initD
-    # # Kinv0
-    # # Kinv1
-    # # initD
-    # # y
-    # # error.var
-    # # type
-    # # l
-    # # p
-    # # k
-    # # alpha
-    #### obj_gp args : END ####
     
     xnew = candidates[f_opt]
     # Update set of design points (D) and plot new point

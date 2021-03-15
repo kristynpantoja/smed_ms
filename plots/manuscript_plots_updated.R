@@ -1,5 +1,5 @@
 ################################################################################
-# last updated: 03/14/21
+# last updated: 03/15/21
 # purpose: to calculate and plot metrics for gp simulations
 
 
@@ -1175,12 +1175,22 @@ ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable),
 # Metrics
 ################################################################################
 
-simcases = list()
+seqmeds = list()
 for(i in 1:4){
-  simcases[[i]] = readRDS(
+  seqmeds[[i]] = readRDS(
     paste0(
       output_home, 
       "/seqmed/scenario1_seqmed_simulations", 
+      "_input", i, 
+      "_Nin6_Nnew15_numSims100.rds"))
+}
+
+boxhills = list()
+for(i in 1:4){
+  boxhills[[i]] = readRDS(
+    paste0(
+      output_home, 
+      "/boxhill/scenario1_boxhill_simulations", 
       "_input", i, 
       "_Nin6_Nnew15_numSims100.rds"))
 }
@@ -1232,48 +1242,100 @@ RSS01_in3_seqmed = rep(NA, numSims)
 RSS01_in4_seqmed = rep(NA, numSims)
 for(i in 1:numSims){
   RSS01_in1_seqmed[i] = getMedianLogRSS01(
-    x = simcases[[1]]$x0, 
-    x.idx = simcases[[1]]$x0.idx, 
-    x.new = simcases[[1]]$design.list[[i]]$D[-c(1:Nin)], 
-    x.new.idx = simcases[[1]]$design.list[[i]]$D.idx[-c(1:Nin)], 
-    y.new = simcases[[1]]$design.list[[i]]$y[-c(1:Nin)], 
-    function.values = simcases[[1]]$function.values.list[ , i], 
+    x = seqmeds[[1]]$x0, 
+    x.idx = seqmeds[[1]]$x0.idx, 
+    x.new = seqmeds[[1]]$design.list[[i]]$D[-c(1:Nin)], 
+    x.new.idx = seqmeds[[1]]$design.list[[i]]$D.idx[-c(1:Nin)], 
+    y.new = seqmeds[[1]]$design.list[[i]]$y[-c(1:Nin)], 
+    function.values = seqmeds[[1]]$function.values.list[ , i], 
     type = type01, l = l01, nugget = nuggetSM)
-  # plot(x_seq, simcases[[1]]$function.values.list[ , i], type = "l")
-  # points(simcases[[1]]$x0, simcases[[1]]$design.list[[i]]$y[1:Nin], col = 3)
-  # points(simcases[[1]]$design.list[[i]]$D[-c(1:Nin)], 
-  #        simcases[[1]]$design.list[[i]]$y[-c(1:Nin)], col = 2)
+  # plot(x_seq, seqmeds[[1]]$function.values.list[ , i], type = "l")
+  # points(seqmeds[[1]]$x0, seqmeds[[1]]$design.list[[i]]$y[1:Nin], col = 3)
+  # points(seqmeds[[1]]$design.list[[i]]$D[-c(1:Nin)], 
+  #        seqmeds[[1]]$design.list[[i]]$y[-c(1:Nin)], col = 2)
   RSS01_in2_seqmed[i] = getMedianLogRSS01(
-    x = simcases[[2]]$x0, 
-    x.idx = simcases[[2]]$x0.idx, 
-    x.new = simcases[[2]]$design.list[[i]]$D[-c(1:Nin)], 
-    x.new.idx = simcases[[2]]$design.list[[i]]$D.idx[-c(1:Nin)], 
-    y.new = simcases[[2]]$design.list[[i]]$y[-c(1:Nin)], 
-    function.values = simcases[[2]]$function.values.list[ , i], 
+    x = seqmeds[[2]]$x0, 
+    x.idx = seqmeds[[2]]$x0.idx, 
+    x.new = seqmeds[[2]]$design.list[[i]]$D[-c(1:Nin)], 
+    x.new.idx = seqmeds[[2]]$design.list[[i]]$D.idx[-c(1:Nin)], 
+    y.new = seqmeds[[2]]$design.list[[i]]$y[-c(1:Nin)], 
+    function.values = seqmeds[[2]]$function.values.list[ , i], 
     type = type01, l = l01, nugget = nuggetSM)
-  # plot(x_seq, simcases[[2]]$function.values.list[ , i], type = "l")
-  # points(simcases[[2]]$x0, simcases[[2]]$design.list[[i]]$y[1:Nin], col = 3)
-  # points(simcases[[2]]$design.list[[i]]$D[-c(1:Nin)],
-  #        simcases[[2]]$design.list[[i]]$y[-c(1:Nin)], col = 2)
+  # plot(x_seq, seqmeds[[2]]$function.values.list[ , i], type = "l")
+  # points(seqmeds[[2]]$x0, seqmeds[[2]]$design.list[[i]]$y[1:Nin], col = 3)
+  # points(seqmeds[[2]]$design.list[[i]]$D[-c(1:Nin)],
+  #        seqmeds[[2]]$design.list[[i]]$y[-c(1:Nin)], col = 2)
   RSS01_in3_seqmed[i] = getMedianLogRSS01(
-    x = simcases[[3]]$x0, 
-    x.idx = simcases[[3]]$x0.idx, 
-    x.new = simcases[[3]]$design.list[[i]]$D[-c(1:Nin)], 
-    x.new.idx = simcases[[3]]$design.list[[i]]$D.idx[-c(1:Nin)], 
-    y.new = simcases[[3]]$design.list[[i]]$y[-c(1:Nin)], 
-    function.values = simcases[[3]]$function.values.list[ , i], 
+    x = seqmeds[[3]]$x0, 
+    x.idx = seqmeds[[3]]$x0.idx, 
+    x.new = seqmeds[[3]]$design.list[[i]]$D[-c(1:Nin)], 
+    x.new.idx = seqmeds[[3]]$design.list[[i]]$D.idx[-c(1:Nin)], 
+    y.new = seqmeds[[3]]$design.list[[i]]$y[-c(1:Nin)], 
+    function.values = seqmeds[[3]]$function.values.list[ , i], 
     type = type01, l = l01, nugget = nuggetSM)
-  # plot(x_seq, simcases[[3]]$function.values.list[ , i], type = "l")
-  # points(simcases[[3]]$x0, simcases[[3]]$design.list[[i]]$y[1:Nin], col = 3)
-  # points(simcases[[3]]$design.list[[i]]$D[-c(1:Nin)],
-  #        simcases[[3]]$design.list[[i]]$y[-c(1:Nin)], col = 2)
+  # plot(x_seq, seqmeds[[3]]$function.values.list[ , i], type = "l")
+  # points(seqmeds[[3]]$x0, seqmeds[[3]]$design.list[[i]]$y[1:Nin], col = 3)
+  # points(seqmeds[[3]]$design.list[[i]]$D[-c(1:Nin)],
+  #        seqmeds[[3]]$design.list[[i]]$y[-c(1:Nin)], col = 2)
   RSS01_in4_seqmed[i] = getMedianLogRSS01(
-    x = simcases[[4]]$design.list[[i]]$D[1:Nin], 
-    x.idx = simcases[[4]]$design.list[[i]]$D.idx[1:Nin], 
-    x.new = simcases[[4]]$design.list[[i]]$D[-c(1:Nin)], 
-    x.new.idx = simcases[[4]]$design.list[[i]]$D.idx[-c(1:Nin)], 
-    y.new = simcases[[4]]$design.list[[i]]$y[-c(1:Nin)], 
-    function.values = simcases[[4]]$function.values.list[ , i], 
+    x = seqmeds[[4]]$design.list[[i]]$D[1:Nin], 
+    x.idx = seqmeds[[4]]$design.list[[i]]$D.idx[1:Nin], 
+    x.new = seqmeds[[4]]$design.list[[i]]$D[-c(1:Nin)], 
+    x.new.idx = seqmeds[[4]]$design.list[[i]]$D.idx[-c(1:Nin)], 
+    y.new = seqmeds[[4]]$design.list[[i]]$y[-c(1:Nin)], 
+    function.values = seqmeds[[4]]$function.values.list[ , i], 
+    type = type01, l = l01, nugget = nuggetSM)
+}
+
+# RSS01 for Box-Hill
+RSS01_in1_boxhill = rep(NA, numSims)
+RSS01_in2_boxhill = rep(NA, numSims)
+RSS01_in3_boxhill = rep(NA, numSims)
+RSS01_in4_boxhill = rep(NA, numSims)
+for(i in 1:numSims){
+  RSS01_in1_seqmed[i] = getMedianLogRSS01(
+    x = boxhills[[1]]$x0, 
+    x.idx = boxhills[[1]]$x0.idx, 
+    x.new = boxhills[[1]]$design.list[[i]]$x.new, 
+    x.new.idx = boxhills[[1]]$design.list[[i]]$x.new.idx, 
+    y.new = boxhills[[1]]$design.list[[i]]$y.new, 
+    function.values = boxhills[[1]]$function.values.list[ , i], 
+    type = type01, l = l01, nugget = nuggetSM)
+  # plot(x_seq, boxhills[[1]]$function.values.list[ , i], type = "l")
+  # points(boxhills[[1]]$x0, boxhills[[1]]$design.list[[i]]$y[1:Nin], col = 3)
+  # points(boxhills[[1]]$design.list[[i]]$D[-c(1:Nin)], 
+  #        boxhills[[1]]$design.list[[i]]$y[-c(1:Nin)], col = 2)
+  RSS01_in2_seqmed[i] = getMedianLogRSS01(
+    x = boxhills[[2]]$x0, 
+    x.idx = boxhills[[2]]$x0.idx, 
+    x.new = boxhills[[2]]$design.list[[i]]$x.new, 
+    x.new.idx = boxhills[[2]]$design.list[[i]]$x.new.idx, 
+    y.new = boxhills[[2]]$design.list[[i]]$y.new, 
+    function.values = boxhills[[2]]$function.values.list[ , i], 
+    type = type01, l = l01, nugget = nuggetSM)
+  # plot(x_seq, boxhills[[2]]$function.values.list[ , i], type = "l")
+  # points(boxhills[[2]]$x0, boxhills[[2]]$design.list[[i]]$y[1:Nin], col = 3)
+  # points(boxhills[[2]]$design.list[[i]]$D[-c(1:Nin)],
+  #        boxhills[[2]]$design.list[[i]]$y[-c(1:Nin)], col = 2)
+  RSS01_in3_seqmed[i] = getMedianLogRSS01(
+    x = boxhills[[3]]$x0, 
+    x.idx = boxhills[[3]]$x0.idx, 
+    x.new = boxhills[[3]]$design.list[[i]]$x.new, 
+    x.new.idx = boxhills[[3]]$design.list[[i]]$x.new.idx, 
+    y.new = boxhills[[3]]$design.list[[i]]$y.new, 
+    function.values = boxhills[[3]]$function.values.list[ , i], 
+    type = type01, l = l01, nugget = nuggetSM)
+  # plot(x_seq, boxhills[[3]]$function.values.list[ , i], type = "l")
+  # points(boxhills[[3]]$x0, boxhills[[3]]$design.list[[i]]$y[1:Nin], col = 3)
+  # points(boxhills[[3]]$design.list[[i]]$D[-c(1:Nin)],
+  #        boxhills[[3]]$design.list[[i]]$y[-c(1:Nin)], col = 2)
+  RSS01_in4_seqmed[i] = getMedianLogRSS01(
+    x = boxhills[[4]]$, 
+    x.idx = boxhills[[4]]$design.list[[i]]$D.idx[1:Nin], 
+    x.new = boxhills[[4]]$design.list[[i]]$x.new, 
+    x.new.idx = boxhills[[4]]$design.list[[i]]$x.new.idx, 
+    y.new = boxhills[[4]]$design.list[[i]]$y.new, 
+    function.values = boxhills[[4]]$function.values.list[ , i], 
     type = type01, l = l01, nugget = nuggetSM)
 }
 
@@ -1284,36 +1346,36 @@ RSS01_in3_spacefilling = rep(NA, numSims)
 RSS01_in4_spacefilling = rep(NA, numSims)
 for(i in 1:numSims){
   RSS01_in1_spacefilling[i] = getMedianLogRSS01(
-    x = simcases[[1]]$x0, 
-    x.idx = simcases[[1]]$x0.idx, 
+    x = seqmeds[[1]]$x0, 
+    x.idx = seqmeds[[1]]$x0.idx, 
     x.new = x_spacefill1, 
     x.new.idx = x_spacefill1_idx, 
     y.new = NULL, 
-    function.values = simcases[[1]]$function.values.list[ , i], 
+    function.values = seqmeds[[1]]$function.values.list[ , i], 
     type = type01, l = l01, nugget = nuggetSM)
   RSS01_in2_spacefilling[i] = getMedianLogRSS01(
-    x = simcases[[2]]$x0, 
-    x.idx = simcases[[2]]$x0.idx, 
+    x = seqmeds[[2]]$x0, 
+    x.idx = seqmeds[[2]]$x0.idx, 
     x.new = x_spacefill2, 
     x.new.idx = x_spacefill2_idx,  
     y.new = NULL, 
-    function.values = simcases[[2]]$function.values.list[ , i], 
+    function.values = seqmeds[[2]]$function.values.list[ , i], 
     type = type01, l = l01, nugget = nuggetSM)
   RSS01_in3_spacefilling[i] = getMedianLogRSS01(
-    x = simcases[[3]]$x0, 
-    x.idx = simcases[[3]]$x0.idx, 
+    x = seqmeds[[3]]$x0, 
+    x.idx = seqmeds[[3]]$x0.idx, 
     x.new = x_spacefill3, 
     x.new.idx = x_spacefill3_idx, 
     y.new = NULL, 
-    function.values = simcases[[3]]$function.values.list[ , i], 
+    function.values = seqmeds[[3]]$function.values.list[ , i], 
     type = type01, l = l01, nugget = nuggetSM)
   RSS01_in4_spacefilling[i] = getMedianLogRSS01(
-    x = simcases[[4]]$design.list[[i]]$D[1:Nin], 
-    x.idx = simcases[[4]]$design.list[[i]]$D.idx[1:Nin], 
+    x = seqmeds[[4]]$design.list[[i]]$D[1:Nin], 
+    x.idx = seqmeds[[4]]$design.list[[i]]$D.idx[1:Nin], 
     x.new = x_spacefill4, 
     x.new.idx = x_spacefill4_idx, 
     y.new = NULL, 
-    function.values = simcases[[4]]$function.values.list[ , i], 
+    function.values = seqmeds[[4]]$function.values.list[ , i], 
     type = type01, l = l01, nugget = nuggetSM)
 }
 
@@ -1328,36 +1390,36 @@ for(i in 1:numSims){
   x_uniform = x_seq[x_uniform_idx]
   # now calculate RSS01
   RSS01_in1_random[i] = getMedianLogRSS01(
-    x = simcases[[1]]$x0, 
-    x.idx = simcases[[1]]$x0.idx, 
+    x = seqmeds[[1]]$x0, 
+    x.idx = seqmeds[[1]]$x0.idx, 
     x.new = x_uniform, 
     x.new.idx = x_uniform_idx, 
     y.new = NULL, 
-    function.values = simcases[[1]]$function.values.list[ , i], 
+    function.values = seqmeds[[1]]$function.values.list[ , i], 
     type = type01, l = l01, nugget = nuggetSM)
   RSS01_in2_random[i] = getMedianLogRSS01(
-    x = simcases[[2]]$x0, 
-    x.idx = simcases[[2]]$x0.idx, 
+    x = seqmeds[[2]]$x0, 
+    x.idx = seqmeds[[2]]$x0.idx, 
     x.new = x_uniform, 
     x.new.idx = x_uniform_idx, 
     y.new = NULL, 
-    function.values = simcases[[2]]$function.values.list[ , i], 
+    function.values = seqmeds[[2]]$function.values.list[ , i], 
     type = type01, l = l01, nugget = nuggetSM)
   RSS01_in3_random[i] = getMedianLogRSS01(
-    x = simcases[[3]]$x0, 
-    x.idx = simcases[[3]]$x0.idx, 
+    x = seqmeds[[3]]$x0, 
+    x.idx = seqmeds[[3]]$x0.idx, 
     x.new = x_uniform, 
     x.new.idx = x_uniform_idx, 
     y.new = NULL, 
-    function.values = simcases[[3]]$function.values.list[ , i], 
+    function.values = seqmeds[[3]]$function.values.list[ , i], 
     type = type01, l = l01, nugget = nuggetSM)
   RSS01_in4_random[i] = getMedianLogRSS01(
-    x = simcases[[4]]$design.list[[i]]$D[1:Nin], 
-    x.idx = simcases[[4]]$design.list[[i]]$D.idx[1:Nin], 
+    x = seqmeds[[4]]$design.list[[i]]$D[1:Nin], 
+    x.idx = seqmeds[[4]]$design.list[[i]]$D.idx[1:Nin], 
     x.new = x_uniform, 
     x.new.idx = x_uniform_idx, 
     y.new = NULL, 
-    function.values = simcases[[4]]$function.values.list[ , i], 
+    function.values = seqmeds[[4]]$function.values.list[ , i], 
     type = type01, l = l01, nugget = nuggetSM)
 }
 

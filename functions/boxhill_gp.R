@@ -108,9 +108,13 @@ BHgp_m2 = function(
     if(all(post.probs.cur %in% c(0, 1))) break
   }
   return(list(
-    x.new.idx = x.new.idx,
+    x = x, 
+    x.idx = x.idx, 
+    y = y, 
     x.new = x.new,
+    x.new.idx = x.new.idx,
     y.new = y.new,
-    post.probs = post.probs.mat
+    post.probs = post.probs.mat, 
+    function.values = function.values
   ))
 }

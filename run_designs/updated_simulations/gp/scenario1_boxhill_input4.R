@@ -127,8 +127,8 @@ design_list = foreach(i = 1:numSims) %dorng% {
 
 save_list = list(
   design.list = design_list, 
-  x0 = x_input,
-  x0.idx = x_input_idx, 
+  x0 = NULL,
+  x0.idx = NULL, 
   candidates = x_seq,
   function.values.list = y_seq_mat, 
   nugget = nuggetBH, 

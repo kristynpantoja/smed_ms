@@ -7,7 +7,7 @@
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = "run_designs/updated_simulations/gp/seqmed"
+output_home = "run_designs/updated_simulations/gp/boxhill"
 functions_home = "functions"
 
 # for seqmed design
@@ -45,11 +45,11 @@ gg_color_hue = function(n) {
 # simulations settings
 numSims = 100
 seed = 12
-Nin = 6
+N0 = 6
 numSeq = 15
 seqN = 1
 Nnew = numSeq * seqN
-Nttl = Nin + Nnew
+Nttl = N0 + Nnew
 xmin = 0
 xmax = 1
 numx = 10^3 + 1
@@ -72,9 +72,9 @@ space_filling_idx = c(1, 1 + ((numx - 1)/(Nttl - 1)) * 1:((numx - 1) / ((numx - 
 space_filling = x_seq[space_filling_idx]
 
 # input set 1 (extrapolation)
-x_in1_idx = space_filling_idx[1:Nin]
+x_in1_idx = space_filling_idx[1:N0]
 x_in1 = x_seq[x_in1_idx]
-x_spacefill1_idx = space_filling_idx[-c(1:Nin)]
+x_spacefill1_idx = space_filling_idx[-c(1:N0)]
 x_spacefill1 = x_seq[x_spacefill1_idx]
 # all.equal(space_filling, c(x_in1, x_spacefill1))
 
@@ -86,7 +86,7 @@ x_spacefill2 = x_seq[x_spacefill2_idx]
 # all.equal(space_filling, sort(c(x_in2, x_spacefill2)))
 
 # input set 3 (space-filling / even coverage)
-x_in3_idx = c(1, 1 + ((numx - 1)/(Nin - 1)) * 1:((numx - 1) / ((numx - 1)/(Nin - 1))))
+x_in3_idx = c(1, 1 + ((numx - 1)/(N0 - 1)) * 1:((numx - 1) / ((numx - 1)/(N0 - 1))))
 x_in3 = x_seq[x_in3_idx]
 x_spacefill3_idx = space_filling_idx[!(space_filling_idx %in% x_in3_idx)]
 x_spacefill3 = x_seq[x_spacefill3_idx]
@@ -114,30 +114,28 @@ model1 = list(type = type01[2], l = l01[2])
 ################################################################################
 # non-parallelized version, for checking things
 
-# seqmed_list = list()
+# input set 1
+x_input = x_in1
+x_input_idx = x_in1_idx
+# boxhill_list = list()
 # for(i in 1:numSims){
 #   print(paste0("starting simulation ", i, " out of ", numSims))
 #   y_seq = y_seq_mat[ , i]
-#   ### randomly select input 4
-#   x_input_idx = sample(1:numx, Nin)
-#   x_input = x_seq[x_input_idx]
-#   ###
 #   y_input = y_seq[x_input_idx]
-#   seqmed_list[[i]] = SeqMEDgp(
-#     y0 = y_input, x0 = x_input, x0.idx = x_input_idx, candidates = x_seq, 
-#     function.values = y_seq, nugget = nuggetSM, type = type01, l = l01, 
-#     numSeq = numSeq, seqN = seqN, prints = TRUE)
+#   boxhill_list[[i]] = BHgp_m2(
+#     y_input, x_input, x_input_idx, prior_probs, model0, model1, Nnew, 
+#     x_seq, y_seq, nuggetBH)
 #   
 #   ### plot!
-#   # x_new_idx = seqmed_list[[i]]$D.idx[-c(1:Nin)]
-#   # x_new = seqmed_list[[i]]$D[-c(1:Nin)]
-#   # y_new = seqmed_list[[i]]$y[-c(1:Nin)]
+#   # x_new_idx = boxhill_list[[i]]$x.new.idx
+#   # x_new = boxhill_list[[i]]$x.new
+#   # y_new = boxhill_list[[i]]$y.new
 #   # 
 #   # # plot
 #   # x_input.gg = x_input
 #   # y_input.gg = y_input
-#   # x_new.gg = x_new
-#   # y_new.gg = y_new
+#   # x_new.gg = na.omit(x_new)
+#   # y_new.gg = na.omit(y_new)
 #   # H0_predfn = getGPPredictive(x_seq, x_input.gg, y_input.gg, type01[1], l01[1],
 #   #                             nugget = NULL)
 #   # H1_predfn = getGPPredictive(x_seq, x_input.gg, y_input.gg, type01[2], l01[2],
@@ -202,42 +200,30 @@ model1 = list(type = type01[2], l = l01[2])
 #   #   labs(y = "y", x = "x", fill = "Function", color = "Function")
 # }
 
-
 ################################################################################
 # parallelized version, for running
 
+# input set 1
+x_input = x_in1
+x_input_idx = x_in1_idx
+
 registerDoRNG(1995)
-design_list = foreach(i = 1:numSims) %dorng% {
+boxhill_list = foreach(i = 1:numSims) %dorng% {
   print(paste0("starting simulation ", i, " out of ", numSims))
   y_seq = y_seq_mat[ , i]
-  ### randomly select input set 4
-  x_input_idx = sample(1:numx, Nin)
-  x_input = x_seq[x_input_idx]
-  ###
   y_input = y_seq[x_input_idx]
-  SeqMEDgp(
-    y0 = y_input, x0 = x_input, x0.idx = x_input_idx, candidates = x_seq,
-    function.values = y_seq, nugget = nuggetSM, type = type01, l = l01,
-    numSeq = numSeq, seqN = seqN, prints = FALSE)
+  BHgp_m2(
+    y_input, x_input, x_input_idx, prior_probs, model0, model1, Nnew, 
+    x_seq, y_seq, nuggetBH)
 }
 
-save_list = list(
-  design.list = design_list, 
-  x0 = NULL,
-  x0.idx = NULL, 
-  candidates = x_seq,
-  function.values.list = y_seq_mat, 
-  nugget = nuggetSM, 
-  type = type01, 
-  l = l01, 
-  numSeq = numSeq,
-  seqN = seqN
-)
-saveRDS(save_list, 
-        paste(output_home, 
-              "/scenario1_seqmed_simulations", 
-              "_input4", 
-              "_Nin", Nin, 
-              "_Nnew", Nnew,
-              "_numSims", numSims, 
-              ".rds", sep = ""))
+saveRDS(boxhill_list, paste(output_home, "/scenario1_boxhill_simulations", 
+                           "_input1", 
+                           "_N0", N0, 
+                           "_Nnew", Nnew,
+                           "_numSims", numSims, 
+                           ".rds", sep = ""))
+
+
+
+

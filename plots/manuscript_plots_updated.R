@@ -1,6 +1,6 @@
 ################################################################################
-# last updated: 12/15/20
-# purpose: to calculate and plot metrics for scenario 1 simulations
+# last updated: 03/14/21
+# purpose: to calculate and plot metrics for gp simulations
 
 
 
@@ -21,7 +21,7 @@
 ################################################################################
 # Sources/Libraries
 ################################################################################
-# tamu cluster
+# directories
 output_home = "run_designs/updated_simulations/lm"
 functions_home = "functions"
 
@@ -892,39 +892,69 @@ msey.plt
 ################################################################################
 # Sources/Libraries
 ################################################################################
-# tamu cluster
-output_home = "run_designs/gp"
 
-# --- Sources/Libraries --- #
+# directories
+output_home = "run_designs/updated_simulations/gp"
+functions_home = "functions"
 
+# for seqmed design
 source(paste(functions_home, "/SeqMEDgp.R", sep = ""))
 source(paste(functions_home, "/SeqMEDgp_batch.R", sep = ""))
+source(paste(functions_home, "/charge_function_q.R", sep = ""))
 source(paste(functions_home, "/wasserstein_distance.R", sep = ""))
 source(paste(functions_home, "/charge_function_q.R", sep = ""))
 source(paste(functions_home, "/covariance_functions.R", sep = ""))
 source(paste(functions_home, "/gp_predictive.R", sep = ""))
 
-library(fields)
+# for box-hill design
+source(paste(functions_home, "/boxhill.R", sep = ""))
+source(paste(functions_home, "/boxhill_gp.R", sep = ""))
+source(paste(functions_home, "/kl_divergence.R", sep = ""))
+
+# for evaluating designs
+# source(paste(functions_home, "/simulate_y.R", sep = ""))
+# source(paste(functions_home, "/postprob_hypotheses.R", sep = ""))
+# source(paste(functions_home, "/posterior_mean_mse.R", sep = ""))
+# source(paste(functions_home, "/predictive_yhat_mse.R", sep = ""))
+
+library(mvtnorm)
+
+# for plots
+library(ggplot2)
+library(ggpubr)
+library(reshape2)
+library(data.table)
+gg_color_hue = function(n) {
+  hues = seq(15, 275, length = n + 1)
+  hcl(h = hues, l = 65, c = 100)[1:n]
+}
+image_path = "plots"
 
 # helper functions
-
-add_errorbands = function(xs, ys, MoE, color){
-  y_lower = ys - MoE
-  y_upper = ys + MoE
-  polygon(c(xs,rev(xs)),c(y_lower,rev(y_upper)),col=color, border = NA)
-}
 
 sigmoid = function(x) {
   1 / (1 + exp(-x))
 }
 
-getMedianLogRSS01 = function(simcase, design = NULL){
+getMedianLogRSS01.old = function(simcase, newpts, design = NULL){
   if(is.null(design)) stop("must specify design! 1 = mmed, 2 = spacefilling, 3 = uniform")
   if(design == 1) logRSS01_vec = (simcase$RSS01mmed)
   if(design == 2) logRSS01_vec = (simcase$RSS01sf)
   if(design == 3) logRSS01_vec = (simcase$RSS01unif)
   return(median(logRSS01_vec, na.rm = TRUE))
 }
+getMedianLogRSS01 = function(simcase, x.new, numSims){
+  RSS01_vec = rep(NA, numSims)
+  for(i in 1:numSims){
+    pred0.tmp = getPredDistrSeq(x.new, x_train, y_train, type01[1], l01[1], nugget = NULL)
+    pred1.tmp = getPredDistrSeq(x.new, x_train, y_train, type01[2], l01[2], nugget = NULL)
+    RSS0.tmp = sum((pred0.tmp$pred_mean - truey)^2)  
+    RSS1.tmp = sum((pred1.tmp$pred_mean - truey)^2)
+    RSS01_vec[i] = RSS0.tmp / RSS1.tmp
+  }
+  
+}
+
 
 getMedianLogPredEvid01 = function(simcase, design = NULL){
   if(is.null(design)) stop("must specify design! 1 = mmed, 2 = spacefilling, 3 = uniform")
@@ -943,93 +973,87 @@ getMedianPostProbH1 = function(simcase, design = NULL){
 }
 
 ################################################################################
-# simulation settings, shared for both scenarios
+# simulation settings, shared for both scenarios (sqexp vs. matern)
 ################################################################################
 
-# x_seq, grid over which to generate subsequent functions
-xmin = 0; xmax = 1
-numx = 1001
-x_seq = seq(from = xmin, to = xmax, length.out = numx) # set training points
+# simulations settings
+numSims = 100
+seed = 12
+N0 = 6
+numSeq = 15
+seqN = 1
+Nnew = numSeq * seqN
+Nttl = N0 + Nnew
+xmin = 0
+xmax = 1
+numx = 10^3 + 1
+x_seq = seq(from = xmin, to = xmax, length.out = numx)
+
+# SeqMED settings
+nuggetSM = 1e-10
+
+# boxhill settings
+prior_probs = rep(1 / 2, 2)
+nuggetBH = 1e-10
 
 ################################################################################
-# initial data
+# input data
 ################################################################################
-
-# train set designs
-N = 6
-N2 = 15
-Ntotal = N + N2
 
 # 1. make space-filling design
-# space_filling = seq(from = xmin, to = xmax, length.out = Ntotal)
-space_filling_ind = c(1, 1 + ((numx - 1)/(Ntotal - 1)) * 1:((numx - 1) / ((numx - 1)/(Ntotal - 1))))
-space_filling = x_seq[space_filling_ind]
+# space_filling = seq(from = xmin, to = xmax, length.out = Nttl)
+space_filling_idx = c(1, 1 + ((numx - 1)/(Nttl - 1)) * 1:((numx - 1) / ((numx - 1)/(Nttl - 1))))
+space_filling = x_seq[space_filling_idx]
 
-# train set 1
-x_train1_ind = space_filling_ind[1:N]
-x_train1 = x_seq[x_train1_ind]
-x_spacefill1_ind = space_filling_ind[-c(1:N)]
-x_spacefill1 = x_seq[x_spacefill1_ind]
+# input set 1 (extrapolation)
+x_in1_idx = space_filling_idx[1:N0]
+x_in1 = x_seq[x_in1_idx]
+x_spacefill1_idx = space_filling_idx[-c(1:N0)]
+x_spacefill1 = x_seq[x_spacefill1_idx]
+# all.equal(space_filling, c(x_in1, x_spacefill1))
 
-# train set 2
-x_train2_ind = space_filling_ind[c(1, 2, 4, 7, 12, 21)]
-x_train2 = x_seq[x_train2_ind]
-x_spacefill2_ind = space_filling_ind[-c(1, 2, 4, 7, 12, 21)]
-x_spacefill2 = x_seq[x_spacefill2_ind]
-# all.equal(space_filling, sort(c(x_train2, x_spacefill2)))
+# input set 2 (increasing spread)
+x_in2_idx = space_filling_idx[c(1, 2, 4, 7, 12, 21)]
+x_in2 = x_seq[x_in2_idx]
+x_spacefill2_idx = space_filling_idx[-c(1, 2, 4, 7, 12, 21)]
+x_spacefill2 = x_seq[x_spacefill2_idx]
+# all.equal(space_filling, sort(c(x_in2, x_spacefill2)))
 
-# train set 3 (space-filling)
-x_train3_ind = c(1, 1 + ((numx - 1)/(N - 1)) * 1:((numx - 1) / ((numx - 1)/(N - 1))))
-x_train3 = x_seq[x_train3_ind]
-x_spacefill3_ind = space_filling_ind[!(space_filling_ind %in% x_train3_ind)]
-x_spacefill3 = x_seq[x_spacefill3_ind]
-# all.equal(space_filling, sort(c(x_train3, x_spacefill3)))
+# input set 3 (space-filling / even coverage)
+x_in3_idx = c(1, 1 + ((numx - 1)/(N0 - 1)) * 1:((numx - 1) / ((numx - 1)/(N0 - 1))))
+x_in3 = x_seq[x_in3_idx]
+x_spacefill3_idx = space_filling_idx[!(space_filling_idx %in% x_in3_idx)]
+x_spacefill3 = x_seq[x_spacefill3_idx]
+# all.equal(space_filling, sort(c(x_in3, x_spacefill3)))
+
+# input set 4 (uniform / random)
 
 ################################################################################
-# Scenario 1: Matern vs. Squared Exponential
+# Scenario 1: Squared exponential vs. matern, true = matern
 ################################################################################
-
-l01= c(0.1, 0.1)
-type01 = c(1, 4)
-numCandidates = 1001
-k = 4
-p = 1
-nugget = NULL
-alpha = 1
-
-# generate matern function
-set.seed(12)
+type01 = c("squaredexponential", "matern")
+l01= c(0.01, 0.01)
+# generate matern functions
+set.seed(seed)
 null_cov = getCov(x_seq, x_seq, type01[2], l01[2])
 null_mean = rep(0, numx)
+y_seq_mat = t(rmvnorm(n = numSims, mean = null_mean, sigma = null_cov)) # the function values
 
-# read in sims
-gaussianvsmatern_train4sims = readRDS(
-  paste0(
-    output_home, 
-    "/gp_demo/gaussianvsmatern_train4sims.rds"))
-
-# get sim info
-sim_ind = 1
-x_train = gaussianvsmatern_train4sims$x_train[ , sim_ind]
-x_train_ind = gaussianvsmatern_train4sims$x_train_ind[ , sim_ind]
-mmed_gp = gaussianvsmatern_train4sims$mmed_gp_list[[sim_ind]]
-y_seq = gaussianvsmatern_train4sims$sim_fns[ , sim_ind]
-y_train = y_seq[x_train_ind]
+# bh settings
+model0 = list(type = type01[1], l = l01[1])
+model1 = list(type = type01[2], l = l01[2])
 
 ################################################################################
-# Initial Data
+# Plot initial data
 ################################################################################
 # different input points
-inputs = as.data.frame(rbind(x_train1, x_train2, x_train3, runif(N)), 
-                       row.names = c("extrapolation", "inc.spread", 
-                                     "even.coverage", "random"))
 
 # plot
 ggdata = data.table(
-  Extrapolation = x_train1, 
-  `Inc Spread` = x_train2, 
-  `Even Coverage` = x_train3, 
-  `Random` = runif(N)
+  `Extrapolation` = x_in1, 
+  `Inc Spread` = x_in2, 
+  `Even Coverage` = x_in3, 
+  `Random` = runif(N0)
 )
 ggdata = melt(ggdata, measure.vars = 1:4)
 ggdata$variable = factor(ggdata$variable)
@@ -1058,22 +1082,40 @@ plt0
 # )
 
 ################################################################################
-# Plot the design
+# Plot the demo design
 ################################################################################
+
+# demo settings
+l01.demo = c(0.1, 0.1)
+nugget.demo = NULL
+
+# read in sims
+gaussianvsmatern_train4sims = readRDS(
+  paste0(
+    "run_designs/gp",
+    "/gp_demo/gaussianvsmatern_train4sims.rds"))
+
+# get sim info
+sim_ind = 1
+x_in = gaussianvsmatern_train4sims$x_train[ , sim_ind]
+x_in_idx = gaussianvsmatern_train4sims$x_train_ind[ , sim_ind]
+mmed_gp = gaussianvsmatern_train4sims$mmed_gp_list[[sim_ind]]
+y_seq = gaussianvsmatern_train4sims$sim_fns[ , sim_ind]
+y_in = y_seq[x_in_idx]
 
 newpts = mmed_gp$addD
 truey = y_seq[mmed_gp$indices]
 
-H0_predfn = getGPPredictive(x_seq, x_train, y_train, type01[1], l01[1],
-                            nugget = NULL)
-H1_predfn = getGPPredictive(x_seq, x_train, y_train, type01[2], l01[2],
-                            nugget = NULL)
+H0_predfn = getGPPredictive(x_seq, x_in, y_in, type01[1], l01.demo[1],
+                            nugget = nugget.demo)
+H1_predfn = getGPPredictive(x_seq, x_in, y_in, type01[2], l01.demo[2],
+                            nugget = nugget.demo)
 
 # get w_seq
-Kinv0 = solve(getCov(x_train, x_train, type01[1], l01[1]))
-Kinv1 = solve(getCov(x_train, x_train, type01[2], l01[2]))
+Kinv0 = solve(getCov(x_in, x_in, type01[1], l01[1]))
+Kinv1 = solve(getCov(x_in, x_in, type01[2], l01[2]))
 w_seq = sapply(x_seq, FUN = function(x1) 
-  WNgp(x1, Kinv0, Kinv1, x_train, y_train, 
+  WNgp(x1, Kinv0, Kinv1, x_in, y_in, 
                                    var_e = 1, type01, l01))
 
 # plot
@@ -1106,11 +1148,11 @@ ggdata.melted = cbind(ggdata.melted,
                       lower = ggdata.lower$value, 
                       upper = ggdata.upper$value)
 ggdata_pts = data.table(
-  x = c(x_train, newpts), 
-  y = c(y_train, truey), 
-  color = c(rep(gg_color_hue(2)[2], length(x_train)), 
+  x = c(x_in, newpts), 
+  y = c(y_in, truey), 
+  color = c(rep(gg_color_hue(2)[2], length(x_in)), 
             rep(gg_color_hue(2)[1], length(newpts))), 
-  shape = c(rep(8, length(x_train)), 
+  shape = c(rep(8, length(x_in)), 
             rep(16, length(newpts)))
 )
 ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable), 
@@ -1148,25 +1190,28 @@ ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable),
 # Metrics
 ################################################################################
 
-gvm1 = readRDS(
+simcases = list()
+for(i in 1:4){
+  simcases[[i]] = readRDS(
     paste0(
       output_home, 
-      "/gpsims_seq/gp_sims/gvm_seq_train1sims.rds"))
-gvm2 = readRDS(
-  paste0(
-    output_home, 
-    "/gpsims_seq/gp_sims/gvm_seq_train2sims.rds"))
-gvm3 = readRDS(
-  paste0(
-    output_home, 
-    "/gpsims_seq/gp_sims/gvm_seq_train3sims.rds"))
-gvm4 = readRDS(
-  paste0(
-    output_home, 
-    "/gpsims_seq/gp_sims/gvm_seq_train4sims.rds"))
-simcases = list(gvm1, gvm2, gvm3, gvm4)
+      "/seqmed/scenario1_seqmed_simulations", 
+      "_input", i, 
+      "_N06_Nnew15_numSims100.rds"))
+}
 
 # RSS Ratio (0/1)
+case1_medianLogRSS01_vec = rep(NA, 3)# case 1: extrapolation (points close together)
+case2_medianLogRSS01_vec = rep(NA, 3)# case 2: ? (points increasingly spread out more)
+case3_medianLogRSS01_vec = rep(NA, 3)# case 3: space-filling
+case4_medianLogRSS01_vec = rep(NA, 3)# case 4: uniformly-distributed inputs
+for(i in 1:3){
+  case1_medianLogRSS01_vec[i] = getMedianLogRSS01(simcases[[1]], i)
+  case2_medianLogRSS01_vec[i] = getMedianLogRSS01(simcases[[2]], i)
+  case3_medianLogRSS01_vec[i] = getMedianLogRSS01(simcases[[3]], i)
+  case4_medianLogRSS01_vec[i] = getMedianLogRSS01(simcases[[4]], i)
+}
+# plot
 ggdata = data.table(
   Extrapolation = case1_medianLogRSS01_vec,
   `Inc Spread` = case2_medianLogRSS01_vec,

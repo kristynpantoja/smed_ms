@@ -45,11 +45,11 @@ gg_color_hue = function(n) {
 # simulations settings
 numSims = 100
 seed = 12
-N0 = 6
+Nin = 6
 numSeq = 15
 seqN = 1
 Nnew = numSeq * seqN
-Nttl = N0 + Nnew
+Nttl = Nin + Nnew
 xmin = 0
 xmax = 1
 numx = 10^3 + 1
@@ -72,9 +72,9 @@ space_filling_idx = c(1, 1 + ((numx - 1)/(Nttl - 1)) * 1:((numx - 1) / ((numx - 
 space_filling = x_seq[space_filling_idx]
 
 # input set 1 (extrapolation)
-x_in1_idx = space_filling_idx[1:N0]
+x_in1_idx = space_filling_idx[1:Nin]
 x_in1 = x_seq[x_in1_idx]
-x_spacefill1_idx = space_filling_idx[-c(1:N0)]
+x_spacefill1_idx = space_filling_idx[-c(1:Nin)]
 x_spacefill1 = x_seq[x_spacefill1_idx]
 # all.equal(space_filling, c(x_in1, x_spacefill1))
 
@@ -86,7 +86,7 @@ x_spacefill2 = x_seq[x_spacefill2_idx]
 # all.equal(space_filling, sort(c(x_in2, x_spacefill2)))
 
 # input set 3 (space-filling / even coverage)
-x_in3_idx = c(1, 1 + ((numx - 1)/(N0 - 1)) * 1:((numx - 1) / ((numx - 1)/(N0 - 1))))
+x_in3_idx = c(1, 1 + ((numx - 1)/(Nin - 1)) * 1:((numx - 1) / ((numx - 1)/(Nin - 1))))
 x_in3 = x_seq[x_in3_idx]
 x_spacefill3_idx = space_filling_idx[!(space_filling_idx %in% x_in3_idx)]
 x_spacefill3 = x_seq[x_spacefill3_idx]
@@ -128,9 +128,9 @@ x_input_idx = x_in2_idx
 #     numSeq = numSeq, seqN = seqN, prints = TRUE)
 # 
 #   ### plot!
-#   # x_new_idx = seqmed_list[[i]]$D.idx[-c(1:N0)]
-#   # x_new = seqmed_list[[i]]$D[-c(1:N0)]
-#   # y_new = seqmed_list[[i]]$y[-c(1:N0)]
+#   # x_new_idx = seqmed_list[[i]]$D.idx[-c(1:Nin)]
+#   # x_new = seqmed_list[[i]]$D[-c(1:Nin)]
+#   # y_new = seqmed_list[[i]]$y[-c(1:Nin)]
 #   #
 #   # # plot
 #   # x_input.gg = x_input
@@ -210,7 +210,7 @@ x_input = x_in2
 x_input_idx = x_in2_idx
 
 registerDoRNG(1995)
-seqmed_list = foreach(i = 1:numSims) %dorng% {
+design_list = foreach(i = 1:numSims) %dorng% {
   print(paste0("starting simulation ", i, " out of ", numSims))
   y_seq = y_seq_mat[ , i]
   y_input = y_seq[x_input_idx]
@@ -220,13 +220,23 @@ seqmed_list = foreach(i = 1:numSims) %dorng% {
     numSeq = numSeq, seqN = seqN, prints = FALSE)
 }
 
-saveRDS(seqmed_list, paste(output_home, "/scenario1_seqmed_simulations", 
-                           "_input2", 
-                           "_N0", N0, 
-                           "_Nnew", Nnew,
-                           "_numSims", numSims, 
-                           ".rds", sep = ""))
-
-
-
-
+save_list = list(
+  design.list = design_list, 
+  x0 = x_input,
+  x0.idx = x_input_idx, 
+  candidates = x_seq,
+  function.values.list = y_seq_mat, 
+  nugget = nuggetSM, 
+  type = type01, 
+  l = l01, 
+  numSeq = numSeq,
+  seqN = seqN
+)
+saveRDS(save_list, 
+        paste(output_home, 
+              "/scenario1_seqmed_simulations", 
+              "_input2", 
+              "_Nin", Nin, 
+              "_Nnew", Nnew,
+              "_numSims", numSims, 
+              ".rds", sep = ""))

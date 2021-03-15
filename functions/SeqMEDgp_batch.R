@@ -10,9 +10,10 @@ obj_gp = function(
   candidate, D, Kinv0, Kinv1, initD, y, error.var, type, l, p = 1, k = 4, alpha = 1
 ){
   result = q_gp(candidate, Kinv0, Kinv1, initD, y, error.var, type, l, p, 
-                alpha)^k * 
-    sum(sapply(D, function(x_i) (q_gp(x_i, Kinv0, Kinv1, initD, y, error.var, type, l, p, 
-                                      alpha) / sqrt((x_i - candidate)^2))^k))
+                alpha)^k # * 
+    # sum(sapply(D, function(x_i) 
+    #   (q_gp(x_i, Kinv0, Kinv1, initD, y, error.var, type, l, p, 
+    #         alpha) / sqrt((x_i - candidate)^2))^k))
   return(result)
 }
 
@@ -26,7 +27,9 @@ SeqMEDgp_batch = function(
   if(length(y) != initN) stop("length of y does not match length of initial input data, initD")
   
   # check if any points in initD give Wasserstein distance of 0 (in which case we don't want to use it since 1/0 in q)
-  old_initD = initD
+  # turns out, that's not necessary
+  
+  # old_initD = initD
   
   # posterior distribution of beta
   if(is.null(nugget)){
@@ -79,8 +82,24 @@ SeqMEDgp_batch = function(
     # Find f_opt: minimum of f_min
     f_min_candidates = sapply(
       candidates, 
-      function(x) obj_gp(x, initD, Kinv0, Kinv1, initD, y, error.var, type, l, p, k, alpha))
+      function(x) obj_gp(
+        x, initD, Kinv0, Kinv1, initD, y, error.var, type, l, p, k, alpha))
     f_opt = which.min(f_min_candidates)
+    #### obj_gp args : BEGIN ####
+    # candidate = candidates[1]
+    # D = initD
+    # # Kinv0
+    # # Kinv1
+    # # initD
+    # # y
+    # # error.var
+    # # type
+    # # l
+    # # p
+    # # k
+    # # alpha
+    #### obj_gp args : END ####
+    
     xnew = candidates[f_opt]
     # Update set of design points (D) and plot new point
     D[1] = xnew
@@ -103,12 +122,12 @@ SeqMEDgp_batch = function(
   }
   
   return(list(
-    "initD" = old_initD, 
+    "initD" = initD, 
     "addD" = D, 
-    "D" = c(old_initD, D),
+    "D" = c(initD, D),
     "candidates" = candidates, 
-    "indices" = D_ind, 
-    "q_initD" = initD))
+    "indices" = D_ind
+    ))
 }
 
 

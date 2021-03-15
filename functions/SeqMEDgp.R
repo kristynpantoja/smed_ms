@@ -39,6 +39,22 @@ SeqMEDgp = function(
       initD = D, y = y, type = type, l = l, error.var = error.var, N2 = seqN[t],
       k = k, p = p, xmin = xmin, xmax = xmax, nugget = nugget, 
       alpha = alpha_seq[t], candidates = candidates, batch.idx = batch.idx)
+    #### SeqMEDgp_batch args : BEGIN ####
+    # initD = D
+    # # y
+    # # type
+    # # l
+    # # error.var
+    # N2 = seqN[t]
+    # # k
+    # # p
+    # # xmin
+    # # xmax
+    # # nugget
+    # alpha = alpha_seq[t]
+    # # candidates
+    # # batch.idx
+    #### SeqMED gp_batch() args : END ####
     
     yt = function.values[Dt$indices]
     

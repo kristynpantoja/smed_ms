@@ -936,27 +936,7 @@ sigmoid = function(x) {
   1 / (1 + exp(-x))
 }
 
-getMedianLogRSS01.old = function(simcase, newpts, design = NULL){
-  if(is.null(design)) stop("must specify design! 1 = mmed, 2 = spacefilling, 3 = uniform")
-  if(design == 1) logRSS01_vec = (simcase$RSS01mmed)
-  if(design == 2) logRSS01_vec = (simcase$RSS01sf)
-  if(design == 3) logRSS01_vec = (simcase$RSS01unif)
-  return(median(logRSS01_vec, na.rm = TRUE))
-}
-getMedianLogRSS01 = function(simcase, x.new, numSims){
-  RSS01_vec = rep(NA, numSims)
-  for(i in 1:numSims){
-    pred0.tmp = getPredDistrSeq(x.new, x_train, y_train, type01[1], l01[1], nugget = NULL)
-    pred1.tmp = getPredDistrSeq(x.new, x_train, y_train, type01[2], l01[2], nugget = NULL)
-    RSS0.tmp = sum((pred0.tmp$pred_mean - truey)^2)  
-    RSS1.tmp = sum((pred1.tmp$pred_mean - truey)^2)
-    RSS01_vec[i] = RSS0.tmp / RSS1.tmp
-  }
-  
-}
-
-
-getMedianLogPredEvid01 = function(simcase, design = NULL){
+getMedianLogPredEvid01.old = function(simcase, design = NULL){
   if(is.null(design)) stop("must specify design! 1 = mmed, 2 = spacefilling, 3 = uniform")
   if(design == 1) logPredEvid01_vec = simcase$logPredEvid01mmed
   if(design == 2) logPredEvid01_vec = simcase$logPredEvid01sf
@@ -964,7 +944,7 @@ getMedianLogPredEvid01 = function(simcase, design = NULL){
   return(median(logPredEvid01_vec, na.rm = TRUE))
 }
 
-getMedianPostProbH1 = function(simcase, design = NULL){
+getMedianPostProbH1.old = function(simcase, design = NULL){
   if(is.null(design)) stop("must specify design! 1 = mmed, 2 = spacefilling, 3 = uniform")
   if(design == 1) postProbH1_vec = exp(simcase$logJointEvid1mmed_vec) / (exp(simcase$logJointEvid0mmed_vec) + exp(simcase$logJointEvid1mmed_vec))
   if(design == 2) postProbH1_vec = exp(simcase$logJointEvid1sf_vec) / (exp(simcase$logJointEvid0sf_vec) + exp(simcase$logJointEvid1sf_vec))
@@ -979,11 +959,11 @@ getMedianPostProbH1 = function(simcase, design = NULL){
 # simulations settings
 numSims = 100
 seed = 12
-N0 = 6
+Nin = 6
 numSeq = 15
 seqN = 1
 Nnew = numSeq * seqN
-Nttl = N0 + Nnew
+Nttl = Nin + Nnew
 xmin = 0
 xmax = 1
 numx = 10^3 + 1
@@ -1006,9 +986,9 @@ space_filling_idx = c(1, 1 + ((numx - 1)/(Nttl - 1)) * 1:((numx - 1) / ((numx - 
 space_filling = x_seq[space_filling_idx]
 
 # input set 1 (extrapolation)
-x_in1_idx = space_filling_idx[1:N0]
+x_in1_idx = space_filling_idx[1:Nin]
 x_in1 = x_seq[x_in1_idx]
-x_spacefill1_idx = space_filling_idx[-c(1:N0)]
+x_spacefill1_idx = space_filling_idx[-c(1:Nin)]
 x_spacefill1 = x_seq[x_spacefill1_idx]
 # all.equal(space_filling, c(x_in1, x_spacefill1))
 
@@ -1020,13 +1000,18 @@ x_spacefill2 = x_seq[x_spacefill2_idx]
 # all.equal(space_filling, sort(c(x_in2, x_spacefill2)))
 
 # input set 3 (space-filling / even coverage)
-x_in3_idx = c(1, 1 + ((numx - 1)/(N0 - 1)) * 1:((numx - 1) / ((numx - 1)/(N0 - 1))))
+x_in3_idx = c(1, 1 + ((numx - 1)/(Nin - 1)) * 
+                1:((numx - 1) / ((numx - 1)/(Nin - 1))))
 x_in3 = x_seq[x_in3_idx]
 x_spacefill3_idx = space_filling_idx[!(space_filling_idx %in% x_in3_idx)]
 x_spacefill3 = x_seq[x_spacefill3_idx]
 # all.equal(space_filling, sort(c(x_in3, x_spacefill3)))
 
 # input set 4 (uniform / random)
+x_spacefill4_idx = floor(c(1, 1 + ((numx - 1)/(Nnew - 1)) * 
+                             1:((numx - 1) / ((numx - 1)/(Nnew - 1)))))
+x_spacefill4 = x_seq[x_spacefill4_idx]
+
 
 ################################################################################
 # Scenario 1: Squared exponential vs. matern, true = matern
@@ -1053,7 +1038,7 @@ ggdata = data.table(
   `Extrapolation` = x_in1, 
   `Inc Spread` = x_in2, 
   `Even Coverage` = x_in3, 
-  `Random` = runif(N0)
+  `Random` = runif(Nin)
 )
 ggdata = melt(ggdata, measure.vars = 1:4)
 ggdata$variable = factor(ggdata$variable)
@@ -1197,26 +1182,212 @@ for(i in 1:4){
       output_home, 
       "/seqmed/scenario1_seqmed_simulations", 
       "_input", i, 
-      "_N06_Nnew15_numSims100.rds"))
+      "_Nin6_Nnew15_numSims100.rds"))
 }
 
 # RSS Ratio (0/1)
-case1_medianLogRSS01_vec = rep(NA, 3)# case 1: extrapolation (points close together)
-case2_medianLogRSS01_vec = rep(NA, 3)# case 2: ? (points increasingly spread out more)
-case3_medianLogRSS01_vec = rep(NA, 3)# case 3: space-filling
-case4_medianLogRSS01_vec = rep(NA, 3)# case 4: uniformly-distributed inputs
-for(i in 1:3){
-  case1_medianLogRSS01_vec[i] = getMedianLogRSS01(simcases[[1]], i)
-  case2_medianLogRSS01_vec[i] = getMedianLogRSS01(simcases[[2]], i)
-  case3_medianLogRSS01_vec[i] = getMedianLogRSS01(simcases[[3]], i)
-  case4_medianLogRSS01_vec[i] = getMedianLogRSS01(simcases[[4]], i)
+# getMedianLogRSS01.old = function(simcase, newpts, design = NULL){
+#   if(is.null(design)) stop("must specify design! 1 = mmed, 2 = spacefilling, 3 = uniform")
+#   if(design == 1) logRSS01_vec = (simcase$RSS01mmed)
+#   if(design == 2) logRSS01_vec = (simcase$RSS01sf)
+#   if(design == 3) logRSS01_vec = (simcase$RSS01unif)
+#   return(median(logRSS01_vec, na.rm = TRUE))
+# }
+# case1_medianLogRSS01_vec = rep(NA, 3)# case 1: extrapolation (points close together)
+# case2_medianLogRSS01_vec = rep(NA, 3)# case 2: ? (points increasingly spread out more)
+# case3_medianLogRSS01_vec = rep(NA, 3)# case 3: space-filling
+# case4_medianLogRSS01_vec = rep(NA, 3)# case 4: uniformly-distributed inputs
+# for(i in 1:3){
+#   case1_medianLogRSS01_vec[i] = getMedianLogRSS01(simcases[[1]], i)
+#   case2_medianLogRSS01_vec[i] = getMedianLogRSS01(simcases[[2]], i)
+#   case3_medianLogRSS01_vec[i] = getMedianLogRSS01(simcases[[3]], i)
+#   case4_medianLogRSS01_vec[i] = getMedianLogRSS01(simcases[[4]], i)
+# }
+
+getMedianLogRSS01 = function(
+  x, 
+  x.idx,
+  x.new, 
+  x.new.idx,
+  y.new = NULL,
+  function.values,
+  type, 
+  l, 
+  nugget
+){
+  y = function.values[x.idx]
+  if(is.null(y.new)) y.new = function.values[x.new.idx]
+  pred0.tmp = getGPPredictive(x.new, x, y, type[1], l[1], nugget)
+  pred1.tmp = getGPPredictive(x.new, x, y, type[2], l[2], nugget)
+  RSS0.tmp = sum((pred0.tmp$pred_mean - y.new)^2)  
+  RSS1.tmp = sum((pred1.tmp$pred_mean - y.new)^2)
+  RSS01 = RSS0.tmp / RSS1.tmp
+  RSS01
 }
+
+# RSS01 for SeqMED
+RSS01_in1_seqmed = rep(NA, numSims)
+RSS01_in2_seqmed = rep(NA, numSims)
+RSS01_in3_seqmed = rep(NA, numSims)
+RSS01_in4_seqmed = rep(NA, numSims)
+for(i in 1:numSims){
+  RSS01_in1_seqmed[i] = getMedianLogRSS01(
+    x = simcases[[1]]$x0, 
+    x.idx = simcases[[1]]$x0.idx, 
+    x.new = simcases[[1]]$design.list[[i]]$D[-c(1:Nin)], 
+    x.new.idx = simcases[[1]]$design.list[[i]]$D.idx[-c(1:Nin)], 
+    y.new = simcases[[1]]$design.list[[i]]$y[-c(1:Nin)], 
+    function.values = simcases[[1]]$function.values.list[ , i], 
+    type = type01, l = l01, nugget = nuggetSM)
+  # plot(x_seq, simcases[[1]]$function.values.list[ , i], type = "l")
+  # points(simcases[[1]]$x0, simcases[[1]]$design.list[[i]]$y[1:Nin], col = 3)
+  # points(simcases[[1]]$design.list[[i]]$D[-c(1:Nin)], 
+  #        simcases[[1]]$design.list[[i]]$y[-c(1:Nin)], col = 2)
+  RSS01_in2_seqmed[i] = getMedianLogRSS01(
+    x = simcases[[2]]$x0, 
+    x.idx = simcases[[2]]$x0.idx, 
+    x.new = simcases[[2]]$design.list[[i]]$D[-c(1:Nin)], 
+    x.new.idx = simcases[[2]]$design.list[[i]]$D.idx[-c(1:Nin)], 
+    y.new = simcases[[2]]$design.list[[i]]$y[-c(1:Nin)], 
+    function.values = simcases[[2]]$function.values.list[ , i], 
+    type = type01, l = l01, nugget = nuggetSM)
+  # plot(x_seq, simcases[[2]]$function.values.list[ , i], type = "l")
+  # points(simcases[[2]]$x0, simcases[[2]]$design.list[[i]]$y[1:Nin], col = 3)
+  # points(simcases[[2]]$design.list[[i]]$D[-c(1:Nin)],
+  #        simcases[[2]]$design.list[[i]]$y[-c(1:Nin)], col = 2)
+  RSS01_in3_seqmed[i] = getMedianLogRSS01(
+    x = simcases[[3]]$x0, 
+    x.idx = simcases[[3]]$x0.idx, 
+    x.new = simcases[[3]]$design.list[[i]]$D[-c(1:Nin)], 
+    x.new.idx = simcases[[3]]$design.list[[i]]$D.idx[-c(1:Nin)], 
+    y.new = simcases[[3]]$design.list[[i]]$y[-c(1:Nin)], 
+    function.values = simcases[[3]]$function.values.list[ , i], 
+    type = type01, l = l01, nugget = nuggetSM)
+  # plot(x_seq, simcases[[3]]$function.values.list[ , i], type = "l")
+  # points(simcases[[3]]$x0, simcases[[3]]$design.list[[i]]$y[1:Nin], col = 3)
+  # points(simcases[[3]]$design.list[[i]]$D[-c(1:Nin)],
+  #        simcases[[3]]$design.list[[i]]$y[-c(1:Nin)], col = 2)
+  RSS01_in4_seqmed[i] = getMedianLogRSS01(
+    x = simcases[[4]]$design.list[[i]]$D[1:Nin], 
+    x.idx = simcases[[4]]$design.list[[i]]$D.idx[1:Nin], 
+    x.new = simcases[[4]]$design.list[[i]]$D[-c(1:Nin)], 
+    x.new.idx = simcases[[4]]$design.list[[i]]$D.idx[-c(1:Nin)], 
+    y.new = simcases[[4]]$design.list[[i]]$y[-c(1:Nin)], 
+    function.values = simcases[[4]]$function.values.list[ , i], 
+    type = type01, l = l01, nugget = nuggetSM)
+}
+
+# RSS01 for Space-filling
+RSS01_in1_spacefilling = rep(NA, numSims)
+RSS01_in2_spacefilling = rep(NA, numSims)
+RSS01_in3_spacefilling = rep(NA, numSims)
+RSS01_in4_spacefilling = rep(NA, numSims)
+for(i in 1:numSims){
+  RSS01_in1_spacefilling[i] = getMedianLogRSS01(
+    x = simcases[[1]]$x0, 
+    x.idx = simcases[[1]]$x0.idx, 
+    x.new = x_spacefill1, 
+    x.new.idx = x_spacefill1_idx, 
+    y.new = NULL, 
+    function.values = simcases[[1]]$function.values.list[ , i], 
+    type = type01, l = l01, nugget = nuggetSM)
+  RSS01_in2_spacefilling[i] = getMedianLogRSS01(
+    x = simcases[[2]]$x0, 
+    x.idx = simcases[[2]]$x0.idx, 
+    x.new = x_spacefill2, 
+    x.new.idx = x_spacefill2_idx,  
+    y.new = NULL, 
+    function.values = simcases[[2]]$function.values.list[ , i], 
+    type = type01, l = l01, nugget = nuggetSM)
+  RSS01_in3_spacefilling[i] = getMedianLogRSS01(
+    x = simcases[[3]]$x0, 
+    x.idx = simcases[[3]]$x0.idx, 
+    x.new = x_spacefill3, 
+    x.new.idx = x_spacefill3_idx, 
+    y.new = NULL, 
+    function.values = simcases[[3]]$function.values.list[ , i], 
+    type = type01, l = l01, nugget = nuggetSM)
+  RSS01_in4_spacefilling[i] = getMedianLogRSS01(
+    x = simcases[[4]]$design.list[[i]]$D[1:Nin], 
+    x.idx = simcases[[4]]$design.list[[i]]$D.idx[1:Nin], 
+    x.new = x_spacefill4, 
+    x.new.idx = x_spacefill4_idx, 
+    y.new = NULL, 
+    function.values = simcases[[4]]$function.values.list[ , i], 
+    type = type01, l = l01, nugget = nuggetSM)
+}
+
+# RSS01 for Uniformly-distributed Random
+RSS01_in1_random = rep(NA, numSims)
+RSS01_in2_random = rep(NA, numSims)
+RSS01_in3_random = rep(NA, numSims)
+RSS01_in4_random = rep(NA, numSims)
+for(i in 1:numSims){
+  # first, get uniformly sampled random points
+  x_uniform_idx = sample(1:numx, Nnew)
+  x_uniform = x_seq[x_uniform_idx]
+  # now calculate RSS01
+  RSS01_in1_random[i] = getMedianLogRSS01(
+    x = simcases[[1]]$x0, 
+    x.idx = simcases[[1]]$x0.idx, 
+    x.new = x_uniform, 
+    x.new.idx = x_uniform_idx, 
+    y.new = NULL, 
+    function.values = simcases[[1]]$function.values.list[ , i], 
+    type = type01, l = l01, nugget = nuggetSM)
+  RSS01_in2_random[i] = getMedianLogRSS01(
+    x = simcases[[2]]$x0, 
+    x.idx = simcases[[2]]$x0.idx, 
+    x.new = x_uniform, 
+    x.new.idx = x_uniform_idx, 
+    y.new = NULL, 
+    function.values = simcases[[2]]$function.values.list[ , i], 
+    type = type01, l = l01, nugget = nuggetSM)
+  RSS01_in3_random[i] = getMedianLogRSS01(
+    x = simcases[[3]]$x0, 
+    x.idx = simcases[[3]]$x0.idx, 
+    x.new = x_uniform, 
+    x.new.idx = x_uniform_idx, 
+    y.new = NULL, 
+    function.values = simcases[[3]]$function.values.list[ , i], 
+    type = type01, l = l01, nugget = nuggetSM)
+  RSS01_in4_random[i] = getMedianLogRSS01(
+    x = simcases[[4]]$design.list[[i]]$D[1:Nin], 
+    x.idx = simcases[[4]]$design.list[[i]]$D.idx[1:Nin], 
+    x.new = x_uniform, 
+    x.new.idx = x_uniform_idx, 
+    y.new = NULL, 
+    function.values = simcases[[4]]$function.values.list[ , i], 
+    type = type01, l = l01, nugget = nuggetSM)
+}
+
+# get the medians
+RSS01_in1 = c(
+  SeqMED = median(RSS01_in1_seqmed), 
+  SpaceFill = median(RSS01_in1_spacefilling), 
+  Random = median(RSS01_in1_random)
+  )
+RSS01_in2 = c(
+  SeqMED = median(RSS01_in2_seqmed), 
+  SpaceFill = median(RSS01_in2_spacefilling), 
+  Random = median(RSS01_in2_random)
+)
+RSS01_in3 = c(
+  SeqMED = median(RSS01_in3_seqmed), 
+  SpaceFill = median(RSS01_in3_spacefilling), 
+  Random = median(RSS01_in3_random)
+)
+RSS01_in4 = c(
+  SeqMED = median(RSS01_in4_seqmed), 
+  SpaceFill = median(RSS01_in4_spacefilling), 
+  Random = median(RSS01_in4_random)
+)
 # plot
 ggdata = data.table(
-  Extrapolation = case1_medianLogRSS01_vec,
-  `Inc Spread` = case2_medianLogRSS01_vec,
-  `Even Coverage` = case3_medianLogRSS01_vec,
-  `Random` = case4_medianLogRSS01_vec,
+  `Extrapolation` = RSS01_in1,
+  `Inc Spread` = RSS01_in2,
+  `Even Coverage` = RSS01_in3,
+  `Random` = RSS01_in4,
   Design = c("SeqMED", "SpaceFill", "Random")
 )
 ggdata = melt(ggdata, id.vars = c("Design"))

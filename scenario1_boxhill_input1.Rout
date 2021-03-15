@@ -270,4 +270,4 @@ Loading required package: rngtools
 > 
 > proc.time()
    user  system elapsed 
-  8.163   1.014  81.761 
+  7.127   1.041  51.210 

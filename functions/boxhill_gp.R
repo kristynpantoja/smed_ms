@@ -1,9 +1,15 @@
 # using joint distribution of y | x 
 #   -- should I be using the posterior predictive, instead?
-Evidence_gp = function(y, x, model){
+Evidence_gp = function(y, x, model, nugget){
+  null_mean_vec = rep(0, length(y))
+  if(is.null(nugget)){
+    K_obs = getCov(x, x, model$type, model$l)
+  } else{
+    K_obs = getCov(x, x, model$type, model$l) + 
+      nugget * diag(length(y))
+  }
   evidence = dmvnorm(
-    y, mean = rep(0, length(y)), 
-    sigma = getCov(x, x, model$type, model$l), log = FALSE)
+    y, mean = null_mean_vec, sigma = K_obs, log = FALSE)
   return(evidence)
 }
 
@@ -68,8 +74,8 @@ BHgp_m2 = function(
   post.probs0 = getHypothesesPosteriors( # posterior prob with current data
     prior.probs = prior.probs, 
     evidences = c(
-      Evidence_gp(y, x, model0),
-      Evidence_gp(y, x, model1)
+      Evidence_gp(y, x, model0, nugget),
+      Evidence_gp(y, x, model1, nugget)
     )
   )
   # get new data
@@ -99,8 +105,8 @@ BHgp_m2 = function(
     post.probs.cur = getHypothesesPosteriors(
       prior.probs = post.probs.cur, 
       evidences = c(
-        Evidence_gp(y.cur, x.cur, model0),
-        Evidence_gp(y.cur, x.cur, model1)
+        Evidence_gp(y.cur, x.cur, model0, nugget),
+        Evidence_gp(y.cur, x.cur, model1, nugget)
       )
     )
     post.probs.mat[i + 1, ] = post.probs.cur

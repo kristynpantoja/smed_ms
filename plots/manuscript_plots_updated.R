@@ -1435,7 +1435,7 @@ ggdata = data.table(
   Design = c("SeqMED", "Boxhill", "SpaceFill", "Random")
 )
 ggdata = melt(ggdata, id.vars = c("Design"))
-ggplot(ggdata, aes(x = variable, y = value, group = Design, 
+RSS01.plt = ggplot(ggdata, aes(x = variable, y = value, group = Design, 
                    color = Design)) + 
   geom_point() + 
   geom_path(linetype = 2) +
@@ -1444,6 +1444,7 @@ ggplot(ggdata, aes(x = variable, y = value, group = Design,
         panel.grid.minor = element_blank(), 
         axis.text.x = element_text(size = 5)) +
   labs(y = "M[RSS0/RSS1]", x = "Initial Data")
+RSS01.plt
 # ggsave("gvm_medianlogrss01.pdf",
 #        plot = last_plot(),
 #        device = "pdf",
@@ -1471,8 +1472,8 @@ for(i in 1:numSims){
   PPH1_in1_seqmed[i] = getHypothesesPosteriors(
     prior.probs = prior_probs, 
     evidences = c(
-      Evidence_gp(y.tmp, x.tmp, model0),
-      Evidence_gp(y.tmp, x.tmp, model1)
+      Evidence_gp(y.tmp, x.tmp, model0, nuggetSM),
+      Evidence_gp(y.tmp, x.tmp, model1, nuggetSM)
     )
   )[2]
   # for input 2
@@ -1481,8 +1482,8 @@ for(i in 1:numSims){
   PPH1_in2_seqmed[i] = getHypothesesPosteriors(
     prior.probs = prior_probs, 
     evidences = c(
-      Evidence_gp(y.tmp, x.tmp, model0),
-      Evidence_gp(y.tmp, x.tmp, model1)
+      Evidence_gp(y.tmp, x.tmp, model0, nuggetSM),
+      Evidence_gp(y.tmp, x.tmp, model1, nuggetSM)
     )
   )[2]
   # for input 3
@@ -1491,8 +1492,8 @@ for(i in 1:numSims){
   PPH1_in3_seqmed[i] = getHypothesesPosteriors(
     prior.probs = prior_probs, 
     evidences = c(
-      Evidence_gp(y.tmp, x.tmp, model0),
-      Evidence_gp(y.tmp, x.tmp, model1)
+      Evidence_gp(y.tmp, x.tmp, model0, nuggetSM),
+      Evidence_gp(y.tmp, x.tmp, model1, nuggetSM)
     )
   )[2]
   # for input 4
@@ -1501,8 +1502,8 @@ for(i in 1:numSims){
   PPH1_in4_seqmed[i] = getHypothesesPosteriors(
     prior.probs = prior_probs, 
     evidences = c(
-      Evidence_gp(y.tmp, x.tmp, model0),
-      Evidence_gp(y.tmp, x.tmp, model1)
+      Evidence_gp(y.tmp, x.tmp, model0, nuggetSM),
+      Evidence_gp(y.tmp, x.tmp, model1, nuggetSM)
     )
   )[2]
 }
@@ -1521,8 +1522,8 @@ for(i in 1:numSims){
   PPH1_in1_boxhill[i] = getHypothesesPosteriors(
     prior.probs = prior_probs, 
     evidences = c(
-      Evidence_gp(y.tmp, x.tmp, model0),
-      Evidence_gp(y.tmp, x.tmp, model1)
+      Evidence_gp(y.tmp, x.tmp, model0, nuggetBH),
+      Evidence_gp(y.tmp, x.tmp, model1, nuggetBH)
     )
   )[2]
   # input 2
@@ -1533,20 +1534,20 @@ for(i in 1:numSims){
   PPH1_in2_boxhill[i] = getHypothesesPosteriors(
     prior.probs = prior_probs, 
     evidences = c(
-      Evidence_gp(y.tmp, x.tmp, model0),
-      Evidence_gp(y.tmp, x.tmp, model1)
+      Evidence_gp(y.tmp, x.tmp, model0, nuggetBH),
+      Evidence_gp(y.tmp, x.tmp, model1, nuggetBH)
     )
   )[2]
-  # input 3
+  # for input 3
   y.tmp = c(boxhills[[3]]$design.list[[i]]$y, 
             as.vector(na.omit(boxhills[[3]]$design.list[[i]]$y.new)))
   x.tmp = c(boxhills[[3]]$design.list[[i]]$x, 
             as.vector(na.omit(boxhills[[3]]$design.list[[i]]$x.new)))
-  PPH1_in1_boxhill[i] = getHypothesesPosteriors(
+  PPH1_in3_boxhill[i] = getHypothesesPosteriors(
     prior.probs = prior_probs, 
     evidences = c(
-      Evidence_gp(y.tmp, x.tmp, model0),
-      Evidence_gp(y.tmp, x.tmp, model1)
+      Evidence_gp(y.tmp, x.tmp, model0, nuggetBH),
+      Evidence_gp(y.tmp, x.tmp, model1, nuggetBH)
     )
   )[2]
   # input 4
@@ -1554,11 +1555,11 @@ for(i in 1:numSims){
             as.vector(na.omit(boxhills[[4]]$design.list[[i]]$y.new)))
   x.tmp = c(boxhills[[4]]$design.list[[i]]$x, 
             as.vector(na.omit(boxhills[[4]]$design.list[[i]]$x.new)))
-  PPH1_in1_boxhill[i] = getHypothesesPosteriors(
+  PPH1_in4_boxhill[i] = getHypothesesPosteriors(
     prior.probs = prior_probs, 
     evidences = c(
-      Evidence_gp(y.tmp, x.tmp, model0),
-      Evidence_gp(y.tmp, x.tmp, model1)
+      Evidence_gp(y.tmp, x.tmp, model0, nuggetBH),
+      Evidence_gp(y.tmp, x.tmp, model1, nuggetBH)
     )
   )[2]
 }
@@ -1568,6 +1569,7 @@ PPH1_in1_spacefilling = rep(NA, numSims)
 PPH1_in2_spacefilling = rep(NA, numSims)
 PPH1_in3_spacefilling = rep(NA, numSims)
 PPH1_in4_spacefilling = rep(NA, numSims)
+nugget = nuggetSM
 for(i in 1:numSims){
   # input 1
   fn.vals.tmp = seqmeds[[1]]$function.values.list[ , i]
@@ -1576,8 +1578,8 @@ for(i in 1:numSims){
   PPH1_in1_spacefilling[i] = getHypothesesPosteriors(
     prior.probs = prior_probs, 
     evidences = c(
-      Evidence_gp(y.tmp, x.tmp, model0),
-      Evidence_gp(y.tmp, x.tmp, model1)
+      Evidence_gp(y.tmp, x.tmp, model0, nugget),
+      Evidence_gp(y.tmp, x.tmp, model1, nugget)
     )
   )[2]
   # input 2
@@ -1587,8 +1589,8 @@ for(i in 1:numSims){
   PPH1_in2_spacefilling[i] = getHypothesesPosteriors(
     prior.probs = prior_probs, 
     evidences = c(
-      Evidence_gp(y.tmp, x.tmp, model0),
-      Evidence_gp(y.tmp, x.tmp, model1)
+      Evidence_gp(y.tmp, x.tmp, model0, nugget),
+      Evidence_gp(y.tmp, x.tmp, model1, nugget)
     )
   )[2]
   # input 3
@@ -1598,8 +1600,8 @@ for(i in 1:numSims){
   PPH1_in3_spacefilling[i] = getHypothesesPosteriors(
     prior.probs = prior_probs, 
     evidences = c(
-      Evidence_gp(y.tmp, x.tmp, model0),
-      Evidence_gp(y.tmp, x.tmp, model1)
+      Evidence_gp(y.tmp, x.tmp, model0, nugget),
+      Evidence_gp(y.tmp, x.tmp, model1, nugget)
     )
   )[2]
   # input 4
@@ -1610,8 +1612,8 @@ for(i in 1:numSims){
   PPH1_in4_spacefilling[i] = getHypothesesPosteriors(
     prior.probs = prior_probs, 
     evidences = c(
-      Evidence_gp(y.tmp, x.tmp, model0),
-      Evidence_gp(y.tmp, x.tmp, model1)
+      Evidence_gp(y.tmp, x.tmp, model0, nugget),
+      Evidence_gp(y.tmp, x.tmp, model1, nugget)
     )
   )[2]
 }
@@ -1633,8 +1635,8 @@ for(i in 1:numSims){
   PPH1_in1_random[i] = getHypothesesPosteriors(
     prior.probs = prior_probs, 
     evidences = c(
-      Evidence_gp(y.tmp, x.tmp, model0),
-      Evidence_gp(y.tmp, x.tmp, model1)
+      Evidence_gp(y.tmp, x.tmp, model0, nugget),
+      Evidence_gp(y.tmp, x.tmp, model1, nugget)
     )
   )[2]
   # input 2
@@ -1644,8 +1646,8 @@ for(i in 1:numSims){
   PPH1_in2_random[i] = getHypothesesPosteriors(
     prior.probs = prior_probs, 
     evidences = c(
-      Evidence_gp(y.tmp, x.tmp, model0),
-      Evidence_gp(y.tmp, x.tmp, model1)
+      Evidence_gp(y.tmp, x.tmp, model0, nugget),
+      Evidence_gp(y.tmp, x.tmp, model1, nugget)
     )
   )[2]
   # input 3
@@ -1655,8 +1657,8 @@ for(i in 1:numSims){
   PPH1_in3_random[i] = getHypothesesPosteriors(
     prior.probs = prior_probs, 
     evidences = c(
-      Evidence_gp(y.tmp, x.tmp, model0),
-      Evidence_gp(y.tmp, x.tmp, model1)
+      Evidence_gp(y.tmp, x.tmp, model0, nugget),
+      Evidence_gp(y.tmp, x.tmp, model1, nugget)
     )
   )[2]
   # input 4
@@ -1667,8 +1669,8 @@ for(i in 1:numSims){
   PPH1_in4_random[i] = getHypothesesPosteriors(
     prior.probs = prior_probs, 
     evidences = c(
-      Evidence_gp(y.tmp, x.tmp, model0),
-      Evidence_gp(y.tmp, x.tmp, model1)
+      Evidence_gp(y.tmp, x.tmp, model0, nugget),
+      Evidence_gp(y.tmp, x.tmp, model1, nugget)
     )
   )[2]
 }
@@ -1707,7 +1709,7 @@ ggdata = data.table(
   Design = c("SeqMED", "BoxHill", "SpaceFilling", "Random")
 )
 ggdata = melt(ggdata, id.vars = c("Design"))
-ggplot(ggdata, aes(x = variable, y = value, group = Design, 
+PPH1.plt = ggplot(ggdata, aes(x = variable, y = value, group = Design, 
                    color = Design)) + 
   geom_point() + 
   geom_path(linetype = 2) +
@@ -1716,6 +1718,7 @@ ggplot(ggdata, aes(x = variable, y = value, group = Design,
         panel.grid.minor = element_blank(), 
         axis.text.x = element_text(size = 5)) +
   labs(y = "P(H1|X, Y)", x = "Initial Data")
+PPH1.plt
 # ggsave("gvm_medianpph1.pdf",
 #        plot = last_plot(),
 #        device = "pdf",
@@ -1728,20 +1731,20 @@ ggplot(ggdata, aes(x = variable, y = value, group = Design,
 
 # in the same plot
 ggdata1 = data.table(
-  A = case1_medianLogRSS01_vec,
-  B = case2_medianLogRSS01_vec,
-  C = case3_medianLogRSS01_vec,
-  D = case4_medianLogRSS01_vec,
-  Design = c("SeqMED", "SpaceFilling", "Random")
+  A = RSS01_in1,
+  B = RSS01_in2,
+  C = RSS01_in3,
+  D = RSS01_in4,
+  Design = c("SeqMED", "BoxHill", "SpaceFilling", "Random")
 )
 ggdata1 = melt(ggdata1, id.vars = c("Design"))
 ggdata1$Metric = "Log(RSS0/RSS1)"
 ggdata2 = data.table(
-  A = case1_medianPPH1_vec,
-  B = case2_medianPPH1_vec,
-  C = case3_medianPPH1_vec,
-  D = case4_medianPPH1_vec,
-  Design = c("SeqMED", "SpaceFilling", "Random")
+  A = PPH1_in1,
+  B = PPH1_in2,
+  C = PPH1_in3,
+  D = PPH1_in4,
+  Design = c("SeqMED", "BoxHill", "SpaceFilling", "Random")
 )
 ggdata2 = melt(ggdata2, id.vars = c("Design"))
 ggdata2$Metric = "P(H1|X,Y)"

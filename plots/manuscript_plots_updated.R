@@ -1,5 +1,5 @@
 ################################################################################
-# last updated: 03/15/21
+# last updated: 03/17/21
 # purpose: to calculate and plot metrics for gp simulations
 
 
@@ -953,7 +953,7 @@ getRSS01 = function(
 }
 
 ################################################################################
-# simulation settings, shared for both scenarios (sqexp vs. matern)
+# simulation settings, shared for both scenarios
 ################################################################################
 
 # simulations settings
@@ -1131,12 +1131,10 @@ H1_predfn = getGPPredictive(x_seq, x_in, y_in, type01[2], l01.demo[2],
                             nugget = nugget.demo)
 
 # get w_seq
-Kinv0 = solve(getCov(x_in, x_in, type01[1], l01[1]))
-Kinv1 = solve(getCov(x_in, x_in, type01[2], l01[2]))
+Kinv0 = solve(getCov(x_in, x_in, type01[1], l01.demo[1]))
+Kinv1 = solve(getCov(x_in, x_in, type01[2], l01.demo[2]))
 w_seq = sapply(x_seq, FUN = function(x1) 
-  WNgp(x1, Kinv0, Kinv1, x_in, y_in, 
-                                   var_e = 1, type01, l01))
-
+  WNgp(x1, Kinv0, Kinv1, x_in, y_in, var_e = 1, type01, l01.demo))
 # plot
 err0 = 2 * sqrt(diag(H0_predfn$pred_var))
 err1 = 2 * sqrt(diag(H1_predfn$pred_var))
@@ -1813,8 +1811,709 @@ plt_gvm3
 #
 
 ################################################################################
-# Scenario 2: Matern vs. Periodic
+# Scenario 2: matern vs. periodic, true = periodic
 ################################################################################
+type01 = c("matern", "periodic")
+l01= c(0.01, 0.1)
+# generate matern functions
+set.seed(seed)
+null_cov = getCov(x_seq, x_seq, type01[2], l01[2])
+null_mean = rep(0, numx)
+
+# bh settings
+model0 = list(type = type01[1], l = l01[1])
+model1 = list(type = type01[2], l = l01[2])
+
+################################################################################
+# Plot the demo design
+################################################################################
+
+# demo settings
+l01.demo = c(0.1, 0.5)
+nugget.demo = NULL
+
+# read in sims
+maternvsperiodic_train4sims = readRDS(
+  paste0(
+    "run_designs/gp",
+    "/gp_demo/maternvsperiodic_train4sims.rds"))
+
+# get sim info
+sim_ind = 1
+x_in = maternvsperiodic_train4sims$x_train[ , sim_ind]
+x_in_idx = maternvsperiodic_train4sims$x_train_ind[ , sim_ind]
+mmed_gp = maternvsperiodic_train4sims$mmed_gp_list[[sim_ind]]
+y_seq = maternvsperiodic_train4sims$sim_fns[ , sim_ind]
+y_in = y_seq[x_in_idx]
+
+newpts = mmed_gp$addD
+truey = y_seq[mmed_gp$indices]
+
+H0_predfn = getGPPredictive(x_seq, x_in, y_in, type01[1], l01.demo[1],
+                            nugget = nugget.demo)
+H1_predfn = getGPPredictive(x_seq, x_in, y_in, type01[2], l01.demo[2],
+                            nugget = nugget.demo)
+
+# get w_seq
+Kinv0 = solve(getCov(x_in, x_in, type01[1], l01.demo[1]))
+Kinv1 = solve(getCov(x_in, x_in, type01[2], l01.demo[2]))
+w_seq = sapply(x_seq, FUN = function(x1) 
+  WNgp(x1, Kinv0, Kinv1, x_in, y_in, var_e = 1, type01, l01.demo))
+
+# plot
+err0 = 2 * sqrt(diag(H0_predfn$pred_var))
+err1 = 2 * sqrt(diag(H1_predfn$pred_var))
+ggdata = data.table(
+  x = x_seq, 
+  `True Function` = y_seq, 
+  Wasserstein = w_seq, 
+  `H0 Predictive` = H0_predfn$pred_mean, 
+  `H1 Predictive` = H1_predfn$pred_mean,
+  lower0 = H0_predfn$pred_mean - err0, 
+  lower1 = H1_predfn$pred_mean - err1, 
+  upper0 = H0_predfn$pred_mean + err0,
+  upper1 = H1_predfn$pred_mean + err1
+)
+yrange = range(ggdata$lower0, ggdata$lower1, 
+               ggdata$upper0, ggdata$upper1)
+yrange[1] = yrange[1] - 1
+ggdata$Wasserstein = ggdata$Wasserstein * 0.25 - abs(yrange[1])
+ggdata$zero1 = NA
+ggdata$zero2 = NA
+ggdata.melted = melt(ggdata, id.vars = c("x"), 
+                     measure.vars = c("True Function", "Wasserstein", "H0 Predictive", "H1 Predictive"))
+ggdata.lower = melt(ggdata, id.vars = c("x"), 
+                    measure.vars = c("zero1", "zero2", "lower0", "lower1"))
+ggdata.upper = melt(ggdata, id.vars = c("x"), 
+                    measure.vars = c("zero1", "zero2", "upper0", "upper1"))
+ggdata.melted = cbind(ggdata.melted, 
+                      lower = ggdata.lower$value, 
+                      upper = ggdata.upper$value)
+ggdata_pts = data.table(
+  x = c(x_in, newpts), 
+  y = c(y_in, truey), 
+  color = c(rep(gg_color_hue(2)[2], length(x_in)), 
+            rep(gg_color_hue(2)[1], length(newpts))), 
+  shape = c(rep(8, length(x_in)), 
+            rep(16, length(newpts)))
+)
+ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable), 
+       linetype = 1) + 
+  geom_path() + 
+  geom_ribbon(aes(ymin = lower, ymax = upper, fill = variable), 
+              alpha = 0.1, linetype = 0) +
+  scale_linetype_manual(values = c(1, 1, 2, 2)) + 
+  scale_fill_manual(values = c(NA, NA, "#00BFC4", "#C77CFF")) + 
+  scale_color_manual(values = c(1, "gray", "#00BFC4", "#C77CFF")) + 
+  geom_point(data = ggdata_pts, mapping = aes(x = x, y = y), 
+             inherit.aes = FALSE, color = ggdata_pts$color, 
+             shape = ggdata_pts$shape,
+             size = 2) +
+  geom_point(data = ggdata_pts, mapping = aes(x = x, y = yrange[1]), 
+             inherit.aes = FALSE, color = ggdata_pts$color, 
+             shape = ggdata_pts$shape, 
+             size = 2) +
+  scale_y_continuous(limits = yrange) +
+  theme_bw() + 
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  labs(y = "y", x = "x", fill = "Function", color = "Function")
+# ggsave("gvm.pdf",
+#        plot = last_plot(),
+#        device = "pdf",
+#        path = image_path,
+#        scale = 1,
+#        width = 4.5,
+#        height = 2.5,
+#        units = c("in")
+# )
+
+################################################################################
+# Metrics
+################################################################################
+
+seqmeds = list()
+for(i in 1:4){
+  seqmeds[[i]] = readRDS(
+    paste0(
+      output_home, 
+      "/seqmed/scenario2_seqmed_simulations", 
+      "_input", i, 
+      "_Nin6_Nnew15_numSims100.rds"))
+}
+
+boxhills = list()
+for(i in 1:4){
+  boxhills[[i]] = readRDS(
+    paste0(
+      output_home, 
+      "/boxhill/scenario2_boxhill_simulations", 
+      "_input", i, 
+      "_Nin6_Nnew15_numSims100.rds"))
+}
+
+# RSS Ratio (0/1)
+
+# see helper function getRSS01
+
+# # check that seqmeds and boxhills use the same values # # # # # # # # # # # #
+# seqmeds.function.values = matrix(NA, nrow = numx * 4, ncol = numSims)
+# boxhills.function.values = matrix(NA, nrow = numx * 4, ncol = numSims)
+# for(i in 1:numSims){
+#   seqmeds.function.values[, i] = c(
+#     seqmeds[[1]]$function.values.list[ , i],
+#     seqmeds[[2]]$function.values.list[ , i],
+#     seqmeds[[3]]$function.values.list[ , i],
+#     seqmeds[[4]]$function.values.list[ , i]
+#   )
+#   boxhills.function.values[, i] = c(
+#     boxhills[[1]]$function.values.list[ , i],
+#     boxhills[[2]]$function.values.list[ , i],
+#     boxhills[[3]]$function.values.list[ , i],
+#     boxhills[[4]]$function.values.list[ , i]
+#   )
+# }
+# all.equal(seqmeds.function.values, boxhills.function.values) # TRUE!
+# 
+# # check that each of seqmeds function.values.lists are equal # # # # # # # # #
+# seqmed.function.values1 = matrix(NA, nrow = numx, ncol = numSims)
+# seqmed.function.values2 = matrix(NA, nrow = numx, ncol = numSims)
+# seqmed.function.values3 = matrix(NA, nrow = numx, ncol = numSims)
+# seqmed.function.values4 = matrix(NA, nrow = numx, ncol = numSims)
+# for(i in 1:numSims){
+#   seqmed.function.values1[, i] = seqmeds[[1]]$function.values.list[ , i]
+#   seqmed.function.values2[, i] = seqmeds[[2]]$function.values.list[ , i]
+#   seqmed.function.values3[, i] = seqmeds[[3]]$function.values.list[ , i]
+#   seqmed.function.values4[, i] = seqmeds[[4]]$function.values.list[ , i]
+# }
+# all.equal(seqmed.function.values1, seqmed.function.values2) # TRUE!
+# all.equal(seqmed.function.values1, seqmed.function.values3) # TRUE!
+# all.equal(seqmed.function.values1, seqmed.function.values4) # TRUE!
+f.vals.mat = seqmeds[[1]]$function.values.list
+
+# # check that random designs are the same in the seqmed and boxhill sims # # # 
+# seqmeds.random.mat = matrix(NA, nrow = Nin, ncol = numSims)
+# boxhills.random.mat = matrix(NA, nrow = Nin, ncol = numSims)
+# seqmeds.random.idx.mat = matrix(NA, nrow = Nin, ncol = numSims)
+# boxhills.random.idx.mat = matrix(NA, nrow = Nin, ncol = numSims)
+# for(i in 1:numSims){
+#   seqmeds.random.mat[, i] = seqmeds[[4]]$design.list[[i]]$x
+#   seqmeds.random.idx.mat[, i] = seqmeds[[4]]$design.list[[i]]$x.idx
+#   boxhills.random.mat[, i] = seqmeds[[4]]$design.list[[i]]$x
+#   boxhills.random.idx.mat[, i] = seqmeds[[4]]$design.list[[i]]$x.idx
+# }
+# all.equal(seqmeds.random.mat, boxhills.random.mat) # TRUE!
+# all.equal(seqmeds.random.idx.mat, boxhills.random.idx.mat) # TRUE!
+random.mat = matrix(NA, nrow = Nin, ncol = numSims)
+random.idx.mat = matrix(NA, nrow = Nin, ncol = numSims)
+for(i in 1:numSims){
+  random.mat[, i] = seqmeds[[4]]$design.list[[i]]$x
+  random.idx.mat[, i] = seqmeds[[4]]$design.list[[i]]$x.idx
+}
+
+# RSS01 for SeqMED
+RSS01_in1_seqmed = rep(NA, numSims)
+RSS01_in2_seqmed = rep(NA, numSims)
+RSS01_in3_seqmed = rep(NA, numSims)
+RSS01_in4_seqmed = rep(NA, numSims)
+
+for(i in 1:numSims){
+  RSS01_in1_seqmed[i] = getRSS01(
+    x = x_in1, x.idx = x_in1_idx, 
+    x.new = seqmeds[[1]]$design.list[[i]]$x.new, 
+    x.new.idx = seqmeds[[1]]$design.list[[i]]$x.new.idx, 
+    y.new = seqmeds[[1]]$design.list[[i]]$y.new, 
+    function.values = f.vals.mat[ , i], type = type01, l = l01, nugget = nuggetSM)
+  # plot(x_seq, seqmeds[[1]]$function.values.list[ , i], type = "l")
+  # points(seqmeds[[1]]$x0, seqmeds[[1]]$design.list[[i]]$y[1:Nin], col = 3)
+  # points(seqmeds[[1]]$design.list[[i]]$D[-c(1:Nin)], 
+  #        seqmeds[[1]]$design.list[[i]]$y[-c(1:Nin)], col = 2)
+  RSS01_in2_seqmed[i] = getRSS01(
+    x = x_in2, x.idx = x_in2_idx, 
+    x.new = seqmeds[[2]]$design.list[[i]]$x.new, 
+    x.new.idx = seqmeds[[2]]$design.list[[i]]$x.new.idx, 
+    y.new = seqmeds[[2]]$design.list[[i]]$y.new, 
+    function.values = f.vals.mat[ , i], type = type01, l = l01, nugget = nuggetSM)
+  RSS01_in3_seqmed[i] = getRSS01(
+    x = x_in3, x.idx = x_in3_idx, 
+    x.new = seqmeds[[3]]$design.list[[i]]$x.new, 
+    x.new.idx = seqmeds[[3]]$design.list[[i]]$x.new.idx, 
+    y.new = seqmeds[[3]]$design.list[[i]]$y.new, 
+    function.values = f.vals.mat[ , i], type = type01, l = l01, nugget = nuggetSM)
+  RSS01_in4_seqmed[i] = getRSS01(
+    x = random.mat[, i], x.idx = random.idx.mat[, i], 
+    x.new = seqmeds[[4]]$design.list[[i]]$x.new, 
+    x.new.idx = seqmeds[[4]]$design.list[[i]]$x.new.idx, 
+    y.new = seqmeds[[4]]$design.list[[i]]$y.new, 
+    function.values = f.vals.mat[ , i], type = type01, l = l01, nugget = nuggetSM)
+}
+
+# RSS01 for Box-Hill
+RSS01_in1_boxhill = rep(NA, numSims)
+RSS01_in2_boxhill = rep(NA, numSims)
+RSS01_in3_boxhill = rep(NA, numSims)
+RSS01_in4_boxhill = rep(NA, numSims)
+for(i in 1:numSims){
+  RSS01_in1_boxhill[i] = getRSS01(
+    x = x_in1, x.idx = x_in1_idx, 
+    x.new = as.vector(na.omit(boxhills[[1]]$design.list[[i]]$x.new)), 
+    x.new.idx = as.vector(na.omit(boxhills[[1]]$design.list[[i]]$x.new.idx)), 
+    y.new = as.vector(na.omit(boxhills[[1]]$design.list[[i]]$y.new)), 
+    function.values = f.vals.mat[ , i], type = type01, l = l01, nugget = nuggetSM)
+  RSS01_in2_boxhill[i] = getRSS01(
+    x = x_in2, x.idx = x_in2_idx, 
+    x.new = as.vector(na.omit(boxhills[[2]]$design.list[[i]]$x.new)), 
+    x.new.idx = as.vector(na.omit(boxhills[[2]]$design.list[[i]]$x.new.idx)), 
+    y.new = as.vector(na.omit(boxhills[[2]]$design.list[[i]]$y.new)), 
+    function.values = f.vals.mat[ , i], type = type01, l = l01, nugget = nuggetSM)
+  RSS01_in3_boxhill[i] = getRSS01(
+    x = x_in3, x.idx = x_in3_idx, 
+    x.new = as.vector(na.omit(boxhills[[3]]$design.list[[i]]$x.new)), 
+    x.new.idx = as.vector(na.omit(boxhills[[3]]$design.list[[i]]$x.new.idx)), 
+    y.new = as.vector(na.omit(boxhills[[3]]$design.list[[i]]$y.new)), 
+    function.values = f.vals.mat[ , i], type = type01, l = l01, nugget = nuggetSM)
+  RSS01_in4_boxhill[i] = getRSS01(
+    x = random.mat[, i], x.idx = random.idx.mat[, i], 
+    x.new = as.vector(na.omit(boxhills[[4]]$design.list[[i]]$x.new)), 
+    x.new.idx = as.vector(na.omit(boxhills[[4]]$design.list[[i]]$x.new.idx)), 
+    y.new = as.vector(na.omit(boxhills[[4]]$design.list[[i]]$y.new)), 
+    function.values = f.vals.mat[ , i], type = type01, l = l01, nugget = nuggetSM)
+}
+
+# RSS01 for Space-filling
+RSS01_in1_spacefilling = rep(NA, numSims)
+RSS01_in2_spacefilling = rep(NA, numSims)
+RSS01_in3_spacefilling = rep(NA, numSims)
+RSS01_in4_spacefilling = rep(NA, numSims)
+for(i in 1:numSims){
+  RSS01_in1_spacefilling[i] = getRSS01(
+    x = x_in1, x.idx = x_in1_idx, 
+    x.new = x_spacefill1, x.new.idx = x_spacefill1_idx, 
+    y.new = NULL, 
+    function.values = f.vals.mat[ , i], type = type01, l = l01, nugget = nuggetSM)
+  RSS01_in2_spacefilling[i] = getRSS01(
+    x = x_in2, x.idx = x_in2_idx, 
+    x.new = x_spacefill2, x.new.idx = x_spacefill2_idx,  
+    y.new = NULL, 
+    function.values = f.vals.mat[ , i], type = type01, l = l01, nugget = nuggetSM)
+  RSS01_in3_spacefilling[i] = getRSS01(
+    x = x_in3, x.idx = x_in3_idx,  
+    x.new = x_spacefill3, x.new.idx = x_spacefill3_idx, 
+    y.new = NULL, 
+    function.values = f.vals.mat[ , i], type = type01, l = l01, nugget = nuggetSM)
+  RSS01_in4_spacefilling[i] = getRSS01(
+    x = random.mat[, i], x.idx = random.idx.mat[, i], 
+    x.new = x_spacefill4, x.new.idx = x_spacefill4_idx, 
+    y.new = NULL, 
+    function.values = f.vals.mat[ , i], type = type01, l = l01, nugget = nuggetSM)
+}
+
+# RSS01 for Uniformly-distributed Random
+RSS01_in1_random = rep(NA, numSims)
+RSS01_in2_random = rep(NA, numSims)
+RSS01_in3_random = rep(NA, numSims)
+RSS01_in4_random = rep(NA, numSims)
+for(i in 1:numSims){
+  # first, get uniformly sampled random points
+  x_uniform_idx = sample(1:numx, Nnew)
+  x_uniform = x_seq[x_uniform_idx]
+  # now calculate RSS01
+  RSS01_in1_random[i] = getRSS01(
+    x = x_in1, x.idx = x_in1_idx, 
+    x.new = x_uniform, x.new.idx = x_uniform_idx, 
+    y.new = NULL, 
+    function.values = f.vals.mat[ , i], type = type01, l = l01, nugget = nuggetSM)
+  RSS01_in2_random[i] = getRSS01(
+    x = x_in2, x.idx = x_in2_idx, 
+    x.new = x_uniform, x.new.idx = x_uniform_idx, 
+    y.new = NULL, 
+    function.values = f.vals.mat[ , i], type = type01, l = l01, nugget = nuggetSM)
+  RSS01_in3_random[i] = getRSS01(
+    x = x_in3, x.idx = x_in3_idx, 
+    x.new = x_uniform, x.new.idx = x_uniform_idx, 
+    y.new = NULL, 
+    function.values = f.vals.mat[ , i], type = type01, l = l01, nugget = nuggetSM)
+  RSS01_in4_random[i] = getRSS01(
+    x = random.mat[, i], x.idx = random.idx.mat[, i], 
+    x.new = x_uniform, x.new.idx = x_uniform_idx, 
+    y.new = NULL, 
+    function.values = f.vals.mat[ , i], type = type01, l = l01, nugget = nuggetSM)
+}
+
+# get the medians
+RSS01_in1 = c(
+  SeqMED = median(RSS01_in1_seqmed), 
+  BoxHill = median(RSS01_in1_boxhill), 
+  SpaceFill = median(RSS01_in1_spacefilling), 
+  Random = median(RSS01_in1_random)
+)
+RSS01_in2 = c(
+  SeqMED = median(RSS01_in2_seqmed), 
+  BoxHill = median(RSS01_in2_boxhill), 
+  SpaceFill = median(RSS01_in2_spacefilling), 
+  Random = median(RSS01_in2_random)
+)
+RSS01_in3 = c(
+  SeqMED = median(RSS01_in3_seqmed), 
+  BoxHill = median(RSS01_in3_boxhill), 
+  SpaceFill = median(RSS01_in3_spacefilling), 
+  Random = median(RSS01_in3_random)
+)
+RSS01_in4 = c(
+  SeqMED = median(RSS01_in4_seqmed), 
+  BoxHill = median(RSS01_in4_boxhill), 
+  SpaceFill = median(RSS01_in4_spacefilling), 
+  Random = median(RSS01_in4_random)
+)
+
+# plot
+ggdata = data.table(
+  `Extrapolation` = RSS01_in1,
+  `Inc Spread` = RSS01_in2,
+  `Even Coverage` = RSS01_in3,
+  `Random` = RSS01_in4,
+  Design = c("SeqMED", "Boxhill", "SpaceFill", "Random")
+)
+ggdata = melt(ggdata, id.vars = c("Design"))
+RSS01.plt = ggplot(ggdata, aes(x = variable, y = value, group = Design, 
+                               color = Design)) + 
+  geom_point() + 
+  geom_path(linetype = 2) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.text.x = element_text(size = 5)) +
+  labs(y = "M[RSS0/RSS1]", x = "Initial Data")
+RSS01.plt
+# ggsave("gvm_medianlogrss01.pdf",
+#        plot = last_plot(),
+#        device = "pdf",
+#        path = image_path,
+#        scale = 1,
+#        width = 4.5,
+#        height = 2,
+#        units = c("in")
+# )
+
+# Posterior Probability of H1
+
+# see boxhill_gp.R function Evidence_gp()
+# also see boxhill.R function getHypothesesPosteriors()
+
+# PPH1 for SeqMED
+PPH1_in1_seqmed = rep(NA, numSims)
+PPH1_in2_seqmed = rep(NA, numSims)
+PPH1_in3_seqmed = rep(NA, numSims)
+PPH1_in4_seqmed = rep(NA, numSims)
+for(i in 1:numSims){
+  # for input 1
+  y.tmp = c(seqmeds[[1]]$design.list[[i]]$y, seqmeds[[1]]$design.list[[i]]$y.new)
+  x.tmp = c(seqmeds[[1]]$design.list[[i]]$x, seqmeds[[1]]$design.list[[i]]$x.new)
+  PPH1_in1_seqmed[i] = getHypothesesPosteriors(
+    prior.probs = prior_probs, 
+    evidences = c(
+      Evidence_gp(y.tmp, x.tmp, model0, nuggetSM),
+      Evidence_gp(y.tmp, x.tmp, model1, nuggetSM)
+    )
+  )[2]
+  # for input 2
+  y.tmp = c(seqmeds[[2]]$design.list[[i]]$y, seqmeds[[2]]$design.list[[i]]$y.new)
+  x.tmp = c(seqmeds[[2]]$design.list[[i]]$x, seqmeds[[2]]$design.list[[i]]$x.new)
+  PPH1_in2_seqmed[i] = getHypothesesPosteriors(
+    prior.probs = prior_probs, 
+    evidences = c(
+      Evidence_gp(y.tmp, x.tmp, model0, nuggetSM),
+      Evidence_gp(y.tmp, x.tmp, model1, nuggetSM)
+    )
+  )[2]
+  # for input 3
+  y.tmp = c(seqmeds[[3]]$design.list[[i]]$y, seqmeds[[3]]$design.list[[i]]$y.new)
+  x.tmp = c(seqmeds[[3]]$design.list[[i]]$x, seqmeds[[3]]$design.list[[i]]$x.new)
+  PPH1_in3_seqmed[i] = getHypothesesPosteriors(
+    prior.probs = prior_probs, 
+    evidences = c(
+      Evidence_gp(y.tmp, x.tmp, model0, nuggetSM),
+      Evidence_gp(y.tmp, x.tmp, model1, nuggetSM)
+    )
+  )[2]
+  # for input 4
+  y.tmp = c(seqmeds[[4]]$design.list[[i]]$y, seqmeds[[4]]$design.list[[i]]$y.new)
+  x.tmp = c(seqmeds[[4]]$design.list[[i]]$x, seqmeds[[4]]$design.list[[i]]$x.new)
+  PPH1_in4_seqmed[i] = getHypothesesPosteriors(
+    prior.probs = prior_probs, 
+    evidences = c(
+      Evidence_gp(y.tmp, x.tmp, model0, nuggetSM),
+      Evidence_gp(y.tmp, x.tmp, model1, nuggetSM)
+    )
+  )[2]
+}
+
+# PPH1 for Box-Hill
+PPH1_in1_boxhill = rep(NA, numSims)
+PPH1_in2_boxhill = rep(NA, numSims)
+PPH1_in3_boxhill = rep(NA, numSims)
+PPH1_in4_boxhill = rep(NA, numSims)
+for(i in 1:numSims){
+  # input 1
+  y.tmp = c(boxhills[[1]]$design.list[[i]]$y, 
+            as.vector(na.omit(boxhills[[1]]$design.list[[i]]$y.new)))
+  x.tmp = c(boxhills[[1]]$design.list[[i]]$x, 
+            as.vector(na.omit(boxhills[[1]]$design.list[[i]]$x.new)))
+  PPH1_in1_boxhill[i] = getHypothesesPosteriors(
+    prior.probs = prior_probs, 
+    evidences = c(
+      Evidence_gp(y.tmp, x.tmp, model0, nuggetBH),
+      Evidence_gp(y.tmp, x.tmp, model1, nuggetBH)
+    )
+  )[2]
+  # input 2
+  y.tmp = c(boxhills[[2]]$design.list[[i]]$y, 
+            as.vector(na.omit(boxhills[[2]]$design.list[[i]]$y.new)))
+  x.tmp = c(boxhills[[2]]$design.list[[i]]$x, 
+            as.vector(na.omit(boxhills[[2]]$design.list[[i]]$x.new)))
+  PPH1_in2_boxhill[i] = getHypothesesPosteriors(
+    prior.probs = prior_probs, 
+    evidences = c(
+      Evidence_gp(y.tmp, x.tmp, model0, nuggetBH),
+      Evidence_gp(y.tmp, x.tmp, model1, nuggetBH)
+    )
+  )[2]
+  # for input 3
+  y.tmp = c(boxhills[[3]]$design.list[[i]]$y, 
+            as.vector(na.omit(boxhills[[3]]$design.list[[i]]$y.new)))
+  x.tmp = c(boxhills[[3]]$design.list[[i]]$x, 
+            as.vector(na.omit(boxhills[[3]]$design.list[[i]]$x.new)))
+  PPH1_in3_boxhill[i] = getHypothesesPosteriors(
+    prior.probs = prior_probs, 
+    evidences = c(
+      Evidence_gp(y.tmp, x.tmp, model0, nuggetBH),
+      Evidence_gp(y.tmp, x.tmp, model1, nuggetBH)
+    )
+  )[2]
+  # input 4
+  y.tmp = c(boxhills[[4]]$design.list[[i]]$y, 
+            as.vector(na.omit(boxhills[[4]]$design.list[[i]]$y.new)))
+  x.tmp = c(boxhills[[4]]$design.list[[i]]$x, 
+            as.vector(na.omit(boxhills[[4]]$design.list[[i]]$x.new)))
+  PPH1_in4_boxhill[i] = getHypothesesPosteriors(
+    prior.probs = prior_probs, 
+    evidences = c(
+      Evidence_gp(y.tmp, x.tmp, model0, nuggetBH),
+      Evidence_gp(y.tmp, x.tmp, model1, nuggetBH)
+    )
+  )[2]
+}
+
+# PPH1 for Space-filling
+PPH1_in1_spacefilling = rep(NA, numSims)
+PPH1_in2_spacefilling = rep(NA, numSims)
+PPH1_in3_spacefilling = rep(NA, numSims)
+PPH1_in4_spacefilling = rep(NA, numSims)
+nugget = nuggetSM
+for(i in 1:numSims){
+  # input 1
+  fn.vals.tmp = seqmeds[[1]]$function.values.list[ , i]
+  y.tmp = c(fn.vals.tmp[seqmeds[[1]]$x0.idx], fn.vals.tmp[x_spacefill1_idx])
+  x.tmp = c(seqmeds[[1]]$x0, x_spacefill1)
+  PPH1_in1_spacefilling[i] = getHypothesesPosteriors(
+    prior.probs = prior_probs, 
+    evidences = c(
+      Evidence_gp(y.tmp, x.tmp, model0, nugget),
+      Evidence_gp(y.tmp, x.tmp, model1, nugget)
+    )
+  )[2]
+  # input 2
+  fn.vals.tmp = seqmeds[[2]]$function.values.list[ , i]
+  y.tmp = c(fn.vals.tmp[seqmeds[[2]]$x0.idx], fn.vals.tmp[x_spacefill2_idx])
+  x.tmp = c(seqmeds[[2]]$x0, x_spacefill2)
+  PPH1_in2_spacefilling[i] = getHypothesesPosteriors(
+    prior.probs = prior_probs, 
+    evidences = c(
+      Evidence_gp(y.tmp, x.tmp, model0, nugget),
+      Evidence_gp(y.tmp, x.tmp, model1, nugget)
+    )
+  )[2]
+  # input 3
+  fn.vals.tmp = seqmeds[[3]]$function.values.list[ , i]
+  y.tmp = c(fn.vals.tmp[seqmeds[[3]]$x0.idx], fn.vals.tmp[x_spacefill3_idx])
+  x.tmp = c(seqmeds[[3]]$x0, x_spacefill3)
+  PPH1_in3_spacefilling[i] = getHypothesesPosteriors(
+    prior.probs = prior_probs, 
+    evidences = c(
+      Evidence_gp(y.tmp, x.tmp, model0, nugget),
+      Evidence_gp(y.tmp, x.tmp, model1, nugget)
+    )
+  )[2]
+  # input 4
+  fn.vals.tmp = seqmeds[[4]]$function.values.list[ , i]
+  y.tmp = c(fn.vals.tmp[seqmeds[[4]]$design.list[[i]]$x.idx], 
+            fn.vals.tmp[x_spacefill4_idx])
+  x.tmp = c(seqmeds[[4]]$design.list[[i]]$x, x_spacefill4)
+  PPH1_in4_spacefilling[i] = getHypothesesPosteriors(
+    prior.probs = prior_probs, 
+    evidences = c(
+      Evidence_gp(y.tmp, x.tmp, model0, nugget),
+      Evidence_gp(y.tmp, x.tmp, model1, nugget)
+    )
+  )[2]
+}
+
+# PPH1 for Uniformly-distributed Random
+PPH1_in1_random = rep(NA, numSims)
+PPH1_in2_random = rep(NA, numSims)
+PPH1_in3_random = rep(NA, numSims)
+PPH1_in4_random = rep(NA, numSims)
+for(i in 1:numSims){
+  # first, get uniformly sampled random points
+  x_uniform_idx = sample(1:numx, Nnew)
+  x_uniform = x_seq[x_uniform_idx]
+  # now calculate PPH1
+  # input 1
+  fn.vals.tmp = seqmeds[[1]]$function.values.list[ , i]
+  y.tmp = c(fn.vals.tmp[seqmeds[[1]]$x0.idx], fn.vals.tmp[x_uniform_idx])
+  x.tmp = c(seqmeds[[1]]$x0, x_uniform)
+  PPH1_in1_random[i] = getHypothesesPosteriors(
+    prior.probs = prior_probs, 
+    evidences = c(
+      Evidence_gp(y.tmp, x.tmp, model0, nugget),
+      Evidence_gp(y.tmp, x.tmp, model1, nugget)
+    )
+  )[2]
+  # input 2
+  fn.vals.tmp = seqmeds[[2]]$function.values.list[ , i]
+  y.tmp = c(fn.vals.tmp[seqmeds[[2]]$x0.idx], fn.vals.tmp[x_uniform_idx])
+  x.tmp = c(seqmeds[[2]]$x0, x_uniform)
+  PPH1_in2_random[i] = getHypothesesPosteriors(
+    prior.probs = prior_probs, 
+    evidences = c(
+      Evidence_gp(y.tmp, x.tmp, model0, nugget),
+      Evidence_gp(y.tmp, x.tmp, model1, nugget)
+    )
+  )[2]
+  # input 3
+  fn.vals.tmp = seqmeds[[3]]$function.values.list[ , i]
+  y.tmp = c(fn.vals.tmp[seqmeds[[3]]$x0.idx], fn.vals.tmp[x_uniform_idx])
+  x.tmp = c(seqmeds[[3]]$x0, x_uniform)
+  PPH1_in3_random[i] = getHypothesesPosteriors(
+    prior.probs = prior_probs, 
+    evidences = c(
+      Evidence_gp(y.tmp, x.tmp, model0, nugget),
+      Evidence_gp(y.tmp, x.tmp, model1, nugget)
+    )
+  )[2]
+  # input 4
+  fn.vals.tmp = seqmeds[[4]]$function.values.list[ , i]
+  y.tmp = c(fn.vals.tmp[seqmeds[[4]]$design.list[[i]]$x.idx], 
+            fn.vals.tmp[x_uniform_idx])
+  x.tmp = c(seqmeds[[4]]$design.list[[i]]$x, x_uniform)
+  PPH1_in4_random[i] = getHypothesesPosteriors(
+    prior.probs = prior_probs, 
+    evidences = c(
+      Evidence_gp(y.tmp, x.tmp, model0, nugget),
+      Evidence_gp(y.tmp, x.tmp, model1, nugget)
+    )
+  )[2]
+}
+
+# get the medians
+PPH1_in1 = c(
+  SeqMED = median(PPH1_in1_seqmed), 
+  BoxHill = median(PPH1_in1_boxhill), 
+  SpaceFill = median(PPH1_in1_spacefilling), 
+  Random = median(PPH1_in1_random)
+)
+PPH1_in2 = c(
+  SeqMED = median(PPH1_in2_seqmed), 
+  BoxHill = median(PPH1_in2_boxhill), 
+  SpaceFill = median(PPH1_in2_spacefilling), 
+  Random = median(PPH1_in2_random)
+)
+PPH1_in3 = c(
+  SeqMED = median(PPH1_in3_seqmed), 
+  BoxHill = median(PPH1_in3_boxhill), 
+  SpaceFill = median(PPH1_in3_spacefilling), 
+  Random = median(PPH1_in3_random)
+)
+PPH1_in4 = c(
+  SeqMED = median(PPH1_in4_seqmed), 
+  BoxHill = median(PPH1_in4_boxhill), 
+  SpaceFill = median(PPH1_in4_spacefilling), 
+  Random = median(PPH1_in4_random)
+)
+
+ggdata = data.table(
+  Extrapolation = PPH1_in1,
+  `Inc Spread` = PPH1_in2,
+  `Even Coverage` = PPH1_in3,
+  `Random` = PPH1_in4,
+  Design = c("SeqMED", "BoxHill", "SpaceFilling", "Random")
+)
+ggdata = melt(ggdata, id.vars = c("Design"))
+PPH1.plt = ggplot(ggdata, aes(x = variable, y = value, group = Design, 
+                              color = Design)) + 
+  geom_point() + 
+  geom_path(linetype = 2) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.text.x = element_text(size = 5)) +
+  labs(y = "P(H1|X, Y)", x = "Initial Data")
+PPH1.plt
+# ggsave("gvm_medianpph1.pdf",
+#        plot = last_plot(),
+#        device = "pdf",
+#        path = image_path,
+#        scale = 1,
+#        width = 4.5,
+#        height = 2,
+#        units = c("in")
+# )
+
+# in the same plot
+ggdata1 = data.table(
+  `Extrapolation` = RSS01_in1,
+  `Inc Spread` = RSS01_in2,
+  `Even Coverage` = RSS01_in3,
+  `Random` = RSS01_in4,
+  Design = c("SeqMED", "BoxHill", "SpaceFilling", "Random")
+)
+ggdata1 = melt(ggdata1, id.vars = c("Design"))
+ggdata1$Metric = "Log(RSS0/RSS1)"
+ggdata2 = data.table(
+  `Extrapolation` = PPH1_in1,
+  `Inc Spread` = PPH1_in2,
+  `Even Coverage` = PPH1_in3,
+  `Random` = PPH1_in4,
+  Design = c("SeqMED", "BoxHill", "SpaceFilling", "Random")
+)
+
+
+ggdata2 = melt(ggdata2, id.vars = c("Design"))
+ggdata2$Metric = "P(H1|X,Y)"
+ggdata3 = rbind(ggdata1, ggdata2)
+ggdata3$Metric = factor(ggdata3$Metric)
+plt_gvm3 = ggplot(ggdata3, aes(x = variable, y = value, group = Design, 
+                               color = Design)) + 
+  facet_wrap(vars(Metric), scales = "free") + 
+  geom_point() + 
+  geom_path(linetype = 2) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.title = element_blank(), 
+        axis.text.x = element_text(angle = 45, vjust = 0.5))
+plt_gvm3
+# ggsave("gvm_medianlogrss01pph1.pdf",
+#        plot = last_plot(),
+#        device = "pdf",
+#        path = image_path,
+#        scale = 1,
+#        width = 4.5,
+#        height = 2,
+#        units = c("in")
+# )
+
+#########################################################################################################################################################################################
 
 # --- Matern vs Periodic --- #
 # MMED parameters for testing

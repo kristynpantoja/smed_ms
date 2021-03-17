@@ -365,15 +365,15 @@ ggplot(ggdata0.m2, aes(x = x, y = epph, color = Design, linetype = Design)) +
 # plot the MSE of beta-hat (posterior mean) of the hypotheses
 ################################################################################
 
-MSEbetahat_doptlin = getClosedMSE(
+MSEbetahat_doptlin = getMSEBeta(
   dopt_linear, N, betaT, mu1, V1, sigmasq, typeT)$MSE_postmean
-MSEbetahat_doptquad = getClosedMSE(
+MSEbetahat_doptquad = getMSEBeta(
   dopt_quadratic, N, betaT, mu1, V1, sigmasq, typeT)$MSE_postmean
-MSEbetahat_space = getClosedMSE(
+MSEbetahat_space = getMSEBeta(
   space_filling, N, betaT, mu1, V1, sigmasq, typeT)$MSE_postmean
-MSEbetahat_seqmed = getClosedMSE(
+MSEbetahat_seqmed = getMSEBeta(
   seqmeds[[which.sim]]$D, N, betaT, mu1, V1, sigmasq, typeT)$MSE_postmean
-MSEbetahat_bh = getClosedMSE(
+MSEbetahat_bh = getMSEBeta(
   bhs.format[[which.sim]]$D, N, betaT, mu1, V1, sigmasq, typeT)$MSE_postmean
 
 b0 = c(MSEbetahat_doptlin[1], MSEbetahat_doptquad[1], MSEbetahat_space[1], 
@@ -409,28 +409,25 @@ mseb.plt
 ################################################################################
 x_seq2 = seq(from = -1.25, to = 1.25, length.out = 1e4)
 
-yhatmse_space = getClosedMSEyhat_seq(
-  x_seq2, space_filling, N, betaT, typeT, mu1, V1, sigmasq, type01[2])
-yhatmse_doptquad = getClosedMSEyhat_seq(
-  x_seq2, dopt_quadratic, N, betaT, typeT, mu1, V1, sigmasq, type01[2])
-yhatmse_doptlin = getClosedMSEyhat_seq(
-  x_seq2, dopt_linear, N, betaT, typeT, mu1, V1, sigmasq, type01[2])
-yhatmse_seqmed = getClosedMSEyhat_seq(
-  x_seq2, seqmeds[[which.sim]]$D, N, betaT, typeT, mu1, V1, sigmasq, type01[2])
-yhatmse_bh = getClosedMSEyhat_seq(
-  x_seq2, bhs.format[[which.sim]]$D, N, betaT, typeT, mu1, V1, sigmasq, type01[2])
+getMSEYhat.d2 = function(x, design){
+  getMSEYhat(x, design, N, betaT, typeT, mu1, V1, sigmasq, type01[2])$MSEyhat
+}
 
-ylimarg = range(
-  0, yhatmse_space$MSEyhat, yhatmse_doptquad$MSEyhat, yhatmse_seqmed$MSEyhat, 
-  yhatmse_bh$MSEyhat)
+yhatmse_space = sapply(x_seq2, getMSEYhat.d2, design = space_filling)
+yhatmse_doptquad = sapply(x_seq2, getMSEYhat.d2, design = dopt_quadratic)
+yhatmse_doptlin = sapply(x_seq2, getMSEYhat.d2, design = dopt_linear)
+yhatmse_seqmed = sapply(x_seq2, getMSEYhat.d2, design = seqmeds[[which.sim]]$D)
+yhatmse_bh = sapply(x_seq2, getMSEYhat.d2, design = bhs.format[[which.sim]]$D)
+
+ylimarg = range(0, yhatmse_space, yhatmse_doptquad, yhatmse_seqmed, yhatmse_bh)
 
 ggdata = data.table(
   x = x_seq2, 
-  Dlinear = yhatmse_doptlin$MSEyhat, 
-  Dquadratic = yhatmse_doptquad$MSEyhat, 
-  SpaceFill = yhatmse_space$MSEyhat, 
-  SeqMED = yhatmse_seqmed$MSEyhat,
-  BoxHill = yhatmse_bh$MSEyhat
+  Dlinear = yhatmse_doptlin, 
+  Dquadratic = yhatmse_doptquad, 
+  SpaceFill = yhatmse_space, 
+  SeqMED = yhatmse_seqmed,
+  BoxHill = yhatmse_bh
 )
 ggdata = melt(ggdata, id = c("x"), value.name = "yhatmse", variable.name = "Design")
 msey.plt = ggplot(ggdata, aes(x = x, y = yhatmse, color = Design)) +
@@ -753,15 +750,15 @@ epph.plt
 mu2 = rep(0, 4)
 V2 = diag(rep(sigmasq01, length(mu2)))
 
-MSEbetahat_doptlin = getClosedMSE(
+MSEbetahat_doptlin = getMSEBeta(
   dopt_linear, N, betaT, mu2, V2, sigmasq, typeT)$MSE_postmean
-MSEbetahat_doptquad = getClosedMSE(
+MSEbetahat_doptquad = getMSEBeta(
   dopt_quadratic, N, betaT, mu2, V2, sigmasq, typeT)$MSE_postmean
-MSEbetahat_space = getClosedMSE(
+MSEbetahat_space = getMSEBeta(
   space_filling, N, betaT, mu2, V2, sigmasq, typeT)$MSE_postmean
-MSEbetahat_seqmed = getClosedMSE(
+MSEbetahat_seqmed = getMSEBeta(
   seqmeds[[which.sim]]$D, N, betaT, mu2, V2, sigmasq, typeT)$MSE_postmean
-MSEbetahat_bh = getClosedMSE(
+MSEbetahat_bh = getMSEBeta(
   bhs.format[[which.sim]]$D, N, betaT, mu2, V2, sigmasq, typeT)$MSE_postmean
 
 b0 = c(MSEbetahat_doptlin[1], MSEbetahat_doptquad[1], MSEbetahat_space[1], 
@@ -804,29 +801,37 @@ x_seq2 = seq(from = -1.25, to = 1.25, length.out = 1e4)
 mu2 = rep(0, 4)
 V2 = diag(rep(sigmasq01, length(mu2)))
 
-yhatmse_space = getClosedMSEyhat_seq(
-  x_seq2, space_filling, N, betaT, typeT, mu2, V2, sigmasq, typeT)
-yhatmse_doptquad = getClosedMSEyhat_seq(
-  x_seq2, dopt_quadratic, N, betaT, typeT, mu2, V2, sigmasq, typeT)
-yhatmse_doptlin = getClosedMSEyhat_seq(
-  x_seq2, dopt_linear, N, betaT, typeT, mu2, V2, sigmasq, typeT)
-yhatmse_seqmed = getClosedMSEyhat_seq(
-  x_seq2, seqmeds[[which.sim]]$D, N, betaT, typeT, mu2, V2, sigmasq, typeT)
-yhatmse_bh = getClosedMSEyhat_seq(
-  x_seq2, bhs.format[[which.sim]]$D, N, betaT, typeT, mu2, V2, sigmasq, typeT)
+getMSEYhat.d3 = function(x, design){
+  getMSEYhat(x, design, N, betaT, typeT, mu2, V2, sigmasq, typeT)$MSEyhat
+}
 
-ylimarg = range(
-  0, yhatmse_space$MSEyhat, yhatmse_doptquad$MSEyhat, yhatmse_seqmed$MSEyhat, 
-  yhatmse_bh$MSEyhat)
+yhatmse_space = sapply(x_seq2, getMSEYhat.d3, design = space_filling)
+yhatmse_doptquad = sapply(x_seq2, getMSEYhat.d3, design = dopt_quadratic)
+yhatmse_doptlin = sapply(x_seq2, getMSEYhat.d3, design = dopt_linear)
+yhatmse_seqmed = sapply(x_seq2, getMSEYhat.d3, design = seqmeds[[which.sim]]$D)
+yhatmse_bh = sapply(x_seq2, getMSEYhat.d3, design = bhs.format[[which.sim]]$D)
+
+# yhatmse_space = getMSEYhat_seq(
+#   x_seq2, space_filling, N, betaT, typeT, mu2, V2, sigmasq, typeT)
+# yhatmse_doptquad = getMSEYhat_seq(
+#   x_seq2, dopt_quadratic, N, betaT, typeT, mu2, V2, sigmasq, typeT)
+# yhatmse_doptlin = getMSEYhat_seq(
+#   x_seq2, dopt_linear, N, betaT, typeT, mu2, V2, sigmasq, typeT)
+# yhatmse_seqmed = getMSEYhat_seq(
+#   x_seq2, seqmeds[[which.sim]]$D, N, betaT, typeT, mu2, V2, sigmasq, typeT)
+# yhatmse_bh = getMSEYhat_seq(
+#   x_seq2, bhs.format[[which.sim]]$D, N, betaT, typeT, mu2, V2, sigmasq, typeT)
+
+ylimarg = range(0, yhatmse_space, yhatmse_doptquad, yhatmse_seqmed, yhatmse_bh)
 ylimarg = c(0, 0.12)
 
 ggdata = data.table(
   x = x_seq2, 
-  Dlinear = yhatmse_doptlin$MSEyhat, 
-  Dquadratic = yhatmse_doptquad$MSEyhat, 
-  SpaceFill = yhatmse_space$MSEyhat, 
-  SeqMED = yhatmse_seqmed$MSEyhat, 
-  BoxHill = yhatmse_bh$MSEyhat
+  Dlinear = yhatmse_doptlin, 
+  Dquadratic = yhatmse_doptquad, 
+  SpaceFill = yhatmse_space, 
+  SeqMED = yhatmse_seqmed, 
+  BoxHill = yhatmse_bh
 )
 ggdata = melt(ggdata, id = c("x"), value.name = "yhatmse", variable.name = "Design")
 msey.plt = ggplot(ggdata, aes(x = x, y = yhatmse, color = Design)) +
@@ -911,12 +916,6 @@ source(paste(functions_home, "/boxhill.R", sep = ""))
 source(paste(functions_home, "/boxhill_gp.R", sep = ""))
 source(paste(functions_home, "/kl_divergence.R", sep = ""))
 
-# for evaluating designs
-# source(paste(functions_home, "/simulate_y.R", sep = ""))
-# source(paste(functions_home, "/postprob_hypotheses.R", sep = ""))
-# source(paste(functions_home, "/posterior_mean_mse.R", sep = ""))
-# source(paste(functions_home, "/predictive_yhat_mse.R", sep = ""))
-
 library(mvtnorm)
 
 # for plots
@@ -931,10 +930,6 @@ gg_color_hue = function(n) {
 image_path = "plots"
 
 # helper functions
-
-sigmoid = function(x) {
-  1 / (1 + exp(-x))
-}
 
 getRSS01 = function(
   x, 
@@ -955,14 +950,6 @@ getRSS01 = function(
   RSS1.tmp = sum((pred1.tmp$pred_mean - y.new)^2)
   RSS01 = RSS0.tmp / RSS1.tmp
   RSS01
-}
-
-getMedianPostProbH1.old = function(simcase, design = NULL){
-  if(is.null(design)) stop("must specify design! 1 = mmed, 2 = spacefilling, 3 = uniform")
-  if(design == 1) postProbH1_vec = exp(simcase$logJointEvid1mmed_vec) / (exp(simcase$logJointEvid0mmed_vec) + exp(simcase$logJointEvid1mmed_vec))
-  if(design == 2) postProbH1_vec = exp(simcase$logJointEvid1sf_vec) / (exp(simcase$logJointEvid0sf_vec) + exp(simcase$logJointEvid1sf_vec))
-  if(design == 3) postProbH1_vec = exp(simcase$logJointEvid1unif_vec) / (exp(simcase$logJointEvid0unif_vec) + exp(simcase$logJointEvid1unif_vec))
-  return(median(postProbH1_vec, na.rm = TRUE))
 }
 
 ################################################################################
@@ -1025,6 +1012,19 @@ x_spacefill4_idx = floor(c(1, 1 + ((numx - 1)/(Nnew - 1)) *
                              1:((numx - 1) / ((numx - 1)/(Nnew - 1)))))
 x_spacefill4 = x_seq[x_spacefill4_idx]
 
+# make sets
+input.set = list(
+  input1 = list(x.new = x_in1, x.new.idx = x_in1_idx), 
+  input2 = list(x.new = x_in2, x.new.idx = x_in2_idx), 
+  input3 = list(x.new = x_in3, x.new.idx = x_in3_idx), 
+  input4 = list(x.new = NULL, x.new.idx = NULL)
+)
+spacefill.set = list(
+  input1 = list(x.new = x_spacefill1, x.new.idx = x_spacefill1_idx), 
+  input2 = list(x.new = x_spacefill2, x.new.idx = x_spacefill2_idx), 
+  input3 = list(x.new = x_spacefill3, x.new.idx = x_spacefill3_idx), 
+  input4 = list(x.new = x_spacefill4, x.new.idx = x_spacefill4_idx)
+)
 
 ################################################################################
 # Scenario 1: Squared exponential vs. matern, true = matern
@@ -1035,7 +1035,6 @@ l01= c(0.01, 0.01)
 set.seed(seed)
 null_cov = getCov(x_seq, x_seq, type01[2], l01[2])
 null_mean = rep(0, numx)
-y_seq_mat = t(rmvnorm(n = numSims, mean = null_mean, sigma = null_cov)) # the function values
 
 # bh settings
 model0 = list(type = type01[1], l = l01[1])
@@ -1055,13 +1054,13 @@ ggdata = data.table(
 )
 ggdata = melt(ggdata, measure.vars = 1:4)
 ggdata$variable = factor(ggdata$variable)
-ggdata2 = data.frame(
+ggdata.domain = data.frame(
   variable = rep(unique(ggdata$variable), each = 2), 
   value = rep(c(0, 1), 2)
 )
-ggdata2$variable = factor(ggdata2$variable)
+ggdata.domain$variable = factor(ggdata.domain$variable)
 plt0 = ggplot() + 
-  geom_path(data = ggdata2, aes(x = value, y = variable), 
+  geom_path(data = ggdata.domain, aes(x = value, y = variable), 
             linetype = 2, color = "gray", inherit.aes = FALSE) + 
   geom_point(data = ggdata, aes(x = value, y = variable)) +
   theme_bw() +
@@ -1079,6 +1078,28 @@ plt0
 #        units = c("in")
 # )
 
+# what do they look like with the spacefilling points?
+
+ggdata2 = data.table(
+  `Extrapolation` = x_spacefill1, 
+  `Inc Spread` = x_spacefill2, 
+  `Even Coverage` = x_spacefill3, 
+  `Random` = x_spacefill4
+)
+ggdata2 = melt(ggdata2, measure.vars = 1:4)
+ggdata2$variable = factor(ggdata2$variable)
+ggdata$type = "Input"
+ggdata2$type = "SpaceFill"
+ggdata.ttl = rbind(ggdata, ggdata2)
+plt0.1 = ggplot() + 
+  geom_path(data = ggdata.domain, aes(x = value, y = variable), 
+            linetype = 2, color = "gray", inherit.aes = FALSE) + 
+  geom_point(data = ggdata.ttl, aes(x = value, y = variable, col = type)) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  labs(y = "", x = "x")
+plt0.1
 ################################################################################
 # Plot the demo design
 ################################################################################
@@ -1212,56 +1233,96 @@ for(i in 1:4){
 
 # see helper function getRSS01
 
+# # check that seqmeds and boxhills use the same values # # # # # # # # # # # #
+# seqmeds.function.values = matrix(NA, nrow = numx * 4, ncol = numSims)
+# boxhills.function.values = matrix(NA, nrow = numx * 4, ncol = numSims)
+# for(i in 1:numSims){
+#   seqmeds.function.values[, i] = c(
+#     seqmeds[[1]]$function.values.list[ , i],
+#     seqmeds[[2]]$function.values.list[ , i],
+#     seqmeds[[3]]$function.values.list[ , i],
+#     seqmeds[[4]]$function.values.list[ , i]
+#   )
+#   boxhills.function.values[, i] = c(
+#     boxhills[[1]]$function.values.list[ , i],
+#     boxhills[[2]]$function.values.list[ , i],
+#     boxhills[[3]]$function.values.list[ , i],
+#     boxhills[[4]]$function.values.list[ , i]
+#   )
+# }
+# all.equal(seqmeds.function.values, boxhills.function.values) # TRUE!
+# 
+# # check that each of seqmeds function.values.lists are equal # # # # # # # # #
+# seqmed.function.values1 = matrix(NA, nrow = numx, ncol = numSims)
+# seqmed.function.values2 = matrix(NA, nrow = numx, ncol = numSims)
+# seqmed.function.values3 = matrix(NA, nrow = numx, ncol = numSims)
+# seqmed.function.values4 = matrix(NA, nrow = numx, ncol = numSims)
+# for(i in 1:numSims){
+#   seqmed.function.values1[, i] = seqmeds[[1]]$function.values.list[ , i]
+#   seqmed.function.values2[, i] = seqmeds[[2]]$function.values.list[ , i]
+#   seqmed.function.values3[, i] = seqmeds[[3]]$function.values.list[ , i]
+#   seqmed.function.values4[, i] = seqmeds[[4]]$function.values.list[ , i]
+# }
+# all.equal(seqmed.function.values1, seqmed.function.values2) # TRUE!
+# all.equal(seqmed.function.values1, seqmed.function.values3) # TRUE!
+# all.equal(seqmed.function.values1, seqmed.function.values4) # TRUE!
+f.vals.mat = seqmeds[[1]]$function.values.list
+
+# # check that random designs are the same in the seqmed and boxhill sims # # # 
+# seqmeds.random.mat = matrix(NA, nrow = Nin, ncol = numSims)
+# boxhills.random.mat = matrix(NA, nrow = Nin, ncol = numSims)
+# seqmeds.random.idx.mat = matrix(NA, nrow = Nin, ncol = numSims)
+# boxhills.random.idx.mat = matrix(NA, nrow = Nin, ncol = numSims)
+# for(i in 1:numSims){
+#   seqmeds.random.mat[, i] = seqmeds[[4]]$design.list[[i]]$x
+#   seqmeds.random.idx.mat[, i] = seqmeds[[4]]$design.list[[i]]$x.idx
+#   boxhills.random.mat[, i] = seqmeds[[4]]$design.list[[i]]$x
+#   boxhills.random.idx.mat[, i] = seqmeds[[4]]$design.list[[i]]$x.idx
+# }
+# all.equal(seqmeds.random.mat, boxhills.random.mat) # TRUE!
+# all.equal(seqmeds.random.idx.mat, boxhills.random.idx.mat) # TRUE!
+random.mat = matrix(NA, nrow = Nin, ncol = numSims)
+random.idx.mat = matrix(NA, nrow = Nin, ncol = numSims)
+for(i in 1:numSims){
+  random.mat[, i] = seqmeds[[4]]$design.list[[i]]$x
+  random.idx.mat[, i] = seqmeds[[4]]$design.list[[i]]$x.idx
+}
+
 # RSS01 for SeqMED
 RSS01_in1_seqmed = rep(NA, numSims)
 RSS01_in2_seqmed = rep(NA, numSims)
 RSS01_in3_seqmed = rep(NA, numSims)
 RSS01_in4_seqmed = rep(NA, numSims)
+
 for(i in 1:numSims){
   RSS01_in1_seqmed[i] = getRSS01(
-    x = seqmeds[[1]]$x0, 
-    x.idx = seqmeds[[1]]$x0.idx, 
+    x = x_in1, x.idx = x_in1_idx, 
     x.new = seqmeds[[1]]$design.list[[i]]$x.new, 
     x.new.idx = seqmeds[[1]]$design.list[[i]]$x.new.idx, 
     y.new = seqmeds[[1]]$design.list[[i]]$y.new, 
-    function.values = seqmeds[[1]]$function.values.list[ , i], 
-    type = type01, l = l01, nugget = nuggetSM)
+    function.values = f.vals.mat[ , i], type = type01, l = l01, nugget = nuggetSM)
   # plot(x_seq, seqmeds[[1]]$function.values.list[ , i], type = "l")
   # points(seqmeds[[1]]$x0, seqmeds[[1]]$design.list[[i]]$y[1:Nin], col = 3)
   # points(seqmeds[[1]]$design.list[[i]]$D[-c(1:Nin)], 
   #        seqmeds[[1]]$design.list[[i]]$y[-c(1:Nin)], col = 2)
   RSS01_in2_seqmed[i] = getRSS01(
-    x = seqmeds[[2]]$x0, 
-    x.idx = seqmeds[[2]]$x0.idx, 
+    x = x_in2, x.idx = x_in2_idx, 
     x.new = seqmeds[[2]]$design.list[[i]]$x.new, 
     x.new.idx = seqmeds[[2]]$design.list[[i]]$x.new.idx, 
     y.new = seqmeds[[2]]$design.list[[i]]$y.new, 
-    function.values = seqmeds[[2]]$function.values.list[ , i], 
-    type = type01, l = l01, nugget = nuggetSM)
-  # plot(x_seq, seqmeds[[2]]$function.values.list[ , i], type = "l")
-  # points(seqmeds[[2]]$x0, seqmeds[[2]]$design.list[[i]]$y[1:Nin], col = 3)
-  # points(seqmeds[[2]]$design.list[[i]]$D[-c(1:Nin)],
-  #        seqmeds[[2]]$design.list[[i]]$y[-c(1:Nin)], col = 2)
+    function.values = f.vals.mat[ , i], type = type01, l = l01, nugget = nuggetSM)
   RSS01_in3_seqmed[i] = getRSS01(
-    x = seqmeds[[3]]$x0, 
-    x.idx = seqmeds[[3]]$x0.idx, 
+    x = x_in3, x.idx = x_in3_idx, 
     x.new = seqmeds[[3]]$design.list[[i]]$x.new, 
     x.new.idx = seqmeds[[3]]$design.list[[i]]$x.new.idx, 
     y.new = seqmeds[[3]]$design.list[[i]]$y.new, 
-    function.values = seqmeds[[3]]$function.values.list[ , i], 
-    type = type01, l = l01, nugget = nuggetSM)
-  # plot(x_seq, seqmeds[[3]]$function.values.list[ , i], type = "l")
-  # points(seqmeds[[3]]$x0, seqmeds[[3]]$design.list[[i]]$y[1:Nin], col = 3)
-  # points(seqmeds[[3]]$design.list[[i]]$D[-c(1:Nin)],
-  #        seqmeds[[3]]$design.list[[i]]$y[-c(1:Nin)], col = 2)
+    function.values = f.vals.mat[ , i], type = type01, l = l01, nugget = nuggetSM)
   RSS01_in4_seqmed[i] = getRSS01(
-    x = seqmeds[[4]]$design.list[[i]]$x, 
-    x.idx = seqmeds[[4]]$design.list[[i]]$x.idx, 
+    x = random.mat[, i], x.idx = random.idx.mat[, i], 
     x.new = seqmeds[[4]]$design.list[[i]]$x.new, 
     x.new.idx = seqmeds[[4]]$design.list[[i]]$x.new.idx, 
     y.new = seqmeds[[4]]$design.list[[i]]$y.new, 
-    function.values = seqmeds[[4]]$function.values.list[ , i], 
-    type = type01, l = l01, nugget = nuggetSM)
+    function.values = f.vals.mat[ , i], type = type01, l = l01, nugget = nuggetSM)
 }
 
 # RSS01 for Box-Hill
@@ -1271,49 +1332,29 @@ RSS01_in3_boxhill = rep(NA, numSims)
 RSS01_in4_boxhill = rep(NA, numSims)
 for(i in 1:numSims){
   RSS01_in1_boxhill[i] = getRSS01(
-    x = boxhills[[1]]$x0, 
-    x.idx = boxhills[[1]]$x0.idx, 
+    x = x_in1, x.idx = x_in1_idx, 
     x.new = as.vector(na.omit(boxhills[[1]]$design.list[[i]]$x.new)), 
     x.new.idx = as.vector(na.omit(boxhills[[1]]$design.list[[i]]$x.new.idx)), 
     y.new = as.vector(na.omit(boxhills[[1]]$design.list[[i]]$y.new)), 
-    function.values = boxhills[[1]]$function.values.list[ , i], 
-    type = type01, l = l01, nugget = nuggetSM)
-  # plot(x_seq, boxhills[[1]]$function.values.list[ , i], type = "l")
-  # points(boxhills[[1]]$x0, boxhills[[1]]$design.list[[i]]$y[1:Nin], col = 3)
-  # points(boxhills[[1]]$design.list[[i]]$D[-c(1:Nin)], 
-  #        boxhills[[1]]$design.list[[i]]$y[-c(1:Nin)], col = 2)
+    function.values = f.vals.mat[ , i], type = type01, l = l01, nugget = nuggetSM)
   RSS01_in2_boxhill[i] = getRSS01(
-    x = boxhills[[2]]$x0, 
-    x.idx = boxhills[[2]]$x0.idx, 
+    x = x_in2, x.idx = x_in2_idx, 
     x.new = as.vector(na.omit(boxhills[[2]]$design.list[[i]]$x.new)), 
     x.new.idx = as.vector(na.omit(boxhills[[2]]$design.list[[i]]$x.new.idx)), 
     y.new = as.vector(na.omit(boxhills[[2]]$design.list[[i]]$y.new)), 
-    function.values = boxhills[[2]]$function.values.list[ , i], 
-    type = type01, l = l01, nugget = nuggetSM)
-  # plot(x_seq, boxhills[[2]]$function.values.list[ , i], type = "l")
-  # points(boxhills[[2]]$x0, boxhills[[2]]$design.list[[i]]$y[1:Nin], col = 3)
-  # points(boxhills[[2]]$design.list[[i]]$D[-c(1:Nin)],
-  #        boxhills[[2]]$design.list[[i]]$y[-c(1:Nin)], col = 2)
+    function.values = f.vals.mat[ , i], type = type01, l = l01, nugget = nuggetSM)
   RSS01_in3_boxhill[i] = getRSS01(
-    x = boxhills[[3]]$x0, 
-    x.idx = boxhills[[3]]$x0.idx, 
+    x = x_in3, x.idx = x_in3_idx, 
     x.new = as.vector(na.omit(boxhills[[3]]$design.list[[i]]$x.new)), 
     x.new.idx = as.vector(na.omit(boxhills[[3]]$design.list[[i]]$x.new.idx)), 
     y.new = as.vector(na.omit(boxhills[[3]]$design.list[[i]]$y.new)), 
-    function.values = boxhills[[3]]$function.values.list[ , i], 
-    type = type01, l = l01, nugget = nuggetSM)
-  # plot(x_seq, boxhills[[3]]$function.values.list[ , i], type = "l")
-  # points(boxhills[[3]]$x0, boxhills[[3]]$design.list[[i]]$y[1:Nin], col = 3)
-  # points(boxhills[[3]]$design.list[[i]]$D[-c(1:Nin)],
-  #        boxhills[[3]]$design.list[[i]]$y[-c(1:Nin)], col = 2)
+    function.values = f.vals.mat[ , i], type = type01, l = l01, nugget = nuggetSM)
   RSS01_in4_boxhill[i] = getRSS01(
-    x = boxhills[[4]]$design.list[[i]]$x, 
-    x.idx = boxhills[[4]]$design.list[[i]]$x.idx, 
+    x = random.mat[, i], x.idx = random.idx.mat[, i], 
     x.new = as.vector(na.omit(boxhills[[4]]$design.list[[i]]$x.new)), 
     x.new.idx = as.vector(na.omit(boxhills[[4]]$design.list[[i]]$x.new.idx)), 
     y.new = as.vector(na.omit(boxhills[[4]]$design.list[[i]]$y.new)), 
-    function.values = boxhills[[4]]$function.values.list[ , i], 
-    type = type01, l = l01, nugget = nuggetSM)
+    function.values = f.vals.mat[ , i], type = type01, l = l01, nugget = nuggetSM)
 }
 
 # RSS01 for Space-filling
@@ -1323,37 +1364,25 @@ RSS01_in3_spacefilling = rep(NA, numSims)
 RSS01_in4_spacefilling = rep(NA, numSims)
 for(i in 1:numSims){
   RSS01_in1_spacefilling[i] = getRSS01(
-    x = seqmeds[[1]]$x0, 
-    x.idx = seqmeds[[1]]$x0.idx, 
-    x.new = x_spacefill1, 
-    x.new.idx = x_spacefill1_idx, 
+    x = x_in1, x.idx = x_in1_idx, 
+    x.new = x_spacefill1, x.new.idx = x_spacefill1_idx, 
     y.new = NULL, 
-    function.values = seqmeds[[1]]$function.values.list[ , i], 
-    type = type01, l = l01, nugget = nuggetSM)
+    function.values = f.vals.mat[ , i], type = type01, l = l01, nugget = nuggetSM)
   RSS01_in2_spacefilling[i] = getRSS01(
-    x = seqmeds[[2]]$x0, 
-    x.idx = seqmeds[[2]]$x0.idx, 
-    x.new = x_spacefill2, 
-    x.new.idx = x_spacefill2_idx,  
+    x = x_in2, x.idx = x_in2_idx, 
+    x.new = x_spacefill2, x.new.idx = x_spacefill2_idx,  
     y.new = NULL, 
-    function.values = seqmeds[[2]]$function.values.list[ , i], 
-    type = type01, l = l01, nugget = nuggetSM)
+    function.values = f.vals.mat[ , i], type = type01, l = l01, nugget = nuggetSM)
   RSS01_in3_spacefilling[i] = getRSS01(
-    x = seqmeds[[3]]$x0, 
-    x.idx = seqmeds[[3]]$x0.idx, 
-    x.new = x_spacefill3, 
-    x.new.idx = x_spacefill3_idx, 
+    x = x_in3, x.idx = x_in3_idx,  
+    x.new = x_spacefill3, x.new.idx = x_spacefill3_idx, 
     y.new = NULL, 
-    function.values = seqmeds[[3]]$function.values.list[ , i], 
-    type = type01, l = l01, nugget = nuggetSM)
+    function.values = f.vals.mat[ , i], type = type01, l = l01, nugget = nuggetSM)
   RSS01_in4_spacefilling[i] = getRSS01(
-    x = seqmeds[[4]]$design.list[[i]]$x, # $D[1:Nin], 
-    x.idx = seqmeds[[4]]$design.list[[i]]$x.idx, # $D.idx[1:Nin], 
-    x.new = x_spacefill4, 
-    x.new.idx = x_spacefill4_idx, 
+    x = random.mat[, i], x.idx = random.idx.mat[, i], 
+    x.new = x_spacefill4, x.new.idx = x_spacefill4_idx, 
     y.new = NULL, 
-    function.values = seqmeds[[4]]$function.values.list[ , i], 
-    type = type01, l = l01, nugget = nuggetSM)
+    function.values = f.vals.mat[ , i], type = type01, l = l01, nugget = nuggetSM)
 }
 
 # RSS01 for Uniformly-distributed Random
@@ -1367,37 +1396,25 @@ for(i in 1:numSims){
   x_uniform = x_seq[x_uniform_idx]
   # now calculate RSS01
   RSS01_in1_random[i] = getRSS01(
-    x = seqmeds[[1]]$x0, 
-    x.idx = seqmeds[[1]]$x0.idx, 
-    x.new = x_uniform, 
-    x.new.idx = x_uniform_idx, 
+    x = x_in1, x.idx = x_in1_idx, 
+    x.new = x_uniform, x.new.idx = x_uniform_idx, 
     y.new = NULL, 
-    function.values = seqmeds[[1]]$function.values.list[ , i], 
-    type = type01, l = l01, nugget = nuggetSM)
+    function.values = f.vals.mat[ , i], type = type01, l = l01, nugget = nuggetSM)
   RSS01_in2_random[i] = getRSS01(
-    x = seqmeds[[2]]$x0, 
-    x.idx = seqmeds[[2]]$x0.idx, 
-    x.new = x_uniform, 
-    x.new.idx = x_uniform_idx, 
+    x = x_in2, x.idx = x_in2_idx, 
+    x.new = x_uniform, x.new.idx = x_uniform_idx, 
     y.new = NULL, 
-    function.values = seqmeds[[2]]$function.values.list[ , i], 
-    type = type01, l = l01, nugget = nuggetSM)
+    function.values = f.vals.mat[ , i], type = type01, l = l01, nugget = nuggetSM)
   RSS01_in3_random[i] = getRSS01(
-    x = seqmeds[[3]]$x0, 
-    x.idx = seqmeds[[3]]$x0.idx, 
-    x.new = x_uniform, 
-    x.new.idx = x_uniform_idx, 
+    x = x_in3, x.idx = x_in3_idx, 
+    x.new = x_uniform, x.new.idx = x_uniform_idx, 
     y.new = NULL, 
-    function.values = seqmeds[[3]]$function.values.list[ , i], 
-    type = type01, l = l01, nugget = nuggetSM)
+    function.values = f.vals.mat[ , i], type = type01, l = l01, nugget = nuggetSM)
   RSS01_in4_random[i] = getRSS01(
-    x = seqmeds[[4]]$design.list[[i]]$D[1:Nin], 
-    x.idx = seqmeds[[4]]$design.list[[i]]$D.idx[1:Nin], 
-    x.new = x_uniform, 
-    x.new.idx = x_uniform_idx, 
+    x = random.mat[, i], x.idx = random.idx.mat[, i], 
+    x.new = x_uniform, x.new.idx = x_uniform_idx, 
     y.new = NULL, 
-    function.values = seqmeds[[4]]$function.values.list[ , i], 
-    type = type01, l = l01, nugget = nuggetSM)
+    function.values = f.vals.mat[ , i], type = type01, l = l01, nugget = nuggetSM)
 }
 
 # get the medians
@@ -1731,21 +1748,23 @@ PPH1.plt
 
 # in the same plot
 ggdata1 = data.table(
-  A = RSS01_in1,
-  B = RSS01_in2,
-  C = RSS01_in3,
-  D = RSS01_in4,
+  `Extrapolation` = RSS01_in1,
+  `Inc Spread` = RSS01_in2,
+  `Even Coverage` = RSS01_in3,
+  `Random` = RSS01_in4,
   Design = c("SeqMED", "BoxHill", "SpaceFilling", "Random")
 )
 ggdata1 = melt(ggdata1, id.vars = c("Design"))
 ggdata1$Metric = "Log(RSS0/RSS1)"
 ggdata2 = data.table(
-  A = PPH1_in1,
-  B = PPH1_in2,
-  C = PPH1_in3,
-  D = PPH1_in4,
+  `Extrapolation` = PPH1_in1,
+  `Inc Spread` = PPH1_in2,
+  `Even Coverage` = PPH1_in3,
+  `Random` = PPH1_in4,
   Design = c("SeqMED", "BoxHill", "SpaceFilling", "Random")
 )
+
+
 ggdata2 = melt(ggdata2, id.vars = c("Design"))
 ggdata2$Metric = "P(H1|X,Y)"
 ggdata3 = rbind(ggdata1, ggdata2)
@@ -1758,7 +1777,8 @@ plt_gvm3 = ggplot(ggdata3, aes(x = variable, y = value, group = Design,
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), 
-        axis.title = element_blank())
+        axis.title = element_blank(), 
+        axis.text.x = element_text(angle = 45, vjust = 0.5))
 plt_gvm3
 # ggsave("gvm_medianlogrss01pph1.pdf",
 #        plot = last_plot(),
@@ -2382,10 +2402,10 @@ smmedvs = smmedvsH0
 hyp_mu = mu0
 hyp_V = V0
 hyp_ind = indices0
-mseBn_smmed = getClosedMSE(smmedvs$D, Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
-mseBn_rand = getClosedMSE(x_random, Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
-mseBn_dopt = getClosedMSE(x_doptimal, Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
-mseBn_fact = getClosedMSE(x_factorial, Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
+mseBn_smmed = getMSEBeta(smmedvs$D, Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
+mseBn_rand = getMSEBeta(x_random, Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
+mseBn_dopt = getMSEBeta(x_doptimal, Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
+mseBn_fact = getMSEBeta(x_factorial, Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
 
 # plot
 b1 = c(mseBn_smmed[1], mseBn_rand[1], mseBn_dopt[1], mseBn_fact[1])
@@ -2750,10 +2770,10 @@ hyp_mu = mu1
 hyp_V = V1
 hyp_ind = indices1
 
-mseBn_smmed = getClosedMSE(smmedvs$D, Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
-mseBn_rand = getClosedMSE(x_random, Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
-mseBn_dopt = getClosedMSE(x_doptimal, Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
-mseBn_fact = getClosedMSE(x_factorial, Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
+mseBn_smmed = getMSEBeta(smmedvs$D, Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
+mseBn_rand = getMSEBeta(x_random, Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
+mseBn_dopt = getMSEBeta(x_doptimal, Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
+mseBn_fact = getMSEBeta(x_factorial, Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
 
 b1 = c(mseBn_smmed[1], mseBn_rand[1], mseBn_dopt[1], mseBn_fact[1])
 b2 = c(mseBn_smmed[2], mseBn_rand[2], mseBn_dopt[2], mseBn_fact[2])

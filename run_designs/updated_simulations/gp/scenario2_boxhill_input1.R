@@ -1,8 +1,8 @@
 ################################################################################
-# last updated: 03/04/2021
-# purpose: to create a list of seqmed simulations for scenario 1:
-#   squared exponential vs. matern,
-#   where the true function is matern
+# last updated: 03/16/2021
+# purpose: to create a list of seqmed simulations for scenario 2:
+#   matern vs. periodic,
+#   where the true function is periodic
 
 ################################################################################
 # Sources/Libraries
@@ -39,7 +39,7 @@ gg_color_hue = function(n) {
 }
 
 ################################################################################
-# simulation settings, shared for both scenarios (sqexp vs. matern)
+# simulation settings, shared for both scenarios
 ################################################################################
 
 # simulations settings
@@ -95,7 +95,7 @@ x_spacefill3 = x_seq[x_spacefill3_idx]
 # input set 4 (uniform / random)
 
 ################################################################################
-# Scenario 1: Squared exponential vs. matern, true = matern
+# Scenario 2: matern vs. periodic, true = periodic
 ################################################################################
 type01 = c("matern", "periodic")
 l01= c(0.01, 0.1)
@@ -139,7 +139,7 @@ save_list = list(
 )
 saveRDS(save_list, 
         paste(output_home, 
-              "/scenario1_boxhill_simulations", 
+              "/scenario2_boxhill_simulations", 
               "_input1", 
               "_Nin", Nin, 
               "_Nnew", Nnew,

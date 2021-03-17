@@ -1,8 +1,8 @@
 ################################################################################
-# last updated: 03/04/2021
-# purpose: to create a list of seqmed simulations for scenario 1:
-#   squared exponential vs. matern,
-#   where the true function is matern
+# last updated: 03/16/2021
+# purpose: to create a list of seqmed simulations for scenario 2:
+#   matern vs. periodic,
+#   where the true function is periodic
 
 ################################################################################
 # Sources/Libraries
@@ -95,10 +95,10 @@ x_spacefill3 = x_seq[x_spacefill3_idx]
 # input set 4 (uniform / random)
 
 ################################################################################
-# Scenario 1: Squared exponential vs. matern, true = matern
+# Scenario 2: matern vs. periodic, true = periodic
 ################################################################################
-type01 = c("squaredexponential", "matern")
-l01= c(0.01, 0.01)
+type01 = c("matern", "periodic")
+l01= c(0.01, 0.1)
 # generate matern functions
 set.seed(seed)
 null_cov = getCov(x_seq, x_seq, type01[2], l01[2])
@@ -111,9 +111,9 @@ model1 = list(type = type01[2], l = l01[2])
 
 # generate seqmeds
 
-# input set 1
-x_input = x_in1
-x_input_idx = x_in1_idx
+# input set 2
+x_input = x_in2
+x_input_idx = x_in2_idx
 
 registerDoRNG(1995)
 design_list = foreach(i = 1:numSims) %dorng% {
@@ -140,8 +140,8 @@ save_list = list(
 )
 saveRDS(save_list, 
         paste(output_home, 
-              "/scenario1_seqmed_simulations", 
-              "_input1", 
+              "/scenario2_seqmed_simulations", 
+              "_input2", 
               "_Nin", Nin, 
               "_Nnew", Nnew,
               "_numSims", numSims, 

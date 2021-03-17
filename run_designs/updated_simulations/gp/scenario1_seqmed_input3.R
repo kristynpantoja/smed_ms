@@ -39,7 +39,7 @@ gg_color_hue = function(n) {
 }
 
 ################################################################################
-# simulation settings, shared for both scenarios (sqexp vs. matern)
+# simulation settings, shared for both scenarios
 ################################################################################
 
 # simulations settings

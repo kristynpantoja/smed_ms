@@ -10,10 +10,12 @@ obj_gp = function(
   candidate, D, Kinv0, Kinv1, initD, y, error.var, type, l, p = 1, k = 4, alpha = 1
 ){
   result = q_gp(candidate, Kinv0, Kinv1, initD, y, error.var, type, l, p, 
-                alpha)^k # * 
-    # sum(sapply(D, function(x_i) 
-    #   (q_gp(x_i, Kinv0, Kinv1, initD, y, error.var, type, l, p, 
+                alpha)^k  * 
+    # sum(sapply(D, function(x_i)
+    #   (q_gp(x_i, Kinv0, Kinv1, initD, y, error.var, type, l, p,
     #         alpha) / sqrt((x_i - candidate)^2))^k))
+  sum(sapply(D, function(x_i)
+    (1 / sqrt((x_i - candidate)^2))^k))
   return(result)
 }
 

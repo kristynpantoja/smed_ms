@@ -1054,6 +1054,7 @@ ggdata = data.table(
 )
 ggdata = melt(ggdata, measure.vars = 1:4)
 ggdata$variable = factor(ggdata$variable)
+ggdata$Type = "Input"
 ggdata.domain = data.frame(
   variable = rep(unique(ggdata$variable), each = 2), 
   value = rep(c(0, 1), 2)
@@ -1062,7 +1063,8 @@ ggdata.domain$variable = factor(ggdata.domain$variable)
 plt0 = ggplot() + 
   geom_path(data = ggdata.domain, aes(x = value, y = variable), 
             linetype = 2, color = "gray", inherit.aes = FALSE) + 
-  geom_point(data = ggdata, aes(x = value, y = variable)) +
+  geom_point(data = ggdata, aes(x = value, y = variable, col = Type)) +
+  scale_color_manual(values = gg_color_hue(2)[1]) + 
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
@@ -1088,18 +1090,37 @@ ggdata2 = data.table(
 )
 ggdata2 = melt(ggdata2, measure.vars = 1:4)
 ggdata2$variable = factor(ggdata2$variable)
-ggdata$type = "Input"
-ggdata2$type = "SpaceFill"
+ggdata$Type = "Input       "
+ggdata2$Type = "SpaceFill"
 ggdata.ttl = rbind(ggdata, ggdata2)
 plt0.1 = ggplot() + 
   geom_path(data = ggdata.domain, aes(x = value, y = variable), 
             linetype = 2, color = "gray", inherit.aes = FALSE) + 
-  geom_point(data = ggdata.ttl, aes(x = value, y = variable, col = type)) +
+  geom_point(data = ggdata, aes(x = value, y = variable, col = Type)) +
+  scale_color_manual(values = gg_color_hue(2)[1]) + 
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
   labs(y = "", x = "x")
-plt0.1
+plt0.2 = ggplot() + 
+  geom_path(data = ggdata.domain, aes(x = value, y = variable), 
+            linetype = 2, color = "gray", inherit.aes = FALSE) + 
+  geom_point(data = ggdata.ttl, aes(x = value, y = variable, col = Type)) +
+  scale_color_manual(values = gg_color_hue(4)[c(1,4)]) + 
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  labs(y = "", x = "x")
+ggarrange(plt0.1, plt0.2, nrow = 2)
+# ggsave("initial_and_spacefill2.pdf",
+#        plot = last_plot(),
+#        device = "pdf",
+#        path = image_path,
+#        scale = 1,
+#        width = 4.5,
+#        height = 4,
+#        units = c("in")
+# )
 ################################################################################
 # Plot the demo design
 ################################################################################
@@ -1458,7 +1479,7 @@ RSS01.plt = ggplot(ggdata, aes(x = variable, y = value, group = Design,
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), 
         axis.text.x = element_text(size = 5)) +
-  labs(y = "M[RSS0/RSS1]", x = "Initial Data")
+  labs(y = "RSS0/RSS1", x = "Initial Data")
 RSS01.plt
 # ggsave("gvm_medianlogrss01.pdf",
 #        plot = last_plot(),
@@ -1721,7 +1742,7 @@ ggdata = data.table(
   `Inc Spread` = PPH1_in2,
   `Even Coverage` = PPH1_in3,
   `Random` = PPH1_in4,
-  Design = c("SeqMED", "BoxHill", "SpaceFilling", "Random")
+  Design = c("SeqMED", "BoxHill", "SpaceFill", "Random")
 )
 ggdata = melt(ggdata, id.vars = c("Design"))
 PPH1.plt = ggplot(ggdata, aes(x = variable, y = value, group = Design, 
@@ -1750,16 +1771,16 @@ ggdata1 = data.table(
   `Inc Spread` = RSS01_in2,
   `Even Coverage` = RSS01_in3,
   `Random` = RSS01_in4,
-  Design = c("SeqMED", "BoxHill", "SpaceFilling", "Random")
+  Design = c("SeqMED", "BoxHill", "SpaceFill", "Random")
 )
 ggdata1 = melt(ggdata1, id.vars = c("Design"))
-ggdata1$Metric = "Log(RSS0/RSS1)"
+ggdata1$Metric = "RSS0/RSS1"
 ggdata2 = data.table(
   `Extrapolation` = PPH1_in1,
   `Inc Spread` = PPH1_in2,
   `Even Coverage` = PPH1_in3,
   `Random` = PPH1_in4,
-  Design = c("SeqMED", "BoxHill", "SpaceFilling", "Random")
+  Design = c("SeqMED", "BoxHill", "SpaceFill", "Random")
 )
 
 
@@ -2183,9 +2204,9 @@ RSS01.plt = ggplot(ggdata, aes(x = variable, y = value, group = Design,
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), 
         axis.text.x = element_text(size = 5)) +
-  labs(y = "M[RSS0/RSS1]", x = "Initial Data")
+  labs(y = "RSS0/RSS1", x = "Initial Data")
 RSS01.plt
-# ggsave("gvm_medianlogrss01.pdf",
+# ggsave("mvp_medianlogrss01.pdf",
 #        plot = last_plot(),
 #        device = "pdf",
 #        path = image_path,
@@ -2446,7 +2467,7 @@ ggdata = data.table(
   `Inc Spread` = PPH1_in2,
   `Even Coverage` = PPH1_in3,
   `Random` = PPH1_in4,
-  Design = c("SeqMED", "BoxHill", "SpaceFilling", "Random")
+  Design = c("SeqMED", "BoxHill", "SpaceFill", "Random")
 )
 ggdata = melt(ggdata, id.vars = c("Design"))
 PPH1.plt = ggplot(ggdata, aes(x = variable, y = value, group = Design, 
@@ -2459,7 +2480,7 @@ PPH1.plt = ggplot(ggdata, aes(x = variable, y = value, group = Design,
         axis.text.x = element_text(size = 5)) +
   labs(y = "P(H1|X, Y)", x = "Initial Data")
 PPH1.plt
-# ggsave("gvm_medianpph1.pdf",
+# ggsave("mvp_medianpph1.pdf",
 #        plot = last_plot(),
 #        device = "pdf",
 #        path = image_path,
@@ -2475,16 +2496,16 @@ ggdata1 = data.table(
   `Inc Spread` = RSS01_in2,
   `Even Coverage` = RSS01_in3,
   `Random` = RSS01_in4,
-  Design = c("SeqMED", "BoxHill", "SpaceFilling", "Random")
+  Design = c("SeqMED", "BoxHill", "SpaceFill", "Random")
 )
 ggdata1 = melt(ggdata1, id.vars = c("Design"))
-ggdata1$Metric = "Log(RSS0/RSS1)"
+ggdata1$Metric = "RSS0/RSS1"
 ggdata2 = data.table(
   `Extrapolation` = PPH1_in1,
   `Inc Spread` = PPH1_in2,
   `Even Coverage` = PPH1_in3,
   `Random` = PPH1_in4,
-  Design = c("SeqMED", "BoxHill", "SpaceFilling", "Random")
+  Design = c("SeqMED", "BoxHill", "SpaceFill", "Random")
 )
 
 
@@ -2503,7 +2524,7 @@ plt_gvm3 = ggplot(ggdata3, aes(x = variable, y = value, group = Design,
         axis.title = element_blank(), 
         axis.text.x = element_text(angle = 45, vjust = 0.5))
 plt_gvm3
-# ggsave("gvm_medianlogrss01pph1.pdf",
+# ggsave("mvp_medianlogrss01pph1.pdf",
 #        plot = last_plot(),
 #        device = "pdf",
 #        path = image_path,

@@ -40,6 +40,7 @@ source(paste(functions_home, "/postprob_hypotheses.R", sep = ""))
 source(paste(functions_home, "/posterior_mean_mse.R", sep = ""))
 source(paste(functions_home, "/predictive_yhat_mse.R", sep = ""))
 
+library(Matrix)
 library(expm)
 library(matrixStats)
 library(MASS)
@@ -1939,7 +1940,7 @@ ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable),
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
   labs(y = "y", x = "x", fill = "Function", color = "Function")
-# ggsave("gvm.pdf",
+# ggsave("mvp.pdf",
 #        plot = last_plot(),
 #        device = "pdf",
 #        path = image_path,
@@ -2534,260 +2535,6 @@ plt_gvm3
 #        units = c("in")
 # )
 
-#########################################################################################################################################################################################
-
-# --- Matern vs Periodic --- #
-# MMED parameters for testing
-l01= c(0.1, 0.5); type01 = c(4, 5); numCandidates = 1001; k = 4; p = 1; 
-nugget = NULL; alpha = 1
-
-# generate periodic function
-set.seed(13)
-null_cov = getCov(x_seq, x_seq, type01[2], l01[2])
-null_mean = rep(0, numx)
-
-# read in sims
-maternvsperiodic_train4sims = readRDS(
-  paste0(
-    output_home, 
-    "/gp_demo/maternvsperiodic_train4sims.rds"))
-
-# get sim info
-sim_ind = 1
-x_train = maternvsperiodic_train4sims$x_train[ , sim_ind]
-x_train_ind = maternvsperiodic_train4sims$x_train_ind[ , sim_ind]
-mmed_gp = maternvsperiodic_train4sims$mmed_gp_list[[sim_ind]]
-y_seq = maternvsperiodic_train4sims$sim_fns[ , sim_ind]
-y_train = y_seq[x_train_ind]
-
-newpts = mmed_gp$addD
-truey = y_seq[mmed_gp$indices]
-
-H0_predfn = getGPPredictive(x_seq, x_train, y_train, type01[1], l01[1], nugget = NULL)
-H1_predfn = getGPPredictive(x_seq, x_train, y_train, type01[2], l01[2], nugget = NULL)
-
-# get w_seq
-Kinv0 = solve(getCov(x_train, x_train, type01[1], l01[1]))
-Kinv1 = solve(getCov(x_train, x_train, type01[2], l01[2]))
-w_seq = sapply(x_seq, FUN = function(x1) WNgp(x1, Kinv0, Kinv1, x_train, y_train, var_e = 1, type01, l01))
-
-# plot
-err0 = 2 * sqrt(diag(H0_predfn$pred_var))
-err1 = 2 * sqrt(diag(H1_predfn$pred_var))
-ggdata = data.table(
-  x = x_seq, 
-  `True Function` = y_seq, 
-  Wasserstein = w_seq, 
-  `H0 Predictive` = H0_predfn$pred_mean, 
-  `H1 Predictive` = H1_predfn$pred_mean,
-  lower0 = H0_predfn$pred_mean - err0, 
-  lower1 = H1_predfn$pred_mean - err1, 
-  upper0 = H0_predfn$pred_mean + err0,
-  upper1 = H1_predfn$pred_mean + err1
-)
-yrange = range(ggdata$lower0, ggdata$lower1, 
-               ggdata$upper0, ggdata$upper1)
-yrange[1] = yrange[1] - 1
-ggdata$Wasserstein = ggdata$Wasserstein * 0.25 - abs(yrange[1])
-ggdata$zero1 = NA
-ggdata$zero2 = NA
-ggdata.melted = melt(ggdata, id.vars = c("x"), 
-                     measure.vars = 2:5)
-ggdata.lower = melt(ggdata, id.vars = c("x"), 
-                    measure.vars = c("zero1", "zero2", "lower0", "lower1"))
-ggdata.upper = melt(ggdata, id.vars = c("x"), 
-                    measure.vars = c("zero1", "zero2", "upper0", "upper1"))
-ggdata.melted = cbind(ggdata.melted, 
-                      lower = ggdata.lower$value, 
-                      upper = ggdata.upper$value)
-ggdata_pts = data.table(
-  x = c(x_train, newpts), 
-  y = c(y_train, truey), 
-  color = c(rep(gg_color_hue(2)[2], length(x_train)), 
-            rep(gg_color_hue(2)[1], length(newpts))), 
-  shape = c(rep(8, length(x_train)), 
-            rep(16, length(newpts)))
-)
-mvp = ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable), 
-             linetype = 1) + 
-  geom_path() + 
-  geom_ribbon(aes(ymin = lower, ymax = upper, fill = variable), 
-              alpha = 0.1, linetype = 0) +
-  scale_linetype_manual(values = c(1, 1, 2, 2)) + 
-  scale_fill_manual(values = c(NA, NA, "#00BFC4", "#C77CFF")) + 
-  scale_color_manual(values = c(1, "gray", "#00BFC4", "#C77CFF")) + 
-  geom_point(data = ggdata_pts, mapping = aes(x = x, y = y), 
-             inherit.aes = FALSE, color = ggdata_pts$color, 
-             shape = ggdata_pts$shape, 
-             size = 2) +
-  geom_point(data = ggdata_pts, mapping = aes(x = x, y = yrange[1]), 
-             inherit.aes = FALSE, color = ggdata_pts$color, 
-             shape = ggdata_pts$shape, 
-             size = 2) +
-  scale_y_continuous(limits = yrange) + 
-  theme_bw() +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank()) +
-  labs(y = "y", x = "x", fill = "Function", color = "Function")
-mvp
-# ggsave("mvp.pdf",
-#        plot = last_plot(),
-#        device = "pdf",
-#        path = image_path,
-#        scale = 1,
-#        width = 4.5,
-#        height = 2.5,
-#        units = c("in")
-# )
-
-################################################################################
-# Metrics
-################################################################################
-
-# MMED parameters for testing
-l01= c(0.01, 0.1); type01 = c(4, 5); numCandidates = 1001; k = 4; p = 1; nugget = NULL; alpha = 1
-
-# mvp sim cases
-mvp1 = readRDS(
-  paste0(
-    output_home, 
-    "/gpsims_seq/gp_sims/mvp_seq_train1sims.rds"))
-mvp2 = readRDS(
-  paste0(
-    output_home, 
-    "/gpsims_seq/gp_sims/mvp_seq_train2sims.rds"))
-mvp3 = readRDS(
-  paste0(
-    output_home, 
-    "/gpsims_seq/gp_sims/mvp_seq_train3sims.rds"))
-mvp4 = readRDS(
-  paste0(
-    output_home, 
-    "/gpsims_seq/gp_sims/mvp_seq_train4sims.rds"))
-simcases = list(mvp1, mvp2, mvp3, mvp4)
-
-
-# RSS Ratio (0/1)
-case1_medianLogRSS01_vec = rep(NA, 3)# case 1: extrapolation (points close together)
-case2_medianLogRSS01_vec = rep(NA, 3)# case 2: ? (points increasingly spread out more)
-case3_medianLogRSS01_vec = rep(NA, 3)# case 3: space-filling
-case4_medianLogRSS01_vec = rep(NA, 3)# case 4: uniformly-distributed inputs
-for(i in 1:3){
-  case1_medianLogRSS01_vec[i] = getRSS01(simcases[[1]], i)
-  case2_medianLogRSS01_vec[i] = getRSS01(simcases[[2]], i)
-  case3_medianLogRSS01_vec[i] = getRSS01(simcases[[3]], i)
-  case4_medianLogRSS01_vec[i] = getRSS01(simcases[[4]], i)
-}
-
-ggdata = data.table(
-  Extrapolation = case1_medianLogRSS01_vec,
-  `Inc Spread` = case2_medianLogRSS01_vec,
-  `Even Coverage` = case3_medianLogRSS01_vec,
-  `Random` = case4_medianLogRSS01_vec,
-  Design = c("SeqMED", "SpaceFilling", "Random")
-)
-ggdata = melt(ggdata, id.vars = c("Design"))
-plt_mvp1 = ggplot(ggdata, aes(x = variable, y = value, group = Design, 
-                              color = Design)) + 
-  geom_point() + 
-  geom_path(linetype = 2) +
-  theme_bw() +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(), 
-        axis.text.x = element_text(size = 5)) +
-  labs(y = "Log(RSS0/RSS1)", x = "Initial Data")
-plt_mvp1
-# ggsave("mvp_medianlogrss01.pdf",
-#        plot = last_plot(),
-#        device = "pdf",
-#        path = image_path,
-#        scale = 1,
-#        width = 4.5,
-#        height = 2,
-#        units = c("in")
-# )
-
-# Posterior Probability of H1
-case1_medianPPH1_vec = rep(NA, 3)# case 1: extrapolation (points close together)
-case2_medianPPH1_vec = rep(NA, 3)# case 2: ? (points increasingly spread out more)
-case3_medianPPH1_vec = rep(NA, 3)# case 3: space-filling
-case4_medianPPH1_vec = rep(NA, 3)# case 4: uniformly-distributed inputs
-for(i in 1:3){
-  case1_medianPPH1_vec[i] = getMedianPostProbH1(simcases[[1]], i)
-  case2_medianPPH1_vec[i] = getMedianPostProbH1(simcases[[2]], i)
-  case3_medianPPH1_vec[i] = getMedianPostProbH1(simcases[[3]], i)
-  case4_medianPPH1_vec[i] = getMedianPostProbH1(simcases[[4]], i)
-}
-
-ggdata = data.table(
-  Extrapolation = case1_medianPPH1_vec,
-  `Inc Spread` = case2_medianPPH1_vec,
-  `Even Coverage` = case3_medianPPH1_vec,
-  `Random` = case4_medianPPH1_vec,
-  Design = c("SeqMED", "SpaceFilling", "Random")
-)
-ggdata = melt(ggdata, id.vars = c("Design"))
-plt_mvp2 = ggplot(ggdata, aes(x = variable, y = value, group = Design, 
-                              color = Design)) + 
-  geom_point() + 
-  geom_path(linetype = 2) +
-  theme_bw() +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(), 
-        axis.text.x = element_text(size = 5)) +
-  labs(y = "P(H1|X, Y)", x = "Initial Data")
-plt_mvp2
-# ggsave("mvp_medianpph1.pdf",
-#        plot = last_plot(),
-#        device = "pdf",
-#        path = image_path,
-#        scale = 1,
-#        width = 4.5,
-#        height = 2,
-#        units = c("in")
-# )
-
-# together
-ggdata1 = data.table(
-  A = case1_medianLogRSS01_vec,
-  B = case2_medianLogRSS01_vec,
-  C = case3_medianLogRSS01_vec,
-  D = case4_medianLogRSS01_vec,
-  Design = c("SeqMED", "SpaceFilling", "Random")
-)
-ggdata1 = melt(ggdata1, id.vars = c("Design"))
-ggdata1$Metric = "Log(RSS0/RSS1)"
-ggdata2 = data.table(
-  A = case1_medianPPH1_vec,
-  B = case2_medianPPH1_vec,
-  C = case3_medianPPH1_vec,
-  D = case4_medianPPH1_vec,
-  Design = c("SeqMED", "SpaceFilling", "Random")
-)
-ggdata2 = melt(ggdata2, id.vars = c("Design"))
-ggdata2$Metric = "P(H1|X,Y)"
-ggdata3 = rbind(ggdata1, ggdata2)
-ggdata3$Metric = factor(ggdata3$Metric)
-plt_mvp3 = ggplot(ggdata3, aes(x = variable, y = value, group = Design, 
-                               color = Design)) + 
-  facet_wrap(vars(Metric), scales = "free") + 
-  geom_point() + 
-  geom_path(linetype = 2) +
-  theme_bw() +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(), 
-        axis.title = element_blank())
-plt_mvp3
-# ggsave("mvp_medianlogrss01pph1.pdf",
-#        plot = last_plot(),
-#        device = "pdf",
-#        path = image_path,
-#        scale = 1,
-#        width = 4.5,
-#        height = 2,
-#        units = c("in")
-# )
-
 #
 ##
 ###
@@ -2834,12 +2581,42 @@ plt_mvp3
 ################################################################################
 # Sources/Libraries
 ################################################################################
-# tamu cluster
+# directories
 output_home = "run_designs/smmed/lmvs_sims"
+functions_home = "functions"
 
-# --- Sources/Libraries --- #
+# for seqmed design
 source(paste(functions_home, "/SeqMEDvs.R", sep = ""))
 source(paste(functions_home, "/SeqMEDvs_batch.R", sep = ""))
+source(paste(functions_home, "/charge_function_q.R", sep = ""))
+source(paste(functions_home, "/construct_design_matrix.R", sep = ""))
+source(paste(functions_home, "/wasserstein_distance.R", sep = ""))
+source(paste(functions_home, "/posterior_parameters.R", sep = ""))
+source(paste(functions_home, "/simulate_y.R", sep = ""))
+
+# for evaluating designs
+source(paste(functions_home, "/simulate_y.R", sep = ""))
+source(paste(functions_home, "/postprob_hypotheses.R", sep = ""))
+source(paste(functions_home, "/posterior_mean_mse.R", sep = ""))
+source(paste(functions_home, "/predictive_yhat_mse.R", sep = ""))
+
+library(Matrix)
+library(expm)
+library(matrixStats)
+library(MASS)
+library(mvtnorm)
+library(knitr)
+
+# for plots
+library(ggplot2)
+library(ggpubr)
+library(reshape2)
+library(data.table)
+gg_color_hue = function(n) {
+  hues = seq(15, 275, length = n + 1)
+  hcl(h = hues, l = 65, c = 100)[1:n]
+}
+image_path = "plots"
 
 ################################################################################
 # simulation settings, shared for both scenarios (2 vs. 3 factors)

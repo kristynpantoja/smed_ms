@@ -108,8 +108,8 @@ x_spacefill3 = x_seq[x_spacefill3_idx]
 ################################################################################
 # Scenario 1: Squared exponential vs. matern, true = matern
 ################################################################################
-type01 = c("squaredexponential", "matern")
-l01= c(0.1, 0.1) # DEMO SETTING ONLY ###########################################
+type01 = c("matern", "periodic")
+l01= c(0.1, 0.5) # DEMO SETTING ONLY ###########################################
 # generate matern functions
 set.seed(seed)
 null_cov = getCov(x_seq, x_seq, type01[2], l01[2])
@@ -213,7 +213,7 @@ ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable),
         panel.grid.minor = element_blank()) +
   labs(y = "y", x = "x", fill = "Function", color = "Function")
 
-ggsave("gvm.pdf",
+ggsave("mvp.pdf",
        plot = last_plot(),
        device = "pdf",
        path = image_path,

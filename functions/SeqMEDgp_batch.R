@@ -10,12 +10,8 @@ obj_gp = function(
   candidate, D, Kinv0, Kinv1, initD, y, error.var, type, l, p = 1, k = 4, alpha = 1
 ){
   result = q_gp(candidate, Kinv0, Kinv1, initD, y, error.var, type, l, p, 
-                alpha)^k  * 
-    # sum(sapply(D, function(x_i)
-    #   (q_gp(x_i, Kinv0, Kinv1, initD, y, error.var, type, l, p,
-    #         alpha) / sqrt((x_i - candidate)^2))^k))
-  sum(sapply(D, function(x_i)
-    (1 / sqrt((x_i - candidate)^2))^k))
+                alpha)^k * 
+  sum(sapply(D, function(x_i) (1 / sqrt((x_i - candidate)^2))^k))
   return(result)
 }
 
@@ -136,8 +132,7 @@ obj_gpvs = function(
   result = q_gpvs(
     candidate, Kinv0, Kinv1, indices0, indices1, initD0, initD1, y, error.var, 
     type, l, p, alpha)^k * 
-    sum(apply(D, 1, function(x_i) (q_gpvs(x_i, Kinv0, Kinv1, indices0, indices1, initD0, initD1, y, error.var, type, l, p, 
-                                           alpha) / sqrt(sum((x_i - candidate)^2)))^k))
+    sum(apply(D, 1, function(x_i) (1 / sqrt(sum((x_i - candidate)^2)))^k))
   return(result)
 }
 

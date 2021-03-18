@@ -7,6 +7,112 @@
 ###############################################
 
 obj_gp = function(
+  candidate, D = NULL, Kinv0, Kinv1, initD, y, error.var, type, l, 
+  p = 1, k = 4, alpha = 1
+){
+  q_cand = q_gp(candidate, Kinv0, Kinv1, initD, y, error.var, type, l, p, 
+            alpha)
+  if(is.null(D)){ # when N2 = 1, and batch.idx != 1
+    sum_q_D = sum(sapply(D, function(x_i) (1 / sqrt((x_i - candidate)^2))^k))
+  } else{ # 
+    sum_q_D = sum(sapply(D, function(x_i)
+      (q_gp(x_i, Kinv0, Kinv1, initD, y, error.var, type, l, p,
+            alpha) / sqrt((x_i - candidate)^2))^k))
+  }
+  result = q_cand^k * sum_q_D
+  return(result)
+}
+
+# MMED_gp_batch, add_MED_ms_oneatatime_data_gp, add_MMEDgp_oneatatime
+SeqMEDgp_batch = function(
+  initD, y, type, l, error.var = 1, N2 = 11, numCandidates = 10^5, k = 4, p = 1, 
+  xmin = 0, xmax = 1, nugget = NULL, alpha = NULL, genCandidates = 1, 
+  candidates = NULL, batch.idx = 1
+){
+  initN = length(initD)
+  if(length(y) != initN) stop("length of y does not match length of initial input data, initD")
+  
+  # check if any points in initD give Wasserstein distance of 0 (in which case we don't want to use it since 1/0 in q)
+  # turns out, that's not necessary
+  
+  # old_initD = initD
+  
+  # posterior distribution of beta
+  if(is.null(nugget)){
+    Kinv0 = solve(getCov(initD, initD, type[1], l[1]))
+    Kinv1 = solve(getCov(initD, initD, type[2], l[2]))
+  } else{
+    Kinv0 = solve(getCov(initD, initD, type[1], l[1]) + diag(rep(nugget, initN)))
+    Kinv1 = solve(getCov(initD, initD, type[2], l[2]) + diag(rep(nugget, initN)))
+  }
+  
+  initN = length(initD)
+  ttlN = initN + N2
+  
+  # -- Generate Candidate Points -- #
+  if(is.null(candidates)){
+    if(genCandidates == 1) candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
+    if(genCandidates == 2) candidates = sort(runif(numCandidates, min = xmin, max = xmax))
+  }
+  
+  D = rep(NA, N2)
+  D_ind = rep(NA, N2)
+  if(batch.idx == 1){
+    # -- Initialize 1st additional design point-- #
+    w_candidates = sapply(candidates, FUN = function(x) WNgp(
+      x, Kinv0, Kinv1, initD, y, error.var, type, l))
+    w_opt = which.max(w_candidates)
+    xopt = candidates[w_opt]
+    is_x_max_in_initD = any(sapply(initD, function(x) x == xopt))
+  } else{
+    is_x_max_in_initD = TRUE
+  }
+  if(is_x_max_in_initD){
+    # Find f_opt: minimum of f_min
+    f_min_candidates = sapply(
+      candidates, 
+      function(x) obj_gp(
+        x, NULL, 
+        Kinv0, Kinv1, initD, y, error.var, type, l, p, k, alpha))
+    f_opt = which.min(f_min_candidates)
+    
+    xnew = candidates[f_opt]
+    # Update set of design points (D) and plot new point
+    D[1] = xnew
+    D_ind[1] = f_opt
+  } else{
+    D[1] = xopt
+    D_ind[1] = w_opt
+  }
+  
+  if(N2 > 1){
+    for(i in 2:N2){
+      # Find f_opt: minimum of f_min
+      f_min_candidates = sapply(
+        candidates, 
+        function(x) obj_gp(
+          x, D[1:(i - 1)], 
+          Kinv0, Kinv1, initD, y, error.var, type, l, p, k, alpha))
+      f_opt = which.min(f_min_candidates)
+      xnew = candidates[f_opt]
+      # Update set of design points (D) and plot new point
+      D[i] = xnew
+      D_ind[i] = f_opt
+    }
+  }
+  
+  return(list(
+    "initD" = initD, 
+    "addD" = D, 
+    "D" = c(initD, D),
+    "candidates" = candidates, 
+    "indices" = D_ind
+  ))
+}
+
+########################################################################################################################################################################################
+
+obj_gp.old = function(
   candidate, D, Kinv0, Kinv1, initD, y, error.var, type, l, p = 1, k = 4, alpha = 1
 ){
   result = q_gp(candidate, Kinv0, Kinv1, initD, y, error.var, type, l, p, 
@@ -16,7 +122,7 @@ obj_gp = function(
 }
 
 # MMED_gp_batch, add_MED_ms_oneatatime_data_gp, add_MMEDgp_oneatatime
-SeqMEDgp_batch = function(
+SeqMEDgp_batch.old = function(
   initD, y, type, l, error.var = 1, N2 = 11, numCandidates = 10^5, k = 4, p = 1, 
   xmin = 0, xmax = 1, nugget = NULL, alpha = NULL, genCandidates = 1, 
   candidates = NULL, batch.idx = 1
@@ -80,7 +186,7 @@ SeqMEDgp_batch = function(
     # Find f_opt: minimum of f_min
     f_min_candidates = sapply(
       candidates, 
-      function(x) obj_gp(
+      function(x) obj_gp.old(
         x, initD, Kinv0, Kinv1, initD, y, error.var, type, l, p, k, alpha))
     f_opt = which.min(f_min_candidates)
     
@@ -96,7 +202,7 @@ SeqMEDgp_batch = function(
   if(N2 > 1){
     for(i in 2:N2){
       # Find f_opt: minimum of f_min
-      f_min_candidates = sapply(candidates, function(x) obj_gp(x, D[1:(i - 1)], Kinv0, Kinv1, initD, y, error.var, type, l, p, k, alpha))
+      f_min_candidates = sapply(candidates, function(x) obj_gp.old(x, D[1:(i - 1)], Kinv0, Kinv1, initD, y, error.var, type, l, p, k, alpha))
       f_opt = which.min(f_min_candidates)
       xnew = candidates[f_opt]
       # Update set of design points (D) and plot new point

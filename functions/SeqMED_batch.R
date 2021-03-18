@@ -83,8 +83,9 @@ SeqMED_batch = function(
     # Find f_opt: minimum of f_min
     f_min_candidates = sapply(
       candidates, 
-      function(x) objective_seqmed(x, initD, postmean0, postmean1, postvar0, 
-                                   postvar1, error.var, type, p, k, alpha))
+      function(x) objective_seqmed(
+        x, initD, 
+        postmean0, postmean1, postvar0, postvar1, error.var, type, p, k, alpha))
     f_opt = which.min(f_min_candidates)
     xnew = candidates[f_opt]
     # Update set of design points (D) and plot new point
@@ -98,9 +99,10 @@ SeqMED_batch = function(
       # Find f_opt: minimum of f_min
       f_min_candidates = sapply(
         candidates, 
-        function(x) objective_seqmed(x, c(initD, D[1:(i - 1)]), postmean0, 
-                                     postmean1, postvar0, postvar1, error.var, type, 
-                                     p, k, alpha))
+        function(x) objective_seqmed(
+          x, c(initD, D[1:(i - 1)]), 
+          postmean0, postmean1, postvar0, postvar1, error.var, type, p, k, alpha
+          ))
       f_opt = which.min(f_min_candidates)
       xnew = candidates[f_opt]
       # Update set of design points (D) and plot new point

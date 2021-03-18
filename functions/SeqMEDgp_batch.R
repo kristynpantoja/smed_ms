@@ -13,9 +13,9 @@ obj_gp = function(
   q_cand = q_gp(candidate, Kinv0, Kinv1, initD, y, error.var, type, l, p, 
             alpha)
   if(is.null(D)){ # when N2 = 1, and batch.idx != 1
-    sum_q_D = sum(sapply(D, function(x_i) (1 / sqrt((x_i - candidate)^2))^k))
+    sum_q_D = sum(sapply(initD, function(x_i) (1 / sqrt((x_i - candidate)^2))^k))
   } else{ # 
-    sum_q_D = sum(sapply(D, function(x_i)
+    sum_q_D = sum(sapply(c(initD, D), function(x_i)
       (q_gp(x_i, Kinv0, Kinv1, initD, y, error.var, type, l, p,
             alpha) / sqrt((x_i - candidate)^2))^k))
   }

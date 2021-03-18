@@ -1,6 +1,6 @@
 ################################################################################
-# last updated: 03/18/2021
-# purpose: to test seqmed simulations for scenario 1:
+# last updated: 03/04/2021
+# purpose: to create a list of seqmed simulations for scenario 1:
 #   squared exponential vs. matern,
 #   where the true function is matern
 
@@ -25,6 +25,16 @@ source(paste(functions_home, "/kl_divergence.R", sep = ""))
 
 library(mvtnorm)
 
+# for plots
+library(ggplot2)
+library(ggpubr)
+library(reshape2)
+library(data.table)
+gg_color_hue = function(n) {
+  hues = seq(15, 275, length = n + 1)
+  hcl(h = hues, l = 65, c = 100)[1:n]
+}
+
 # set up parallelization
 library(doFuture)
 library(parallel)
@@ -44,11 +54,11 @@ gg_color_hue = function(n) {
 
 # simulations settings
 numSims = 100
-seed = 12
+seed = 1
 Nin = 6
-numSeq = 16 # (including input x stage)
+numSeq = 15
 seqN = 1
-Nnew = (numSeq - 1) * seqN
+Nnew = numSeq * seqN
 Nttl = Nin + Nnew
 xmin = 0
 xmax = 1

@@ -8,16 +8,35 @@
 
 obj_gp = function(
   candidate, D = NULL, Kinv0, Kinv1, initD, y, error.var, type, l, 
-  p = 1, k = 4, alpha = 1
+  p = 1, k = 4, alpha = 1, obj_fn = 1
 ){
   q_cand = q_gp(candidate, Kinv0, Kinv1, initD, y, error.var, type, l, p, 
             alpha)
-  if(is.null(D)){ # when N2 = 1, and batch.idx != 1
-    sum_q_D = sum(sapply(initD, function(x_i) (1 / sqrt((x_i - candidate)^2))^k))
-  } else{ # 
-    sum_q_D = sum(sapply(c(initD, D), function(x_i)
-      (q_gp(x_i, Kinv0, Kinv1, initD, y, error.var, type, l, p,
-            alpha) / sqrt((x_i - candidate)^2))^k))
+  if(obj_fn == 1){
+    if(is.null(D)){ # when N2 = 1, and batch.idx != 1
+      sum_q_D = sum(sapply(initD, function(x_i) (1 / sqrt((x_i - candidate)^2))^k)) ########### define q(xi \in initD) = 1?
+    } else{ # 
+      sum_q_D = sum(sapply(initD, function(x_i) (1 / sqrt((x_i - candidate)^2))^k)) + 
+        sum(sapply(D, function(x_i)
+          (q_gp(x_i, Kinv0, Kinv1, initD, y, error.var, type, l, p,
+                alpha) / sqrt((x_i - candidate)^2))^k))
+    }
+  } else if(obj_fn == 2){
+    if(is.null(D)){ # when N2 = 1, and batch.idx != 1
+      sum_q_D = sum(sapply(initD, function(x_i) (1 / sqrt((x_i - candidate)^2))^k)) ########### define q(xi \in initD) = 1?
+    } else{ # 
+      sum_q_D = sum(sapply(D, function(x_i)
+          (q_gp(x_i, Kinv0, Kinv1, initD, y, error.var, type, l, p,
+                alpha) / sqrt((x_i - candidate)^2))^k))
+    }
+  } else{ # obj_fn == 3
+    if(is.null(D)){ # when N2 = 1, and batch.idx != 1
+      sum_q_D = 1 # no space-filling????##################
+    } else{
+      sum_q_D = sum(sapply(D, function(x_i)
+          (q_gp(x_i, Kinv0, Kinv1, initD, y, error.var, type, l, p,
+                alpha) / sqrt((x_i - candidate)^2))^k))
+    }
   }
   result = q_cand^k * sum_q_D
   return(result)
@@ -27,7 +46,7 @@ obj_gp = function(
 SeqMEDgp_batch = function(
   initD, y, type, l, error.var = 1, N2 = 11, numCandidates = 10^5, k = 4, p = 1, 
   xmin = 0, xmax = 1, nugget = NULL, alpha = NULL, genCandidates = 1, 
-  candidates = NULL, batch.idx = 1
+  candidates = NULL, batch.idx = 1, obj_fn = 1
 ){
   initN = length(initD)
   if(length(y) != initN) stop("length of y does not match length of initial input data, initD")
@@ -73,7 +92,7 @@ SeqMEDgp_batch = function(
       candidates, 
       function(x) obj_gp(
         x, NULL, 
-        Kinv0, Kinv1, initD, y, error.var, type, l, p, k, alpha))
+        Kinv0, Kinv1, initD, y, error.var, type, l, p, k, alpha, obj_fn))
     f_opt = which.min(f_min_candidates)
     
     xnew = candidates[f_opt]
@@ -92,7 +111,7 @@ SeqMEDgp_batch = function(
         candidates, 
         function(x) obj_gp(
           x, D[1:(i - 1)], 
-          Kinv0, Kinv1, initD, y, error.var, type, l, p, k, alpha))
+          Kinv0, Kinv1, initD, y, error.var, type, l, p, k, alpha, obj_fn))
       f_opt = which.min(f_min_candidates)
       xnew = candidates[f_opt]
       # Update set of design points (D) and plot new point

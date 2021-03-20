@@ -2,17 +2,27 @@
 # require("charge_function_q.R")
 # require("covariance_functions.R")
 
-###############################################
-### MMED GP, one-at-a-time greedy algorithm ###
-###############################################
+#################################################
+### SeqMED GP, one-at-a-time greedy algorithm ###
+#################################################
 
 obj_gp = function(
   candidate, D = NULL, Kinv0, Kinv1, initD, y, error.var, type, l, 
   p = 1, k = 4, alpha = 1, obj_fn = 1
 ){
   q_cand = q_gp(candidate, Kinv0, Kinv1, initD, y, error.var, type, l, p, 
-            alpha)
+                alpha)
   if(obj_fn == 1){
+    if(is.null(D)){ # when N2 = 1, and batch.idx != 1
+      sum_q_D_arg = initD
+    } else{
+      sum_q_D_arg = c(initD, D)
+    }
+    sum_q_D = sum(sapply(sum_q_D_arg, function(x_i) 
+      (q_gp(x_i, Kinv0, Kinv1, initD, y, error.var, type, l, p,
+            alpha) / sqrt((x_i - candidate)^2))^k))
+    result = q_cand^k * sum_q_D
+  } else if(obj_fn == 2){
     if(is.null(D)){ # when N2 = 1, and batch.idx != 1
       sum_q_D = sum(sapply(initD, function(x_i) (1 / sqrt((x_i - candidate)^2))^k)) ########### define q(xi \in initD) = 1?
     } else{ # 
@@ -20,23 +30,16 @@ obj_gp = function(
         sum(sapply(D, function(x_i)
           (q_gp(x_i, Kinv0, Kinv1, initD, y, error.var, type, l, p,
                 alpha) / sqrt((x_i - candidate)^2))^k))
-    }
-  } else if(obj_fn == 2){
+    } 
+  } else{ # back to 1
     if(is.null(D)){ # when N2 = 1, and batch.idx != 1
-      sum_q_D = sum(sapply(initD, function(x_i) (1 / sqrt((x_i - candidate)^2))^k)) ########### define q(xi \in initD) = 1?
-    } else{ # 
-      sum_q_D = sum(sapply(D, function(x_i)
-          (q_gp(x_i, Kinv0, Kinv1, initD, y, error.var, type, l, p,
-                alpha) / sqrt((x_i - candidate)^2))^k))
-    }
-  } else{ # obj_fn == 3
-    if(is.null(D)){ # when N2 = 1, and batch.idx != 1
-      sum_q_D = 1 # no space-filling????##################
+      sum_q_D_arg = initD
     } else{
-      sum_q_D = sum(sapply(D, function(x_i)
-          (q_gp(x_i, Kinv0, Kinv1, initD, y, error.var, type, l, p,
-                alpha) / sqrt((x_i - candidate)^2))^k))
+      sum_q_D_arg = c(initD, D)
     }
+    sum_q_D = sum(sapply(sum_q_D_arg, function(x_i) 
+      (q_gp(x_i, Kinv0, Kinv1, initD, y, error.var, type, l, p,
+            alpha) / sqrt((x_i - candidate)^2))^k))
   }
   result = q_cand^k * sum_q_D
   return(result)
@@ -45,8 +48,8 @@ obj_gp = function(
 # MMED_gp_batch, add_MED_ms_oneatatime_data_gp, add_MMEDgp_oneatatime
 SeqMEDgp_batch = function(
   initD, y, type, l, error.var = 1, N2 = 11, numCandidates = 10^5, k = 4, p = 1, 
-  xmin = 0, xmax = 1, nugget = NULL, alpha = NULL, genCandidates = 1, 
-  candidates = NULL, batch.idx = 1, obj_fn = 1
+  xmin = 0, xmax = 1, nugget = NULL, alpha = NULL, candidates = NULL, 
+  batch.idx = 1, obj_fn = 1
 ){
   initN = length(initD)
   if(length(y) != initN) stop("length of y does not match length of initial input data, initD")
@@ -67,12 +70,6 @@ SeqMEDgp_batch = function(
   
   initN = length(initD)
   ttlN = initN + N2
-  
-  # -- Generate Candidate Points -- #
-  if(is.null(candidates)){
-    if(genCandidates == 1) candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
-    if(genCandidates == 2) candidates = sort(runif(numCandidates, min = xmin, max = xmax))
-  }
   
   D = rep(NA, N2)
   D_ind = rep(NA, N2)
@@ -136,7 +133,7 @@ obj_gp.old = function(
 ){
   result = q_gp(candidate, Kinv0, Kinv1, initD, y, error.var, type, l, p, 
                 alpha)^k * 
-  sum(sapply(D, function(x_i) (1 / sqrt((x_i - candidate)^2))^k))
+    sum(sapply(D, function(x_i) (1 / sqrt((x_i - candidate)^2))^k))
   return(result)
 }
 
@@ -236,7 +233,7 @@ SeqMEDgp_batch.old = function(
     "D" = c(initD, D),
     "candidates" = candidates, 
     "indices" = D_ind
-    ))
+  ))
 }
 
 
@@ -244,9 +241,9 @@ SeqMEDgp_batch.old = function(
 
 
 
-################################################
+##################################################
 ### SeqMED GP for Variable Selection, 1D vs 2D ###
-################################################
+##################################################
 
 # meant to be able to handle 2d dimensional input, for variable selection problem
 

@@ -1806,7 +1806,7 @@ plt_gvm3
 #        path = image_path,
 #        scale = 1,
 #        width = 4.5,
-#        height = 2,
+#        height = 2.5,
 #        units = c("in")
 # )
 
@@ -1978,54 +1978,8 @@ for(i in 1:4){
 
 # see helper function getRSS01
 
-# # check that seqmeds and boxhills use the same values # # # # # # # # # # # #
-# seqmeds.function.values = matrix(NA, nrow = numx * 4, ncol = numSims)
-# boxhills.function.values = matrix(NA, nrow = numx * 4, ncol = numSims)
-# for(i in 1:numSims){
-#   seqmeds.function.values[, i] = c(
-#     seqmeds[[1]]$function.values.list[ , i],
-#     seqmeds[[2]]$function.values.list[ , i],
-#     seqmeds[[3]]$function.values.list[ , i],
-#     seqmeds[[4]]$function.values.list[ , i]
-#   )
-#   boxhills.function.values[, i] = c(
-#     boxhills[[1]]$function.values.list[ , i],
-#     boxhills[[2]]$function.values.list[ , i],
-#     boxhills[[3]]$function.values.list[ , i],
-#     boxhills[[4]]$function.values.list[ , i]
-#   )
-# }
-# all.equal(seqmeds.function.values, boxhills.function.values) # TRUE!
-# 
-# # check that each of seqmeds function.values.lists are equal # # # # # # # # #
-# seqmed.function.values1 = matrix(NA, nrow = numx, ncol = numSims)
-# seqmed.function.values2 = matrix(NA, nrow = numx, ncol = numSims)
-# seqmed.function.values3 = matrix(NA, nrow = numx, ncol = numSims)
-# seqmed.function.values4 = matrix(NA, nrow = numx, ncol = numSims)
-# for(i in 1:numSims){
-#   seqmed.function.values1[, i] = seqmeds[[1]]$function.values.list[ , i]
-#   seqmed.function.values2[, i] = seqmeds[[2]]$function.values.list[ , i]
-#   seqmed.function.values3[, i] = seqmeds[[3]]$function.values.list[ , i]
-#   seqmed.function.values4[, i] = seqmeds[[4]]$function.values.list[ , i]
-# }
-# all.equal(seqmed.function.values1, seqmed.function.values2) # TRUE!
-# all.equal(seqmed.function.values1, seqmed.function.values3) # TRUE!
-# all.equal(seqmed.function.values1, seqmed.function.values4) # TRUE!
 f.vals.mat = seqmeds[[1]]$function.values.list
 
-# # check that random designs are the same in the seqmed and boxhill sims # # # 
-# seqmeds.random.mat = matrix(NA, nrow = Nin, ncol = numSims)
-# boxhills.random.mat = matrix(NA, nrow = Nin, ncol = numSims)
-# seqmeds.random.idx.mat = matrix(NA, nrow = Nin, ncol = numSims)
-# boxhills.random.idx.mat = matrix(NA, nrow = Nin, ncol = numSims)
-# for(i in 1:numSims){
-#   seqmeds.random.mat[, i] = seqmeds[[4]]$design.list[[i]]$x
-#   seqmeds.random.idx.mat[, i] = seqmeds[[4]]$design.list[[i]]$x.idx
-#   boxhills.random.mat[, i] = seqmeds[[4]]$design.list[[i]]$x
-#   boxhills.random.idx.mat[, i] = seqmeds[[4]]$design.list[[i]]$x.idx
-# }
-# all.equal(seqmeds.random.mat, boxhills.random.mat) # TRUE!
-# all.equal(seqmeds.random.idx.mat, boxhills.random.idx.mat) # TRUE!
 random.mat = matrix(NA, nrow = Nin, ncol = numSims)
 random.idx.mat = matrix(NA, nrow = Nin, ncol = numSims)
 for(i in 1:numSims){
@@ -2509,12 +2463,11 @@ ggdata2 = data.table(
   Design = c("SeqMED", "BoxHill", "SpaceFill", "Random")
 )
 
-
 ggdata2 = melt(ggdata2, id.vars = c("Design"))
 ggdata2$Metric = "P(H1|X,Y)"
 ggdata3 = rbind(ggdata1, ggdata2)
 ggdata3$Metric = factor(ggdata3$Metric)
-plt_gvm3 = ggplot(ggdata3, aes(x = variable, y = value, group = Design, 
+plt_mvp3 = ggplot(ggdata3, aes(x = variable, y = value, group = Design, 
                                color = Design)) + 
   facet_wrap(vars(Metric), scales = "free") + 
   geom_point() + 
@@ -2524,14 +2477,14 @@ plt_gvm3 = ggplot(ggdata3, aes(x = variable, y = value, group = Design,
         panel.grid.minor = element_blank(), 
         axis.title = element_blank(), 
         axis.text.x = element_text(angle = 45, vjust = 0.5))
-plt_gvm3
+plt_mvp3
 # ggsave("mvp_medianlogrss01pph1.pdf",
 #        plot = last_plot(),
 #        device = "pdf",
 #        path = image_path,
 #        scale = 1,
 #        width = 4.5,
-#        height = 2,
+#        height = 2.5,
 #        units = c("in")
 # )
 

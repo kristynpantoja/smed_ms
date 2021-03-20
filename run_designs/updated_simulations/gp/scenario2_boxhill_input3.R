@@ -46,9 +46,9 @@ gg_color_hue = function(n) {
 numSims = 100
 seed = 12
 Nin = 6
-numSeq = 16 # (including input x stage)
+numSeq = 15
 seqN = 1
-Nnew = (numSeq - 1) * seqN
+Nnew = numSeq * seqN
 Nttl = Nin + Nnew
 xmin = 0
 xmax = 1
@@ -56,7 +56,7 @@ numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
 
 # SeqMED settings
-nuggetSM = 1e-10
+nuggetSM = 1e-5
 
 # boxhill settings
 prior_probs = rep(1 / 2, 2)

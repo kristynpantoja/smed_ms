@@ -54,12 +54,12 @@ gg_color_hue = function(n) {
 ################################################################################
 
 # simulations settings
-numSims = 1 # DEMO SETTING ONLY ###############################################
-seed = 1 # DEMO SETTING ONLY ###################################################
+numSims = 100
+seed = 12
 Nin = 6
-numSeq = 2
-seqN = 15
-Nnew = (numSeq - 1) * seqN
+numSeq = 15
+seqN = 1
+Nnew = numSeq * seqN
 Nttl = Nin + Nnew
 xmin = 0
 xmax = 1
@@ -67,7 +67,7 @@ numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
 
 # SeqMED settings
-nuggetSM = NULL # DEMO SETTING ONLY ############################################
+nuggetSM = 1e-5
 
 # boxhill settings
 prior_probs = rep(1 / 2, 2)
@@ -123,13 +123,15 @@ model1 = list(type = type01[2], l = l01[2])
 # generate seqmed for demo #####################################################
 
 # input set
-x_input_idx = sample(1:numx, Nin)
-x_input = x_seq[x_input_idx]
+x_input_idx = x_in2_idx
+x_input = x_in2
+# x_input_idx = sample(1:numx, Nin)
+# x_input = x_seq[x_input_idx]
 y_input = y_seq[x_input_idx]
 seqmed.res = SeqMEDgp(
   y0 = y_input, x0 = x_input, x0.idx = x_input_idx, candidates = x_seq,
   function.values = y_seq, nugget = nuggetSM, type = type01, l = l01,
-  numSeq = numSeq, seqN = seqN, prints = TRUE
+  numSeq = numSeq, seqN = seqN, prints = TRUE, obj_fn = 3
   , seed = 1234 # DEMO SETTING ONLY ############################################
 )
 
@@ -206,22 +208,15 @@ ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable),
   geom_point(data = ggdata_pts, mapping = aes(x = x, y = yrange[1]), 
              inherit.aes = FALSE, color = ggdata_pts$color, 
              shape = ggdata_pts$shape, 
-             size = 2) +
+             size = 2) + 
+  geom_text(data = ggdata_pts %>% dplyr::filter(shape == 16), 
+            mapping = aes(x = x, y = yrange[1] + 0.1), inherit.aes = FALSE,
+            label = 1:Nnew) + 
   scale_y_continuous(limits = yrange) +
   theme_bw() + 
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
   labs(y = "y", x = "x", fill = "Function", color = "Function")
-
-ggsave("mvp.pdf",
-       plot = last_plot(),
-       device = "pdf",
-       path = image_path,
-       scale = 1,
-       width = 4.5,
-       height = 2.5,
-       units = c("in")
-)
 
 
 

@@ -46,9 +46,9 @@ gg_color_hue = function(n) {
 numSims = 100
 seed = 12
 Nin = 6
-numSeq = 16 # (including input x stage)
+numSeq = 15
 seqN = 1
-Nnew = (numSeq - 1) * seqN
+Nnew = numSeq * seqN
 Nttl = Nin + Nnew
 xmin = 0
 xmax = 1
@@ -56,7 +56,7 @@ numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
 
 # SeqMED settings
-nuggetSM = 1e-10
+nuggetSM = 1e-5
 
 # boxhill settings
 prior_probs = rep(1 / 2, 2)
@@ -125,7 +125,7 @@ for(i in 1:numSims){
   seqmed_list[[i]] = SeqMEDgp(
     y0 = y_input, x0 = x_input, x0.idx = x_input_idx, candidates = x_seq,
     function.values = y_seq, nugget = nuggetSM, type = type01, l = l01,
-    numSeq = numSeq, seqN = seqN, prints = TRUE
+    numSeq = numSeq, seqN = seqN, prints = TRUE, obj_fn = 4
     , seed = 1234 # DELETE THIS ARGUMENT LATER.
     )
   seqmed_list[[i]]$D[-c(1:Nin)]

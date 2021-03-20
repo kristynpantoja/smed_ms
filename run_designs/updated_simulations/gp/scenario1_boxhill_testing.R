@@ -1,8 +1,6 @@
 ################################################################################
-# last updated: 03/04/2021
-# purpose: to create a list of seqmed simulations for scenario 1:
-#   squared exponential vs. matern,
-#   where the true function is matern
+# last updated: 03/15/2021
+# testing BoxHill method in scenario 1
 
 ################################################################################
 # Sources/Libraries
@@ -45,18 +43,18 @@ gg_color_hue = function(n) {
 # simulations settings
 numSims = 100
 seed = 12
-N0 = 6
+Nin = 6
 numSeq = 15
 seqN = 1
 Nnew = numSeq * seqN
-Nttl = N0 + Nnew
+Nttl = Nin + Nnew
 xmin = 0
 xmax = 1
 numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
 
 # SeqMED settings
-nuggetSM = 1e-10
+nuggetSM = 1e-5
 
 # boxhill settings
 prior_probs = rep(1 / 2, 2)

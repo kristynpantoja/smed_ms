@@ -56,7 +56,7 @@ numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
 
 # SeqMED settings
-nuggetSM = 1e-10
+nuggetSM = 1e5
 
 # boxhill settings
 prior_probs = rep(1 / 2, 2)
@@ -99,11 +99,13 @@ x_spacefill3 = x_seq[x_spacefill3_idx]
 ################################################################################
 type01 = c("squaredexponential", "matern")
 l01= c(0.01, 0.01)
+eps_var = 1
+
 # generate matern functions
 set.seed(seed)
 null_cov = getCov(x_seq, x_seq, type01[2], l01[2])
 null_mean = rep(0, numx)
-y_seq_mat = t(rmvnorm(n = numSims, mean = null_mean, sigma = null_cov)) # the function values
+y_seq_mat = t(rmvnorm(n = 1, mean = null_mean, sigma = null_cov + eps_var * diag(numx))) # the noisy data values
 
 # bh settings
 model0 = list(type = type01[1], l = l01[1])

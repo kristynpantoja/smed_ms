@@ -67,7 +67,7 @@ numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
 
 # SeqMED settings
-nuggetSM = 1e-5 # DEMO SETTING ONLY ############################################
+nuggetSM = 1e-10
 
 # boxhill settings
 prior_probs = rep(1 / 2, 2)

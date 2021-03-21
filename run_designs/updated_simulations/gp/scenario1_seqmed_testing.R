@@ -125,29 +125,31 @@ for(i in 1:numSims){
   seqmed_list[[i]] = SeqMEDgp(
     y0 = y_input, x0 = x_input, x0.idx = x_input_idx, candidates = x_seq,
     function.values = y_seq, nugget = nuggetSM, type = type01, l = l01,
-    numSeq = numSeq, seqN = seqN, prints = TRUE, obj_fn = 4
+    numSeq = numSeq, seqN = seqN, prints = TRUE
     , seed = 1234 # DELETE THIS ARGUMENT LATER.
     )
   seqmed_list[[i]]$D[-c(1:Nin)]
   #### SeqMEDgp args : BEGIN ####
-  # y0 = y_input
-  # x0 = x_input
-  # x0.idx = x_input_idx
-  # candidates = x_seq
-  # function.values = y_seq
-  # nugget = nuggetSM
-  # type = type01
-  # l = l01
-  # error.var = 1
-  # xmin = 0
-  # xmax = 1
-  # k = 4
-  # p = 1
-  # # numSeq
-  # # seqN
-  # alpha_seq = 1
-  # prints = TRUE
-  # seed = 1234
+  y0 = y_input
+  x0 = x_input
+  x0.idx = x_input_idx
+  candidates = x_seq
+  function.values = y_seq
+  nugget = nuggetSM
+  type = type01
+  l = l01
+  error.var = 1
+  xmin = 0
+  xmax = 1
+  k = 4
+  p = 1
+  # numSeq
+  # seqN
+  alpha_seq = 1
+  prints = TRUE
+  seed = 1234
+  obj_fn = 1
+  stageInit = FALSE
   #### SeqMED gp args : END ####
   
   

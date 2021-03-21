@@ -1122,6 +1122,7 @@ ggarrange(plt0.1, plt0.2, nrow = 2)
 #        height = 4,
 #        units = c("in")
 # )
+
 ################################################################################
 # Plot the demo design
 ################################################################################
@@ -1753,105 +1754,7 @@ model1 = list(type = type01[2], l = l01[2])
 # Plot the demo design
 ################################################################################
 
-# demo settings
-l01.demo = c(0.1, 0.5)
-nugget.demo = NULL
-
-# read in sims
-maternvsperiodic_train4sims = readRDS(
-  paste0(
-    "run_designs/gp",
-    "/gp_demo/maternvsperiodic_train4sims.rds"))
-
-# get sim info
-sim_ind = 1
-x_in = maternvsperiodic_train4sims$x_train[ , sim_ind]
-x_in_idx = maternvsperiodic_train4sims$x_train_ind[ , sim_ind]
-mmed_gp = maternvsperiodic_train4sims$mmed_gp_list[[sim_ind]]
-y_seq = maternvsperiodic_train4sims$sim_fns[ , sim_ind]
-y_in = y_seq[x_in_idx]
-
-newpts = mmed_gp$addD
-truey = y_seq[mmed_gp$indices]
-
-H0_predfn = getGPPredictive(x_seq, x_in, y_in, type01[1], l01.demo[1],
-                            nugget = nugget.demo)
-H1_predfn = getGPPredictive(x_seq, x_in, y_in, type01[2], l01.demo[2],
-                            nugget = nugget.demo)
-
-# get w_seq
-Kinv0 = solve(getCov(x_in, x_in, type01[1], l01.demo[1]))
-Kinv1 = solve(getCov(x_in, x_in, type01[2], l01.demo[2]))
-w_seq = sapply(x_seq, FUN = function(x1) 
-  WNgp(x1, Kinv0, Kinv1, x_in, y_in, var_e = 1, type01, l01.demo))
-
-# plot
-err0 = 2 * sqrt(diag(H0_predfn$pred_var))
-err1 = 2 * sqrt(diag(H1_predfn$pred_var))
-ggdata = data.table(
-  x = x_seq, 
-  `True Function` = y_seq, 
-  Wasserstein = w_seq, 
-  `H0 Predictive` = H0_predfn$pred_mean, 
-  `H1 Predictive` = H1_predfn$pred_mean,
-  lower0 = H0_predfn$pred_mean - err0, 
-  lower1 = H1_predfn$pred_mean - err1, 
-  upper0 = H0_predfn$pred_mean + err0,
-  upper1 = H1_predfn$pred_mean + err1
-)
-yrange = range(ggdata$lower0, ggdata$lower1, 
-               ggdata$upper0, ggdata$upper1)
-yrange[1] = yrange[1] - 1
-ggdata$Wasserstein = ggdata$Wasserstein * 0.25 - abs(yrange[1])
-ggdata$zero1 = NA
-ggdata$zero2 = NA
-ggdata.melted = melt(ggdata, id.vars = c("x"), 
-                     measure.vars = c("True Function", "Wasserstein", "H0 Predictive", "H1 Predictive"))
-ggdata.lower = melt(ggdata, id.vars = c("x"), 
-                    measure.vars = c("zero1", "zero2", "lower0", "lower1"))
-ggdata.upper = melt(ggdata, id.vars = c("x"), 
-                    measure.vars = c("zero1", "zero2", "upper0", "upper1"))
-ggdata.melted = cbind(ggdata.melted, 
-                      lower = ggdata.lower$value, 
-                      upper = ggdata.upper$value)
-ggdata_pts = data.table(
-  x = c(x_in, newpts), 
-  y = c(y_in, truey), 
-  color = c(rep(gg_color_hue(2)[2], length(x_in)), 
-            rep(gg_color_hue(2)[1], length(newpts))), 
-  shape = c(rep(8, length(x_in)), 
-            rep(16, length(newpts)))
-)
-ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable), 
-       linetype = 1) + 
-  geom_path() + 
-  geom_ribbon(aes(ymin = lower, ymax = upper, fill = variable), 
-              alpha = 0.1, linetype = 0) +
-  scale_linetype_manual(values = c(1, 1, 2, 2)) + 
-  scale_fill_manual(values = c(NA, NA, "#00BFC4", "#C77CFF")) + 
-  scale_color_manual(values = c(1, "gray", "#00BFC4", "#C77CFF")) + 
-  geom_point(data = ggdata_pts, mapping = aes(x = x, y = y), 
-             inherit.aes = FALSE, color = ggdata_pts$color, 
-             shape = ggdata_pts$shape,
-             size = 2) +
-  geom_point(data = ggdata_pts, mapping = aes(x = x, y = yrange[1]), 
-             inherit.aes = FALSE, color = ggdata_pts$color, 
-             shape = ggdata_pts$shape, 
-             size = 2) +
-  scale_y_continuous(limits = yrange) +
-  theme_bw() + 
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank()) +
-  labs(y = "y", x = "x", fill = "Function", color = "Function")
-# ggsave("mvp.pdf",
-#        plot = last_plot(),
-#        device = "pdf",
-#        path = image_path,
-#        scale = 1,
-#        width = 4.5,
-#        height = 2.5,
-#        units = c("in")
-# )
+# see run_designs/updated_simulations/gp/scenario2_seqmed_demo_plot.R
 
 ################################################################################
 # Metrics

@@ -20,7 +20,8 @@ obj_gp = function(
     }
     sum_q_D = sum(sapply(sum_q_D_arg, function(x_i) 
       (q_gp(x_i, Kinv0, Kinv1, initD, y, error.var, type, l, p,
-            alpha) / sqrt((x_i - candidate)^2))^k))
+            alpha) / 
+         sqrt((x_i - candidate)^2))^k))
     result = q_cand^k * sum_q_D
   } else if(obj_fn == 2){
     if(is.null(D)){ # when N2 = 1, and batch.idx != 1
@@ -39,7 +40,8 @@ obj_gp = function(
     }
     sum_q_D = sum(sapply(sum_q_D_arg, function(x_i) 
       (q_gp(x_i, Kinv0, Kinv1, initD, y, error.var, type, l, p,
-            alpha) / sqrt((x_i - candidate)^2))^k))
+            alpha) / 
+         sqrt((x_i - candidate)^2))^k))
   }
   result = q_cand^k * sum_q_D
   return(result)
@@ -90,8 +92,8 @@ SeqMEDgp_batch = function(
       function(x) obj_gp(
         x, NULL, 
         Kinv0, Kinv1, initD, y, error.var, type, l, p, k, alpha, obj_fn))
+    if(all(f_min_candidates == Inf)) stop("SeqMEDgp_batch: all candidates result in objective function = 0. Need larger nugget term.")
     f_opt = which.min(f_min_candidates)
-    
     xnew = candidates[f_opt]
     # Update set of design points (D) and plot new point
     D[1] = xnew

@@ -5,13 +5,13 @@
 SeqMEDgp = function(
   y0 = NULL, x0 = NULL, x0.idx = NULL, candidates, function.values, 
   nugget = NULL, type, l, error.var = 1, xmin = 0, xmax = 1, k = 4, p = 1, 
-  numSeq = 5, seqN = 3, alpha_seq = 1, obj_fn = 1, prints = FALSE,
-  seed = NULL, stageInit = FALSE
+  numSeq = 5, seqN = 3, alpha.seq = 1, buffer = 1e-15, objective.type = 1, 
+  init.as.stage = FALSE, prints = FALSE, seed = NULL
 ){
   if(!is.null(seed)) set.seed(seed)
   if(numSeq > 1 & length(seqN) == 1) seqN = rep(seqN, numSeq)
-  if(numSeq > 1 & is.null(alpha_seq)) alpha_seq = rep(1, numSeq)
-  if(numSeq > 1 & length(alpha_seq) == 1) alpha_seq = rep(alpha_seq, numSeq)
+  if(numSeq > 1 & is.null(alpha.seq)) alpha.seq = rep(1, numSeq)
+  if(numSeq > 1 & length(alpha.seq) == 1) alpha.seq = rep(alpha.seq, numSeq)
   if(is.null(candidates)) stop("SeqMEDgp: No candidates provided!")
   
   # check preliminary data
@@ -34,7 +34,7 @@ SeqMEDgp = function(
   x.new.idx = c()
   y.new = c()
   
-  if(stageInit){ # if initial data is its own stage
+  if(init.as.stage){ # if initial data is its own stage
     if(numSeq == 1){
       return(list(
         x = x0, 
@@ -69,8 +69,8 @@ SeqMEDgp = function(
     Dt = SeqMEDgp_batch(
       initD = D, y = y, type = type, l = l, error.var = error.var, N2 = seqN[t],
       k = k, p = p, xmin = xmin, xmax = xmax, nugget = nugget, 
-      alpha = alpha_seq[t], candidates = candidates, batch.idx = batch.idx, 
-      obj_fn = obj_fn)
+      alpha = alpha.seq[t], candidates = candidates, batch.idx = batch.idx, 
+      buffer = buffer, objective.type = objective.type)
     
     yt = function.values[Dt$indices]
     
@@ -113,14 +113,14 @@ SeqMEDgpvs = function(
   type = c(1, 1), l = c(0.1, 0.1), idx0, idx1, error.var = 1, N2 = 11, 
   candidates, k = 4, p = 1, 
   xmin = 0, xmax = 1, nugget = NULL, 
-  numSeq = 5, seqN = 3, alpha_seq = 1, buffer_seq = 0, 
+  numSeq = 5, seqN = 3, alpha.seq = 1, buffer_seq = 0, 
   numDims = NULL, 
-  seed = NULL, algorithm = 1, prints = FALSE, stageInit = TRUE
+  seed = NULL, algorithm = 1, prints = FALSE, init.as.stage = TRUE
 ){
   if(!is.null(seed)) set.seed(seed)
   if(numSeq > 1 & length(seqN) == 1) seqN = rep(seqN, numSeq)
-  if(numSeq > 1 & is.null(alpha_seq)) alpha_seq = rep(1, numSeq)
-  if(numSeq > 1 & length(alpha_seq) == 1) alpha_seq = rep(alpha_seq, numSeq)
+  if(numSeq > 1 & is.null(alpha.seq)) alpha.seq = rep(1, numSeq)
+  if(numSeq > 1 & length(alpha.seq) == 1) alpha.seq = rep(alpha.seq, numSeq)
   if(is.null(candidates)) stop("SeqMEDgp: No candidates provided!")
   
   # # check candidates
@@ -172,7 +172,7 @@ SeqMEDgpvs = function(
   # }
   # D1 = x0
   
-  if(stageInit){ # if initial data is its own stage
+  if(init.as.stage){ # if initial data is its own stage
     if(numSeq == 1){
       return(list(
         x = x0, 
@@ -207,7 +207,7 @@ SeqMEDgpvs = function(
     Dt = SeqMEDgp_batch(
       initD = D, y = y, type = type, l = l, error.var = error.var, N2 = seqN[t],
       k = k, p = p, xmin = xmin, xmax = xmax, nugget = nugget, 
-      alpha = alpha_seq[t], candidates = candidates, batch.idx = batch.idx, 
+      alpha = alpha.seq[t], candidates = candidates, batch.idx = batch.idx, 
       obj_fn = obj_fn)
     
     yt = function.values[Dt$indices]
@@ -218,7 +218,7 @@ SeqMEDgpvs = function(
                         indices0 = indices0, indices1 = indices1, var_e = var_e, 
                         N2 = seqN[t], numCandidates = NULL, k = k, p = p, 
                         xmin = xmin, xmax = xmax, nugget = nugget, 
-                        alpha = alpha_seq[t], buffer = buffer_seq[t], 
+                        alpha = alpha.seq[t], buffer = buffer_seq[t], 
                         genCandidates = genCandidates, candidates = candidates, 
                         algorithm = algorithm, batch.idx = batch.idx)
     }

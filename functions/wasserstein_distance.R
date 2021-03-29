@@ -1,5 +1,3 @@
-# Wasserstein distance betwen two normals
-# formerly named Wasserstein_distance
 WN = function(mu1, mu2, var1, var2, dim = 1){
   # Normal(mu1, var1)
   # Normal(mu2, var2)
@@ -25,14 +23,12 @@ WN = function(mu1, mu2, var1, var2, dim = 1){
 }
 
 
-
-# require("posterior_mean.R")
-# require("construct_design_matrix.R")
-# require("posterior_variance.R")
-
 ####################################################################
 ### SeqMED (uses posterior predictive distribution of y) ###########
 ####################################################################
+# require("posterior_mean.R")
+# require("construct_design_matrix.R")
+# require("posterior_variance.R")
 
 # 1 dimension, or with transformations of x
 # formerly named Wasserstein_distance_postpred
@@ -86,11 +82,11 @@ WNgp = function(x, Kinv0, Kinv1, initD, y, var_e, type, l){
   # posterior predictive distribution of y, for candidate x
   postpredy_mu0 = t(k0) %*% Kinv0 %*% y
   postpredy_var0 = var_e * (1 - t(k0) %*% Kinv0 %*% k0)
-  if(postpredy_var0 < 0) postpredy_var0 = 0 # !!!!!!!!!! #############################################
+  if(postpredy_var0 < 0) postpredy_var0 = 0 # only happens when too-small
   
   postpredy_mu1 = t(k1) %*% Kinv1 %*% y
   postpredy_var1 = var_e * (1 - t(k1) %*% Kinv1 %*% k1)
-  if(postpredy_var1 < 0) postpredy_var1 = 0 # !!!!!!!!!! #############################################
+  if(postpredy_var1 < 0) postpredy_var1 = 0 # same reason
   
   W = WN(postpredy_mu0, postpredy_mu1, postpredy_var0, postpredy_var1)
   return(as.numeric(W))
@@ -111,11 +107,11 @@ WNgpvs = function(
   # posterior predictive distribution of y, for candidate x
   postpredy_mu0 = t(k0) %*% Kinv0 %*% y
   postpredy_var0 = var_e * (1 - t(k0) %*% Kinv0 %*% k0)
-  if(postpredy_var0 < 0) postpredy_var0 = 0 # !!!!!!!!!! ##########################################
+  if(postpredy_var0 < 0) postpredy_var0 = 0 
   
   postpredy_mu1 = t(k1) %*% Kinv1 %*% y
   postpredy_var1 = var_e * (1 - t(k1) %*% Kinv1 %*% k1)
-  if(postpredy_var1 < 0) postpredy_var1 = 0 # !!!!!!!!!! ############################################
+  if(postpredy_var1 < 0) postpredy_var1 = 0 
   W = WN(postpredy_mu0, postpredy_mu1, postpredy_var0, postpredy_var1, dim = 1)
   return(as.numeric(W))
 }

@@ -1,8 +1,6 @@
 ################################################################################
-# last updated: 03/18/2021
-# purpose: to test seqmed simulations for scenario 1:
-#   squared exponential vs. matern,
-#   where the true function is matern
+# last updated: 03/16/2021
+# purpose: test seqmed settings
 
 ################################################################################
 # Sources/Libraries
@@ -56,7 +54,7 @@ numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
 
 # SeqMED settings
-nuggetSM = 1e5
+nuggetSM = 1e-10
 
 # boxhill settings
 prior_probs = rep(1 / 2, 2)
@@ -95,17 +93,15 @@ x_spacefill3 = x_seq[x_spacefill3_idx]
 # input set 4 (uniform / random)
 
 ################################################################################
-# Scenario 1: Squared exponential vs. matern, true = matern
+# Scenario 2: matern vs. periodic, true = periodic
 ################################################################################
-type01 = c("squaredexponential", "matern")
-l01= c(0.01, 0.01)
-eps_var = 1
-
+type01 = c("matern", "periodic")
+l01= c(0.01, 0.1)
 # generate matern functions
 set.seed(seed)
 null_cov = getCov(x_seq, x_seq, type01[2], l01[2])
 null_mean = rep(0, numx)
-y_seq_mat = t(rmvnorm(n = 1, mean = null_mean, sigma = null_cov + eps_var * diag(numx))) # the noisy data values
+y_seq_mat = t(rmvnorm(n = numSims, mean = null_mean, sigma = null_cov)) # the function values
 
 # bh settings
 model0 = list(type = type01[1], l = l01[1])
@@ -115,8 +111,8 @@ model1 = list(type = type01[2], l = l01[2])
 
 # try different buffers
 # input set
-x_input = x_in1
-x_input_idx = x_in1_idx
+x_input = x_in3
+x_input_idx = x_in3_idx
 seqmed_list = list()
 # index
 i = 1

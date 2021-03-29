@@ -8,11 +8,14 @@
 
 obj_gp = function(
   candidate, D = NULL, Kinv0, Kinv1, initD, y, error.var, type, l, 
-  p = 1, k = 4, alpha = 1, obj_fn = 1
+  p = 1, k = 4, alpha = 1, buffer = 0, objective.type = 1
 ){
-  q_cand = q_gp(candidate, Kinv0, Kinv1, initD, y, error.var, type, l, p, 
-                alpha)
-  if(obj_fn == 1){
+  ### objective.type == 1 is the SeqMEDgp() case that is actually a MED. ###
+  if(objective.type == 1 | 
+     objective.type == "SeqMED" | 
+     objective.type == "MED"){
+    q_cand = q_gp(candidate, Kinv0, Kinv1, initD, y, error.var, type, l, p, 
+                  alpha, buffer = 0) # no need for buffer here
     if(is.null(D)){ # when N2 = 1, and batch.idx != 1
       sum_q_D_arg = initD
     } else{
@@ -20,30 +23,29 @@ obj_gp = function(
     }
     sum_q_D = sum(sapply(sum_q_D_arg, function(x_i) 
       (q_gp(x_i, Kinv0, Kinv1, initD, y, error.var, type, l, p,
-            alpha) / 
+            alpha, buffer) / 
          sqrt((x_i - candidate)^2))^k))
     result = q_cand^k * sum_q_D
-  } else if(obj_fn == 2){
-    if(is.null(D)){ # when N2 = 1, and batch.idx != 1
-      sum_q_D = sum(sapply(initD, function(x_i) (1 / sqrt((x_i - candidate)^2))^k)) ########### define q(xi \in initD) = 1?
-    } else{ # 
-      sum_q_D = sum(sapply(initD, function(x_i) (1 / sqrt((x_i - candidate)^2))^k)) + 
-        sum(sapply(D, function(x_i)
-          (q_gp(x_i, Kinv0, Kinv1, initD, y, error.var, type, l, p,
-                alpha) / sqrt((x_i - candidate)^2))^k))
-    } 
-  } else{ # back to 1
-    if(is.null(D)){ # when N2 = 1, and batch.idx != 1
-      sum_q_D_arg = initD
-    } else{
-      sum_q_D_arg = c(initD, D)
-    }
-    sum_q_D = sum(sapply(sum_q_D_arg, function(x_i) 
-      (q_gp(x_i, Kinv0, Kinv1, initD, y, error.var, type, l, p,
-            alpha) / 
-         sqrt((x_i - candidate)^2))^k))
   }
-  result = q_cand^k * sum_q_D
+  ### objective.type == 2 is just optimizing q(x) over x \in C ###
+  if(objective.type == 2 | 
+     objective.type == "q"){
+    q_cand = q_gp(candidate, Kinv0, Kinv1, initD, y, error.var, type, l, p, 
+                  alpha, buffer = 0) # no need for buffer here
+    if(is.null(D)){ # when N2 = 1, and batch.idx != 1
+      result = q_cand^k
+    } else{ # when N2 > 1
+      sum_q_D = sum(sapply(D, function(x_i) 
+        (q_gp(x_i, Kinv0, Kinv1, initD, y, error.var, type, l, p,
+              alpha, buffer) / 
+           sqrt((x_i - candidate)^2))^k))
+      result = q_cand^k * sum_q_D
+    }
+  }
+  ### no other objective.type options
+  if(objective.type != 1 & objective.type != 2){
+    stop("obj_gp: invalid objective.type value")
+  }
   return(result)
 }
 
@@ -51,7 +53,7 @@ obj_gp = function(
 SeqMEDgp_batch = function(
   initD, y, type, l, error.var = 1, N2 = 11, numCandidates = 10^5, k = 4, p = 1, 
   xmin = 0, xmax = 1, nugget = NULL, alpha = NULL, candidates = NULL, 
-  batch.idx = 1, obj_fn = 1
+  batch.idx = 1, buffer = 1e-15, objective.type = 1
 ){
   initN = length(initD)
   if(length(y) != initN) stop("length of y does not match length of initial input data, initD")
@@ -91,8 +93,11 @@ SeqMEDgp_batch = function(
       candidates, 
       function(x) obj_gp(
         x, NULL, 
-        Kinv0, Kinv1, initD, y, error.var, type, l, p, k, alpha, obj_fn))
-    if(all(f_min_candidates == Inf)) stop("SeqMEDgp_batch: all candidates result in objective function = 0. Need larger nugget term.")
+        Kinv0, Kinv1, initD, y, error.var, type, l, p, k, 
+        alpha, buffer, objective.type))
+    if(all(f_min_candidates == Inf)){
+      stop("SeqMEDgp_batch: all candidates result in objective function = 0.")
+    }
     f_opt = which.min(f_min_candidates)
     xnew = candidates[f_opt]
     # Update set of design points (D) and plot new point
@@ -110,7 +115,8 @@ SeqMEDgp_batch = function(
         candidates, 
         function(x) obj_gp(
           x, D[1:(i - 1)], 
-          Kinv0, Kinv1, initD, y, error.var, type, l, p, k, alpha, obj_fn))
+          Kinv0, Kinv1, initD, y, error.var, type, l, p, k, 
+          alpha, buffer, objective.type))
       f_opt = which.min(f_min_candidates)
       xnew = candidates[f_opt]
       # Update set of design points (D) and plot new point

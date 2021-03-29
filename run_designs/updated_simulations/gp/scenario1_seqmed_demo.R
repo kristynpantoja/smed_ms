@@ -67,7 +67,7 @@ numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
 
 # SeqMED settings
-nuggetSM = 1
+nuggetSM = 1e-10
 
 # boxhill settings
 prior_probs = rep(1 / 2, 2)
@@ -109,14 +109,18 @@ x_spacefill3 = x_seq[x_spacefill3_idx]
 # Scenario 1: Squared exponential vs. matern, true = matern
 ################################################################################
 type01 = c("squaredexponential", "matern")
+# simulation settings: c(0.01, 0.01)
+# demo settings: c(0.1, 0.1)
+# l01 = c(0.1, 0.1)
 l01= c(0.01, 0.01)
-eps_var = 1
+# eps_var = 1
 
 # generate matern functions
 set.seed(seed)
 null_cov = getCov(x_seq, x_seq, type01[2], l01[2])
 null_mean = rep(0, numx)
-y_seq = t(rmvnorm(n = 1, mean = null_mean, sigma = null_cov + eps_var * diag(numx))) # the function values
+# y_seq = t(rmvnorm(n = 1, mean = null_mean, sigma = null_cov + eps_var * diag(numx))) # the function values
+y_seq = t(rmvnorm(n = 1, mean = null_mean, sigma = null_cov))
 
 # bh settings
 model0 = list(type = type01[1], l = l01[1])
@@ -124,27 +128,134 @@ model1 = list(type = type01[2], l = l01[2])
 
 # generate seqmed for demo #####################################################
 
+# # input set
+# x_input_idx = x_in3_idx
+# x_input = x_in3
+# x_input_idx = sample(1:numx, Nin)
+# x_input = x_seq[x_input_idx]
+# y_input = y_seq[x_input_idx]
+# seqmed.res = SeqMEDgp(
+#   y0 = y_input, x0 = x_input, x0.idx = x_input_idx, candidates = x_seq,
+#   function.values = y_seq, nugget = nuggetSM, type = type01, l = l01,
+#   numSeq = numSeq, seqN = seqN, prints = TRUE
+#   , seed = 1234
+# )
+# 
+# # plot@@@
+# x_in = x_input
+# x_in_idx = x_input_idx
+# mmed_gp = seqmed.res
+# y_in = y_input
+# 
+# newpts = mmed_gp$x.new
+# truey = y_seq[mmed_gp$x.new.idx]
+# 
+# H0_predfn = getGPPredictive(x_seq, x_in, y_in, type01[1], l01[1],
+#                             nugget = nuggetSM)
+# H1_predfn = getGPPredictive(x_seq, x_in, y_in, type01[2], l01[2],
+#                             nugget = nuggetSM)
+# 
+# # get w_seq
+# Kinv0 = solve(getCov(x_in, x_in, type01[1], l01[1]))
+# Kinv1 = solve(getCov(x_in, x_in, type01[2], l01[2]))
+# w_seq = sapply(x_seq, FUN = function(x1) 
+#   WNgp(x1, Kinv0, Kinv1, x_in, y_in, var_e = 1, type01, l01))
+# # plot
+# err0 = 2 * sqrt(diag(H0_predfn$pred_var))
+# err1 = 2 * sqrt(diag(H1_predfn$pred_var))
+# ggdata = data.table(
+#   x = x_seq, 
+#   `True Function` = as.vector(y_seq), 
+#   Wasserstein = w_seq, 
+#   `H0 Predictive` = H0_predfn$pred_mean, 
+#   `H1 Predictive` = H1_predfn$pred_mean,
+#   lower0 = H0_predfn$pred_mean - err0, 
+#   lower1 = H1_predfn$pred_mean - err1, 
+#   upper0 = H0_predfn$pred_mean + err0,
+#   upper1 = H1_predfn$pred_mean + err1
+# )
+# yrange = range(ggdata$lower0, ggdata$lower1, 
+#                ggdata$upper0, ggdata$upper1)
+# yrange[1] = yrange[1] - 1
+# ggdata$Wasserstein = ggdata$Wasserstein * 0.25 - abs(yrange[1])
+# ggdata$zero1 = NA
+# ggdata$zero2 = NA
+# ggdata.melted = melt(
+#   ggdata, id.vars = c("x"), 
+#   measure.vars = c("True Function", "Wasserstein", "H0 Predictive", "H1 Predictive"))
+# ggdata.lower = melt(ggdata, id.vars = c("x"), 
+#                     measure.vars = c("zero1", "zero2", "lower0", "lower1"))
+# ggdata.upper = melt(ggdata, id.vars = c("x"), 
+#                     measure.vars = c("zero1", "zero2", "upper0", "upper1"))
+# ggdata.melted = cbind(ggdata.melted, 
+#                       lower = ggdata.lower$value, 
+#                       upper = ggdata.upper$value)
+# ggdata_pts = data.table(
+#   x = c(x_in, newpts), 
+#   y = c(y_in, truey), 
+#   color = c(rep(gg_color_hue(2)[2], length(x_in)), 
+#             rep(gg_color_hue(2)[1], length(newpts))), 
+#   shape = c(rep(8, length(x_in)), 
+#             rep(16, length(newpts)))
+# )
+# ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable), 
+#        linetype = 1) + 
+#   geom_path() + 
+#   geom_ribbon(aes(ymin = lower, ymax = upper, fill = variable), 
+#               alpha = 0.1, linetype = 0) +
+#   scale_linetype_manual(values = c(1, 1, 2, 2)) + 
+#   scale_fill_manual(values = c(NA, NA, "#00BFC4", "#C77CFF")) + 
+#   scale_color_manual(values = c(1, "gray", "#00BFC4", "#C77CFF")) + 
+#   geom_point(data = ggdata_pts, mapping = aes(x = x, y = y), 
+#              inherit.aes = FALSE, color = ggdata_pts$color, 
+#              shape = ggdata_pts$shape,
+#              size = 2) +
+#   geom_point(data = ggdata_pts, mapping = aes(x = x, y = yrange[1]), 
+#              inherit.aes = FALSE, color = ggdata_pts$color, 
+#              shape = ggdata_pts$shape, 
+#              size = 2) + 
+#   geom_text(data = ggdata_pts %>% dplyr::filter(shape == 16), 
+#             mapping = aes(x = x, y = yrange[1] + 0.1 * (1:numSeq)), inherit.aes = FALSE,
+#              label = 1:Nnew) + 
+#   scale_y_continuous(limits = yrange) +
+#   theme_bw() + 
+#   theme(panel.grid.major = element_blank(),
+#         panel.grid.minor = element_blank()) +
+#   labs(y = "y", x = "x", fill = "Function", color = "Function")
+# 
+# ggsave(paste0("gvm", "_seqmed", "_input", 4),
+#        plot = last_plot(),
+#        device = "pdf",
+#        path = image_path,
+#        scale = 1,
+#        width = 4.5,
+#        height = 2.5,
+#        units = c("in")
+# )
+
+# generate boxhill for demo ####################################################
+
 # input set
-x_input_idx = x_in3_idx
-x_input = x_in3
 x_input_idx = sample(1:numx, Nin)
 x_input = x_seq[x_input_idx]
+# x_input_idx = x_in3_idx
+# x_input = x_in3
+###
 y_input = y_seq[x_input_idx]
-seqmed.res = SeqMEDgp(
-  y0 = y_input, x0 = x_input, x0.idx = x_input_idx, candidates = x_seq,
-  function.values = y_seq, nugget = nuggetSM, type = type01, l = l01,
-  numSeq = numSeq, seqN = seqN, prints = TRUE
-  , seed = 1234
+bh.res = BHgp_m2(
+  y_input, x_input, x_input_idx, prior_probs, model0, model1, Nnew, 
+  x_seq, y_seq, nuggetBH
+  , seed = 1234 # DEMO SETTING ONLY ############################################
 )
 
-# plot@@@
+# get sim info
+sim_ind = 1
 x_in = x_input
 x_in_idx = x_input_idx
-mmed_gp = seqmed.res
 y_in = y_input
 
-newpts = mmed_gp$x.new
-truey = y_seq[mmed_gp$x.new.idx]
+newpts = bh.res$x.new
+truey = y_seq[bh.res$x.new.idx]
 
 H0_predfn = getGPPredictive(x_seq, x_in, y_in, type01[1], l01[1],
                             nugget = nuggetSM)
@@ -209,25 +320,16 @@ ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable),
   geom_point(data = ggdata_pts, mapping = aes(x = x, y = yrange[1]), 
              inherit.aes = FALSE, color = ggdata_pts$color, 
              shape = ggdata_pts$shape, 
-             size = 2) + 
-  geom_text(data = ggdata_pts %>% dplyr::filter(shape == 16), 
-            mapping = aes(x = x, y = yrange[1] + 0.1 * (1:numSeq)), inherit.aes = FALSE,
-             label = 1:Nnew) + 
+             size = 2) +
   scale_y_continuous(limits = yrange) +
   theme_bw() + 
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
   labs(y = "y", x = "x", fill = "Function", color = "Function")
 
-ggsave(paste0("gvm", "_seqmed", "_input", 4),
-       plot = last_plot(),
-       device = "pdf",
-       path = image_path,
-       scale = 1,
-       width = 4.5,
-       height = 2.5,
-       units = c("in")
-)
-
+x_input
+x_input_idx
+bh.res$x.new
+bh.res$x.new.idx
 
 

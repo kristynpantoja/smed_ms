@@ -1,8 +1,8 @@
 ################################################################################
 # last updated: 04/07/2021
-# purpose: to test seqmedgp for scenario 1:
-#   squared exponential vs. matern,
-#   where the true function is matern
+# purpose: to test seqmedgp for scenario 2:
+#   matern vs. periodic,
+#   where the true function is periodic
 # trying out some (not necessarily MED) designs
 
 ################################################################################
@@ -59,7 +59,7 @@ numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
 
 # SeqMED settings
-nuggetSM = NULL
+nuggetSM = 1e-10
 
 # boxhill settings
 prior_probs = rep(1 / 2, 2)
@@ -98,13 +98,13 @@ x_spacefill3 = x_seq[x_spacefill3_idx]
 # input set 4 (uniform / random)
 
 ################################################################################
-# Scenario 1: Squared exponential vs. matern, true = matern
+# Scenario 2: matern vs. periodic, true = periodic
 ################################################################################
-type01 = c("squaredexponential", "matern")
-# l01= c(0.01, 0.01) # SIM SETTING
-l01= c(0.1, 0.1) # DEMO SETTING
+type01 = c("matern", "periodic")
+# l01= c(0.01, 0.1)  # SIM SETTING
+l01= c(0.1, 0.5) # DEMO SETTING
 
-# generate matern functions ####################################################
+# generate periodic functions ##################################################
 set.seed(seed)
 null_cov = getCov(x_seq, x_seq, type01[2], l01[2])
 null_mean = rep(0, numx)
@@ -123,8 +123,8 @@ model1 = list(type = type01[2], l = l01[2])
 ################################################################################
 
 # input set
-x_input = x_in2
-x_input_idx = x_in2_idx
+x_input = x_in1
+x_input_idx = x_in1_idx
 seqmed_list = list()
 # index
 i = 1
@@ -186,7 +186,7 @@ data.gg = data.frame(
   Sim = rep(1:length(buffer.seq), each = Nnew), 
   Buffer = factor(rep(buffer.seq, each = Nnew), levels = buffer.seq), 
   SeqMEDgp = as.vector(x.new.mat)
-  )
+)
 data.gg0 = data.frame(
   Sim = rep(1:length(buffer.seq), each = Nin), 
   Buffer = factor(rep(buffer.seq, each = Nin), levels = buffer.seq), 
@@ -205,108 +205,3 @@ ggplot() +
 # plot the function
 # ggplot(data.frame(x = x_seq, y = y_seq), aes(x = x, y = y)) + 
 #   geom_path()
-
-################################################################################
-# try different objective.type - SIM SETTINGS ##################################
-################################################################################
-
-# input set
-x_input = x_in2
-x_input_idx = x_in2_idx
-seqmed_list = list()
-# index
-i = 1
-y_seq = y_seq_mat[ , i]
-y_input = y_seq[x_input_idx]
-
-# calculate posterior probs given initial data
-getHypothesesPosteriors(
-  prior.probs = prior_probs, 
-  evidences = c(
-    Evidence_gp(y_input, x_input, model0, nuggetBH),
-    Evidence_gp(y_input, x_input, model1, nuggetBH)
-  )
-)
-
-# seqmed
-buffer = 1e-20
-types = c("BH", "MED", "q", "BatchMED", "Batch q")
-obj.seq = c(1, 2)
-seqmed_list = list()
-for(i in 1:length(obj.seq)){
-  numSeq = 6 # BACK TO ORIGINAL VALUE #########################################
-  seqN = 1
-  Nnew = numSeq * seqN # CHANGES DUE TO THE ABOVE ##############################
-  seqmed_list[[i]] = SeqMEDgp(
-    y0 = y_input, x0 = x_input, x0.idx = x_input_idx, candidates = x_seq,
-    function.values = y_seq, nugget = nuggetSM, type = type01, l = l01,
-    numSeq = numSeq, # FOR OBJECTIVE DEMO ######################################
-    seqN = seqN, prints = TRUE, buffer = buffer, 
-    objective.type = obj.seq[i] # FOR OBJECTIVE DEMO ###########################
-    , seed = 1234 # DELETE THIS ARGUMENT LATER.
-  )
-}
-for(i in 1:length(obj.seq)){
-  idx = i + 2
-  numSeq = 2 # BATCHES #########################################################
-  seqN = 3 # BATCHES ###########################################################
-  Nnew = numSeq * seqN # CHANGES DUE TO THE ABOVE ##############################
-  seqmed_list[[idx]] = SeqMEDgp(
-    y0 = y_input, x0 = x_input, x0.idx = x_input_idx, candidates = x_seq,
-    function.values = y_seq, nugget = nuggetSM, type = type01, l = l01,
-    numSeq = numSeq, # FOR OBJECTIVE DEMO ######################################
-    seqN = seqN, prints = TRUE, buffer = buffer, 
-    objective.type = obj.seq[i] # FOR OBJECTIVE DEMO ###########################
-    , seed = 1234 # DELETE THIS ARGUMENT LATER.
-  )
-}
-bh = BHgp_m2(
-  y_input, x_input, x_input_idx, prior_probs, model0, model1, Nnew, 
-  x_seq, y_seq, nuggetBH)
-# bh$x.new
-
-par(mfrow = c(4, 1))
-x.new.mat = matrix(NA, nrow = Nnew, ncol = length(seqmed_list))
-for(i in 1:length(seqmed_list)){
-  x.in.tmp = seqmed_list[[i]]$x
-  x.new.tmp = seqmed_list[[i]]$x.new
-  x.new.mat[, i] = x.new.tmp
-  # plot(x.in.tmp, y = rep(0, length(x.in.tmp)), 
-  #      ylim = c(-0.01, 0.02), xlim = c(xmin, xmax),
-  #      xlab = "", ylab = "")
-  # points(x.new.tmp, y = rep(0.01, length(x.new.tmp)), col = 2)
-  # print(x.new.tmp)
-}
-x.new.mat = cbind(bh$x.new, x.new.mat)
-
-par(mfrow = c(1, 1))
-data.gg = data.frame(
-  Index = as.character(rep(1:Nnew, length(seqmed_list) + 1)), 
-  Sim = rep(1:(length(seqmed_list) + 1), each = Nnew), 
-  Type = factor(rep(types, each = Nnew), levels = types), 
-  SeqMEDgp = as.vector(x.new.mat)
-)
-data.gg0 = data.frame(
-  Sim = rep(1:(length(seqmed_list) + 1), each = Nin), 
-  Type = factor(rep(types, each = Nin), levels = types), 
-  Input = rep(x_input, (length(seqmed_list) + 1))
-)
-ggplot() + 
-  geom_point(data = data.gg0, 
-             mapping = aes(x = Input, y = Type)) +
-  geom_point(data = data.gg, 
-             mapping = aes(x = SeqMEDgp, y = Type, color = Type), 
-             inherit.aes = FALSE) + 
-  geom_text(data = data.gg, aes(x = SeqMEDgp, y = Type, label = Index), 
-            vjust = -0.8 * as.numeric(data.gg$Index) ) +
-  xlim(c(xmin, xmax))
-
-# plot the function
-ggplot(data.frame(x = x_seq, y = y_seq), aes(x = x, y = y)) + 
-  geom_path()
-
-################################################################################
-# try different alpha ##########################################################
-################################################################################
-
-

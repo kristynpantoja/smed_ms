@@ -1,5 +1,5 @@
 ################################################################################
-# last updated: 03/28/2021
+# last updated: 04/07/2021
 # purpose: to test seqmedgp for scenario 2:
 #   matern vs. periodic,
 #   where the true function is periodic
@@ -119,25 +119,28 @@ model1 = list(type = type01[2], l = l01[2])
 ################################################################################
 
 ################################################################################
-# try different buffers ########################################################
+# try different buffers - DEMO SETTINGS ########################################
 ################################################################################
 
 # input set
-x_input = x_in3
-x_input_idx = x_in3_idx
+x_input = x_in1
+x_input_idx = x_in1_idx
 seqmed_list = list()
 # index
 i = 1
 y_seq = y_seq_mat[ , i]
 y_input = y_seq[x_input_idx]
 # seqmed
-buffer.seq = c(1e-20, 1e-15, 1e-10)
+buffer.seq = c(1e-20, 1e-15, 1e-10, 1e-5)
 seqmed_list = list()
+numSeq = 5 # FOR BUFFER DEMO ###################################################
+Nnew = numSeq * seqN # CHANGES DUE TO THE ABOVE ################################
 for(i in 1:length(buffer.seq)){
   seqmed_list[[i]] = SeqMEDgp(
     y0 = y_input, x0 = x_input, x0.idx = x_input_idx, candidates = x_seq,
     function.values = y_seq, nugget = nuggetSM, type = type01, l = l01,
-    numSeq = numSeq, seqN = seqN, prints = TRUE, buffer = buffer.seq[i]
+    numSeq = numSeq, # FOR BUFFER DEMO #########################################
+    seqN = seqN, prints = TRUE, buffer = buffer.seq[i]
     , seed = 1234 # DELETE THIS ARGUMENT LATER.
   )
 }
@@ -163,21 +166,23 @@ for(i in 1:length(buffer.seq)){
 # prints = TRUE
 # seed = NULL
 
-par(mfrow = c(5, 1))
-x.new.mat = matrix(NA, nrow = Nnew, ncol = length(buffer.seq))
+
+# par(mfrow = c(4, 1))
+x.new.mat = matrix(NA, nrow = numSeq, ncol = length(buffer.seq))
 for(i in 1:length(buffer.seq)){
   x.in.tmp = seqmed_list[[i]]$x
   x.new.tmp = seqmed_list[[i]]$x.new
   x.new.mat[, i] = x.new.tmp
-  plot(x.in.tmp, y = rep(0, length(x.in.tmp)), 
-       ylim = c(-0.01, 0.02), xlim = c(xmin, xmax),
-       xlab = "", ylab = "")
-  points(x.new.tmp, y = rep(0.01, length(x.new.tmp)), col = 2)
+  # plot(x.in.tmp, y = rep(0, length(x.in.tmp)), 
+  #      ylim = c(-0.01, 0.02), xlim = c(xmin, xmax),
+  #      xlab = "", ylab = "")
+  # points(x.new.tmp, y = rep(0.01, length(x.new.tmp)), col = 2)
   print(x.new.tmp)
 }
 
-par(mfrow = c(1, 1))
+# par(mfrow = c(1, 1))
 data.gg = data.frame(
+  Index = as.character(rep(1:Nnew, length(buffer.seq))), 
   Sim = rep(1:length(buffer.seq), each = Nnew), 
   Buffer = factor(rep(buffer.seq, each = Nnew), levels = buffer.seq), 
   SeqMEDgp = as.vector(x.new.mat)
@@ -193,14 +198,16 @@ ggplot() +
   geom_point(data = data.gg, 
              mapping = aes(x = SeqMEDgp, y = Buffer, color = Buffer), 
              inherit.aes = FALSE) + 
+  geom_text(data = data.gg, aes(x = SeqMEDgp, y = Buffer, label = Index), 
+            vjust = -0.5) +
   xlim(c(xmin, xmax))
 
 # plot the function
-ggplot(data.frame(x = x_seq, y = y_seq), aes(x = x, y = y)) + 
-  geom_path()
+# ggplot(data.frame(x = x_seq, y = y_seq), aes(x = x, y = y)) + 
+#   geom_path()
 
 ################################################################################
-# try different objective.type #################################################
+# try different objective.type - SIM SETTINGS ##################################
 ################################################################################
 
 # input set
@@ -211,30 +218,52 @@ seqmed_list = list()
 i = 1
 y_seq = y_seq_mat[ , i]
 y_input = y_seq[x_input_idx]
+
+# calculate posterior probs given initial data
+getHypothesesPosteriors(
+  prior.probs = prior_probs, 
+  evidences = c(
+    Evidence_gp(y_input, x_input, model0, nuggetBH),
+    Evidence_gp(y_input, x_input, model1, nuggetBH)
+  )
+)
+
 # seqmed
 buffer = 1e-20
-types = c("MED", "q", "BatchMED", "Batch q")
+types = c("BH", "MED", "q", "BatchMED", "Batch q")
 obj.seq = c(1, 2)
 seqmed_list = list()
 for(i in 1:length(obj.seq)){
+  numSeq = 6 # BACK TO ORIGINAL VALUE #########################################
+  seqN = 1
+  Nnew = numSeq * seqN # CHANGES DUE TO THE ABOVE ##############################
   seqmed_list[[i]] = SeqMEDgp(
     y0 = y_input, x0 = x_input, x0.idx = x_input_idx, candidates = x_seq,
     function.values = y_seq, nugget = nuggetSM, type = type01, l = l01,
-    numSeq = numSeq, seqN = seqN, prints = TRUE, buffer = buffer, 
-    objective.type = obj.seq[i]
+    numSeq = numSeq, # FOR OBJECTIVE DEMO ######################################
+    seqN = seqN, prints = TRUE, buffer = buffer, 
+    objective.type = obj.seq[i] # FOR OBJECTIVE DEMO ###########################
     , seed = 1234 # DELETE THIS ARGUMENT LATER.
   )
 }
 for(i in 1:length(obj.seq)){
   idx = i + 2
+  numSeq = 2 # BATCHES #########################################################
+  seqN = 3 # BATCHES ###########################################################
+  Nnew = numSeq * seqN # CHANGES DUE TO THE ABOVE ##############################
   seqmed_list[[idx]] = SeqMEDgp(
     y0 = y_input, x0 = x_input, x0.idx = x_input_idx, candidates = x_seq,
     function.values = y_seq, nugget = nuggetSM, type = type01, l = l01,
-    numSeq = 3, seqN = 5, prints = TRUE, buffer = buffer, 
-    objective.type = obj.seq[i]
+    numSeq = numSeq, # FOR OBJECTIVE DEMO ######################################
+    seqN = seqN, prints = TRUE, buffer = buffer, 
+    objective.type = obj.seq[i] # FOR OBJECTIVE DEMO ###########################
     , seed = 1234 # DELETE THIS ARGUMENT LATER.
   )
 }
+bh = BHgp_m2(
+  y_input, x_input, x_input_idx, prior_probs, model0, model1, Nnew, 
+  x_seq, y_seq, nuggetBH)
+# bh$x.new
 
 par(mfrow = c(4, 1))
 x.new.mat = matrix(NA, nrow = Nnew, ncol = length(seqmed_list))
@@ -242,23 +271,25 @@ for(i in 1:length(seqmed_list)){
   x.in.tmp = seqmed_list[[i]]$x
   x.new.tmp = seqmed_list[[i]]$x.new
   x.new.mat[, i] = x.new.tmp
-  plot(x.in.tmp, y = rep(0, length(x.in.tmp)), 
-       ylim = c(-0.01, 0.02), xlim = c(xmin, xmax),
-       xlab = "", ylab = "")
-  points(x.new.tmp, y = rep(0.01, length(x.new.tmp)), col = 2)
-  print(x.new.tmp)
+  # plot(x.in.tmp, y = rep(0, length(x.in.tmp)), 
+  #      ylim = c(-0.01, 0.02), xlim = c(xmin, xmax),
+  #      xlab = "", ylab = "")
+  # points(x.new.tmp, y = rep(0.01, length(x.new.tmp)), col = 2)
+  # print(x.new.tmp)
 }
+x.new.mat = cbind(bh$x.new, x.new.mat)
 
 par(mfrow = c(1, 1))
 data.gg = data.frame(
-  Sim = rep(1:length(seqmed_list), each = Nnew), 
+  Index = as.character(rep(1:Nnew, length(seqmed_list) + 1)), 
+  Sim = rep(1:(length(seqmed_list) + 1), each = Nnew), 
   Type = factor(rep(types, each = Nnew), levels = types), 
   SeqMEDgp = as.vector(x.new.mat)
 )
 data.gg0 = data.frame(
-  Sim = rep(1:length(seqmed_list), each = Nin), 
+  Sim = rep(1:(length(seqmed_list) + 1), each = Nin), 
   Type = factor(rep(types, each = Nin), levels = types), 
-  Input = rep(x_input, length(seqmed_list))
+  Input = rep(x_input, (length(seqmed_list) + 1))
 )
 ggplot() + 
   geom_point(data = data.gg0, 
@@ -266,11 +297,9 @@ ggplot() +
   geom_point(data = data.gg, 
              mapping = aes(x = SeqMEDgp, y = Type, color = Type), 
              inherit.aes = FALSE) + 
+  geom_text(data = data.gg, aes(x = SeqMEDgp, y = Type, label = Index), 
+            vjust = -0.8 * as.numeric(data.gg$Index) ) +
   xlim(c(xmin, xmax))
-
-# plot the function
-ggplot(data.frame(x = x_seq, y = y_seq), aes(x = x, y = y)) + 
-  geom_path()
 
 ################################################################################
 # try different alpha ##########################################################

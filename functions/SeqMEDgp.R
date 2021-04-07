@@ -26,7 +26,6 @@ SeqMEDgp = function(
       stop("SeqMEDgp : length of preliminary x0 and y0 don't match!")
     }
   }
-  Nttl = sum(seqN)
   D = x0
   D.idx = x0.idx
   y = y0

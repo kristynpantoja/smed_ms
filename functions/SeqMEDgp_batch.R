@@ -14,30 +14,37 @@ obj_gp = function(
   if(objective.type == 1 | 
      objective.type == "SeqMED" | 
      objective.type == "MED"){
+    # q(x), x in C
     q_cand = q_gp(candidate, Kinv0, Kinv1, initD, y, error.var, type, l, p, 
-                  alpha, buffer = 0) # no need for buffer here
-    if(is.null(D)){ # when N2 = 1, and batch.idx != 1
-      sum_q_D_arg = initD
-    } else{
-      sum_q_D_arg = c(initD, D)
-    }
-    sum_q_D = sum(sapply(sum_q_D_arg, function(x_i) 
+                  alpha, buffer) # no need for buffer here, jsyk
+    # the other terms in the summation
+    # q(xi), xi in the observed set, D_t^c
+    sum_q_D = sum(sapply(initD, function(x_i) 
       (q_gp(x_i, Kinv0, Kinv1, initD, y, error.var, type, l, p,
             alpha, buffer) / 
          sqrt((x_i - candidate)^2))^k))
+    if(!is.null(D)){ # when N2 > 1
+      # q(xi), xi in the unobserved design points D^{(t)}
+      sum_q_D = sum_q_D + 
+        sum(sapply(D, function(x_i)  # no need for butter here, either fyi
+          (q_gp(x_i, Kinv0, Kinv1, initD, y, error.var, type, l, p,
+                alpha, buffer) / 
+             sqrt((x_i - candidate)^2))^k))
+    }
     result = q_cand^k * sum_q_D
   }
   ### objective.type == 2 is just optimizing q(x) over x \in C ###
   if(objective.type == 2 | 
      objective.type == "q"){
+    # no need for buffer in this case
     q_cand = q_gp(candidate, Kinv0, Kinv1, initD, y, error.var, type, l, p, 
-                  alpha, buffer = 0) # no need for buffer here
+                  alpha, buffer = 0)
     if(is.null(D)){ # when N2 = 1, and batch.idx != 1
       result = q_cand^k
     } else{ # when N2 > 1
-      sum_q_D = sum(sapply(D, function(x_i) 
+      sum_q_D = sum(sapply(D, function(x_i) # disregard initD
         (q_gp(x_i, Kinv0, Kinv1, initD, y, error.var, type, l, p,
-              alpha, buffer) / 
+              alpha, buffer = 0) / 
            sqrt((x_i - candidate)^2))^k))
       result = q_cand^k * sum_q_D
     }

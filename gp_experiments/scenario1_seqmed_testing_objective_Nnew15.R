@@ -146,7 +146,7 @@ types = c("BH", "MED", "q", "BatchMED", "Batch q")
 obj.seq = c(1, 2)
 seqmed_list = list()
 for(i in 1:length(obj.seq)){
-  numSeq = 6 # FULL SEQUENTIAL #################################################
+  numSeq = 15 # FULL SEQUENTIAL #################################################
   seqN = 1 # FULL SEQUENTIAL ###################################################
   Nnew = numSeq * seqN # FULL SEQUENTIAL #######################################
   seqmed_list[[i]] = SeqMEDgp(
@@ -159,8 +159,8 @@ for(i in 1:length(obj.seq)){
 }
 for(i in 1:length(obj.seq)){
   idx = i + 2
-  numSeq = 2 # BATCH SEQUENTIAL ################################################
-  seqN = 3 # BATCH SEQUENTIAL ##################################################
+  numSeq = 3 # BATCH SEQUENTIAL ################################################
+  seqN = 5 # BATCH SEQUENTIAL ##################################################
   Nnew = numSeq * seqN # BATCH SEQUENTIAL ######################################
   seqmed_list[[idx]] = SeqMEDgp(
     y0 = y_input, x0 = x_input, x0.idx = x_input_idx, candidates = x_seq,

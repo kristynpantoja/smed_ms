@@ -33,16 +33,16 @@ WN = function(mu1, mu2, var1, var2, dim = 1){
 # 1 dimension, or with transformations of x
 # formerly named Wasserstein_distance_postpred
 WNlm = function(
-  x, postmean0, postmean1, postvar0, postvar1, var_e, type, dim = 1){
+  x, postmean0, postmean1, postvar0, postvar1, signal.var, type, dim = 1){
   x0 = t(constructDesignX(x, 1, type[1]))
   x1 = t(constructDesignX(x, 1, type[2]))
   
   # posterior predictive distribution of y, for candidate x
   postpredy_mu0 = t(x0) %*% postmean0
-  postpredy_var0 = t(x0) %*% postvar0 %*% x0 + var_e
+  postpredy_var0 = t(x0) %*% postvar0 %*% x0 + signal.var
   
   postpredy_mu1 = t(x1) %*% postmean1
-  postpredy_var1 = t(x1) %*% postvar1 %*% x1 + var_e
+  postpredy_var1 = t(x1) %*% postvar1 %*% x1 + signal.var
   
   W = WN(postpredy_mu0, postpredy_mu1, postpredy_var0, postpredy_var1)
   return(as.numeric(W))
@@ -51,17 +51,17 @@ WNlm = function(
 # multidimensional, for variable selection
 # formerly named Wasserstein_vs
 WNlmvs = function(
-  x, variables0, variables1, postmean0, postmean1, postvar0, postvar1, var_e, 
+  x, variables0, variables1, postmean0, postmean1, postvar0, postvar1, signal.var, 
   dim = 1){
   x0 = t(constructDesignX(x, 1, NULL))[ , variables0]
   x1 = t(constructDesignX(x, 1, NULL))[ , variables1]
   
   # posterior predictive distribution of y, for candidate x
   postpredy_mu0 = t(x0) %*% postmean0
-  postpredy_var0 = t(x0) %*% postvar0 %*% x0 + var_e
+  postpredy_var0 = t(x0) %*% postvar0 %*% x0 + signal.var
   
   postpredy_mu1 = t(x1) %*% postmean1
-  postpredy_var1 = t(x1) %*% postvar1 %*% x1 + var_e
+  postpredy_var1 = t(x1) %*% postvar1 %*% x1 + signal.var
   
   W = WN(postpredy_mu0, postpredy_mu1, postpredy_var0, postpredy_var1)
   return(as.numeric(W))
@@ -73,7 +73,7 @@ WNlmvs = function(
 
 # compare covariance functions or other parameters in 1 dimension
 # formerly named Wasserstein_distance_postpred_gp
-WNgp = function(x, Kinv0, Kinv1, initD, y, var_e, type, l){
+WNgp = function(x, Kinv0, Kinv1, initD, y, signal.var, type, l){
   
   # posterior distribution of beta
   k0 = t(as.matrix(getCov(x, initD, type[1], l[1])))
@@ -81,11 +81,11 @@ WNgp = function(x, Kinv0, Kinv1, initD, y, var_e, type, l){
   
   # posterior predictive distribution of y, for candidate x
   postpredy_mu0 = t(k0) %*% Kinv0 %*% y
-  postpredy_var0 = var_e * (1 - t(k0) %*% Kinv0 %*% k0)
+  postpredy_var0 = signal.var * (1 - t(k0) %*% Kinv0 %*% k0)
   if(postpredy_var0 < 0) postpredy_var0 = 0 # only happens when too-small
   
   postpredy_mu1 = t(k1) %*% Kinv1 %*% y
-  postpredy_var1 = var_e * (1 - t(k1) %*% Kinv1 %*% k1)
+  postpredy_var1 = signal.var * (1 - t(k1) %*% Kinv1 %*% k1)
   if(postpredy_var1 < 0) postpredy_var1 = 0 # same reason
   
   W = WN(postpredy_mu0, postpredy_mu1, postpredy_var0, postpredy_var1)
@@ -95,7 +95,7 @@ WNgp = function(x, Kinv0, Kinv1, initD, y, var_e, type, l){
 # multidimensional, for variable selection
 # formerly named Wasserstein_distance_postpred_gpvs
 WNgpvs = function(
-  x, Kinv0, Kinv1, variables0, variables1, initD0, initD1, y, var_e, type, l){
+  x, Kinv0, Kinv1, variables0, variables1, initD0, initD1, y, signal.var, type, l){
   x = t(as.matrix(x))
   
   # posterior distribution of beta
@@ -106,11 +106,11 @@ WNgpvs = function(
   
   # posterior predictive distribution of y, for candidate x
   postpredy_mu0 = t(k0) %*% Kinv0 %*% y
-  postpredy_var0 = var_e * (1 - t(k0) %*% Kinv0 %*% k0)
+  postpredy_var0 = signal.var * (1 - t(k0) %*% Kinv0 %*% k0)
   if(postpredy_var0 < 0) postpredy_var0 = 0 
   
   postpredy_mu1 = t(k1) %*% Kinv1 %*% y
-  postpredy_var1 = var_e * (1 - t(k1) %*% Kinv1 %*% k1)
+  postpredy_var1 = signal.var * (1 - t(k1) %*% Kinv1 %*% k1)
   if(postpredy_var1 < 0) postpredy_var1 = 0 
   W = WN(postpredy_mu0, postpredy_mu1, postpredy_var0, postpredy_var1, dim = 1)
   return(as.numeric(W))

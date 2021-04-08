@@ -209,7 +209,7 @@ ggplot() +
              mapping = aes(x = SeqMEDgp, y = Type, color = Type), 
              inherit.aes = FALSE) + 
   geom_text(data = data.gg, aes(x = SeqMEDgp, y = Type, label = Index), 
-            vjust = -0.8 * as.numeric(data.gg$Index) ) +
+            vjust = -0.8 * as.numeric(paste(data.gg$Index)) ) +
   xlim(c(xmin, xmax))
 
 # plot the function

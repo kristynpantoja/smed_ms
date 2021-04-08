@@ -4,9 +4,10 @@
 
 SeqMEDgp = function(
   y0 = NULL, x0 = NULL, x0.idx = NULL, candidates, function.values, 
-  nugget = NULL, type, l, error.var = 1, xmin = 0, xmax = 1, k = 4, p = 1, 
+  nugget = NULL, type, l, signal.var = 1, xmin = 0, xmax = 1, k = 4, p = 1, 
   numSeq = 5, seqN = 3, alpha.seq = 1, buffer = 1e-15, objective.type = 1, 
-  init.as.stage = FALSE, prints = FALSE, seed = NULL
+  init.as.stage = FALSE, prints = FALSE, seed = NULL, 
+  model0 = NULL, model1 = NULL
 ){
   if(!is.null(seed)) set.seed(seed)
   if(numSeq > 1 & length(seqN) == 1) seqN = rep(seqN, numSeq)
@@ -66,10 +67,11 @@ SeqMEDgp = function(
       batch.idx = t
     }
     Dt = SeqMEDgp_batch(
-      initD = D, y = y, type = type, l = l, error.var = error.var, N2 = seqN[t],
+      initD = D, y = y, type = type, l = l, signal.var = signal.var, N2 = seqN[t],
       k = k, p = p, xmin = xmin, xmax = xmax, nugget = nugget, 
       alpha = alpha.seq[t], candidates = candidates, batch.idx = batch.idx, 
-      buffer = buffer, objective.type = objective.type)
+      buffer = buffer, objective.type = objective.type, 
+      model0 = model0, model1 = model1)
     
     yt = function.values[Dt$indices]
     
@@ -109,7 +111,7 @@ SeqMEDgp = function(
 SeqMEDgpvs = function(
   # true_y, type_true = NULL, l_true = NULL, indices_true = NULL, 
   y0, x0 = NULL, x0.idx = NULL, function.values, 
-  type = c(1, 1), l = c(0.1, 0.1), idx0, idx1, error.var = 1, N2 = 11, 
+  type = c(1, 1), l = c(0.1, 0.1), idx0, idx1, signal.var = 1, N2 = 11, 
   candidates, k = 4, p = 1, 
   xmin = 0, xmax = 1, nugget = NULL, 
   numSeq = 5, seqN = 3, alpha.seq = 1, buffer_seq = 0, 
@@ -204,7 +206,7 @@ SeqMEDgpvs = function(
       batch.idx = t
     }
     Dt = SeqMEDgp_batch(
-      initD = D, y = y, type = type, l = l, error.var = error.var, N2 = seqN[t],
+      initD = D, y = y, type = type, l = l, signal.var = signal.var, N2 = seqN[t],
       k = k, p = p, xmin = xmin, xmax = xmax, nugget = nugget, 
       alpha = alpha.seq[t], candidates = candidates, batch.idx = batch.idx, 
       obj_fn = obj_fn)

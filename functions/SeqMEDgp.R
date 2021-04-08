@@ -3,8 +3,7 @@
 #################################################
 
 SeqMEDgp = function(
-  y0 = NULL, x0 = NULL, x0.idx = NULL, candidates, function.values, 
-  nugget = NULL, type, l, signal.var = 1, xmin = 0, xmax = 1, k = 4, p = 1, 
+  y0 = NULL, x0 = NULL, x0.idx = NULL, candidates, function.values, xmin = 0, xmax = 1, k = 4, p = 1, 
   numSeq = 5, seqN = 3, alpha.seq = 1, buffer = 1e-15, objective.type = 1, 
   init.as.stage = FALSE, prints = FALSE, seed = NULL, 
   model0 = NULL, model1 = NULL
@@ -67,8 +66,8 @@ SeqMEDgp = function(
       batch.idx = t
     }
     Dt = SeqMEDgp_batch(
-      initD = D, y = y, type = type, l = l, signal.var = signal.var, N2 = seqN[t],
-      k = k, p = p, xmin = xmin, xmax = xmax, nugget = nugget, 
+      initD = D, y = y, N2 = seqN[t],
+      k = k, p = p, xmin = xmin, xmax = xmax,
       alpha = alpha.seq[t], candidates = candidates, batch.idx = batch.idx, 
       buffer = buffer, objective.type = objective.type, 
       model0 = model0, model1 = model1)

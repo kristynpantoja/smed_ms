@@ -59,7 +59,9 @@ numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
 
 # SeqMED settings
+signalSM = 1
 nuggetSM = NULL
+buffer = 1e-20 # NONZERO #######################################################
 
 # boxhill settings
 prior_probs = rep(1 / 2, 2)
@@ -111,108 +113,20 @@ null_mean = rep(0, numx)
 y_seq_mat = t(rmvnorm(n = numSims, mean = null_mean, sigma = null_cov)) # the function values
 
 # bh settings
-model0 = list(type = type01[1], l = l01[1])
-model1 = list(type = type01[2], l = l01[2])
+model0 = list(type = type01[1], l = l01[1], signal.var = signalSM, error.var = nuggetSM)
+model1 = list(type = type01[2], l = l01[2], signal.var = signalSM, error.var = nuggetSM)
 
 ################################################################################
 # generate seqmeds #############################################################
 ################################################################################
 
 ################################################################################
-# try different buffers - DEMO SETTINGS ########################################
+# try different objective.type - DEMO SETTINGS #################################
 ################################################################################
 
 # input set
 x_input = x_in1
 x_input_idx = x_in1_idx
-seqmed_list = list()
-# index
-i = 1
-y_seq = y_seq_mat[ , i]
-y_input = y_seq[x_input_idx]
-# seqmed
-buffer.seq = c(1e-20, 1e-15, 1e-10, 1e-5)
-seqmed_list = list()
-numSeq = 5 # FOR BUFFER DEMO ###################################################
-Nnew = numSeq * seqN # CHANGES DUE TO THE ABOVE ################################
-for(i in 1:length(buffer.seq)){
-  seqmed_list[[i]] = SeqMEDgp(
-    y0 = y_input, x0 = x_input, x0.idx = x_input_idx, candidates = x_seq,
-    function.values = y_seq, nugget = nuggetSM, type = type01, l = l01,
-    numSeq = numSeq, # FOR BUFFER DEMO #########################################
-    seqN = seqN, prints = TRUE, buffer = buffer.seq[i]
-    , seed = 1234 # DELETE THIS ARGUMENT LATER.
-  )
-}
-# y0 = y_input
-# x0 = x_input
-# x0.idx = x_input_idx
-# candidates = x_seq
-# function.values = y_seq
-# nugget = nuggetSM
-# type = type01
-# l = l01
-# error.var = 1
-# xmin = 0
-# xmax = 1
-# k = 4
-# p = 1
-# numSeq
-# seqN
-# alpha.seq = 1
-# buffer = buffer.seq[i]
-# objective.type = 1
-# init.as.stage = FALSE
-# prints = TRUE
-# seed = NULL
-
-
-# par(mfrow = c(4, 1))
-x.new.mat = matrix(NA, nrow = numSeq, ncol = length(buffer.seq))
-for(i in 1:length(buffer.seq)){
-  x.in.tmp = seqmed_list[[i]]$x
-  x.new.tmp = seqmed_list[[i]]$x.new
-  x.new.mat[, i] = x.new.tmp
-  # plot(x.in.tmp, y = rep(0, length(x.in.tmp)), 
-  #      ylim = c(-0.01, 0.02), xlim = c(xmin, xmax),
-  #      xlab = "", ylab = "")
-  # points(x.new.tmp, y = rep(0.01, length(x.new.tmp)), col = 2)
-  print(x.new.tmp)
-}
-
-# par(mfrow = c(1, 1))
-data.gg = data.frame(
-  Index = as.character(rep(1:Nnew, length(buffer.seq))), 
-  Sim = rep(1:length(buffer.seq), each = Nnew), 
-  Buffer = factor(rep(buffer.seq, each = Nnew), levels = buffer.seq), 
-  SeqMEDgp = as.vector(x.new.mat)
-)
-data.gg0 = data.frame(
-  Sim = rep(1:length(buffer.seq), each = Nin), 
-  Buffer = factor(rep(buffer.seq, each = Nin), levels = buffer.seq), 
-  Input = rep(x_input, length(buffer.seq))
-)
-ggplot() + 
-  geom_point(data = data.gg0, 
-             mapping = aes(x = Input, y = Buffer)) +
-  geom_point(data = data.gg, 
-             mapping = aes(x = SeqMEDgp, y = Buffer, color = Buffer), 
-             inherit.aes = FALSE) + 
-  geom_text(data = data.gg, aes(x = SeqMEDgp, y = Buffer, label = Index), 
-            vjust = -0.5) +
-  xlim(c(xmin, xmax))
-
-# plot the function
-# ggplot(data.frame(x = x_seq, y = y_seq), aes(x = x, y = y)) + 
-#   geom_path()
-
-################################################################################
-# try different objective.type - SIM SETTINGS ##################################
-################################################################################
-
-# input set
-x_input = x_in3
-x_input_idx = x_in3_idx
 seqmed_list = list()
 # index
 i = 1
@@ -228,38 +142,36 @@ getHypothesesPosteriors(
   )
 )
 
-# seqmed
-buffer = 1e-20
+# seqmeds
 types = c("BH", "MED", "q", "BatchMED", "Batch q")
 obj.seq = c(1, 2)
 seqmed_list = list()
 for(i in 1:length(obj.seq)){
-  numSeq = 6 # BACK TO ORIGINAL VALUE #########################################
-  seqN = 1
-  Nnew = numSeq * seqN # CHANGES DUE TO THE ABOVE ##############################
+  numSeq = 6 # FULL SEQUENTIAL #################################################
+  seqN = 1 # FULL SEQUENTIAL ###################################################
+  Nnew = numSeq * seqN # FULL SEQUENTIAL #######################################
   seqmed_list[[i]] = SeqMEDgp(
     y0 = y_input, x0 = x_input, x0.idx = x_input_idx, candidates = x_seq,
-    function.values = y_seq, nugget = nuggetSM, type = type01, l = l01,
-    numSeq = numSeq, # FOR OBJECTIVE DEMO ######################################
-    seqN = seqN, prints = TRUE, buffer = buffer, 
+    function.values = y_seq, model0 = model0, model1 = model1, 
+    numSeq = numSeq, seqN = seqN, prints = TRUE, buffer = buffer, 
     objective.type = obj.seq[i] # FOR OBJECTIVE DEMO ###########################
-    , seed = 1234 # DELETE THIS ARGUMENT LATER.
+    , seed = 1234
   )
 }
 for(i in 1:length(obj.seq)){
   idx = i + 2
-  numSeq = 2 # BATCHES #########################################################
-  seqN = 3 # BATCHES ###########################################################
-  Nnew = numSeq * seqN # CHANGES DUE TO THE ABOVE ##############################
+  numSeq = 2 # BATCH SEQUENTIAL ################################################
+  seqN = 3 # BATCH SEQUENTIAL ##################################################
+  Nnew = numSeq * seqN # BATCH SEQUENTIAL ######################################
   seqmed_list[[idx]] = SeqMEDgp(
     y0 = y_input, x0 = x_input, x0.idx = x_input_idx, candidates = x_seq,
-    function.values = y_seq, nugget = nuggetSM, type = type01, l = l01,
-    numSeq = numSeq, # FOR OBJECTIVE DEMO ######################################
-    seqN = seqN, prints = TRUE, buffer = buffer, 
+    function.values = y_seq, model0 = model0, model1 = model1,
+    numSeq = numSeq, seqN = seqN, prints = TRUE, buffer = buffer, 
     objective.type = obj.seq[i] # FOR OBJECTIVE DEMO ###########################
-    , seed = 1234 # DELETE THIS ARGUMENT LATER.
+    , seed = 1234
   )
 }
+# boxhill
 bh = BHgp_m2(
   y_input, x_input, x_input_idx, prior_probs, model0, model1, Nnew, 
   x_seq, y_seq, nuggetBH)
@@ -278,6 +190,7 @@ for(i in 1:length(seqmed_list)){
   # print(x.new.tmp)
 }
 x.new.mat = cbind(bh$x.new, x.new.mat)
+colnames(x.new.mat) = types
 
 par(mfrow = c(1, 1))
 data.gg = data.frame(
@@ -298,9 +211,9 @@ ggplot() +
              mapping = aes(x = SeqMEDgp, y = Type, color = Type), 
              inherit.aes = FALSE) + 
   geom_text(data = data.gg, aes(x = SeqMEDgp, y = Type, label = Index), 
-            vjust = -0.8 * as.numeric(data.gg$Index) ) +
+            vjust = -0.8 * as.numeric(paste(data.gg$Index)) ) +
   xlim(c(xmin, xmax))
 
-################################################################################
-# try different alpha ##########################################################
-################################################################################
+# plot the function
+# ggplot(data.frame(x = x_seq, y = y_seq), aes(x = x, y = y)) + 
+#   geom_path()

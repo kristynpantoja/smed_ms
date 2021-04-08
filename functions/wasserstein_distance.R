@@ -73,19 +73,19 @@ WNlmvs = function(
 
 # compare covariance functions or other parameters in 1 dimension
 # formerly named Wasserstein_distance_postpred_gp
-WNgp = function(x, Kinv0, Kinv1, initD, y, signal.var, type, l){
+WNgp = function(x, Kinv0, Kinv1, initD, y, model0, model1){
   
   # posterior distribution of beta
-  k0 = t(as.matrix(getCov(x, initD, type[1], l[1])))
-  k1 = t(as.matrix(getCov(x, initD, type[2], l[2])))
+  k0 = t(as.matrix(getCov(x, initD, model0$type, model0$l, model0$signal.var)))
+  k1 = t(as.matrix(getCov(x, initD, model1$type, model1$l, model1$signal.var)))
   
   # posterior predictive distribution of y, for candidate x
   postpredy_mu0 = t(k0) %*% Kinv0 %*% y
-  postpredy_var0 = signal.var * (1 - t(k0) %*% Kinv0 %*% k0)
+  postpredy_var0 = 1 - t(k0) %*% Kinv0 %*% k0
   if(postpredy_var0 < 0) postpredy_var0 = 0 # only happens when too-small
   
   postpredy_mu1 = t(k1) %*% Kinv1 %*% y
-  postpredy_var1 = signal.var * (1 - t(k1) %*% Kinv1 %*% k1)
+  postpredy_var1 = 1 - t(k1) %*% Kinv1 %*% k1
   if(postpredy_var1 < 0) postpredy_var1 = 0 # same reason
   
   W = WN(postpredy_mu0, postpredy_mu1, postpredy_var0, postpredy_var1)

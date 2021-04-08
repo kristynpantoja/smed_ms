@@ -38,10 +38,9 @@ q_vs = function(
 
 # for D1, ..., DT in gp models with one explanatory variable
 q_gp = function(
-  x, Kinv0, Kinv1, initD, y, signal.var, type, l, p, alpha = 1, buffer = 0
+  x, Kinv0, Kinv1, initD, y, p, alpha = 1, buffer = 0, model0, model1
 ){
-  if(length(type) != 2) stop("type should be vector with length == 2")
-  W = WNgp(x, Kinv0, Kinv1, initD, y, signal.var, type, l) + buffer
+  W = WNgp(x, Kinv0, Kinv1, initD, y, model0, model1) + buffer
   q_exponent = alpha / (2 * p)
   return(1.0 / (W)^q_exponent)
 }

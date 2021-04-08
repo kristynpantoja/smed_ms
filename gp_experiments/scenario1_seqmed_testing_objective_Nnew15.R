@@ -59,8 +59,9 @@ numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
 
 # SeqMED settings
+signalSM = 1
 nuggetSM = NULL
-buffer = 1e-20
+buffer = 1e-20 # NONZERO #######################################################
 
 # boxhill settings
 prior_probs = rep(1 / 2, 2)
@@ -112,8 +113,8 @@ null_mean = rep(0, numx)
 y_seq_mat = t(rmvnorm(n = numSims, mean = null_mean, sigma = null_cov)) # the function values
 
 # bh settings
-model0 = list(type = type01[1], l = l01[1])
-model1 = list(type = type01[2], l = l01[2])
+model0 = list(type = type01[1], l = l01[1], signal.var = signalSM, error.var = nuggetSM)
+model1 = list(type = type01[2], l = l01[2], signal.var = signalSM, error.var = nuggetSM)
 
 ################################################################################
 # generate seqmeds #############################################################
@@ -124,8 +125,8 @@ model1 = list(type = type01[2], l = l01[2])
 ################################################################################
 
 # input set
-x_input = x_in1
-x_input_idx = x_in1_idx
+x_input = x_in3
+x_input_idx = x_in3_idx
 seqmed_list = list()
 # index
 i = 1
@@ -151,7 +152,7 @@ for(i in 1:length(obj.seq)){
   Nnew = numSeq * seqN # FULL SEQUENTIAL #######################################
   seqmed_list[[i]] = SeqMEDgp(
     y0 = y_input, x0 = x_input, x0.idx = x_input_idx, candidates = x_seq,
-    function.values = y_seq, nugget = nuggetSM, type = type01, l = l01,
+    function.values = y_seq, model0 = model0, model1 = model1, 
     numSeq = numSeq, seqN = seqN, prints = TRUE, buffer = buffer, 
     objective.type = obj.seq[i] # FOR OBJECTIVE DEMO ###########################
     , seed = 1234
@@ -164,7 +165,7 @@ for(i in 1:length(obj.seq)){
   Nnew = numSeq * seqN # BATCH SEQUENTIAL ######################################
   seqmed_list[[idx]] = SeqMEDgp(
     y0 = y_input, x0 = x_input, x0.idx = x_input_idx, candidates = x_seq,
-    function.values = y_seq, nugget = nuggetSM, type = type01, l = l01,
+    function.values = y_seq, model0 = model0, model1 = model1, 
     numSeq = numSeq, seqN = seqN, prints = TRUE, buffer = buffer, 
     objective.type = obj.seq[i] # FOR OBJECTIVE DEMO ###########################
     , seed = 1234

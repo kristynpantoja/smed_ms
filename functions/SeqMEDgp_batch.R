@@ -79,9 +79,6 @@ SeqMEDgp_batch = function(
     Kinv1 = solve(getCov(initD, initD, type[2], l[2]) + diag(rep(nugget, initN)))
   }
   
-  initN = length(initD)
-  ttlN = initN + N2
-  
   D = rep(NA, N2)
   D_ind = rep(NA, N2)
   if(batch.idx == 1){

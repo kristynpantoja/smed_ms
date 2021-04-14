@@ -226,12 +226,138 @@ Type 'q()' to quit R.
 +         file = paste0(
 +           output_home,
 +           "/scenario1_seqmed", 
-+           "_nugget", errorvar.type, 
++           "_signal", signalvar.type, 
 +           "_input", input.type, 
 +           "_seq", seq.type,
 +           "_seed", rng.seed,
 +           ".rds"))
-Error in paste0(output_home, "/scenario1_seqmed", "_nugget", errorvar.type,  : 
-  object 'errorvar.type' not found
-Calls: saveRDS -> paste0
-Execution halted
+> 
+> proc.time()
+   user  system elapsed 
+  3.557   0.858 148.690 
+ steps"
+[1] "finished 10 out of 15 steps"
+[1] "finished 11 out of 15 steps"
+[1] "finished 12 out of 15 steps"
+[1] "finished 13 out of 15 steps"
+[1] "finished 14 out of 15 steps"
+[1] "finished 15 out of 15 steps"
+[1] "finished 1 out of 15 steps"
+[1] "finished 2 out of 15 steps"
+[1] "finished 3 out of 15 steps"
+[1] "finished 4 out of 15 steps"
+[1] "finished 5 out of 15 steps"
+[1] "finished 6 out of 15 steps"
+[1] "finished 7 out of 15 steps"
+[1] "finished 8 out of 15 steps"
+[1] "finished 9 out of 15 steps"
+[1] "finished 10 out of 15 steps"
+[1] "finished 11 out of 15 steps"
+[1] "finished 12 out of 15 steps"
+[1] "finished 13 out of 15 steps"
+[1] "finished 14 out of 15 steps"
+[1] "finished 15 out of 15 steps"
+[1] "finished 1 out of 15 steps"
+[1] "finished 2 out of 15 steps"
+[1] "finished 3 out of 15 steps"
+[1] "finished 4 out of 15 steps"
+[1] "finished 5 out of 15 steps"
+[1] "finished 6 out of 15 steps"
+[1] "finished 7 out of 15 steps"
+[1] "finished 8 out of 15 steps"
+[1] "finished 9 out of 15 steps"
+[1] "finished 10 out of 15 steps"
+[1] "finished 11 out of 15 steps"
+[1] "finished 12 out of 15 steps"
+[1] "finished 13 out of 15 steps"
+[1] "finished 14 out of 15 steps"
+[1] "finished 15 out of 15 steps"
+[1] "finished 1 out of 15 steps"
+[1] "finished 2 out of 15 steps"
+[1] "finished 3 out of 15 steps"
+[1] "finished 4 out of 15 steps"
+[1] "finished 5 out of 15 steps"
+[1] "finished 6 out of 15 steps"
+[1] "finished 7 out of 15 steps"
+[1] "finished 8 out of 15 steps"
+[1] "finished 9 out of 15 steps"
+[1] "finished 10 out of 15 steps"
+[1] "finished 11 out of 15 steps"
+[1] "finished 12 out of 15 steps"
+[1] "finished 13 out of 15 steps"
+[1] "finished 14 out of 15 steps"
+[1] "finished 15 out of 15 steps"
+[1] "finished 1 out of 15 steps"
+[1] "finished 2 out of 15 steps"
+[1] "finished 3 out of 15 steps"
+[1] "finished 4 out of 15 steps"
+[1] "finished 5 out of 15 steps"
+[1] "finished 6 out of 15 steps"
+[1] "finished 7 out of 15 steps"
+[1] "finished 8 out of 15 steps"
+[1] "finished 9 out of 15 steps"
+[1] "finished 10 out of 15 steps"
+[1] "finished 11 out of 15 steps"
+[1] "finished 12 out of 15 steps"
+[1] "finished 13 out of 15 steps"
+[1] "finished 14 out of 15 steps"
+[1] "finished 15 out of 15 steps"
+[1] "finished 1 out of 15 steps"
+[1] "finished 2 out of 15 steps"
+[1] "finished 3 out of 15 steps"
+[1] "finished 4 out of 15 steps"
+[1] "finished 5 out of 15 steps"
+[1] "finished 6 out of 15 steps"
+[1] "finished 7 out of 15 steps"
+[1] "finished 8 out of 15 steps"
+[1] "finished 9 out of 15 steps"
+[1] "finished 10 out of 15 steps"
+[1] "finished 11 out of 15 steps"
+[1] "finished 12 out of 15 steps"
+[1] "finished 13 out of 15 steps"
+[1] "finished 14 out of 15 steps"
+[1] "finished 15 out of 15 steps"
+[1] "finished 1 out of 15 steps"
+[1] "finished 2 out of 15 steps"
+[1] "finished 3 out of 15 steps"
+[1] "finished 4 out of 15 steps"
+[1] "finished 5 out of 15 steps"
+[1] "finished 6 out of 15 steps"
+[1] "finished 7 out of 15 steps"
+[1] "finished 8 out of 15 steps"
+[1] "finished 9 out of 15 steps"
+[1] "finished 10 out of 15 steps"
+[1] "finished 11 out of 15 steps"
+[1] "finished 12 out of 15 steps"
+[1] "finished 13 out of 15 steps"
+[1] "finished 14 out of 15 steps"
+[1] "finished 15 out of 15 steps"
+[1] "finished 1 out of 15 steps"
+[1] "finished 2 out of 15 steps"
+[1] "finished 3 out of 15 steps"
+[1] "finished 4 out of 15 steps"
+[1] "finished 5 out of 15 steps"
+[1] "finished 6 out of 15 steps"
+[1] "finished 7 out of 15 steps"
+[1] "finished 8 out of 15 steps"
+[1] "finished 9 out of 15 steps"
+[1] "finished 10 out of 15 steps"
+[1] "finished 11 out of 15 steps"
+[1] "finished 12 out of 15 steps"
+[1] "finished 13 out of 15 steps"
+[1] "finished 14 out of 15 steps"
+[1] "finished 15 out of 15 steps"
+> 
+> saveRDS(seqmeds, 
++         file = paste0(
++           output_home,
++           "/scenario1_seqmed", 
++           "_signal", signalvar.type, 
++           "_input", input.type, 
++           "_seq", seq.type,
++           "_seed", rng.seed,
++           ".rds"))
+> 
+> proc.time()
+   user  system elapsed 
+  3.550   0.659 153.306 

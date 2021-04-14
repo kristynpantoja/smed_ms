@@ -51,7 +51,7 @@ gg_color_hue = function(n) {
 ################################################################################
 # simulation settings, shared for both scenarios
 ################################################################################
-signalvar.type = 1 # 1 = phi0 sigmasq != 1, 2 = phi1 sigmasq != 1
+signalvar.type = 2 # 1 = phi0 sigmasq != 1, 2 = phi1 sigmasq != 1
 input.type = 3 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
 seq.type = 2 # 1 = fully sequential, 2 = stage-sequential 3x5
 

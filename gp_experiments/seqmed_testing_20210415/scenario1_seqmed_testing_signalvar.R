@@ -177,7 +177,7 @@ saveRDS(seqmeds,
         file = paste0(
           output_home,
           "/scenario1_seqmed", 
-          "_nugget", errorvar.type, 
+          "_signal", signalvar.type, 
           "_input", input.type, 
           "_seq", seq.type,
           "_seed", rng.seed,

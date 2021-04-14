@@ -1,9 +1,10 @@
 ################################################################################
-# last updated: 04/07/2021
+# last updated: 04/08/2021
 # purpose: to test seqmedgp for scenario 1:
 #   squared exponential vs. matern,
 #   where the true function is matern
 # trying out some (not necessarily MED) designs
+# changed SeqMEDgp to take in model0, model1
 
 ################################################################################
 # Sources/Libraries
@@ -113,8 +114,8 @@ null_mean = rep(0, numx)
 y_seq_mat = t(rmvnorm(n = numSims, mean = null_mean, sigma = null_cov)) # the function values
 
 # bh settings
-model0 = list(type = type01[1], l = l01[1], signal.var = 1, error.var = nuggetSM)
-model1 = list(type = type01[2], l = l01[2], signal.var = 1, error.var = nuggetSM)
+model0 = list(type = type01[1], l = l01[1], signal.var = signalSM, error.var = nuggetSM)
+model1 = list(type = type01[2], l = l01[2], signal.var = signalSM, error.var = nuggetSM)
 
 ################################################################################
 # generate seqmeds #############################################################
@@ -125,8 +126,8 @@ model1 = list(type = type01[2], l = l01[2], signal.var = 1, error.var = nuggetSM
 ################################################################################
 
 # input set
-x_input = x_in1
-x_input_idx = x_in1_idx
+x_input = x_in3
+x_input_idx = x_in3_idx
 seqmed_list = list()
 # index
 i = 1
@@ -147,7 +148,7 @@ types = c("BH", "MED", "q", "BatchMED", "Batch q")
 obj.seq = c(1, 2)
 seqmed_list = list()
 for(i in 1:length(obj.seq)){
-  numSeq = 15 # FULL SEQUENTIAL ################################################
+  numSeq = 15 # FULL SEQUENTIAL #################################################
   seqN = 1 # FULL SEQUENTIAL ###################################################
   Nnew = numSeq * seqN # FULL SEQUENTIAL #######################################
   seqmed_list[[i]] = SeqMEDgp(
@@ -165,7 +166,7 @@ for(i in 1:length(obj.seq)){
   Nnew = numSeq * seqN # BATCH SEQUENTIAL ######################################
   seqmed_list[[idx]] = SeqMEDgp(
     y0 = y_input, x0 = x_input, x0.idx = x_input_idx, candidates = x_seq,
-    function.values = y_seq, model0 = model0, model1 = model1,
+    function.values = y_seq, model0 = model0, model1 = model1, 
     numSeq = numSeq, seqN = seqN, prints = TRUE, buffer = buffer, 
     objective.type = obj.seq[i] # FOR OBJECTIVE DEMO ###########################
     , seed = 1234
@@ -177,7 +178,7 @@ bh = BHgp_m2(
   x_seq, y_seq, nuggetBH)
 # bh$x.new
 
-# par(mfrow = c(4, 1))
+par(mfrow = c(4, 1))
 x.new.mat = matrix(NA, nrow = Nnew, ncol = length(seqmed_list))
 for(i in 1:length(seqmed_list)){
   x.in.tmp = seqmed_list[[i]]$x
@@ -190,8 +191,9 @@ for(i in 1:length(seqmed_list)){
   # print(x.new.tmp)
 }
 x.new.mat = cbind(bh$x.new, x.new.mat)
+colnames(x.new.mat) = types
 
-# par(mfrow = c(1, 1))
+par(mfrow = c(1, 1))
 data.gg = data.frame(
   Index = as.character(rep(1:Nnew, length(seqmed_list) + 1)), 
   Sim = rep(1:(length(seqmed_list) + 1), each = Nnew), 
@@ -210,7 +212,7 @@ ggplot() +
              mapping = aes(x = SeqMEDgp, y = Type, color = Type), 
              inherit.aes = FALSE) + 
   geom_text(data = data.gg, aes(x = SeqMEDgp, y = Type, label = Index), 
-            vjust = -0.5 * as.numeric(paste(data.gg$Index)), size = 1.75) +
+            vjust = -0.8 * as.numeric(paste(data.gg$Index)) ) +
   xlim(c(xmin, xmax))
 
 # plot the function
@@ -338,6 +340,8 @@ ggplot(PPHs_seq.df, aes(x = Index, y = value, color = Type)) +
 # results are very strange. 
 #   MED doesn't do well unless it's in stages.
 
+
+
 ################################################################################
 # posterior probabilities for each possible design point #######################
 ################################################################################
@@ -349,8 +353,8 @@ getPPH = function(x.idx, which.pph = 0){
   PPHs = getHypothesesPosteriors(
     prior.probs = prior_probs, 
     evidences = c(
-      Evidence_gp(y.tmp, x.tmp, model0, nuggetSM),
-      Evidence_gp(y.tmp, x.tmp, model1, nuggetSM)
+      Evidence_gp(y.tmp, x.tmp, model0, nuggetBH),
+      Evidence_gp(y.tmp, x.tmp, model1, nuggetBH)
     )
   )
   if(which.pph == 0){
@@ -385,7 +389,11 @@ ggplot(pph_seq.df, aes(x = x, y = value, color = Hypothesis)) +
 # this is the same for MED, q, BatchMED, Batch q
 initD = x_input
 y = y_input
+type = type01
+l = l01
+nugget = nuggetSM
 candidates = x_seq
+error.var = 1
 
 initN = length(initD)
 if(length(y) != initN) stop("length of y does not match length of initial input data, initD")
@@ -396,22 +404,20 @@ if(length(y) != initN) stop("length of y does not match length of initial input 
 # old_initD = initD
 
 # posterior distribution of beta
-if(is.null(model0$error.var)){
-  Kinv0 = solve(getCov(initD, initD, model0$type, model0$l))
+if(is.null(nugget)){
+  Kinv0 = solve(getCov(initD, initD, type[1], l[1]))
+  Kinv1 = solve(getCov(initD, initD, type[2], l[2]))
 } else{
-  Kinv0 = solve(getCov(initD, initD, model0$type, model0$l) + 
-                  diag(rep(model0$error.var, initN)))
+  Kinv0 = solve(getCov(initD, initD, type[1], l[1]) + diag(rep(nugget, initN)))
+  Kinv1 = solve(getCov(initD, initD, type[2], l[2]) + diag(rep(nugget, initN)))
 }
-if(is.null(model1$error.var)){
-  Kinv1 = solve(getCov(initD, initD, model1$type, model1$l))
-} else{
-  Kinv1 = solve(getCov(initD, initD, model1$type, model1$l) + 
-                  diag(rep(model1$error.var, initN)))
-}
+
+initN = length(initD)
+ttlN = initN + N2
 
 # -- Initialize 1st additional design point-- #
 w_candidates = sapply(candidates, FUN = function(x) WNgp(
-  x, Kinv0, Kinv1, initD, y, model0, model1))
+  x, Kinv0, Kinv1, initD, y, error.var, type, l))
 w_opt = which.max(w_candidates)
 xopt = candidates[w_opt]
 is_x_max_in_initD = any(sapply(initD, function(x) x == xopt))
@@ -437,10 +443,10 @@ xopt_objectives = rep(NA, length(seqmed_list))
 for(i in 1:length(obj.seq)){
   seqmed.tmp = seqmed_list[[i]]
   objective.type = obj.seq[i]
-  batch.idx = 2
   
   initD = c(seqmed.tmp$x, seqmed.tmp$x.new[1])
   y = c(seqmed.tmp$y, seqmed.tmp$y.new[1])
+  N2 = 1 # FULL SEQUENTIAL #####################################################
   
   initN = length(initD)
   if(length(y) != initN) stop("length of y does not match length of initial input data, initD")
@@ -451,31 +457,25 @@ for(i in 1:length(obj.seq)){
   # old_initD = initD
   
   # posterior distribution of beta
-  if(is.null(model0$error.var)){
-    Kinv0 = solve(getCov(initD, initD, model0$type, model0$l))
+  if(is.null(nugget)){
+    Kinv0 = solve(getCov(initD, initD, type[1], l[1]))
+    Kinv1 = solve(getCov(initD, initD, type[2], l[2]))
   } else{
-    Kinv0 = solve(getCov(initD, initD, model0$type, model0$l) + 
-                    diag(rep(model0$error.var, initN)))
-  }
-  if(is.null(model1$error.var)){
-    Kinv1 = solve(getCov(initD, initD, model1$type, model1$l))
-  } else{
-    Kinv1 = solve(getCov(initD, initD, model1$type, model1$l) + 
-                    diag(rep(model1$error.var, initN)))
+    Kinv0 = solve(getCov(initD, initD, type[1], l[1]) + diag(rep(nugget, initN)))
+    Kinv1 = solve(getCov(initD, initD, type[2], l[2]) + diag(rep(nugget, initN)))
   }
   
-    # Find f_opt: minimum of f_min
-    f_min_candidates = sapply(
-      candidates, 
-      function(x) obj_gp(
-        x, NULL, 
-        Kinv0, Kinv1, initD, y, p = 1, k = 4, alpha = 1, buffer, objective.type, 
-        model0, model1))
-    if(all(f_min_candidates == Inf)){
-      stop("SeqMEDgp_batch: all candidates result in objective function = Inf.")
-    }
-    f_opt = which.min(f_min_candidates)
-    xnew = candidates[f_opt]
+  f_min_candidates = sapply(
+    candidates, 
+    function(x) obj_gp(
+      x, NULL, 
+      Kinv0, Kinv1, initD, y, error.var, type, l, p = 1, k = 4, 
+      alpha = 1, buffer, objective.type))
+  if(all(f_min_candidates == Inf)){
+    stop("SeqMEDgp_batch: all candidates result in objective function = 0.")
+  }
+  f_opt = which.min(f_min_candidates)
+  xnew = candidates[f_opt]
   
   # assign #
   objectives[, i] = f_min_candidates
@@ -490,11 +490,11 @@ for(i in 1:length(obj.seq)){
   idx = i + 2
   seqmed.tmp = seqmed_list[[idx]]
   objective.type = obj.seq[i]
-  batch.idx = 1
-  N2 = 2
   
-  initD = seqmed.tmp$x
-  y = seqmed.tmp$y
+  initD = c(seqmed.tmp$x)
+  y = c(seqmed.tmp$y)
+  N2 = 2 # BATCH SEQUENTIAL ####################################################
+  batch.idx = 1
   
   initN = length(initD)
   if(length(y) != initN) stop("length of y does not match length of initial input data, initD")
@@ -505,17 +505,12 @@ for(i in 1:length(obj.seq)){
   # old_initD = initD
   
   # posterior distribution of beta
-  if(is.null(model0$error.var)){
-    Kinv0 = solve(getCov(initD, initD, model0$type, model0$l))
+  if(is.null(nugget)){
+    Kinv0 = solve(getCov(initD, initD, type[1], l[1]))
+    Kinv1 = solve(getCov(initD, initD, type[2], l[2]))
   } else{
-    Kinv0 = solve(getCov(initD, initD, model0$type, model0$l) + 
-                    diag(rep(model0$error.var, initN)))
-  }
-  if(is.null(model1$error.var)){
-    Kinv1 = solve(getCov(initD, initD, model1$type, model1$l))
-  } else{
-    Kinv1 = solve(getCov(initD, initD, model1$type, model1$l) + 
-                    diag(rep(model1$error.var, initN)))
+    Kinv0 = solve(getCov(initD, initD, type[1], l[1]) + diag(rep(nugget, initN)))
+    Kinv1 = solve(getCov(initD, initD, type[2], l[2]) + diag(rep(nugget, initN)))
   }
   
   D = rep(NA, N2)
@@ -523,7 +518,7 @@ for(i in 1:length(obj.seq)){
   if(batch.idx == 1){
     # -- Initialize 1st additional design point-- #
     w_candidates = sapply(candidates, FUN = function(x) WNgp(
-      x, Kinv0, Kinv1, initD, y, model0, model1))
+      x, Kinv0, Kinv1, initD, y, error.var, type, l))
     w_opt = which.max(w_candidates)
     xopt = candidates[w_opt]
     is_x_max_in_initD = any(sapply(initD, function(x) x == xopt))
@@ -536,10 +531,10 @@ for(i in 1:length(obj.seq)){
       candidates, 
       function(x) obj_gp(
         x, NULL, 
-        Kinv0, Kinv1, initD, y, p, k, alpha, buffer, objective.type, 
-        model0, model1))
+        Kinv0, Kinv1, initD, y, error.var, type, l, p, k, 
+        alpha, buffer, objective.type))
     if(all(f_min_candidates == Inf)){
-      stop("SeqMEDgp_batch: all candidates result in objective function = Inf.")
+      stop("SeqMEDgp_batch: all candidates result in objective function = 0.")
     }
     f_opt = which.min(f_min_candidates)
     xnew = candidates[f_opt]
@@ -558,8 +553,8 @@ for(i in 1:length(obj.seq)){
         candidates, 
         function(x) obj_gp(
           x, D[1:(i - 1)], 
-          Kinv0, Kinv1, initD, y, p = 1, k = 4, alpha = 1, buffer, objective.type, 
-          model0, model1))
+          Kinv0, Kinv1, initD, y, error.var, type, l, p = 1, k = 4, 
+          alpha = 1, buffer, objective.type))
       f_opt = which.min(f_min_candidates)
       xnew = candidates[f_opt]
       # Update set of design points (D) and plot new point
@@ -583,8 +578,24 @@ objectives.df = melt(objectives)
 objectives.df = as.data.frame(objectives.df)
 names(objectives.df) = c("Index", "Type", "value")
 objectives.df$x = rep(x_seq, ncol(objectives))
-objectives.df$value = log(objectives.df$value)
 
 ggplot(objectives.df, aes(x = x, y = value, color = Type)) + 
   facet_wrap(~Type, scales = "free_y") + geom_path()
+
+objectives.df2 = objectives.df
+objectives.df2[objectives.df2$value == Inf & objectives.df2$Type == types[-1][1], "value"] = 
+  max(objectives.df2[objectives.df2$value != Inf & objectives.df2$Type == types[-1][1], "value"])
+objectives.df2[objectives.df2$value == Inf & objectives.df2$Type == types[-1][2], "value"] = 
+  max(objectives.df2[objectives.df2$value != Inf & objectives.df2$Type == types[-1][2], "value"])
+objectives.df2[objectives.df2$value == Inf & objectives.df2$Type == types[-1][3], "value"] = 
+  max(objectives.df2[objectives.df2$value != Inf & objectives.df2$Type == types[-1][3], "value"])
+objectives.df2[objectives.df2$value == Inf & objectives.df2$Type == types[-1][4], "value"] = 
+  max(objectives.df2[objectives.df2$value != Inf & objectives.df2$Type == types[-1][4], "value"])
+
+objectives.df2$value = log(objectives.df2$value)
+ggplot(objectives.df2, aes(x = x, y = value, color = Type)) + 
+  facet_wrap(~Type, scales = "free_y") + 
+  geom_vline(xintercept = x_input, color = "gray") +
+  geom_vline(xintercept = seqmed_list[[1]]$x.new[1], color = "gray") +
+  geom_path()
 

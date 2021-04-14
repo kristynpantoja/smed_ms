@@ -1,9 +1,10 @@
 ################################################################################
-# last updated: 04/07/2021
+# last updated: 04/08/2021
 # purpose: to test seqmedgp for scenario 1:
 #   squared exponential vs. matern,
 #   where the true function is matern
 # trying out some (not necessarily MED) designs
+# changed SeqMEDgp to take in model0, model1
 
 ################################################################################
 # Sources/Libraries
@@ -44,6 +45,8 @@ gg_color_hue = function(n) {
 ################################################################################
 # simulation settings, shared for both scenarios
 ################################################################################
+simtype = 1 
+inputtype = 1 
 
 # simulations settings
 numSims = 100
@@ -59,6 +62,7 @@ numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
 
 # SeqMED settings
+sigmasqs = c(1 - 1e-15, 1)
 nuggetSM = NULL
 buffer = 0
 
@@ -112,8 +116,15 @@ null_mean = rep(0, numx)
 y_seq_mat = t(rmvnorm(n = numSims, mean = null_mean, sigma = null_cov)) # the function values
 
 # bh settings
-model0 = list(type = type01[1], l = l01[1], signal.var = 1 - 1e-15, error.var = NULL)
-model1 = list(type = type01[2], l = l01[2], signal.var = 1, error.var = NULL)
+if(simtype == 1){
+  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasqs[1], error.var = nuggetSM)
+  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasqs[2], error.var = nuggetSM)
+  
+} else if(simtype == 2){
+  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasqs[2], error.var = nuggetSM)
+  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasqs[1], error.var = nuggetSM)
+  
+}
 
 ################################################################################
 # generate seqmeds #############################################################
@@ -124,8 +135,16 @@ model1 = list(type = type01[2], l = l01[2], signal.var = 1, error.var = NULL)
 ################################################################################
 
 # input set
-x_input = x_in1
-x_input_idx = x_in1_idx
+if(inputtype == 1){
+  x_input = x_in1
+  x_input_idx = x_in1_idx
+} else if(inputtype == 2){
+  x_input = x_in2
+  x_input_idx = x_in2_idx
+} else if(inputtype == 3){
+  x_input = x_in3
+  x_input_idx = x_in3_idx
+}
 seqmed_list = list()
 # index
 i = 1
@@ -133,13 +152,13 @@ y_seq = y_seq_mat[ , i]
 y_input = y_seq[x_input_idx]
 
 # calculate posterior probs given initial data
-getHypothesesPosteriors(
-  prior.probs = prior_probs, 
-  evidences = c(
-    Evidence_gp(y_input, x_input, model0, nuggetBH),
-    Evidence_gp(y_input, x_input, model1, nuggetBH)
-  )
-)
+# getHypothesesPosteriors(
+#   prior.probs = prior_probs, 
+#   evidences = c(
+#     Evidence_gp(y_input, x_input, model0, nuggetBH),
+#     Evidence_gp(y_input, x_input, model1, nuggetBH)
+#   )
+# )
 
 # seqmeds
 types = c("BH", "MED", "q", "BatchMED", "Batch q")

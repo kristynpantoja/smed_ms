@@ -1,9 +1,11 @@
 ################################################################################
-# last updated: 04/07/2021
+# last updated: 04/08/2021
 # purpose: to test seqmedgp for scenario 2:
 #   matern vs. periodic,
 #   where the true function is periodic
 # trying out some (not necessarily MED) designs
+# changed SeqMEDgp to take in model0, model1
+# demo settings
 
 ################################################################################
 # Sources/Libraries

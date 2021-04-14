@@ -4,6 +4,7 @@
 #   squared exponential vs. matern,
 #   where the true function is matern
 # trying out some (not necessarily MED) designs
+# changed SeqMEDgp to take in model0, model1
 # demo version
 
 ################################################################################

@@ -1,9 +1,10 @@
 ################################################################################
-# last updated: 04/07/2021
+# last updated: 04/08/2021
 # purpose: to test seqmedgp for scenario 1:
 #   squared exponential vs. matern,
 #   where the true function is matern
 # trying out some (not necessarily MED) designs
+# changed SeqMEDgp to take in model0, model1
 
 ################################################################################
 # Sources/Libraries
@@ -60,8 +61,8 @@ x_seq = seq(from = xmin, to = xmax, length.out = numx)
 
 # SeqMED settings
 signalSM = 1
-nuggetSM = NULL # TESTING ######################################################
-buffer = 0
+nuggetSM = NULL
+buffer = 1e-20 # NONZERO #######################################################
 
 # boxhill settings
 prior_probs = rep(1 / 2, 2)
@@ -113,8 +114,8 @@ null_mean = rep(0, numx)
 y_seq_mat = t(rmvnorm(n = numSims, mean = null_mean, sigma = null_cov)) # the function values
 
 # bh settings
-model0 = list(type = type01[1], l = l01[1], signal.var = signalSM, error.var = 1e-10)
-model1 = list(type = type01[2], l = l01[2], signal.var = signalSM, error.var = 1e-20)
+model0 = list(type = type01[1], l = l01[1], signal.var = 1, error.var = nuggetSM)
+model1 = list(type = type01[2], l = l01[2], signal.var = 1, error.var = nuggetSM)
 
 ################################################################################
 # generate seqmeds #############################################################
@@ -464,18 +465,18 @@ for(i in 1:length(obj.seq)){
                     diag(rep(model1$error.var, initN)))
   }
   
-  # Find f_opt: minimum of f_min
-  f_min_candidates = sapply(
-    candidates, 
-    function(x) obj_gp(
-      x, NULL, 
-      Kinv0, Kinv1, initD, y, p = 1, k = 4, alpha = 1, buffer, objective.type, 
-      model0, model1))
-  if(all(f_min_candidates == Inf)){
-    stop("SeqMEDgp_batch: all candidates result in objective function = Inf.")
-  }
-  f_opt = which.min(f_min_candidates)
-  xnew = candidates[f_opt]
+    # Find f_opt: minimum of f_min
+    f_min_candidates = sapply(
+      candidates, 
+      function(x) obj_gp(
+        x, NULL, 
+        Kinv0, Kinv1, initD, y, p = 1, k = 4, alpha = 1, buffer, objective.type, 
+        model0, model1))
+    if(all(f_min_candidates == Inf)){
+      stop("SeqMEDgp_batch: all candidates result in objective function = Inf.")
+    }
+    f_opt = which.min(f_min_candidates)
+    xnew = candidates[f_opt]
   
   # assign #
   objectives[, i] = f_min_candidates

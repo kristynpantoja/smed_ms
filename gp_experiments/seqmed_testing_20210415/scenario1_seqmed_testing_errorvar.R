@@ -51,9 +51,9 @@ gg_color_hue = function(n) {
 ################################################################################
 # simulation settings, shared for both scenarios
 ################################################################################
-errorvar.type = 2 # 1 = phi0 with nugget, 2 = phi1 with nugget
-input.type = 3 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
-seq.type = 2 # 1 = fully sequential, 2 = stage-sequential 3x5
+errorvar.type = 1 # 1 = phi0 with nugget, 2 = phi1 with nugget
+input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
+seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
 
 # simulations settings
 numSims = 10
@@ -76,10 +76,6 @@ x_seq = seq(from = xmin, to = xmax, length.out = numx)
 sigmasq = 1
 nuggets = c(1e-10, 1e-15)
 buffer = 0
-
-# boxhill settings
-prior_probs = rep(1 / 2, 2)
-nuggetBH = 1e-10
 
 ################################################################################
 # input data
@@ -120,13 +116,8 @@ type01 = c("squaredexponential", "matern")
 l01= c(0.01, 0.01) # SIM SETTING
 # l01= c(0.1, 0.1) # DEMO SETTING
 
-# generate matern functions ####################################################
-registerDoRNG(rng.seed)
-null_cov = getCov(x_seq, x_seq, type01[2], l01[2])
-null_mean = rep(0, numx)
-y_seq_mat = t(rmvnorm(n = numSims, mean = null_mean, sigma = null_cov)) # the function values
-
-# bh settings
+################################################################################
+# models
 if(errorvar.type == 1){
   model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
                 error.var = nuggets[1])
@@ -138,16 +129,24 @@ if(errorvar.type == 1){
                 error.var = nuggets[2])
   model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
                 error.var = nuggets[1])
-  
 }
 
 ################################################################################
-# generate seqmeds #############################################################
-################################################################################
+# import matern functions
+simulated.functions = readRDS(paste0(
+  output_home,
+  "/scenario1_simulated_functions", 
+  "_seed", rng.seed,
+  ".rds"))
+numSims = simulated.functions$numSims
+x_seq = simulated.functions$x
+numx = length(x_seq)
+null_cov = simulated.functions$null_cov
+null_mean = simulated.functions$null_mean
+y_seq_mat = simulated.functions$function_values_mat
 
 ################################################################################
-# try different objective.type - SIM SETTINGS ##################################
-################################################################################
+# generate seqmeds 
 
 # input set
 if(input.type == 1){
@@ -161,7 +160,6 @@ if(input.type == 1){
   x_input_idx = x_in3_idx
 }
 
-# seqmed
 registerDoRNG(rng.seed)
 seqmeds = foreach(
   i = 1:numSims
@@ -172,15 +170,15 @@ seqmeds = foreach(
     y0 = y_input, x0 = x_input, x0.idx = x_input_idx, candidates = x_seq,
     function.values = y_seq, model0 = model0, model1 = model1, 
     numSeq = numSeq, seqN = seqN, prints = TRUE, buffer = buffer, 
-    objective.type = 1, seed = 1234)
+    objective.type = 1)
 }
 
-saveRDS(
-  list(y_seq_mat = y_seq_mat, seqmeds = seqmeds), 
-  file = paste0(output_home,
-                "/scenario1_seqmed", 
-                "_nugget", errorvar.type, 
-                "_input", input.type, 
-                "_seq", seq.type,
-                "_seed", rng.seed,
-                ".rds"))
+saveRDS(seqmeds, 
+        file = paste0(
+          output_home,
+          "/scenario1_seqmed", 
+          "_nugget", errorvar.type, 
+          "_input", input.type, 
+          "_seq", seq.type,
+          "_seed", rng.seed,
+          ".rds"))

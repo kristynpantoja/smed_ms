@@ -75,13 +75,13 @@ SeqMEDgp_batch = function(
     Kinv0 = solve(getCov(initD, initD, model0$type, model0$l))
   } else{
     Kinv0 = solve(getCov(initD, initD, model0$type, model0$l) + 
-                    diag(rep(model0$error.var, initN)))
+                    model0$error.var * diag(initN))
   }
   if(is.null(model1$error.var)){
     Kinv1 = solve(getCov(initD, initD, model1$type, model1$l))
   } else{
     Kinv1 = solve(getCov(initD, initD, model1$type, model1$l) + 
-                    diag(rep(model1$error.var, initN)))
+                    model1$error.var * diag(initN))
   }
   
   D = rep(NA, N2)

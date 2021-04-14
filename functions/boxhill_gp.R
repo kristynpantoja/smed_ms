@@ -1,12 +1,12 @@
 # using joint distribution of y | x 
 #   -- should I be using the posterior predictive, instead?
-Evidence_gp = function(y, x, model, nugget){
+Evidence_gp = function(y, x, model){
   null_mean_vec = rep(0, length(y))
-  if(is.null(nugget)){
-    K_obs = getCov(x, x, model$type, model$l)
+  if(is.null(model$error.var)){
+    K_obs = getCov(x, x, model$type, model$l, model$signal.var)
   } else{
-    K_obs = getCov(x, x, model$type, model$l) + 
-      nugget * diag(length(y))
+    K_obs = getCov(x, x, model$type, model$l, model$signal.var) + 
+      model$error.var * diag(length(y))
   }
   evidence = dmvnorm(
     y, mean = null_mean_vec, sigma = K_obs, log = FALSE)
@@ -23,13 +23,14 @@ BHDgp_m2 = function(
   #   they are the same for both model.i and model.j
   model.i, # type of covariance function type.i, 
   #   length-scale parameter l.i
-  model.j, # type of covariance function type.j, 
+  model.j # type of covariance function type.j, 
   #   length-scale parameter l.j
-  nugget = NULL
 ){
   # posterior predictive distributions
-  pred.i = getGPPredictive(candidate, x, y, model.i$type, model.i$l, nugget)
-  pred.j = getGPPredictive(candidate, x, y, model.j$type, model.j$l, nugget)
+  pred.i = getGPPredictive(candidate, x, y, model.i$type, model.i$l, 
+                           model.i$signal.var, model.i$error.var)
+  pred.j = getGPPredictive(candidate, x, y, model.j$type, model.j$l, 
+                           model.j$signal.var, model.j$error.var)
   # evaluate criterion D
   KLij = rep(NA, length(candidate))
   KLji = rep(NA, length(candidate))
@@ -52,7 +53,6 @@ BHgp_m2 = function(
   n, # number of new points
   candidates, # domain over which the function is evaluated 
   function.values, # true function values, evaluated over the domain
-  nugget = NULL,
   seed = NULL
 ){
   if(!is.null(seed)) set.seed(seed)
@@ -74,8 +74,8 @@ BHgp_m2 = function(
   post.probs0 = getHypothesesPosteriors( # posterior prob with current data
     prior.probs = prior.probs, 
     evidences = c(
-      Evidence_gp(y, x, model0, nugget),
-      Evidence_gp(y, x, model1, nugget)
+      Evidence_gp(y, x, model0),
+      Evidence_gp(y, x, model1)
     )
   )
   # get new data
@@ -90,7 +90,7 @@ BHgp_m2 = function(
   for(i in 1:n){
     # evaluate criterion over x_seq
     bhd_seq = sapply(candidates, FUN = function(x) BHDgp_m2(
-      y.cur, x.cur, post.probs.cur, x, model0, model1, nugget))
+      y.cur, x.cur, post.probs.cur, x, model0, model1))
     if(!all(!is.nan(bhd_seq))){
       warning("Warning in BHgp_m2() : There were NaNs in Box & Hill criterion 
               evaluation over the candidate set!!")
@@ -105,8 +105,8 @@ BHgp_m2 = function(
     post.probs.cur = getHypothesesPosteriors(
       prior.probs = post.probs.cur, 
       evidences = c(
-        Evidence_gp(y.cur, x.cur, model0, nugget),
-        Evidence_gp(y.cur, x.cur, model1, nugget)
+        Evidence_gp(y.cur, x.cur, model0),
+        Evidence_gp(y.cur, x.cur, model1)
       )
     )
     post.probs.mat[i + 1, ] = post.probs.cur

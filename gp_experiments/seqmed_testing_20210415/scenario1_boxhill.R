@@ -51,20 +51,13 @@ gg_color_hue = function(n) {
 ################################################################################
 # simulation settings, shared for both scenarios
 ################################################################################
-signalvar.type = 1 # 1 = phi0 sigmasq != 1, 2 = phi1 sigmasq != 1
-input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
-seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
+input.type = 3 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
 
 # simulations settings
 numSims = 10
 Nin = 6
-if(seq.type == 1){
-  numSeq = 15
-  seqN = 1
-} else if(seq.type == 2){
-  numSeq = 3
-  seqN = 5
-}
+numSeq = 15
+seqN = 1
 Nnew = numSeq * seqN
 Nttl = Nin + Nnew
 xmin = 0
@@ -72,10 +65,10 @@ xmax = 1
 numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
 
-# SeqMED settings
-sigmasqs = c(1 - 1e-10, 1)
-nuggetSM = NULL
-buffer = 0
+# boxhill settings
+sigmasq = 1
+nugget = 1e-10
+prior_probs = rep(1 / 2, 2)
 
 ################################################################################
 # input data
@@ -118,18 +111,10 @@ l01= c(0.01, 0.01) # SIM SETTING
 
 ################################################################################
 # models
-if(signalvar.type == 1){
-  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasqs[1], 
-                error.var = nuggetSM)
-  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasqs[2], 
-                error.var = nuggetSM)
-  
-} else if(signalvar.type == 2){
-  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasqs[2],
-                error.var = nuggetSM)
-  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasqs[1], 
-                error.var = nuggetSM)
-}
+model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
+              error.var = nugget)
+model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
+              error.var = nugget)
 
 ################################################################################
 # import matern functions
@@ -146,7 +131,7 @@ null_mean = simulated.functions$null_mean
 y_seq_mat = simulated.functions$function_values_mat
 
 ################################################################################
-# generate seqmeds 
+# generate boxhills
 
 # input set
 if(input.type == 1){
@@ -160,25 +145,22 @@ if(input.type == 1){
   x_input_idx = x_in3_idx
 }
 
+# boxhill
 registerDoRNG(rng.seed)
-seqmeds = foreach(
+boxhills = foreach(
   i = 1:numSims
 ) %dorng% {
   y_seq = y_seq_mat[ , i]
   y_input = y_seq[x_input_idx]
-  SeqMEDgp(
-    y0 = y_input, x0 = x_input, x0.idx = x_input_idx, candidates = x_seq,
-    function.values = y_seq, model0 = model0, model1 = model1, 
-    numSeq = numSeq, seqN = seqN, prints = TRUE, buffer = buffer, 
-    objective.type = 1)
+  BHgp_m2(
+    y_input, x_input, x_input_idx, prior_probs, model0, model1, Nnew, 
+    x_seq, y_seq)
 }
 
-saveRDS(seqmeds, 
+saveRDS(boxhills, 
         file = paste0(
           output_home,
-          "/scenario1_seqmed", 
-          "_nugget", errorvar.type, 
+          "/scenario1_boxhill", 
           "_input", input.type, 
-          "_seq", seq.type,
           "_seed", rng.seed,
           ".rds"))

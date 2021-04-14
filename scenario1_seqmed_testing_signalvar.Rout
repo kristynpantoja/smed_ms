@@ -70,7 +70,7 @@ Type 'q()' to quit R.
 > ################################################################################
 > # simulation settings, shared for both scenarios
 > ################################################################################
-> signalvar.type = 2 # 1 = phi0 sigmasq != 1, 2 = phi1 sigmasq != 1
+> signalvar.type = 1 # 1 = phi0 sigmasq != 1, 2 = phi1 sigmasq != 1
 > input.type = 3 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
 > seq.type = 2 # 1 = fully sequential, 2 = stage-sequential 3x5
 > 
@@ -95,10 +95,6 @@ Type 'q()' to quit R.
 > sigmasqs = c(1 - 1e-10, 1)
 > nuggetSM = NULL
 > buffer = 0
-> 
-> # boxhill settings
-> prior_probs = rep(1 / 2, 2)
-> nuggetBH = 1e-10
 > 
 > ################################################################################
 > # input data
@@ -139,13 +135,8 @@ Type 'q()' to quit R.
 > l01= c(0.01, 0.01) # SIM SETTING
 > # l01= c(0.1, 0.1) # DEMO SETTING
 > 
-> # generate matern functions ####################################################
-> registerDoRNG(rng.seed)
-> null_cov = getCov(x_seq, x_seq, type01[2], l01[2])
-> null_mean = rep(0, numx)
-> y_seq_mat = t(rmvnorm(n = numSims, mean = null_mean, sigma = null_cov)) # the function values
-> 
-> # bh settings
+> ################################################################################
+> # models
 > if(signalvar.type == 1){
 +   model0 = list(type = type01[1], l = l01[1], signal.var = sigmasqs[1], 
 +                 error.var = nuggetSM)
@@ -157,16 +148,24 @@ Type 'q()' to quit R.
 +                 error.var = nuggetSM)
 +   model1 = list(type = type01[2], l = l01[2], signal.var = sigmasqs[1], 
 +                 error.var = nuggetSM)
-+   
 + }
 > 
 > ################################################################################
-> # generate seqmeds #############################################################
-> ################################################################################
+> # import matern functions
+> simulated.functions = readRDS(paste0(
++   output_home,
++   "/scenario1_simulated_functions", 
++   "_seed", rng.seed,
++   ".rds"))
+> numSims = simulated.functions$numSims
+> x_seq = simulated.functions$x
+> numx = length(x_seq)
+> null_cov = simulated.functions$null_cov
+> null_mean = simulated.functions$null_mean
+> y_seq_mat = simulated.functions$function_values_mat
 > 
 > ################################################################################
-> # try different objective.type - SIM SETTINGS ##################################
-> ################################################################################
+> # generate seqmeds 
 > 
 > # input set
 > if(input.type == 1){
@@ -180,7 +179,6 @@ Type 'q()' to quit R.
 +   x_input_idx = x_in3_idx
 + }
 > 
-> # seqmed
 > registerDoRNG(rng.seed)
 > seqmeds = foreach(
 +   i = 1:numSims
@@ -191,7 +189,7 @@ Type 'q()' to quit R.
 +     y0 = y_input, x0 = x_input, x0.idx = x_input_idx, candidates = x_seq,
 +     function.values = y_seq, model0 = model0, model1 = model1, 
 +     numSeq = numSeq, seqN = seqN, prints = TRUE, buffer = buffer, 
-+     objective.type = 1, seed = 1234)
++     objective.type = 1)
 + }
 [1] "finished 1 out of 3 steps"
 [1] "finished 2 out of 3 steps"
@@ -224,16 +222,16 @@ Type 'q()' to quit R.
 [1] "finished 2 out of 3 steps"
 [1] "finished 3 out of 3 steps"
 > 
-> saveRDS(
-+   list(y_seq_mat = y_seq_mat, seqmeds = seqmeds), 
-+   file = paste0(output_home,
-+                 "/scenario1_seqmed", 
-+                 "_signal", signalvar.type, 
-+                 "_input", input.type, 
-+                 "_seq", seq.type,
-+                 "_seed", rng.seed,
-+                 ".rds"))
-> 
-> proc.time()
-   user  system elapsed 
-  7.316   0.996  80.834 
+> saveRDS(seqmeds, 
++         file = paste0(
++           output_home,
++           "/scenario1_seqmed", 
++           "_nugget", errorvar.type, 
++           "_input", input.type, 
++           "_seq", seq.type,
++           "_seed", rng.seed,
++           ".rds"))
+Error in paste0(output_home, "/scenario1_seqmed", "_nugget", errorvar.type,  : 
+  object 'errorvar.type' not found
+Calls: saveRDS -> paste0
+Execution halted

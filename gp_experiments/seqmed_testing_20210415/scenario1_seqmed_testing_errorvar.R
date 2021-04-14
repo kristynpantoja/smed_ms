@@ -52,8 +52,8 @@ gg_color_hue = function(n) {
 # simulation settings, shared for both scenarios
 ################################################################################
 errorvar.type = 1 # 1 = phi0 with nugget, 2 = phi1 with nugget
-input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
-seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
+input.type = 3 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
+seq.type = 2 # 1 = fully sequential, 2 = stage-sequential 3x5
 
 # simulations settings
 numSims = 10

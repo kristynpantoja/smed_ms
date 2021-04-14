@@ -9,7 +9,7 @@
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = "run_designs/gp_experiments"
+output_home = "gp_experiments/seqmed_testing_20210415/outputs"
 functions_home = "functions"
 
 # for seqmed design
@@ -73,7 +73,7 @@ numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
 
 # SeqMED settings
-sigmasqs = c(1 - 1e-15, 1)
+sigmasqs = c(1 - 1e-10, 1)
 nuggetSM = NULL
 buffer = 0
 
@@ -174,3 +174,13 @@ seqmeds = foreach(
     numSeq = numSeq, seqN = seqN, prints = TRUE, buffer = buffer, 
     objective.type = 1, seed = 1234)
 }
+
+saveRDS(
+  list(y_seq_mat = y_seq_mat, seqmeds = seqmeds), 
+  file = paste0(output_home,
+                "/scenario1_seqmed", 
+                "_signal", signalvar.type, 
+                "_input", input.type, 
+                "_seq", seq.type,
+                "_seed", rng.seed,
+                ".rds"))

@@ -9,7 +9,7 @@
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = "run_designs/gp_experiments"
+output_home = "gp_experiments/seqmed_testing_20210415/outputs"
 functions_home = "functions"
 
 # for seqmed design
@@ -51,7 +51,7 @@ gg_color_hue = function(n) {
 ################################################################################
 # simulation settings, shared for both scenarios
 ################################################################################
-signalvar.type = 1 # 1 = phi0 sigmasq != 1, 2 = phi1 sigmasq != 1
+errorvar.type = 1 # 1 = phi0 with nugget, 2 = phi1 with nugget
 input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
 seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
 
@@ -73,8 +73,8 @@ numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
 
 # SeqMED settings
-sigmasqs = c(1 - 1e-15, 1)
-nuggetSM = NULL
+sigmasq = 1
+nuggets = c(1e-10, NULL)
 buffer = 0
 
 # boxhill settings
@@ -127,17 +127,17 @@ null_mean = rep(0, numx)
 y_seq_mat = t(rmvnorm(n = numSims, mean = null_mean, sigma = null_cov)) # the function values
 
 # bh settings
-if(signalvar.type == 1){
-  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasqs[1], 
-                error.var = nuggetSM)
-  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasqs[2], 
-                error.var = nuggetSM)
+if(errorvar.type == 1){
+  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
+                error.var = nuggets[1])
+  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
+                error.var = nuggets[2])
   
-} else if(signalvar.type == 2){
-  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasqs[2],
-                error.var = nuggetSM)
-  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasqs[1], 
-                error.var = nuggetSM)
+} else if(errorvar.type == 2){
+  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq,
+                error.var = nuggets[2])
+  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
+                error.var = nuggets[1])
   
 }
 
@@ -174,3 +174,13 @@ seqmeds = foreach(
     numSeq = numSeq, seqN = seqN, prints = TRUE, buffer = buffer, 
     objective.type = 1, seed = 1234)
 }
+
+saveRDS(
+  list(y_seq_mat = y_seq_mat, seqmeds = seqmeds), 
+  file = paste0(output_home,
+                "/scenario1_seqmed", 
+                "_nugget", errorvar.type, 
+                "_input", input.type, 
+                "_seq", seq.type,
+                "_seed", rng.seed,
+                ".rds"))

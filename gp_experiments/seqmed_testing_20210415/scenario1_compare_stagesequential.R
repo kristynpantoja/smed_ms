@@ -184,7 +184,8 @@ boxhills = readRDS(paste0(
 seqmeds.n1 = readRDS(paste0(
   output_home,
   "/scenario1_seqmed", 
-  "_nugget", 1, 
+  "_obj", objective.type,
+  "_error", 1, 
   "_input", input.type, 
   "_seq", seq.type,
   "_seed", rng.seed,
@@ -194,7 +195,8 @@ seqmeds.n1 = readRDS(paste0(
 seqmeds.n2 = readRDS(paste0(
   output_home,
   "/scenario1_seqmed", 
-  "_nugget", 2, 
+  "_obj", objective.type,
+  "_error", 2, 
   "_input", input.type, 
   "_seq", seq.type,
   "_seed", rng.seed,
@@ -204,6 +206,7 @@ seqmeds.n2 = readRDS(paste0(
 seqmeds.s1 = readRDS(paste0(
   output_home,
   "/scenario1_seqmed", 
+  "_obj", objective.type,
   "_signal", 1, 
   "_input", input.type, 
   "_seq", seq.type,
@@ -214,6 +217,7 @@ seqmeds.s1 = readRDS(paste0(
 seqmeds.s2 = readRDS(paste0(
   output_home,
   "/scenario1_seqmed", 
+  "_obj", objective.type,
   "_signal", 2, 
   "_input", input.type, 
   "_seq", seq.type,

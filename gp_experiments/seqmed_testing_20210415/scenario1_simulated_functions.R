@@ -51,22 +51,9 @@ gg_color_hue = function(n) {
 ################################################################################
 # simulation settings, shared for both scenarios
 ################################################################################
-errorvar.type = 1 # 1 = phi0 with nugget, 2 = phi1 with nugget
-input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
-seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
 
 # simulations settings
-numSims = 10
-Nin = 6
-if(seq.type == 1){
-  numSeq = 15
-  seqN = 1
-} else if(seq.type == 2){
-  numSeq = 3
-  seqN = 5
-}
-Nnew = numSeq * seqN
-Nttl = Nin + Nnew
+numSims = 25
 xmin = 0
 xmax = 1
 numx = 10^3 + 1

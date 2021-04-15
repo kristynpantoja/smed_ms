@@ -51,6 +51,7 @@ gg_color_hue = function(n) {
 ################################################################################
 # simulation settings, shared for both scenarios
 ################################################################################
+objective.type = 1
 # errorvar.type = 1 # 1 = phi0 with nugget, 2 = phi1 with nugget
 # signalvar.type = 2 # 1 = phi0 sigmasq != 1, 2 = phi1 sigmasq != 1
 input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
@@ -184,7 +185,8 @@ boxhills = readRDS(paste0(
 seqmeds.n1 = readRDS(paste0(
   output_home,
   "/scenario1_seqmed", 
-  "_nugget", 1, 
+  "_obj", objective.type,
+  "_error", 1, 
   "_input", input.type, 
   "_seq", seq.type,
   "_seed", rng.seed,
@@ -194,7 +196,8 @@ seqmeds.n1 = readRDS(paste0(
 seqmeds.n2 = readRDS(paste0(
   output_home,
   "/scenario1_seqmed", 
-  "_nugget", 2, 
+  "_obj", objective.type,
+  "_error", 2, 
   "_input", input.type, 
   "_seq", seq.type,
   "_seed", rng.seed,
@@ -204,6 +207,7 @@ seqmeds.n2 = readRDS(paste0(
 seqmeds.s1 = readRDS(paste0(
   output_home,
   "/scenario1_seqmed", 
+  "_obj", objective.type,
   "_signal", 1, 
   "_input", input.type, 
   "_seq", seq.type,
@@ -214,6 +218,7 @@ seqmeds.s1 = readRDS(paste0(
 seqmeds.s2 = readRDS(paste0(
   output_home,
   "/scenario1_seqmed", 
+  "_obj", objective.type,
   "_signal", 2, 
   "_input", input.type, 
   "_seq", seq.type,

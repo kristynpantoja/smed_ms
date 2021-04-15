@@ -58,7 +58,7 @@ input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
 seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
 
 # simulations settings
-numSims = 10
+numSims = 25
 Nin = 6
 if(seq.type == 1){
   numSeq = 15

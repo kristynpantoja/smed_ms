@@ -147,16 +147,14 @@ model1.n2 = list(type = type01[2], l = l01[2], signal.var = sigmasq,
 # models - SeqMED with different signal variance
 # signalvar.type == 1
 model0.s1 = list(type = type01[1], l = l01[1], signal.var = sigmasqs[1], 
-              error.var = nuggetSM)
+              error.var = nugget.sm)
 model1.s1 = list(type = type01[2], l = l01[2], signal.var = sigmasqs[2], 
-              error.var = nuggetSM)
+              error.var = nugget.sm)
 # signalvar.type == 2
 model0.s1 = list(type = type01[1], l = l01[1], signal.var = sigmasqs[2],
-              error.var = nuggetSM)
+              error.var = nugget.sm)
 model1.s2 = list(type = type01[2], l = l01[2], signal.var = sigmasqs[1], 
-              error.var = nuggetSM)
-
-
+              error.var = nugget.sm)
 
 ################################################################################
 # import matern functions
@@ -183,7 +181,7 @@ boxhills = readRDS(paste0(
   ".rds"
 ))
 
-seqmeds1 = readRDS(paste0(
+seqmeds.n1 = readRDS(paste0(
   output_home,
   "/scenario1_seqmed", 
   "_nugget", 1, 
@@ -193,10 +191,30 @@ seqmeds1 = readRDS(paste0(
   ".rds"
 ))
 
-seqmeds2 = readRDS(paste0(
+seqmeds.n2 = readRDS(paste0(
   output_home,
   "/scenario1_seqmed", 
   "_nugget", 2, 
+  "_input", input.type, 
+  "_seq", seq.type,
+  "_seed", rng.seed,
+  ".rds"
+))
+
+seqmeds.s1 = readRDS(paste0(
+  output_home,
+  "/scenario1_seqmed", 
+  "_signal", 1, 
+  "_input", input.type, 
+  "_seq", seq.type,
+  "_seed", rng.seed,
+  ".rds"
+))
+
+seqmeds.s2 = readRDS(paste0(
+  output_home,
+  "/scenario1_seqmed", 
+  "_signal", 2, 
   "_input", input.type, 
   "_seq", seq.type,
   "_seed", rng.seed,
@@ -240,17 +258,24 @@ PPH_seq = data.frame(
 for(b in 1:numSims){
   # designs at sim b
   bh = boxhills[[b]]
-  s1 = seqmeds1[[b]]
-  s2 = seqmeds2[[b]]
+  n1 = seqmeds.n1[[b]]
+  n2 = seqmeds.n2[[b]]
+  s1 = seqmeds.s1[[b]]
+  s2 = seqmeds.s2[[b]]
   # sequence of PPHs for each design
   PPH_seq.bh = getPPHseq(bh, model0.bh, model1.bh)
-  PPH_seq.s1 = getPPHseq(s1, model0.n1, model0.n2)
-  PPH_seq.s2 = getPPHseq(s2, model0.n1, model0.n2)
+  PPH_seq.n1 = getPPHseq(n1, model0.n1, model1.n2)
+  PPH_seq.n2 = getPPHseq(n2, model0.n1, model1.n2)
+  PPH_seq.s1 = getPPHseq(s1, model0.n1, model1.n2)
+  PPH_seq.s2 = getPPHseq(s2, model0.n1, model1.n2)
   # master data frame
-  PPH_seq.bh$type = "bh"
-  PPH_seq.s1$type = "s1"
-  PPH_seq.s2$type = "s2"
-  PPH_seq.tmp = rbind(PPH_seq.bh, PPH_seq.s1, PPH_seq.s2)
+  PPH_seq.bh$type = "boxhill"
+  PPH_seq.n1$type = "nugget1"
+  PPH_seq.n2$type = "nugget2"
+  PPH_seq.s1$type = "signal1"
+  PPH_seq.s2$type = "signal2"
+  PPH_seq.tmp = rbind(
+    PPH_seq.bh, PPH_seq.n1, PPH_seq.n2, PPH_seq.s1, PPH_seq.s2)
   PPH_seq.tmp$sim = b
   PPH_seq = rbind(PPH_seq, PPH_seq.tmp)
 }

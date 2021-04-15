@@ -33,7 +33,7 @@ library(future)
 library(doFuture)
 library(parallel)
 registerDoFuture()
-nworkers = detectCores()
+nworkers = detectCores() - 2
 plan(multisession, workers = nworkers)
 
 library(rngtools)
@@ -51,21 +51,11 @@ gg_color_hue = function(n) {
 ################################################################################
 # simulation settings, shared for both scenarios
 ################################################################################
-signalvar.type = 2 # 1 = phi0 sigmasq != 1, 2 = phi1 sigmasq != 1
-input.type = 3 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
-seq.type = 2 # 1 = fully sequential, 2 = stage-sequential 3x5
 
 # simulations settings
-numSims = 10
+numSims = 25
 Nin = 6
-if(seq.type == 1){
-  numSeq = 15
-  seqN = 1
-} else if(seq.type == 2){
-  numSeq = 3
-  seqN = 5
-}
-Nnew = numSeq * seqN
+Nnew = 15
 Nttl = Nin + Nnew
 xmin = 0
 xmax = 1
@@ -74,7 +64,7 @@ x_seq = seq(from = xmin, to = xmax, length.out = numx)
 
 # SeqMED settings
 sigmasqs = c(1 - 1e-10, 1)
-nuggetSM = NULL
+nugget = NULL
 buffer = 0
 
 ################################################################################
@@ -117,21 +107,6 @@ l01= c(0.01, 0.01) # SIM SETTING
 # l01= c(0.1, 0.1) # DEMO SETTING
 
 ################################################################################
-# models
-if(signalvar.type == 1){
-  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasqs[1], 
-                error.var = nuggetSM)
-  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasqs[2], 
-                error.var = nuggetSM)
-  
-} else if(signalvar.type == 2){
-  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasqs[2],
-                error.var = nuggetSM)
-  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasqs[1], 
-                error.var = nuggetSM)
-}
-
-################################################################################
 # import matern functions
 simulated.functions = readRDS(paste0(
   output_home,
@@ -148,37 +123,80 @@ y_seq_mat = simulated.functions$function_values_mat
 ################################################################################
 # generate seqmeds 
 
-# input set
-if(input.type == 1){
-  x_input = x_in1
-  x_input_idx = x_in1_idx
-} else if(input.type == 2){
-  x_input = x_in2
-  x_input_idx = x_in2_idx
-} else if(input.type == 3){
-  x_input = x_in3
-  x_input_idx = x_in3_idx
+for(i in 1:2){
+  for(j in 1:3){
+    for(k in 1:2){
+      for(m in 1:2){
+        # i : signal setting
+        # models
+        signalvar.type = i
+        if(signalvar.type == 1){
+          model0 = list(type = type01[1], l = l01[1], signal.var = sigmasqs[1], 
+                        error.var = nugget)
+          model1 = list(type = type01[2], l = l01[2], signal.var = sigmasqs[2], 
+                        error.var = nugget)
+        } else if(signalvar.type == 2){
+          model0 = list(type = type01[1], l = l01[1], signal.var = sigmasqs[2],
+                        error.var = nugget)
+          model1 = list(type = type01[2], l = l01[2], signal.var = sigmasqs[1], 
+                        error.var = nugget)
+        }
+        
+        # j : input setting
+        input.type = j
+        # input set
+        if(input.type == 1){
+          x_input = x_in1
+          x_input_idx = x_in1_idx
+        } else if(input.type == 2){
+          x_input = x_in2
+          x_input_idx = x_in2_idx
+        } else if(input.type == 3){
+          x_input = x_in3
+          x_input_idx = x_in3_idx
+        }
+        
+        # k : sequential setting
+        seq.type = k
+        if(seq.type == 1){
+          numSeq = 15
+          seqN = 1
+        } else if(seq.type == 2){
+          numSeq = 3
+          seqN = 5
+        }
+        
+        # m : objective.type setting
+        objective.type = m
+        
+        # simulations!
+        registerDoRNG(rng.seed)
+        seqmeds = foreach(
+          b = 1:numSims
+        ) %dorng% {
+          y_seq = y_seq_mat[ , b]
+          y_input = y_seq[x_input_idx]
+          SeqMEDgp(
+            y0 = y_input, x0 = x_input, x0.idx = x_input_idx, 
+            candidates = x_seq, function.values = y_seq, 
+            model0 = model0, model1 = model1, 
+            numSeq = numSeq, seqN = seqN, prints = FALSE, buffer = buffer, 
+            objective.type = objective.type)
+        }
+        
+        print(paste0("completed i = ", i, ", j = ", j, ", k = ", k, 
+                     ", m = ", m , "!"))
+        saveRDS(seqmeds,
+                file = paste0(
+                  output_home,
+                  "/scenario1_seqmed",
+                  "obj", objective.type,
+                  "_signal", signalvar.type,
+                  "_input", input.type,
+                  "_seq", seq.type,
+                  "_seed", rng.seed,
+                  ".rds"))
+      }
+    }
+  }
 }
-
-registerDoRNG(rng.seed)
-seqmeds = foreach(
-  i = 1:numSims
-) %dorng% {
-  y_seq = y_seq_mat[ , i]
-  y_input = y_seq[x_input_idx]
-  SeqMEDgp(
-    y0 = y_input, x0 = x_input, x0.idx = x_input_idx, candidates = x_seq,
-    function.values = y_seq, model0 = model0, model1 = model1, 
-    numSeq = numSeq, seqN = seqN, prints = TRUE, buffer = buffer, 
-    objective.type = 1)
-}
-
-saveRDS(seqmeds, 
-        file = paste0(
-          output_home,
-          "/scenario1_seqmed", 
-          "_signal", signalvar.type, 
-          "_input", input.type, 
-          "_seq", seq.type,
-          "_seed", rng.seed,
-          ".rds"))

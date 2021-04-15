@@ -53,7 +53,7 @@ gg_color_hue = function(n) {
 ################################################################################
 # errorvar.type = 1 # 1 = phi0 with nugget, 2 = phi1 with nugget
 # signalvar.type = 2 # 1 = phi0 sigmasq != 1, 2 = phi1 sigmasq != 1
-input.type = 3 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
+input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
 seq.type = 2 # 1 = fully sequential, 2 = stage-sequential 3x5
 
 # simulations settings
@@ -398,6 +398,16 @@ obj.data$type = factor(obj.data$type, levels = 1:length(designs),
 obj.data$type = factor(obj.data$type, levels = design.levels)
 obj.data$x = rep(x_seq, length(designs))
 
-ggplot(obj.data, aes(x = x, y = logObjective, color = )) + 
+plt = ggplot(obj.data, aes(x = x, y = logObjective, color = )) + 
   facet_wrap(~type) + 
   geom_path()
+ggsave(paste0(
+  "20210416_scen1", 
+  "_in", input.type, 
+  "_full_x2obj.pdf"),
+  plot = plt,
+  width = 6, 
+  height = 4, 
+  units = c("in")
+)
+

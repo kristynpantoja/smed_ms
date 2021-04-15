@@ -190,7 +190,7 @@ for(i in 1:2){
                 file = paste0(
                   output_home,
                   "/scenario1_seqmed",
-                  "obj", objective.type,
+                  "_obj", objective.type,
                   "_signal", signalvar.type,
                   "_input", input.type,
                   "_seq", seq.type,

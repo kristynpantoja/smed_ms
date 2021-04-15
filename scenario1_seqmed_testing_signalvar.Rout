@@ -209,7 +209,7 @@ Type 'q()' to quit R.
 +                 file = paste0(
 +                   output_home,
 +                   "/scenario1_seqmed",
-+                   "obj", objective.type,
++                   "_obj", objective.type,
 +                   "_signal", signalvar.type,
 +                   "_input", input.type,
 +                   "_seq", seq.type,
@@ -246,4 +246,4 @@ Type 'q()' to quit R.
 > 
 > proc.time()
    user  system elapsed 
- 19.414   2.153 805.373 
+ 19.178   1.995 800.432 

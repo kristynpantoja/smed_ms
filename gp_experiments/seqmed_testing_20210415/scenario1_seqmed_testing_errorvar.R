@@ -129,13 +129,13 @@ for(i in 1:2){
       for(m in 1:2){
         # i : signal setting
         # models
-        signalvar.type = i
-        if(signalvar.type == 1){
+        errorvar.type = i
+        if(errorvar.type == 1){
           model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
                         error.var = nuggets[1])
           model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
                         error.var = nuggets[2])
-        } else if(signalvar.type == 2){
+        } else if(errorvar.type == 2){
           model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq,
                         error.var = nuggets[2])
           model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
@@ -190,8 +190,8 @@ for(i in 1:2){
                 file = paste0(
                   output_home,
                   "/scenario1_seqmed",
-                  "obj", objective.type,
-                  "_signal", signalvar.type,
+                  "_obj", objective.type,
+                  "_error", errorvar.type,
                   "_input", input.type,
                   "_seq", seq.type,
                   "_seed", rng.seed,

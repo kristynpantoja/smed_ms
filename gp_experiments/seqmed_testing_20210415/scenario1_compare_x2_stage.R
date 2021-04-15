@@ -126,11 +126,17 @@ l01= c(0.01, 0.01) # SIM SETTING
 # l01= c(0.1, 0.1) # DEMO SETTING
 
 ################################################################################
-# models - BoxHill & q
-model0.bhq = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
+# models - BoxHill
+model0.bh = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
                  error.var = nugget.bh)
-model1.bhq = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
+model1.bh = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
                  error.var = nugget.bh)
+
+# models - q, buffer
+model0.other = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
+                    error.var = nugget.sm)
+model1.other = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
+                    error.var = nugget.sm)
 
 # models - SeqMED with different nugget term
 # errorvar.type == 1
@@ -147,14 +153,14 @@ model1.n2 = list(type = type01[2], l = l01[2], signal.var = sigmasq,
 # models - SeqMED with different signal variance
 # signalvar.type == 1
 model0.s1 = list(type = type01[1], l = l01[1], signal.var = sigmasqs[1], 
-              error.var = nugget.sm)
+                 error.var = nugget.sm)
 model1.s1 = list(type = type01[2], l = l01[2], signal.var = sigmasqs[2], 
-              error.var = nugget.sm)
+                 error.var = nugget.sm)
 # signalvar.type == 2
 model0.s2 = list(type = type01[1], l = l01[1], signal.var = sigmasqs[2],
-              error.var = nugget.sm)
+                 error.var = nugget.sm)
 model1.s2 = list(type = type01[2], l = l01[2], signal.var = sigmasqs[1], 
-              error.var = nugget.sm)
+                 error.var = nugget.sm)
 
 ################################################################################
 # import matern functions
@@ -183,9 +189,19 @@ boxhills = readRDS(paste0(
 
 qs = readRDS(paste0(
   output_home,
-  "/scenario1_seqmed", 
+  "/scenario1_seqmed",
   "_obj", 2,
-  "_input", input.type, 
+  "_input", input.type,
+  "_seq", seq.type,
+  "_seed", rng.seed,
+  ".rds"
+))
+
+buffers = readRDS(paste0(
+  output_home,
+  "/scenario1_buffer",
+  "_obj", 1,
+  "_input", input.type,
   "_seq", seq.type,
   "_seed", rng.seed,
   ".rds"
@@ -238,22 +254,26 @@ seqmeds.s2 = readRDS(paste0(
 ################################################################################
 # make plots
 ################################################################################
-# 5 designs that aren't boxhill
+# 6 designs that aren't boxhill
 idx = 1
-designs = list(qs[[idx]], seqmeds.n1[[idx]], seqmeds.n2[[idx]], 
+designs = list(qs[[idx]], buffers[[idx]], 
+               seqmeds.n1[[idx]], seqmeds.n2[[idx]], 
                seqmeds.s1[[idx]], seqmeds.s2[[idx]])
-model0s = list(model0.bhq, model0.n1, model0.n2, model0.s1, model0.s2)
-model1s = list(model1.bhq, model1.n1, model1.n2, model1.s1, model1.s2)
-design.names = c("q", "nugget1", "nugget2", "signal1", "signal2")
+model0s = list(model0.other, model0.other, 
+               model0.n1, model0.n2, model0.s1, model0.s2)
+model1s = list(model1.other, model1.other,
+               model1.n1, model1.n2, model1.s1, model1.s2)
+design.names = c("q", "buffer", 
+                 "nugget1", "nugget2", 
+                 "signal1", "signal2")
 
 # global settings
 candidates = x_seq
-buffer = 0
 batch.idx = 1
 N2 = 2
 
 # function for getting objective of x2 -- stages!
-getx2 = function(design, objective.type, model0, model1){
+getx2 = function(design, objective.type, buffer, model0, model1){
   
   initD = design$x
   y = design$y
@@ -346,21 +366,36 @@ objectives = matrix(NA, nrow = length(x_seq), ncol = length(designs))
 x_vec = rep(NA, length(designs))
 x_idx_vec = rep(NA, length(designs))
 for(i in 1:length(designs)){
+  # objective.type
   if(i == 1){
     objective.type = 2
   } else{
     objective.type = 1
   }
-  res = getx2(designs[[i]], objective.type, model0s[[i]], model1s[[i]])
+  # buffer
+  if(i == 2){
+    buffer = 1e-15
+  } else{
+    buffer = 0
+  }
+  res = getx2(designs[[i]], objective.type, buffer, model0s[[i]], model1s[[i]])
   objectives[, i] = res$objective
   x_vec[i] = res$x
   x_idx_vec[i] = res$x.idx
 }
 
+design.names = c("q", "buffer", "nugget1", "nugget2", 
+                 "signal1", "signal2")
+design.levels = c("nugget1", "nugget2", "q", 
+                 "signal1", "signal2", "buffer")
+
 obj.data = data.frame(melt(objectives))
 names(obj.data) = c("index", "type", "logObjective")
 obj.data$logObjective = log(obj.data$logObjective)
-obj.data$type = factor(obj.data$type, levels = 1:5, labels = design.names)
+obj.data$type = factor(obj.data$type, levels = 1:length(designs), 
+                       labels = design.names) # map design numbers to names
+# reorder
+obj.data$type = factor(obj.data$type, levels = design.levels)
 obj.data$x = rep(x_seq, length(designs))
 
 ggplot(obj.data, aes(x = x, y = logObjective, color = )) + 

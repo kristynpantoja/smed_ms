@@ -53,7 +53,7 @@ gg_color_hue = function(n) {
 ################################################################################
 # errorvar.type = 1 # 1 = phi0 with nugget, 2 = phi1 with nugget
 # signalvar.type = 2 # 1 = phi0 sigmasq != 1, 2 = phi1 sigmasq != 1
-input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
+input.type = 3 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
 seq.type = 2 # 1 = fully sequential, 2 = stage-sequential 3x5
 
 # simulations settings
@@ -132,7 +132,7 @@ model0.bh = list(type = type01[1], l = l01[1], signal.var = sigmasq,
 model1.bh = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
                  error.var = nugget.bh)
 
-# models - q, random, space-filling
+# models - q, random, space-filling, buffer
 model0.other = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
                     error.var = nugget.sm)
 model1.other = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
@@ -191,6 +191,16 @@ qs = readRDS(paste0(
   output_home,
   "/scenario1_seqmed",
   "_obj", 2,
+  "_input", input.type,
+  "_seq", seq.type,
+  "_seed", rng.seed,
+  ".rds"
+))
+
+buffers = readRDS(paste0(
+  output_home,
+  "/scenario1_buffer",
+  "_obj", 1,
   "_input", input.type,
   "_seq", seq.type,
   "_seed", rng.seed,
@@ -291,19 +301,21 @@ getPPHseq = function(design, model0, model1){
 
 PPH_seq = data.frame(
   PPH0 = numeric(), PPH1 = numeric(), type = character(), sim = numeric())
-for(b in 1:numSims){
+for(j in 1:numSims){
   # designs at sim b
-  bh = boxhills[[b]]
-  q = qs[[b]]
-  r = randoms[[b]]
-  sf = spacefills[[b]]
-  n1 = seqmeds.n1[[b]]
-  n2 = seqmeds.n2[[b]]
-  s1 = seqmeds.s1[[b]]
-  s2 = seqmeds.s2[[b]]
+  bh = boxhills[[j]]
+  q = qs[[j]]
+  b = buffers[[j]]
+  r = randoms[[j]]
+  sf = spacefills[[j]]
+  n1 = seqmeds.n1[[j]]
+  n2 = seqmeds.n2[[j]]
+  s1 = seqmeds.s1[[j]]
+  s2 = seqmeds.s2[[j]]
   # sequence of PPHs for each design
   PPH_seq.bh = getPPHseq(bh, model0.bh, model1.bh)
   PPH_seq.q = getPPHseq(q, model0.other, model1.other)
+  PPH_seq.b = getPPHseq(b, model0.other, model1.other)
   PPH_seq.r = getPPHseq(r, model0.other, model1.other)
   PPH_seq.sf = getPPHseq(sf, model0.other, model1.other)
   PPH_seq.n1 = getPPHseq(n1, model0.n1, model1.n1)
@@ -313,6 +325,7 @@ for(b in 1:numSims){
   # master data frame
   PPH_seq.bh$type = "boxhill"
   PPH_seq.q$type = "q"
+  PPH_seq.b$type = "buffer"
   PPH_seq.r$type = "random"
   PPH_seq.sf$type = "spacefill"
   PPH_seq.n1$type = "nugget1"
@@ -320,9 +333,9 @@ for(b in 1:numSims){
   PPH_seq.s1$type = "signal1"
   PPH_seq.s2$type = "signal2"
   PPH_seq.tmp = rbind(
-    PPH_seq.bh, PPH_seq.q, PPH_seq.r, PPH_seq.sf, 
+    PPH_seq.bh, PPH_seq.q, PPH_seq.b, PPH_seq.r, PPH_seq.sf, 
     PPH_seq.n1, PPH_seq.n2, PPH_seq.s1, PPH_seq.s2)
-  PPH_seq.tmp$sim = b
+  PPH_seq.tmp$sim = j
   PPH_seq = rbind(PPH_seq, PPH_seq.tmp)
 }
 

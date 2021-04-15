@@ -60,7 +60,7 @@ obj_gp = function(
 SeqMEDgp_batch = function(
   initD, y, N2 = 11, numCandidates = 10^5, k = 4, p = 1, 
   xmin = 0, xmax = 1, alpha = NULL, candidates = NULL, 
-  batch.idx = 1, buffer = 1e-15, objective.type = 1, model0, model1
+  batch.idx = 1, buffer = 0, objective.type = 1, model0, model1
 ){
   initN = length(initD)
   if(length(y) != initN) stop("length of y does not match length of initial input data, initD")

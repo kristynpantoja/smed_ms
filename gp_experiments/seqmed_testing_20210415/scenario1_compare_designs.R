@@ -126,11 +126,17 @@ l01= c(0.01, 0.01) # SIM SETTING
 # l01= c(0.1, 0.1) # DEMO SETTING
 
 ################################################################################
-# models - BoxHill & q
-model0.bhq = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
-                  error.var = nugget.bh)
-model1.bhq = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
-                  error.var = nugget.bh)
+# models - BoxHill
+model0.bh = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
+                 error.var = nugget.bh)
+model1.bh = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
+                 error.var = nugget.bh)
+
+# models - q, buffer
+model0.other = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
+                    error.var = nugget.sm)
+model1.other = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
+                    error.var = nugget.sm)
 
 # models - SeqMED with different nugget term
 # errorvar.type == 1
@@ -185,6 +191,16 @@ qs = readRDS(paste0(
   output_home,
   "/scenario1_seqmed",
   "_obj", 2,
+  "_input", input.type,
+  "_seq", seq.type,
+  "_seed", rng.seed,
+  ".rds"
+))
+
+buffers = readRDS(paste0(
+  output_home,
+  "/scenario1_buffer",
+  "_obj", 1,
   "_input", input.type,
   "_seq", seq.type,
   "_seed", rng.seed,
@@ -253,25 +269,31 @@ if(input.type == 1){
 
 # all 6 designs
 idx = 1
-designs = list(boxhills[[idx]], qs[[idx]], seqmeds.n1[[idx]], seqmeds.n2[[idx]], 
+designs = list(boxhills[[idx]], qs[[idx]], buffers[[idx]], 
+               seqmeds.n1[[idx]], seqmeds.n2[[idx]], 
                seqmeds.s1[[idx]], seqmeds.s2[[idx]])
-design.names = c("bh", "q", "nugget1", "nugget2", "signal1", "signal2")
+design.names = c("bh", "q", "buffer", 
+                 "nugget1", "nugget2", 
+                 "signal1", "signal2")
 
 x.new.mat = matrix(NA, nrow = Nnew, ncol = length(designs))
 for(i in 1:length(designs)){
   x.new.mat[, i] = designs[[i]]$x.new
 }
 
+design.levels = c("nugget1", "nugget2", "signal1", "signal2", 
+                  "buffer", "q", "bh")
+
 data.gg = data.frame(
   index = as.character(rep(1:Nnew, length(designs))), 
-  type = factor(rep(design.names, each = Nnew), levels = design.names), 
+  type = factor(rep(design.names, each = Nnew), levels = design.levels), 
   value = as.vector(x.new.mat)
 )
 data.gg0 = data.frame(
-  type = factor(rep(design.names, each = Nin), levels = design.names), 
+  type = factor(rep(design.names, each = Nin), levels = design.levels), 
   input = rep(x_input, length(designs))
 )
-text.gg = dplyr::filter(data.gg, index %in% as.character(1:10))
+text.gg = dplyr::filter(data.gg, index %in% as.character(1:15))
 ggplot() + 
   geom_point(data = data.gg0, 
              mapping = aes(x = input, y = type)) +
@@ -280,5 +302,5 @@ ggplot() +
              inherit.aes = FALSE) + 
   geom_text(data = text.gg, 
             aes(x = value, y = type, label = index), 
-            vjust = -0.75 * as.numeric(paste(text.gg$index)), size = 2) +
+            vjust = -0.65 * as.numeric(paste(text.gg$index)), size = 2) +
   xlim(c(xmin, xmax))

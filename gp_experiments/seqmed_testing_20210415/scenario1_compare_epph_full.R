@@ -126,11 +126,17 @@ l01= c(0.01, 0.01) # SIM SETTING
 # l01= c(0.1, 0.1) # DEMO SETTING
 
 ################################################################################
-# models - BoxHill & q
-model0.bhq = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
+# models - BoxHill
+model0.bh = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
                   error.var = nugget.bh)
-model1.bhq = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
+model1.bh = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
                   error.var = nugget.bh)
+
+# models - q, random, space-filling
+model0.other = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
+                 error.var = nugget.sm)
+model1.other = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
+                 error.var = nugget.sm)
 
 # models - SeqMED with different nugget term
 # errorvar.type == 1
@@ -188,6 +194,22 @@ qs = readRDS(paste0(
   "_input", input.type,
   "_seq", seq.type,
   "_seed", rng.seed,
+  ".rds"
+))
+
+randoms = readRDS(paste0(
+  output_home, 
+  "/scenario1_random", 
+  "_input", input.type, 
+  "_seed", rng.seed, 
+  ".rds"
+))
+
+spacefills = readRDS(paste0(
+  output_home, 
+  "/scenario1_spacefilling", 
+  "_input", input.type, 
+  "_seed", rng.seed, 
   ".rds"
 ))
 
@@ -273,35 +295,43 @@ for(b in 1:numSims){
   # designs at sim b
   bh = boxhills[[b]]
   q = qs[[b]]
+  r = randoms[[b]]
+  sf = spacefills[[b]]
   n1 = seqmeds.n1[[b]]
   n2 = seqmeds.n2[[b]]
   s1 = seqmeds.s1[[b]]
   s2 = seqmeds.s2[[b]]
   # sequence of PPHs for each design
-  PPH_seq.bh = getPPHseq(bh, model0.bhq, model1.bhq)
-  PPH_seq.q = getPPHseq(q, model0.bhq, model1.bhq)
-  PPH_seq.n1 = getPPHseq(n1, model0.n1, model1.n2)
-  PPH_seq.n2 = getPPHseq(n2, model0.n1, model1.n2)
-  PPH_seq.s1 = getPPHseq(s1, model0.n1, model1.n2)
-  PPH_seq.s2 = getPPHseq(s2, model0.n1, model1.n2)
+  PPH_seq.bh = getPPHseq(bh, model0.bh, model1.bh)
+  PPH_seq.q = getPPHseq(q, model0.other, model1.other)
+  PPH_seq.r = getPPHseq(r, model0.other, model1.other)
+  PPH_seq.sf = getPPHseq(sf, model0.other, model1.other)
+  PPH_seq.n1 = getPPHseq(n1, model0.n1, model1.n1)
+  PPH_seq.n2 = getPPHseq(n2, model0.n2, model1.n2)
+  PPH_seq.s1 = getPPHseq(s1, model0.s1, model1.s1)
+  PPH_seq.s2 = getPPHseq(s2, model0.s2, model1.s2)
   # master data frame
   PPH_seq.bh$type = "boxhill"
   PPH_seq.q$type = "q"
+  PPH_seq.r$type = "random"
+  PPH_seq.sf$type = "spacefill"
   PPH_seq.n1$type = "nugget1"
   PPH_seq.n2$type = "nugget2"
   PPH_seq.s1$type = "signal1"
   PPH_seq.s2$type = "signal2"
   PPH_seq.tmp = rbind(
-    PPH_seq.bh, PPH_seq.q, PPH_seq.n1, PPH_seq.n2, PPH_seq.s1, PPH_seq.s2)
+    PPH_seq.bh, PPH_seq.q, PPH_seq.r, PPH_seq.sf, 
+    PPH_seq.n1, PPH_seq.n2, PPH_seq.s1, PPH_seq.s2)
   PPH_seq.tmp$sim = b
   PPH_seq = rbind(PPH_seq, PPH_seq.tmp)
 }
+
 PPH0mean_seq = aggregate(PPH_seq$PPH0, by = list(PPH_seq$index, PPH_seq$type), 
-                         FUN = mean, na.action = na.omit)
+                         FUN = function(x) mean(x, na.rm = TRUE))
 names(PPH0mean_seq) = c("index", "type", "value")
 PPH0mean_seq$Hypothesis = "H0"
 PPH1mean_seq = aggregate(PPH_seq$PPH1, by = list(PPH_seq$index, PPH_seq$type), 
-                         FUN = mean, na.action = na.omit)
+                         FUN = function(x) mean(x, na.rm = TRUE))
 names(PPH1mean_seq) = c("index", "type", "value")
 PPH1mean_seq$Hypothesis = "H1"
 PPHmean_seq = rbind(PPH0mean_seq, PPH1mean_seq)

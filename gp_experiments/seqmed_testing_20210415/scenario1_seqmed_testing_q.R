@@ -107,6 +107,12 @@ l01= c(0.01, 0.01) # SIM SETTING
 # l01= c(0.1, 0.1) # DEMO SETTING
 
 ################################################################################
+model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
+              error.var = nugget)
+model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
+              error.var = nugget)
+
+################################################################################
 # import matern functions
 simulated.functions = readRDS(paste0(
   output_home,
@@ -122,11 +128,6 @@ y_seq_mat = simulated.functions$function_values_mat
 
 ################################################################################
 # generate seqmeds 
-
-model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
-              error.var = nugget)
-model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
-              error.var = nugget)
 
 for(j in 1:3){
   for(k in 1:2){
@@ -170,8 +171,7 @@ for(j in 1:3){
         objective.type = 2)
     }
     
-    print(paste0("completed i = ", i, ", j = ", j, ", k = ", k, 
-                 ", m = ", m , "!"))
+    print(paste0("completed j = ", j, ", k = ", k, "!"))
     saveRDS(seqmeds,
             file = paste0(
               output_home,

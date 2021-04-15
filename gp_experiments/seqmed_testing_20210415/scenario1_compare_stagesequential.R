@@ -51,7 +51,6 @@ gg_color_hue = function(n) {
 ################################################################################
 # simulation settings, shared for both scenarios
 ################################################################################
-objective.type = 1
 # errorvar.type = 1 # 1 = phi0 with nugget, 2 = phi1 with nugget
 # signalvar.type = 2 # 1 = phi0 sigmasq != 1, 2 = phi1 sigmasq != 1
 input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
@@ -127,10 +126,10 @@ l01= c(0.01, 0.01) # SIM SETTING
 # l01= c(0.1, 0.1) # DEMO SETTING
 
 ################################################################################
-# models - BoxHill
-model0.bh = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
+# models - BoxHill & q
+model0.bhq = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
                  error.var = nugget.bh)
-model1.bh = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
+model1.bhq = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
                  error.var = nugget.bh)
 
 # models - SeqMED with different nugget term
@@ -182,10 +181,20 @@ boxhills = readRDS(paste0(
   ".rds"
 ))
 
+qs = readRDS(paste0(
+  output_home,
+  "/scenario1_seqmed", 
+  "_obj", 2,
+  "_input", input.type, 
+  "_seq", seq.type,
+  "_seed", rng.seed,
+  ".rds"
+))
+
 seqmeds.n1 = readRDS(paste0(
   output_home,
   "/scenario1_seqmed", 
-  "_obj", objective.type,
+  "_obj", 1,
   "_error", 1, 
   "_input", input.type, 
   "_seq", seq.type,
@@ -196,7 +205,7 @@ seqmeds.n1 = readRDS(paste0(
 seqmeds.n2 = readRDS(paste0(
   output_home,
   "/scenario1_seqmed", 
-  "_obj", objective.type,
+  "_obj", 1,
   "_error", 2, 
   "_input", input.type, 
   "_seq", seq.type,
@@ -207,7 +216,7 @@ seqmeds.n2 = readRDS(paste0(
 seqmeds.s1 = readRDS(paste0(
   output_home,
   "/scenario1_seqmed", 
-  "_obj", objective.type,
+  "_obj", 1,
   "_signal", 1, 
   "_input", input.type, 
   "_seq", seq.type,
@@ -218,7 +227,7 @@ seqmeds.s1 = readRDS(paste0(
 seqmeds.s2 = readRDS(paste0(
   output_home,
   "/scenario1_seqmed", 
-  "_obj", objective.type,
+  "_obj", 1,
   "_signal", 2, 
   "_input", input.type, 
   "_seq", seq.type,
@@ -263,24 +272,27 @@ PPH_seq = data.frame(
 for(b in 1:numSims){
   # designs at sim b
   bh = boxhills[[b]]
+  q = qs[[b]]
   n1 = seqmeds.n1[[b]]
   n2 = seqmeds.n2[[b]]
   s1 = seqmeds.s1[[b]]
   s2 = seqmeds.s2[[b]]
   # sequence of PPHs for each design
-  PPH_seq.bh = getPPHseq(bh, model0.bh, model1.bh)
+  PPH_seq.bh = getPPHseq(bh, model0.bhq, model1.bhq)
+  PPH_seq.q = getPPHseq(q, model0.bhq, model1.bhq)
   PPH_seq.n1 = getPPHseq(n1, model0.n1, model1.n2)
   PPH_seq.n2 = getPPHseq(n2, model0.n1, model1.n2)
   PPH_seq.s1 = getPPHseq(s1, model0.n1, model1.n2)
   PPH_seq.s2 = getPPHseq(s2, model0.n1, model1.n2)
   # master data frame
   PPH_seq.bh$type = "boxhill"
+  PPH_seq.q$type = "q"
   PPH_seq.n1$type = "nugget1"
   PPH_seq.n2$type = "nugget2"
   PPH_seq.s1$type = "signal1"
   PPH_seq.s2$type = "signal2"
   PPH_seq.tmp = rbind(
-    PPH_seq.bh, PPH_seq.n1, PPH_seq.n2, PPH_seq.s1, PPH_seq.s2)
+    PPH_seq.bh, PPH_seq.q, PPH_seq.n1, PPH_seq.n2, PPH_seq.s1, PPH_seq.s2)
   PPH_seq.tmp$sim = b
   PPH_seq = rbind(PPH_seq, PPH_seq.tmp)
 }
@@ -297,8 +309,3 @@ ggplot(PPHmean_seq, aes(x = index, y = value, color = type, linetype = type)) +
   facet_wrap(~Hypothesis) + 
   geom_path() + 
   theme_bw()
-
-
-
-
-

@@ -180,8 +180,7 @@ for(i in 1:2){
           objective.type = 1)
       }
       
-      print(paste0("completed i = ", i, ", j = ", j, ", k = ", k, 
-                   ", m = ", m , "!"))
+      print(paste0("completed i = ", i, ", j = ", j, ", k = ", k, "!"))
       saveRDS(seqmeds,
               file = paste0(
                 output_home,

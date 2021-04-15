@@ -404,7 +404,7 @@ plt = ggplot(obj.data, aes(x = x, y = logObjective, color = )) +
 ggsave(paste0(
   "20210416_scen1", 
   "_in", input.type, 
-  "_full_x2obj.pdf"),
+  "_stage_x2obj.pdf"),
   plot = plt,
   width = 6, 
   height = 4, 

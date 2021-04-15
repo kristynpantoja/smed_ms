@@ -151,7 +151,7 @@ model0.s1 = list(type = type01[1], l = l01[1], signal.var = sigmasqs[1],
 model1.s1 = list(type = type01[2], l = l01[2], signal.var = sigmasqs[2], 
               error.var = nugget.sm)
 # signalvar.type == 2
-model0.s1 = list(type = type01[1], l = l01[1], signal.var = sigmasqs[2],
+model0.s2 = list(type = type01[1], l = l01[1], signal.var = sigmasqs[2],
               error.var = nugget.sm)
 model1.s2 = list(type = type01[2], l = l01[2], signal.var = sigmasqs[1], 
               error.var = nugget.sm)
@@ -183,9 +183,9 @@ boxhills = readRDS(paste0(
 
 qs = readRDS(paste0(
   output_home,
-  "/scenario1_seqmed", 
+  "/scenario1_seqmed",
   "_obj", 2,
-  "_input", input.type, 
+  "_input", input.type,
   "_seq", seq.type,
   "_seed", rng.seed,
   ".rds"

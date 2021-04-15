@@ -128,9 +128,9 @@ l01= c(0.01, 0.01) # SIM SETTING
 ################################################################################
 # models - BoxHill & q
 model0.bhq = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
-                 error.var = nugget.bh)
+                  error.var = nugget.bh)
 model1.bhq = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
-                 error.var = nugget.bh)
+                  error.var = nugget.bh)
 
 # models - SeqMED with different nugget term
 # errorvar.type == 1
@@ -147,14 +147,14 @@ model1.n2 = list(type = type01[2], l = l01[2], signal.var = sigmasq,
 # models - SeqMED with different signal variance
 # signalvar.type == 1
 model0.s1 = list(type = type01[1], l = l01[1], signal.var = sigmasqs[1], 
-              error.var = nugget.sm)
+                 error.var = nugget.sm)
 model1.s1 = list(type = type01[2], l = l01[2], signal.var = sigmasqs[2], 
-              error.var = nugget.sm)
+                 error.var = nugget.sm)
 # signalvar.type == 2
-model0.s1 = list(type = type01[1], l = l01[1], signal.var = sigmasqs[2],
-              error.var = nugget.sm)
+model0.s2 = list(type = type01[1], l = l01[1], signal.var = sigmasqs[2],
+                 error.var = nugget.sm)
 model1.s2 = list(type = type01[2], l = l01[2], signal.var = sigmasqs[1], 
-              error.var = nugget.sm)
+                 error.var = nugget.sm)
 
 ################################################################################
 # import matern functions
@@ -183,9 +183,9 @@ boxhills = readRDS(paste0(
 
 qs = readRDS(paste0(
   output_home,
-  "/scenario1_seqmed", 
+  "/scenario1_seqmed",
   "_obj", 2,
-  "_input", input.type, 
+  "_input", input.type,
   "_seq", seq.type,
   "_seed", rng.seed,
   ".rds"
@@ -238,74 +238,92 @@ seqmeds.s2 = readRDS(paste0(
 ################################################################################
 # make plots
 ################################################################################
-PPHs_seq = list()
+# 5 designs that aren't boxhill
+idx = 1
+designs = list(qs[[idx]], seqmeds.n1[[idx]], seqmeds.n2[[idx]], 
+               seqmeds.s1[[idx]], seqmeds.s2[[idx]])
+model0s = list(model0.bhq, model0.n1, model0.n2, model0.s1, model0.s2)
+model1s = list(model1.bhq, model1.n1, model1.n2, model1.s1, model1.s2)
+design.names = c("q", "nugget1", "nugget2", "signal1", "signal2")
 
-getPPHseq = function(design, model0, model1){
-  PPH0_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
-  PPH1_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
-  for(i in 1:length(as.vector(na.omit(design$y.new)))){
-    y.tmp = c(design$y, as.vector(na.omit(design$y.new))[1:i])
-    x.tmp = c(design$x, as.vector(na.omit(design$x.new))[1:i])
-    PPHs.tmp = getHypothesesPosteriors(
-      prior.probs = prior_probs, 
-      evidences = c(
-        Evidence_gp(y.tmp, x.tmp, model0),
-        Evidence_gp(y.tmp, x.tmp, model1)
-      )
-    )
-    PPH0_seq[i] = PPHs.tmp[1]
-    PPH1_seq[i] = PPHs.tmp[2]
+# global settings
+candidates = x_seq
+buffer = 0
+batch.idx = 2
+
+# function for getting objective of x2
+getx2 = function(design, objective.type, model0, model1){
+  initD = c(design$x, design$x.new[1])
+  y = c(design$y, design$y.new[1])
+  
+  initN = length(initD)
+  if(length(y) != initN) stop("length of y does not match length of initial input data, initD")
+  
+  # check if any points in initD give Wasserstein distance of 0 (in which case we don't want to use it since 1/0 in q)
+  # turns out, that's not necessary
+  
+  # old_initD = initD
+  
+  # posterior distribution of beta
+  if(is.null(model0$error.var)){
+    Kinv0 = solve(getCov(initD, initD, model0$type, model0$l))
+  } else{
+    Kinv0 = solve(getCov(initD, initD, model0$type, model0$l) + 
+                    diag(rep(model0$error.var, initN)))
   }
-  if(length(PPH0_seq) < Nnew){
-    PPH0_seq[(length(PPH0_seq) + 1):Nnew] = NA
-    PPH1_seq[(length(PPH1_seq) + 1):Nnew] = NA
+  if(is.null(model1$error.var)){
+    Kinv1 = solve(getCov(initD, initD, model1$type, model1$l))
+  } else{
+    Kinv1 = solve(getCov(initD, initD, model1$type, model1$l) + 
+                    diag(rep(model1$error.var, initN)))
   }
-  return(data.frame(
-    index = 1:Nnew, 
-    PPH0 = PPH0_seq, 
-    PPH1 = PPH1_seq
+  
+  # Find f_opt: minimum of f_min
+  f_min_candidates = sapply(
+    candidates, 
+    function(x) obj_gp(
+      x, NULL, 
+      Kinv0, Kinv1, initD, y, p = 1, k = 4, alpha = 1, buffer, objective.type, 
+      model0, model1))
+  if(all(f_min_candidates == Inf)){
+    stop("SeqMEDgp_batch: all candidates result in objective function = Inf.")
+  }
+  f_opt = which.min(f_min_candidates)
+  xnew = candidates[f_opt]
+  
+  # checks #
+  if(xnew != design$x.new[2]) warning("x2 doesn't match!")
+  if(f_opt != design$x.new.idx[2]) warning("x2.idx doesn't match!")
+  
+  return(list(
+    objective = f_min_candidates, 
+    x = xnew,
+    x.idx = f_opt
   ))
 }
 
-PPH_seq = data.frame(
-  PPH0 = numeric(), PPH1 = numeric(), type = character(), sim = numeric())
-for(b in 1:numSims){
-  # designs at sim b
-  bh = boxhills[[b]]
-  q = qs[[b]]
-  n1 = seqmeds.n1[[b]]
-  n2 = seqmeds.n2[[b]]
-  s1 = seqmeds.s1[[b]]
-  s2 = seqmeds.s2[[b]]
-  # sequence of PPHs for each design
-  PPH_seq.bh = getPPHseq(bh, model0.bhq, model1.bhq)
-  PPH_seq.q = getPPHseq(q, model0.bhq, model1.bhq)
-  PPH_seq.n1 = getPPHseq(n1, model0.n1, model1.n2)
-  PPH_seq.n2 = getPPHseq(n2, model0.n1, model1.n2)
-  PPH_seq.s1 = getPPHseq(s1, model0.n1, model1.n2)
-  PPH_seq.s2 = getPPHseq(s2, model0.n1, model1.n2)
-  # master data frame
-  PPH_seq.bh$type = "boxhill"
-  PPH_seq.q$type = "q"
-  PPH_seq.n1$type = "nugget1"
-  PPH_seq.n2$type = "nugget2"
-  PPH_seq.s1$type = "signal1"
-  PPH_seq.s2$type = "signal2"
-  PPH_seq.tmp = rbind(
-    PPH_seq.bh, PPH_seq.q, PPH_seq.n1, PPH_seq.n2, PPH_seq.s1, PPH_seq.s2)
-  PPH_seq.tmp$sim = b
-  PPH_seq = rbind(PPH_seq, PPH_seq.tmp)
+# calculate x2 objective
+objectives = matrix(NA, nrow = length(x_seq), ncol = length(designs))
+x_vec = rep(NA, length(designs))
+x_idx_vec = rep(NA, length(designs))
+for(i in 1:length(designs)){
+  if(i == 1){
+    objective.type = 2
+  } else{
+    objective.type = 1
+  }
+  res = getx2(designs[[i]], objective.type, model0s[[i]], model1s[[i]])
+  objectives[, i] = res$objective
+  x_vec[i] = res$x
+  x_idx_vec[i] = res$x.idx
 }
-PPH0mean_seq = aggregate(PPH_seq$PPH0, by = list(PPH_seq$index, PPH_seq$type), 
-                         FUN = mean, na.action = na.omit)
-names(PPH0mean_seq) = c("index", "type", "value")
-PPH0mean_seq$Hypothesis = "H0"
-PPH1mean_seq = aggregate(PPH_seq$PPH1, by = list(PPH_seq$index, PPH_seq$type), 
-                         FUN = mean, na.action = na.omit)
-names(PPH1mean_seq) = c("index", "type", "value")
-PPH1mean_seq$Hypothesis = "H1"
-PPHmean_seq = rbind(PPH0mean_seq, PPH1mean_seq)
-ggplot(PPHmean_seq, aes(x = index, y = value, color = type, linetype = type)) + 
-  facet_wrap(~Hypothesis) + 
-  geom_path() + 
-  theme_bw()
+
+obj.data = data.frame(melt(objectives))
+names(obj.data) = c("index", "type", "logObjective")
+obj.data$logObjective = log(obj.data$logObjective)
+obj.data$type = factor(obj.data$type, levels = 1:5, labels = design.names)
+obj.data$x = rep(x_seq, length(designs))
+
+ggplot(obj.data, aes(x = x, y = logObjective, color = )) + 
+  facet_wrap(~type) + 
+  geom_path()

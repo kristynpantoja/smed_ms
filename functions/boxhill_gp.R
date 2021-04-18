@@ -110,6 +110,8 @@ BHgp_m2 = function(
       )
     )
     post.probs.mat[i + 1, ] = post.probs.cur
+    # check post.probs.cur -- if either is NaN, stop
+    if(sum(is.nan(post.probs.cur)) > 0) break
     # check post.probs.cur -- if either equals 0 or 1
     if(sum(post.probs.cur %in% c(0, 1)) > 0) break
   }

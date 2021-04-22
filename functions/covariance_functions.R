@@ -40,12 +40,20 @@ phi_periodic = function(Xi, Xj, l, signal.var = 1){
 
 getCov = function(X1, X2, type, l = 1, signal.var = 1){
   phi = NULL
-  if(type == 1 | type == "squaredexponential" | type == "sqexp" | type == "gaussian" | type == "s" | type == "g") phi = phi_sqexp
-  else if(type == 2) phi = phi_matern
-  else if(type == 3 | type == "exp" | type == "exponential" | type == "e") phi = phi_exp
-  else if(type == 4 | type == "matern" | type == "mat" | type == "m") phi = phi_matern2
-  else if(type == 5 | type == "periodic" | type == "p") phi = phi_periodic
-  else stop("invalid type specification of covariance function for GP")
+  if(type == 1 | type == "squaredexponential" | type == "sqexp" | 
+     type == "gaussian" | type == "s" | type == "g") {
+    phi = phi_sqexp
+  } else if(type == 2) {
+    phi = phi_matern
+  } else if(type == 3 | type == "exp" | type == "exponential" | type == "e") {
+    phi = phi_exp
+  } else if(type == 4 | type == "matern" | type == "mat" | type == "m") {
+    phi = phi_matern2
+  } else if(type == 5 | type == "periodic" | type == "p") {
+    phi = phi_periodic
+  } else{
+    stop("invalid type specification of covariance function for GP")
+  }
   if(is.vector(X1) & is.vector(X2)) {
     X1 = as.matrix(X1)
     X2 = as.matrix(X2)

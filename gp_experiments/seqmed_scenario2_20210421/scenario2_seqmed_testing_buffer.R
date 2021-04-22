@@ -102,7 +102,7 @@ x_spacefill3 = x_seq[x_spacefill3_idx]
 ################################################################################
 type01 = c("matern", "periodic")
 typeT = type01[2]
-l01= c(0.1, 0.5)
+l01= c(0.01, 0.1)
 lT = l01[2]
 
 ################################################################################
@@ -166,7 +166,7 @@ for(j in 1:3){
         y0 = y_input, x0 = x_input, x0.idx = x_input_idx, 
         candidates = x_seq, function.values = y_seq, 
         model0 = model0, model1 = model1, 
-        numSeq = numSeq, seqN = seqN, prints = FALSE, buffer = buffer, 
+        numSeq = numSeq, seqN = seqN, prints = TRUE, buffer = buffer, 
         objective.type = 1)
     }
     

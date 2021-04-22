@@ -8,6 +8,7 @@
 # Sources/Libraries
 ################################################################################
 output_home = "gp_experiments/seqmed_scenario2_20210421/outputs"
+functions_home = "functions"
 
 # for seqmed design
 source(paste(functions_home, "/SeqMEDgp.R", sep = ""))

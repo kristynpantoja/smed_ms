@@ -1,5 +1,5 @@
 ################################################################################
-# last updated: 04/17/2021
+# last updated: 04/21/2021
 # purpose: to test seqmedgp for scenario 3:
 #   squared exponential vs. another squared exponential,
 #   where the true function is matern
@@ -267,7 +267,7 @@ seqmeds.s2 = readRDS(paste0(
 ))
 
 ################################################################################
-# make plots
+# make sequential EPPH plots
 ################################################################################
 PPHs_seq = list()
 

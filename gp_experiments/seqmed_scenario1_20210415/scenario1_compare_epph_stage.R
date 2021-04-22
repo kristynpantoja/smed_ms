@@ -9,7 +9,7 @@
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = "gp_experiments/seqmed_testing_20210415/outputs"
+output_home = "gp_experiments/seqmed_scenario1_20210415/outputs"
 functions_home = "functions"
 
 # for seqmed design
@@ -53,7 +53,7 @@ gg_color_hue = function(n) {
 ################################################################################
 # errorvar.type = 1 # 1 = phi0 with nugget, 2 = phi1 with nugget
 # signalvar.type = 2 # 1 = phi0 sigmasq != 1, 2 = phi1 sigmasq != 1
-input.type = 3 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
+input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
 seq.type = 2 # 1 = fully sequential, 2 = stage-sequential 3x5
 
 # simulations settings
@@ -80,7 +80,7 @@ nugget.sm = NULL
 buffer = 0
 
 # boxhill settings
-nugget.bh = 1e-10
+nugget.bh = NULL
 prior_probs = rep(1 / 2, 2)
 
 # shared settings
@@ -181,7 +181,7 @@ y_seq_mat = simulated.functions$function_values_mat
 
 boxhills = readRDS(paste0(
   output_home, 
-  "/scenario1_boxhill", 
+  "/scenario1_boxhill_nuggetNULL", 
   "_input", input.type, 
   "_seed", rng.seed, 
   ".rds"
@@ -351,4 +351,5 @@ PPHmean_seq = rbind(PPH0mean_seq, PPH1mean_seq)
 ggplot(PPHmean_seq, aes(x = index, y = value, color = type, linetype = type)) + 
   facet_wrap(~Hypothesis) + 
   geom_path() + 
-  theme_bw()
+  theme_bw() +
+  ylim(0, 1)

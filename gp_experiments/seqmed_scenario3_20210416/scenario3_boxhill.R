@@ -62,7 +62,7 @@ x_seq = seq(from = xmin, to = xmax, length.out = numx)
 
 # boxhill settings
 sigmasq = 1
-nugget = 1e-10
+nugget = NULL # 1e-10
 prior_probs = rep(1 / 2, 2)
 
 ################################################################################
@@ -157,11 +157,21 @@ for(j in 1:3){
         x_seq, y_seq)
     }
     
-    saveRDS(boxhills, 
-            file = paste0(
-              output_home,
-              "/scenario3_boxhill", 
-              "_input", input.type, 
-              "_seed", rng.seed,
-              ".rds"))
+    if(is.null(nugget)){
+      saveRDS(boxhills, 
+              file = paste0(
+                output_home,
+                "/scenario3_boxhill_nuggetNULL", 
+                "_input", input.type, 
+                "_seed", rng.seed,
+                ".rds"))
+    } else{
+      saveRDS(boxhills, 
+              file = paste0(
+                output_home,
+                "/scenario3_boxhill", 
+                "_input", input.type, 
+                "_seed", rng.seed,
+                ".rds"))
+    }
 }

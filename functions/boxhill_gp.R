@@ -95,6 +95,10 @@ BHgp_m2 = function(
       warning("Warning in BHgp_m2() : There were NaNs in Box & Hill criterion 
               evaluation over the candidate set!!")
     }
+    if(all(is.nan(bhd_seq))){
+      warning("Warning in BHgp_m2() : ***ALL*** NaNs in Box & Hill criterion
+              evaluated over the candidate set!!")
+    }
     # get new point
     x.new.idx[i] = which.max(bhd_seq)
     x.new[i] = candidates[x.new.idx[i]]

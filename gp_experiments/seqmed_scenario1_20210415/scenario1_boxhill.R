@@ -9,7 +9,7 @@
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = "gp_experiments/seqmed_testing_20210415/outputs"
+output_home = "gp_experiments/seqmed_scenario1_20210415/outputs"
 functions_home = "functions"
 
 # for seqmed design
@@ -51,7 +51,6 @@ gg_color_hue = function(n) {
 ################################################################################
 # simulation settings, shared for both scenarios
 ################################################################################
-input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
 
 # simulations settings
 numSims = 25
@@ -67,7 +66,7 @@ x_seq = seq(from = xmin, to = xmax, length.out = numx)
 
 # boxhill settings
 sigmasq = 1
-nugget = 1e-10
+nugget = NULL
 prior_probs = rep(1 / 2, 2)
 
 ################################################################################
@@ -133,34 +132,49 @@ y_seq_mat = simulated.functions$function_values_mat
 ################################################################################
 # generate boxhills
 
-# input set
-if(input.type == 1){
-  x_input = x_in1
-  x_input_idx = x_in1_idx
-} else if(input.type == 2){
-  x_input = x_in2
-  x_input_idx = x_in2_idx
-} else if(input.type == 3){
-  x_input = x_in3
-  x_input_idx = x_in3_idx
+for(j in 1:3){
+  
+  # j : input setting
+  input.type = j
+  # input set
+  if(input.type == 1){
+    x_input = x_in1
+    x_input_idx = x_in1_idx
+  } else if(input.type == 2){
+    x_input = x_in2
+    x_input_idx = x_in2_idx
+  } else if(input.type == 3){
+    x_input = x_in3
+    x_input_idx = x_in3_idx
+  }
+  
+  # simulations!
+  registerDoRNG(rng.seed)
+  boxhills = foreach(
+    i = 1:numSims
+  ) %dorng% {
+    y_seq = y_seq_mat[ , i]
+    y_input = y_seq[x_input_idx]
+    BHgp_m2(
+      y_input, x_input, x_input_idx, prior_probs, model0, model1, Nnew, 
+      x_seq, y_seq)
+  }
+  
+  if(is.null(nugget)){
+    saveRDS(boxhills, 
+            file = paste0(
+              output_home,
+              "/scenario1_boxhill_nuggetNULL", 
+              "_input", input.type, 
+              "_seed", rng.seed,
+              ".rds"))
+  } else{
+    saveRDS(boxhills, 
+            file = paste0(
+              output_home,
+              "/scenario1_boxhill", 
+              "_input", input.type, 
+              "_seed", rng.seed,
+              ".rds"))
+  }
 }
-
-# boxhill
-registerDoRNG(rng.seed)
-boxhills = foreach(
-  i = 1:numSims
-) %dorng% {
-  y_seq = y_seq_mat[ , i]
-  y_input = y_seq[x_input_idx]
-  BHgp_m2(
-    y_input, x_input, x_input_idx, prior_probs, model0, model1, Nnew, 
-    x_seq, y_seq)
-}
-
-saveRDS(boxhills, 
-        file = paste0(
-          output_home,
-          "/scenario1_boxhill", 
-          "_input", input.type, 
-          "_seed", rng.seed,
-          ".rds"))

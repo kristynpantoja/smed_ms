@@ -9,7 +9,7 @@
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = "gp_experiments/seqmed_testing_20210415/outputs"
+output_home = "gp_experiments/seqmed_scenario1_20210415/outputs"
 functions_home = "functions"
 
 # for seqmed design
@@ -80,7 +80,7 @@ nugget.sm = NULL
 buffer = 0
 
 # boxhill settings
-nugget.bh = 1e-10
+nugget.bh = NULL
 prior_probs = rep(1 / 2, 2)
 
 # shared settings
@@ -181,7 +181,7 @@ y_seq_mat = simulated.functions$function_values_mat
 
 boxhills = readRDS(paste0(
   output_home, 
-  "/scenario1_boxhill", 
+  "/scenario1_boxhill_nuggetNULL", 
   "_input", input.type, 
   "_seed", rng.seed, 
   ".rds"
@@ -351,4 +351,5 @@ PPHmean_seq = rbind(PPH0mean_seq, PPH1mean_seq)
 ggplot(PPHmean_seq, aes(x = index, y = value, color = type, linetype = type)) + 
   facet_wrap(~Hypothesis) + 
   geom_path() + 
-  theme_bw()
+  theme_bw() +
+  ylim(0, 1)

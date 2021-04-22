@@ -65,7 +65,7 @@ if(seq.type == 1){
   seqN = 5
 }
 Nnew = numSeq * seqN
-Nttl = Nin + Nnew
+Nttl = Nin + Nnew 
 xmin = 0
 xmax = 1
 numx = 10^3 + 1
@@ -78,7 +78,7 @@ nugget.sm = NULL
 buffer = 0
 
 # boxhill settings
-nugget.bh = 1e-10
+nugget.bh = NULL # 1e-10
 prior_probs = rep(1 / 2, 2)
 
 # shared settings
@@ -180,7 +180,7 @@ y_seq_mat = simulated.functions$function_values_mat
 
 boxhills = readRDS(paste0(
   output_home, 
-  "/scenario3_boxhill", 
+  "/scenario3_boxhill_nuggetNULL", 
   "_input", input.type, 
   "_seed", rng.seed, 
   ".rds"
@@ -292,7 +292,7 @@ data.gg0 = data.frame(
   type = factor(rep(design.names, each = Nin), levels = design.levels), 
   input = rep(x_input, length(designs))
 )
-text.gg = dplyr::filter(data.gg, index %in% as.character(1:15))
+text.gg = dplyr::filter(data.gg, index %in% as.character(1:10))
 ggplot() + 
   geom_point(data = data.gg0, 
              mapping = aes(x = input, y = type)) +

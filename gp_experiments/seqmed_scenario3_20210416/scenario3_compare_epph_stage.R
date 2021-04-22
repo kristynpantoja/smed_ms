@@ -51,7 +51,7 @@ gg_color_hue = function(n) {
 ################################################################################
 # errorvar.type = 1 # 1 = phi0 with nugget, 2 = phi1 with nugget
 # signalvar.type = 2 # 1 = phi0 sigmasq != 1, 2 = phi1 sigmasq != 1
-input.type = 3 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
+input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
 seq.type = 2 # 1 = fully sequential, 2 = stage-sequential 3x5
 
 # simulations settings
@@ -78,7 +78,7 @@ nugget.sm = NULL
 buffer = 0
 
 # boxhill settings
-nugget.bh = 1e-10
+nugget.bh = NULL # 1e-10
 prior_probs = rep(1 / 2, 2)
 
 # shared settings
@@ -180,7 +180,7 @@ y_seq_mat = simulated.functions$function_values_mat
 
 boxhills = readRDS(paste0(
   output_home, 
-  "/scenario3_boxhill", 
+  "/scenario3_boxhill_nuggetNULL", 
   "_input", input.type, 
   "_seed", rng.seed, 
   ".rds"
@@ -271,35 +271,44 @@ seqmeds.s2 = readRDS(paste0(
 ################################################################################
 PPHs_seq = list()
 
-getPPHseq = function(design, model0, model1){
+modelT = list(type = typeT, l = lT, signal.var = sigmasq, error.var = NULL)
+
+getPPHseq_scen3 = function(design, model0, model1, modelT){
   PPH0_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
   PPH1_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
+  PPHT_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
+  # modelT$error.var = min(model0$error.var, model1$error.var, modelT$error.var)
   for(i in 1:length(as.vector(na.omit(design$y.new)))){
     y.tmp = c(design$y, as.vector(na.omit(design$y.new))[1:i])
     x.tmp = c(design$x, as.vector(na.omit(design$x.new))[1:i])
     PPHs.tmp = getHypothesesPosteriors(
-      prior.probs = prior_probs, 
+      prior.probs = rep(1 / 3, 3), 
       evidences = c(
         Evidence_gp(y.tmp, x.tmp, model0),
-        Evidence_gp(y.tmp, x.tmp, model1)
+        Evidence_gp(y.tmp, x.tmp, model1), 
+        Evidence_gp(y.tmp, x.tmp, modelT)
       )
     )
     PPH0_seq[i] = PPHs.tmp[1]
     PPH1_seq[i] = PPHs.tmp[2]
+    PPHT_seq[i] = PPHs.tmp[3]
   }
   if(length(PPH0_seq) < Nnew){
     PPH0_seq[(length(PPH0_seq) + 1):Nnew] = NA
     PPH1_seq[(length(PPH1_seq) + 1):Nnew] = NA
+    PPHT_seq[(length(PPHT_seq) + 1):Nnew] = NA
   }
   return(data.frame(
     index = 1:Nnew, 
     PPH0 = PPH0_seq, 
-    PPH1 = PPH1_seq
+    PPH1 = PPH1_seq, 
+    PPHT = PPHT_seq
   ))
 }
 
 PPH_seq = data.frame(
-  PPH0 = numeric(), PPH1 = numeric(), type = character(), sim = numeric())
+  PPH0 = numeric(), PPH1 = numeric(), PPHT = numeric(), 
+  type = character(), sim = numeric())
 for(j in 1:numSims){
   # designs at sim b
   bh = boxhills[[j]]
@@ -312,15 +321,15 @@ for(j in 1:numSims){
   s1 = seqmeds.s1[[j]]
   s2 = seqmeds.s2[[j]]
   # sequence of PPHs for each design
-  PPH_seq.bh = getPPHseq(bh, model0.bh, model1.bh)
-  PPH_seq.q = getPPHseq(q, model0.other, model1.other)
-  PPH_seq.b = getPPHseq(b, model0.other, model1.other)
-  PPH_seq.r = getPPHseq(r, model0.other, model1.other)
-  PPH_seq.sf = getPPHseq(sf, model0.other, model1.other)
-  PPH_seq.n1 = getPPHseq(n1, model0.n1, model1.n1)
-  PPH_seq.n2 = getPPHseq(n2, model0.n2, model1.n2)
-  PPH_seq.s1 = getPPHseq(s1, model0.s1, model1.s1)
-  PPH_seq.s2 = getPPHseq(s2, model0.s2, model1.s2)
+  PPH_seq.bh = getPPHseq_scen3(bh, model0.bh, model1.bh, modelT)
+  PPH_seq.q = getPPHseq_scen3(q, model0.other, model1.other, modelT)
+  PPH_seq.b = getPPHseq_scen3(b, model0.other, model1.other, modelT)
+  PPH_seq.r = getPPHseq_scen3(r, model0.other, model1.other, modelT)
+  PPH_seq.sf = getPPHseq_scen3(sf, model0.other, model1.other, modelT)
+  PPH_seq.n1 = getPPHseq_scen3(n1, model0.n1, model1.n1, modelT)
+  PPH_seq.n2 = getPPHseq_scen3(n2, model0.n2, model1.n2, modelT)
+  PPH_seq.s1 = getPPHseq_scen3(s1, model0.s1, model1.s1, modelT)
+  PPH_seq.s2 = getPPHseq_scen3(s2, model0.s2, model1.s2, modelT)
   # master data frame
   PPH_seq.bh$type = "boxhill"
   PPH_seq.q$type = "q"
@@ -346,8 +355,14 @@ PPH1mean_seq = aggregate(PPH_seq$PPH1, by = list(PPH_seq$index, PPH_seq$type),
                          FUN = function(x) mean(x, na.rm = TRUE))
 names(PPH1mean_seq) = c("index", "type", "value")
 PPH1mean_seq$Hypothesis = "H1"
-PPHmean_seq = rbind(PPH0mean_seq, PPH1mean_seq)
+PPHTmean_seq = aggregate(PPH_seq$PPHT, by = list(PPH_seq$index, PPH_seq$type), 
+                         FUN = function(x) mean(x, na.rm = TRUE))
+names(PPHTmean_seq) = c("index", "type", "value")
+PPHTmean_seq$Hypothesis = "HT"
+
+PPHmean_seq = rbind(PPH0mean_seq, PPH1mean_seq, PPHTmean_seq)
 ggplot(PPHmean_seq, aes(x = index, y = value, color = type, linetype = type)) + 
   facet_wrap(~Hypothesis) + 
   geom_path() + 
-  theme_bw()
+  theme_bw() + 
+  ylim(0, 1)

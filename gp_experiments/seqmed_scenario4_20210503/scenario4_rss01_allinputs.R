@@ -1,13 +1,13 @@
 ################################################################################
-# last updated: 04/28/2021
-# purpose: to test seqmedgp for scenario 3:
-#   squared exponential vs. another squared exponential,
-#   where the true function is matern
+# last updated: 05/03/2021
+# purpose: to test seqmedgp for scenario 4:
+#   matern vs. squared exponential,
+#   where the true function is periodic
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = "gp_experiments/seqmed_scenario3_20210416/outputs"
+output_home = "gp_experiments/seqmed_scenario4_20210503/outputs"
 functions_home = "functions"
 
 # for seqmed design
@@ -117,11 +117,11 @@ x_spacefill3 = x_seq[x_spacefill3_idx]
 # input set 4 (uniform / random)
 
 ################################################################################
-# Scenario 3: Squared exponential vs. squared exponential, true = matern
+# Scenario 4: Matern vs. squared exponential, true = periodic
 ################################################################################
-type01 = c("squaredexponential", "squaredexponential")
-typeT = "matern"
-l01= c(0.005, 0.01)
+type01 = c("matern", "squaredexponential")
+typeT = "periodic"
+l01= c(0.01, 0.01)
 lT = 0.01
 
 ################################################################################
@@ -162,10 +162,10 @@ model1.s2 = list(type = type01[2], l = l01[2], signal.var = sigmasqs[1],
                  error.var = nugget.sm)
 
 ################################################################################
-# import matern functions
+# import periodic functions
 simulated.functions = readRDS(paste0(
   output_home,
-  "/scenario3_simulated_functions", 
+  "/scenario4_simulated_functions", 
   "_seed", rng.seed,
   ".rds"))
 numSims = simulated.functions$numSims
@@ -180,21 +180,21 @@ y_seq_mat = simulated.functions$function_values_mat
 
 boxhills1 = readRDS(paste0(
   output_home, 
-  "/scenario3_boxhill", 
+  "/scenario4_boxhill", 
   "_input", 1, 
   "_seed", rng.seed, 
   ".rds"
 ))
 boxhills2 = readRDS(paste0(
   output_home, 
-  "/scenario3_boxhill", 
+  "/scenario4_boxhill", 
   "_input", 2, 
   "_seed", rng.seed, 
   ".rds"
 ))
 boxhills3 = readRDS(paste0(
   output_home, 
-  "/scenario3_boxhill", 
+  "/scenario4_boxhill", 
   "_input", 3, 
   "_seed", rng.seed, 
   ".rds"
@@ -202,7 +202,7 @@ boxhills3 = readRDS(paste0(
 
 qs1 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed",
+  "/scenario4_seqmed",
   "_obj", 2,
   "_input", 1,
   "_seq", seq.type,
@@ -211,7 +211,7 @@ qs1 = readRDS(paste0(
 ))
 qs2 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed",
+  "/scenario4_seqmed",
   "_obj", 2,
   "_input", 2,
   "_seq", seq.type,
@@ -220,7 +220,7 @@ qs2 = readRDS(paste0(
 ))
 qs3 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed",
+  "/scenario4_seqmed",
   "_obj", 2,
   "_input", 3,
   "_seq", seq.type,
@@ -230,7 +230,7 @@ qs3 = readRDS(paste0(
 
 buffers1 = readRDS(paste0(
   output_home,
-  "/scenario3_buffer",
+  "/scenario4_buffer",
   "_obj", 1,
   "_input", 1,
   "_seq", seq.type,
@@ -239,7 +239,7 @@ buffers1 = readRDS(paste0(
 ))
 buffers2 = readRDS(paste0(
   output_home,
-  "/scenario3_buffer",
+  "/scenario4_buffer",
   "_obj", 1,
   "_input", 2,
   "_seq", seq.type,
@@ -248,7 +248,7 @@ buffers2 = readRDS(paste0(
 ))
 buffers3 = readRDS(paste0(
   output_home,
-  "/scenario3_buffer",
+  "/scenario4_buffer",
   "_obj", 1,
   "_input", 3,
   "_seq", seq.type,
@@ -258,21 +258,21 @@ buffers3 = readRDS(paste0(
 
 randoms1 = readRDS(paste0(
   output_home, 
-  "/scenario3_random", 
+  "/scenario4_random", 
   "_input", 1, 
   "_seed", rng.seed, 
   ".rds"
 ))
 randoms2 = readRDS(paste0(
   output_home, 
-  "/scenario3_random", 
+  "/scenario4_random", 
   "_input", 2, 
   "_seed", rng.seed, 
   ".rds"
 ))
 randoms3 = readRDS(paste0(
   output_home, 
-  "/scenario3_random", 
+  "/scenario4_random", 
   "_input", 3, 
   "_seed", rng.seed, 
   ".rds"
@@ -280,21 +280,21 @@ randoms3 = readRDS(paste0(
 
 spacefills1 = readRDS(paste0(
   output_home, 
-  "/scenario3_spacefilling", 
+  "/scenario4_spacefilling", 
   "_input", 1, 
   "_seed", rng.seed, 
   ".rds"
 ))
 spacefills2 = readRDS(paste0(
   output_home, 
-  "/scenario3_spacefilling", 
+  "/scenario4_spacefilling", 
   "_input", 2, 
   "_seed", rng.seed, 
   ".rds"
 ))
 spacefills3 = readRDS(paste0(
   output_home, 
-  "/scenario3_spacefilling", 
+  "/scenario4_spacefilling", 
   "_input", 3, 
   "_seed", rng.seed, 
   ".rds"
@@ -302,7 +302,7 @@ spacefills3 = readRDS(paste0(
 
 seqmeds.n1.1 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed", 
+  "/scenario4_seqmed", 
   "_obj", 1,
   "_error", 1, 
   "_input", 1, 
@@ -312,7 +312,7 @@ seqmeds.n1.1 = readRDS(paste0(
 ))
 seqmeds.n1.2 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed", 
+  "/scenario4_seqmed", 
   "_obj", 1,
   "_error", 1, 
   "_input", 2, 
@@ -322,7 +322,7 @@ seqmeds.n1.2 = readRDS(paste0(
 ))
 seqmeds.n1.3 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed", 
+  "/scenario4_seqmed", 
   "_obj", 1,
   "_error", 1, 
   "_input", 3, 
@@ -333,7 +333,7 @@ seqmeds.n1.3 = readRDS(paste0(
 
 seqmeds.n2.1 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed", 
+  "/scenario4_seqmed", 
   "_obj", 1,
   "_error", 2, 
   "_input", 1, 
@@ -343,7 +343,7 @@ seqmeds.n2.1 = readRDS(paste0(
 ))
 seqmeds.n2.2 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed", 
+  "/scenario4_seqmed", 
   "_obj", 1,
   "_error", 2, 
   "_input", 2, 
@@ -353,7 +353,7 @@ seqmeds.n2.2 = readRDS(paste0(
 ))
 seqmeds.n2.3 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed", 
+  "/scenario4_seqmed", 
   "_obj", 1,
   "_error", 2, 
   "_input", 3, 
@@ -364,7 +364,7 @@ seqmeds.n2.3 = readRDS(paste0(
 
 seqmeds.s1.1 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed", 
+  "/scenario4_seqmed", 
   "_obj", 1,
   "_signal", 1, 
   "_input", 1, 
@@ -374,7 +374,7 @@ seqmeds.s1.1 = readRDS(paste0(
 ))
 seqmeds.s1.2 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed", 
+  "/scenario4_seqmed", 
   "_obj", 1,
   "_signal", 1, 
   "_input", 2, 
@@ -384,7 +384,7 @@ seqmeds.s1.2 = readRDS(paste0(
 ))
 seqmeds.s1.3 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed", 
+  "/scenario4_seqmed", 
   "_obj", 1,
   "_signal", 1, 
   "_input", 3, 
@@ -395,7 +395,7 @@ seqmeds.s1.3 = readRDS(paste0(
 
 seqmeds.s2.1 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed", 
+  "/scenario4_seqmed", 
   "_obj", 1,
   "_signal", 2, 
   "_input", 1, 
@@ -405,7 +405,7 @@ seqmeds.s2.1 = readRDS(paste0(
 ))
 seqmeds.s2.2 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed", 
+  "/scenario4_seqmed", 
   "_obj", 1,
   "_signal", 2, 
   "_input", 2, 
@@ -415,7 +415,7 @@ seqmeds.s2.2 = readRDS(paste0(
 ))
 seqmeds.s2.3 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed", 
+  "/scenario4_seqmed", 
   "_obj", 1,
   "_signal", 2, 
   "_input", 3, 

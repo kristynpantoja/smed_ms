@@ -1,13 +1,13 @@
 ################################################################################
-# last updated: 04/21/2021
-# purpose: to test seqmedgp for scenario 3:
-#   squared exponential vs. another squared exponential,
-#   where the true function is matern
+# last updated: 05/03/2021
+# purpose: to test seqmedgp for scenario 4:
+#   matern vs. squared exponential,
+#   where the true function is periodic
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = "gp_experiments/seqmed_scenario3_20210416/outputs"
+output_home = "gp_experiments/seqmed_scenario4_20210503/outputs"
 functions_home = "functions"
 
 # for seqmed design
@@ -65,7 +65,7 @@ if(seq.type == 1){
   seqN = 5
 }
 Nnew = numSeq * seqN
-Nttl = Nin + Nnew
+Nttl = Nin + Nnew 
 xmin = 0
 xmax = 1
 numx = 10^3 + 1
@@ -78,7 +78,7 @@ nugget.sm = NULL
 buffer = 0
 
 # boxhill settings
-nugget.bh = NULL #1e-10
+nugget.bh = NULL # 1e-10
 prior_probs = rep(1 / 2, 2)
 
 # shared settings
@@ -117,11 +117,11 @@ x_spacefill3 = x_seq[x_spacefill3_idx]
 # input set 4 (uniform / random)
 
 ################################################################################
-# Scenario 3: Squared exponential vs. squared exponential, true = matern
+# Scenario 4: Matern vs. squared exponential, true = periodic
 ################################################################################
-type01 = c("squaredexponential", "squaredexponential")
-typeT = "matern"
-l01= c(0.005, 0.01)
+type01 = c("matern", "squaredexponential")
+typeT = "periodic"
+l01= c(0.01, 0.01)
 lT = 0.01
 
 ################################################################################
@@ -131,7 +131,7 @@ model0.bh = list(type = type01[1], l = l01[1], signal.var = sigmasq,
 model1.bh = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
                  error.var = nugget.bh)
 
-# models - q, random, space-filling, buffer
+# models - q, buffer
 model0.other = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
                     error.var = nugget.sm)
 model1.other = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
@@ -162,10 +162,10 @@ model1.s2 = list(type = type01[2], l = l01[2], signal.var = sigmasqs[1],
                  error.var = nugget.sm)
 
 ################################################################################
-# import matern functions
+# import periodic functions
 simulated.functions = readRDS(paste0(
   output_home,
-  "/scenario3_simulated_functions", 
+  "/scenario4_simulated_functions", 
   "_seed", rng.seed,
   ".rds"))
 numSims = simulated.functions$numSims
@@ -180,7 +180,7 @@ y_seq_mat = simulated.functions$function_values_mat
 
 boxhills = readRDS(paste0(
   output_home, 
-  "/scenario3_boxhill_nuggetNULL", 
+  "/scenario4_boxhill_nuggetNULL", 
   "_input", input.type, 
   "_seed", rng.seed, 
   ".rds"
@@ -188,7 +188,7 @@ boxhills = readRDS(paste0(
 
 qs = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed",
+  "/scenario4_seqmed",
   "_obj", 2,
   "_input", input.type,
   "_seq", seq.type,
@@ -198,7 +198,7 @@ qs = readRDS(paste0(
 
 buffers = readRDS(paste0(
   output_home,
-  "/scenario3_buffer",
+  "/scenario4_buffer",
   "_obj", 1,
   "_input", input.type,
   "_seq", seq.type,
@@ -206,25 +206,9 @@ buffers = readRDS(paste0(
   ".rds"
 ))
 
-randoms = readRDS(paste0(
-  output_home, 
-  "/scenario3_random", 
-  "_input", input.type, 
-  "_seed", rng.seed, 
-  ".rds"
-))
-
-spacefills = readRDS(paste0(
-  output_home, 
-  "/scenario3_spacefilling", 
-  "_input", input.type, 
-  "_seed", rng.seed, 
-  ".rds"
-))
-
 seqmeds.n1 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed", 
+  "/scenario4_seqmed", 
   "_obj", 1,
   "_error", 1, 
   "_input", input.type, 
@@ -235,7 +219,7 @@ seqmeds.n1 = readRDS(paste0(
 
 seqmeds.n2 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed", 
+  "/scenario4_seqmed", 
   "_obj", 1,
   "_error", 2, 
   "_input", input.type, 
@@ -246,7 +230,7 @@ seqmeds.n2 = readRDS(paste0(
 
 seqmeds.s1 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed", 
+  "/scenario4_seqmed", 
   "_obj", 1,
   "_signal", 1, 
   "_input", input.type, 
@@ -257,7 +241,7 @@ seqmeds.s1 = readRDS(paste0(
 
 seqmeds.s2 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed", 
+  "/scenario4_seqmed", 
   "_obj", 1,
   "_signal", 2, 
   "_input", input.type, 
@@ -267,102 +251,55 @@ seqmeds.s2 = readRDS(paste0(
 ))
 
 ################################################################################
-# make sequential EPPH plots
+# make plots
 ################################################################################
-PPHs_seq = list()
 
-modelT = list(type = typeT, l = lT, signal.var = sigmasq, error.var = NULL)
-
-getPPHseq_scen3 = function(design, model0, model1, modelT){
-  PPH0_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
-  PPH1_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
-  PPHT_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
-  # modelT$error.var = min(model0$error.var, model1$error.var, modelT$error.var)
-  for(i in 1:length(as.vector(na.omit(design$y.new)))){
-    y.tmp = c(design$y, as.vector(na.omit(design$y.new))[1:i])
-    x.tmp = c(design$x, as.vector(na.omit(design$x.new))[1:i])
-    PPHs.tmp = getHypothesesPosteriors(
-      prior.probs = rep(1 / 3, 3), 
-      evidences = c(
-        Evidence_gp(y.tmp, x.tmp, model0),
-        Evidence_gp(y.tmp, x.tmp, model1), 
-        Evidence_gp(y.tmp, x.tmp, modelT)
-      )
-    )
-    PPH0_seq[i] = PPHs.tmp[1]
-    PPH1_seq[i] = PPHs.tmp[2]
-    PPHT_seq[i] = PPHs.tmp[3]
-  }
-  if(length(PPH0_seq) < Nnew){
-    PPH0_seq[(length(PPH0_seq) + 1):Nnew] = NA
-    PPH1_seq[(length(PPH1_seq) + 1):Nnew] = NA
-    PPHT_seq[(length(PPHT_seq) + 1):Nnew] = NA
-  }
-  return(data.frame(
-    index = 1:Nnew, 
-    PPH0 = PPH0_seq, 
-    PPH1 = PPH1_seq, 
-    PPHT = PPHT_seq
-  ))
+# input set
+if(input.type == 1){
+  x_input = x_in1
+  x_input_idx = x_in1_idx
+} else if(input.type == 2){
+  x_input = x_in2
+  x_input_idx = x_in2_idx
+} else if(input.type == 3){
+  x_input = x_in3
+  x_input_idx = x_in3_idx
 }
 
-PPH_seq = data.frame(
-  PPH0 = numeric(), PPH1 = numeric(), PPHT = numeric(), 
-  type = character(), sim = numeric())
-for(j in 1:numSims){
-  # designs at sim b
-  bh = boxhills[[j]]
-  q = qs[[j]]
-  b = buffers[[j]]
-  r = randoms[[j]]
-  sf = spacefills[[j]]
-  n1 = seqmeds.n1[[j]]
-  n2 = seqmeds.n2[[j]]
-  s1 = seqmeds.s1[[j]]
-  s2 = seqmeds.s2[[j]]
-  # sequence of PPHs for each design
-  PPH_seq.bh = getPPHseq_scen3(bh, model0.bh, model1.bh, modelT)
-  PPH_seq.q = getPPHseq_scen3(q, model0.other, model1.other, modelT)
-  PPH_seq.b = getPPHseq_scen3(b, model0.other, model1.other, modelT)
-  PPH_seq.r = getPPHseq_scen3(r, model0.other, model1.other, modelT)
-  PPH_seq.sf = getPPHseq_scen3(sf, model0.other, model1.other, modelT)
-  PPH_seq.n1 = getPPHseq_scen3(n1, model0.n1, model1.n1, modelT)
-  PPH_seq.n2 = getPPHseq_scen3(n2, model0.n2, model1.n2, modelT)
-  PPH_seq.s1 = getPPHseq_scen3(s1, model0.s1, model1.s1, modelT)
-  PPH_seq.s2 = getPPHseq_scen3(s2, model0.s2, model1.s2, modelT)
-  # master data frame
-  PPH_seq.bh$type = "boxhill"
-  PPH_seq.q$type = "q"
-  PPH_seq.b$type = "buffer"
-  PPH_seq.r$type = "random"
-  PPH_seq.sf$type = "spacefill"
-  PPH_seq.n1$type = "nugget1"
-  PPH_seq.n2$type = "nugget2"
-  PPH_seq.s1$type = "signal1"
-  PPH_seq.s2$type = "signal2"
-  PPH_seq.tmp = rbind(
-    PPH_seq.bh, PPH_seq.q, PPH_seq.b, PPH_seq.r, PPH_seq.sf, 
-    PPH_seq.n1, PPH_seq.n2, PPH_seq.s1, PPH_seq.s2)
-  PPH_seq.tmp$sim = j
-  PPH_seq = rbind(PPH_seq, PPH_seq.tmp)
+# all 6 designs
+idx = 1
+designs = list(boxhills[[idx]], qs[[idx]], buffers[[idx]], 
+               seqmeds.n1[[idx]], seqmeds.n2[[idx]], 
+               seqmeds.s1[[idx]], seqmeds.s2[[idx]])
+design.names = c("bh", "q", "buffer", 
+                 "nugget1", "nugget2", 
+                 "signal1", "signal2")
+
+x.new.mat = matrix(NA, nrow = Nnew, ncol = length(designs))
+for(i in 1:length(designs)){
+  x.new.mat[, i] = designs[[i]]$x.new
 }
 
-PPH0mean_seq = aggregate(PPH_seq$PPH0, by = list(PPH_seq$index, PPH_seq$type), 
-                         FUN = function(x) mean(x, na.rm = TRUE))
-names(PPH0mean_seq) = c("index", "type", "value")
-PPH0mean_seq$Hypothesis = "H0"
-PPH1mean_seq = aggregate(PPH_seq$PPH1, by = list(PPH_seq$index, PPH_seq$type), 
-                         FUN = function(x) mean(x, na.rm = TRUE))
-names(PPH1mean_seq) = c("index", "type", "value")
-PPH1mean_seq$Hypothesis = "H1"
-PPHTmean_seq = aggregate(PPH_seq$PPHT, by = list(PPH_seq$index, PPH_seq$type), 
-                         FUN = function(x) mean(x, na.rm = TRUE))
-names(PPHTmean_seq) = c("index", "type", "value")
-PPHTmean_seq$Hypothesis = "HT"
+design.levels = c("nugget1", "nugget2", "signal1", "signal2", 
+                  "buffer", "q", "bh")
 
-PPHmean_seq = rbind(PPH0mean_seq, PPH1mean_seq, PPHTmean_seq)
-ggplot(PPHmean_seq, aes(x = index, y = value, color = type, linetype = type)) + 
-  facet_wrap(~Hypothesis) + 
-  geom_path() + 
-  theme_bw() +
-  ylim(0, 1)
+data.gg = data.frame(
+  index = as.character(rep(1:Nnew, length(designs))), 
+  type = factor(rep(design.names, each = Nnew), levels = design.levels), 
+  value = as.vector(x.new.mat)
+)
+data.gg0 = data.frame(
+  type = factor(rep(design.names, each = Nin), levels = design.levels), 
+  input = rep(x_input, length(designs))
+)
+text.gg = dplyr::filter(data.gg, index %in% as.character(1:10))
+ggplot() + 
+  geom_point(data = data.gg0, 
+             mapping = aes(x = input, y = type)) +
+  geom_point(data = data.gg, 
+             mapping = aes(x = value, y = type, color = type), 
+             inherit.aes = FALSE) + 
+  geom_text(data = text.gg, 
+            aes(x = value, y = type, label = index), 
+            vjust = -0.65 * as.numeric(paste(text.gg$index)), size = 2) +
+  xlim(c(xmin, xmax))

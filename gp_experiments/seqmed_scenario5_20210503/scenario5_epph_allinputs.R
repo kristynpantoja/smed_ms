@@ -1,13 +1,13 @@
 ################################################################################
-# last updated: 04/28/2021
-# purpose: to test seqmedgp for scenario 3:
-#   squared exponential vs. another squared exponential,
-#   where the true function is matern
+# last updated: 05/03/2021
+# purpose: to test seqmedgp for scenario 5:
+#   matern vs. periodic,
+#   where the true function is squared exponential
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = "gp_experiments/seqmed_scenario3_20210416/outputs"
+output_home = "gp_experiments/seqmed_scenario5_20210503/outputs"
 functions_home = "functions"
 
 # for seqmed design
@@ -51,7 +51,7 @@ gg_color_hue = function(n) {
 ################################################################################
 # errorvar.type = 1 # 1 = phi0 with nugget, 2 = phi1 with nugget
 # signalvar.type = 2 # 1 = phi0 sigmasq != 1, 2 = phi1 sigmasq != 1
-# input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
+input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
 seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
 
 # simulations settings
@@ -117,11 +117,11 @@ x_spacefill3 = x_seq[x_spacefill3_idx]
 # input set 4 (uniform / random)
 
 ################################################################################
-# Scenario 3: Squared exponential vs. squared exponential, true = matern
+# Scenario 5: Matern vs. periodic, true = squared exponential
 ################################################################################
-type01 = c("squaredexponential", "squaredexponential")
-typeT = "matern"
-l01= c(0.005, 0.01)
+type01 = c("matern", "periodic")
+typeT = "squaredexponential"
+l01= c(0.01, 0.01)
 lT = 0.01
 
 ################################################################################
@@ -162,10 +162,10 @@ model1.s2 = list(type = type01[2], l = l01[2], signal.var = sigmasqs[1],
                  error.var = nugget.sm)
 
 ################################################################################
-# import matern functions
+# import sqexp functions
 simulated.functions = readRDS(paste0(
   output_home,
-  "/scenario3_simulated_functions", 
+  "/scenario5_simulated_functions", 
   "_seed", rng.seed,
   ".rds"))
 numSims = simulated.functions$numSims
@@ -180,21 +180,21 @@ y_seq_mat = simulated.functions$function_values_mat
 
 boxhills1 = readRDS(paste0(
   output_home, 
-  "/scenario3_boxhill", 
+  "/scenario5_boxhill", 
   "_input", 1, 
   "_seed", rng.seed, 
   ".rds"
 ))
 boxhills2 = readRDS(paste0(
   output_home, 
-  "/scenario3_boxhill", 
+  "/scenario5_boxhill", 
   "_input", 2, 
   "_seed", rng.seed, 
   ".rds"
 ))
 boxhills3 = readRDS(paste0(
   output_home, 
-  "/scenario3_boxhill", 
+  "/scenario5_boxhill", 
   "_input", 3, 
   "_seed", rng.seed, 
   ".rds"
@@ -202,7 +202,7 @@ boxhills3 = readRDS(paste0(
 
 qs1 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed",
+  "/scenario5_seqmed",
   "_obj", 2,
   "_input", 1,
   "_seq", seq.type,
@@ -211,7 +211,7 @@ qs1 = readRDS(paste0(
 ))
 qs2 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed",
+  "/scenario5_seqmed",
   "_obj", 2,
   "_input", 2,
   "_seq", seq.type,
@@ -220,7 +220,7 @@ qs2 = readRDS(paste0(
 ))
 qs3 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed",
+  "/scenario5_seqmed",
   "_obj", 2,
   "_input", 3,
   "_seq", seq.type,
@@ -230,7 +230,7 @@ qs3 = readRDS(paste0(
 
 buffers1 = readRDS(paste0(
   output_home,
-  "/scenario3_buffer",
+  "/scenario5_buffer",
   "_obj", 1,
   "_input", 1,
   "_seq", seq.type,
@@ -239,7 +239,7 @@ buffers1 = readRDS(paste0(
 ))
 buffers2 = readRDS(paste0(
   output_home,
-  "/scenario3_buffer",
+  "/scenario5_buffer",
   "_obj", 1,
   "_input", 2,
   "_seq", seq.type,
@@ -248,7 +248,7 @@ buffers2 = readRDS(paste0(
 ))
 buffers3 = readRDS(paste0(
   output_home,
-  "/scenario3_buffer",
+  "/scenario5_buffer",
   "_obj", 1,
   "_input", 3,
   "_seq", seq.type,
@@ -258,21 +258,21 @@ buffers3 = readRDS(paste0(
 
 randoms1 = readRDS(paste0(
   output_home, 
-  "/scenario3_random", 
+  "/scenario5_random", 
   "_input", 1, 
   "_seed", rng.seed, 
   ".rds"
 ))
 randoms2 = readRDS(paste0(
   output_home, 
-  "/scenario3_random", 
+  "/scenario5_random", 
   "_input", 2, 
   "_seed", rng.seed, 
   ".rds"
 ))
 randoms3 = readRDS(paste0(
   output_home, 
-  "/scenario3_random", 
+  "/scenario5_random", 
   "_input", 3, 
   "_seed", rng.seed, 
   ".rds"
@@ -280,21 +280,21 @@ randoms3 = readRDS(paste0(
 
 spacefills1 = readRDS(paste0(
   output_home, 
-  "/scenario3_spacefilling", 
+  "/scenario5_spacefilling", 
   "_input", 1, 
   "_seed", rng.seed, 
   ".rds"
 ))
 spacefills2 = readRDS(paste0(
   output_home, 
-  "/scenario3_spacefilling", 
+  "/scenario5_spacefilling", 
   "_input", 2, 
   "_seed", rng.seed, 
   ".rds"
 ))
 spacefills3 = readRDS(paste0(
   output_home, 
-  "/scenario3_spacefilling", 
+  "/scenario5_spacefilling", 
   "_input", 3, 
   "_seed", rng.seed, 
   ".rds"
@@ -302,7 +302,7 @@ spacefills3 = readRDS(paste0(
 
 seqmeds.n1.1 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed", 
+  "/scenario5_seqmed", 
   "_obj", 1,
   "_error", 1, 
   "_input", 1, 
@@ -312,7 +312,7 @@ seqmeds.n1.1 = readRDS(paste0(
 ))
 seqmeds.n1.2 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed", 
+  "/scenario5_seqmed", 
   "_obj", 1,
   "_error", 1, 
   "_input", 2, 
@@ -322,7 +322,7 @@ seqmeds.n1.2 = readRDS(paste0(
 ))
 seqmeds.n1.3 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed", 
+  "/scenario5_seqmed", 
   "_obj", 1,
   "_error", 1, 
   "_input", 3, 
@@ -333,7 +333,7 @@ seqmeds.n1.3 = readRDS(paste0(
 
 seqmeds.n2.1 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed", 
+  "/scenario5_seqmed", 
   "_obj", 1,
   "_error", 2, 
   "_input", 1, 
@@ -343,7 +343,7 @@ seqmeds.n2.1 = readRDS(paste0(
 ))
 seqmeds.n2.2 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed", 
+  "/scenario5_seqmed", 
   "_obj", 1,
   "_error", 2, 
   "_input", 2, 
@@ -353,7 +353,7 @@ seqmeds.n2.2 = readRDS(paste0(
 ))
 seqmeds.n2.3 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed", 
+  "/scenario5_seqmed", 
   "_obj", 1,
   "_error", 2, 
   "_input", 3, 
@@ -364,7 +364,7 @@ seqmeds.n2.3 = readRDS(paste0(
 
 seqmeds.s1.1 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed", 
+  "/scenario5_seqmed", 
   "_obj", 1,
   "_signal", 1, 
   "_input", 1, 
@@ -374,7 +374,7 @@ seqmeds.s1.1 = readRDS(paste0(
 ))
 seqmeds.s1.2 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed", 
+  "/scenario5_seqmed", 
   "_obj", 1,
   "_signal", 1, 
   "_input", 2, 
@@ -384,7 +384,7 @@ seqmeds.s1.2 = readRDS(paste0(
 ))
 seqmeds.s1.3 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed", 
+  "/scenario5_seqmed", 
   "_obj", 1,
   "_signal", 1, 
   "_input", 3, 
@@ -395,7 +395,7 @@ seqmeds.s1.3 = readRDS(paste0(
 
 seqmeds.s2.1 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed", 
+  "/scenario5_seqmed", 
   "_obj", 1,
   "_signal", 2, 
   "_input", 1, 
@@ -405,7 +405,7 @@ seqmeds.s2.1 = readRDS(paste0(
 ))
 seqmeds.s2.2 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed", 
+  "/scenario5_seqmed", 
   "_obj", 1,
   "_signal", 2, 
   "_input", 2, 
@@ -415,7 +415,7 @@ seqmeds.s2.2 = readRDS(paste0(
 ))
 seqmeds.s2.3 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed", 
+  "/scenario5_seqmed", 
   "_obj", 1,
   "_signal", 2, 
   "_input", 3, 
@@ -438,20 +438,27 @@ seqmed.n2s = list(seqmeds.n2.1, seqmeds.n2.2, seqmeds.n2.3)
 seqmed.s1s = list(seqmeds.s1.1, seqmeds.s1.2, seqmeds.s1.3)
 seqmed.s2s = list(seqmeds.s2.1, seqmeds.s2.2, seqmeds.s2.3)
 
-# calculate the RSS01
-getRSST = function(design, model){
-  pred.tmp = getGPPredictive(design$x.new, design$x, design$y, 
-                              model$type, model$l, 
-                              model$signal.var, model$error.var)
-  RSST.tmp = sum((pred.tmp$pred_mean - design$y.new)^2, na.rm = TRUE) 
-  return(data.frame("RSST" = RSST.tmp))
+# calculate the final posterior probability
+getPPH = function(design, model0, model1, modelT){
+    y.tmp = c(design$y, as.vector(na.omit(design$y.new)))
+    x.tmp = c(design$x, as.vector(na.omit(design$x.new)))
+    PPHs.tmp = getHypothesesPosteriors(
+      prior.probs = rep(1 / 3, 3), 
+      evidences = c(
+        Evidence_gp(y.tmp, x.tmp, model0),
+        Evidence_gp(y.tmp, x.tmp, model1),
+        Evidence_gp(y.tmp, x.tmp, modelT)
+      )
+    )
+  return(data.frame("H0" = PPHs.tmp[1], "H1" = PPHs.tmp[2], "HT" = PPHs.tmp[3]))
 }
 
 # true model
 modelT = list(type = typeT, l = lT, signal.var = sigmasq, error.var = NULL)
 
-RSS.df = data.frame(RSST = numeric(), 
-                    type = character(), sim = numeric(), input = numeric())
+PPH = data.frame(
+  PPH0 = numeric(), PPH1 = numeric(), PPHT = numeric(), 
+  type = character(), sim = numeric(), input = numeric())
 for(k in 1:3){
   for(j in 1:numSims){
     # designs at sim b
@@ -465,49 +472,60 @@ for(k in 1:3){
     s1 = seqmed.s1s[[k]][[j]]
     s2 = seqmed.s2s[[k]][[j]]
     # sequence of PPHs for each design
-    RSS.bh = getRSST(bh, modelT)
-    RSS.q = getRSST(q, modelT)
-    RSS.b = getRSST(b, modelT)
-    RSS.r = getRSST(r, modelT)
-    RSS.sf = getRSST(sf, modelT)
-    RSS.n1 = getRSST(n1, modelT)
-    RSS.n2 = getRSST(n2, modelT)
-    RSS.s1 = getRSST(s1, modelT)
-    RSS.s2 = getRSST(s2, modelT)
+    PPH.bh = getPPH(bh, model0.bh, model1.bh, modelT)
+    PPH.q = getPPH(q, model0.other, model1.other, modelT)
+    PPH.b = getPPH(b, model0.other, model1.other, modelT)
+    PPH.r = getPPH(r, model0.other, model1.other, modelT)
+    PPH.sf = getPPH(sf, model0.other, model1.other, modelT)
+    PPH.n1 = getPPH(n1, model0.n1, model1.n1, modelT)
+    PPH.n2 = getPPH(n2, model0.n2, model1.n2, modelT)
+    PPH.s1 = getPPH(s1, model0.s1, model1.s1, modelT)
+    PPH.s2 = getPPH(s2, model0.s2, model1.s2, modelT)
     # master data frame
-    RSS.bh$type = "boxhill"
-    RSS.q$type = "q"
-    RSS.b$type = "buffer"
-    RSS.r$type = "random"
-    RSS.sf$type = "spacefill"
-    RSS.n1$type = "nugget1"
-    RSS.n2$type = "nugget2"
-    RSS.s1$type = "signal1"
-    RSS.s2$type = "signal2"
-    RSS.tmp = rbind(
-      RSS.bh, RSS.q, RSS.b, RSS.r, RSS.sf, 
-      RSS.n1, RSS.n2, RSS.s1, RSS.s2)
-    RSS.tmp$sim = j
-    RSS.tmp$input = k
-    RSS.df = rbind(RSS.df, RSS.tmp)
+    PPH.bh$type = "boxhill"
+    PPH.q$type = "q"
+    PPH.b$type = "buffer"
+    PPH.r$type = "random"
+    PPH.sf$type = "spacefill"
+    PPH.n1$type = "nugget1"
+    PPH.n2$type = "nugget2"
+    PPH.s1$type = "signal1"
+    PPH.s2$type = "signal2"
+    PPH.tmp = rbind(
+      PPH.bh, PPH.q, PPH.b, PPH.r, PPH.sf, 
+      PPH.n1, PPH.n2, PPH.s1, PPH.s2)
+    PPH.tmp$sim = j
+    PPH.tmp$input = k
+    PPH = rbind(PPH, PPH.tmp)
   }
 }
 
-RSSTmean = aggregate(RSS.df$RSST, by = list(RSS.df$type, RSS.df$input), 
+PPH0mean = aggregate(PPH$H0, by = list(PPH$type, PPH$input), 
                          FUN = function(x) mean(x, na.rm = TRUE))
-names(RSSTmean) = c("type", "input", "value")
+names(PPH0mean) = c("type", "input", "value")
+PPH0mean$Hypothesis = "H0"
+PPH1mean = aggregate(PPH$H1, by = list(PPH$type, PPH$input), 
+                         FUN = function(x) mean(x, na.rm = TRUE))
+names(PPH1mean) = c("type", "input", "value")
+PPH1mean$Hypothesis = "H1"
+PPHTmean = aggregate(PPH$HT, by = list(PPH$type, PPH$input), 
+                     FUN = function(x) mean(x, na.rm = TRUE))
+names(PPHTmean) = c("type", "input", "value")
+PPHTmean$Hypothesis = "HT"
 
-RSSTmean$type = factor(RSSTmean$type)
-RSSTmean$input = factor(RSSTmean$input, 
+PPHmean = rbind(PPH0mean, PPH1mean, PPHTmean)
+PPHmean$type = factor(PPHmean$type)
+PPHmean$Hypothesis = factor(PPHmean$Hypothesis)
+PPHmean$input = factor(PPHmean$input, 
                        labels = c("extrapolation", "inc spread", "even coverage"))
 
-# RSST
-RSST.plt = ggplot(RSSTmean, 
+PPHT.plt = ggplot(dplyr::filter(PPHmean, Hypothesis == "HT"), 
                   aes(x = input, y = value, group = type, color = type)) + 
   geom_point() + 
   geom_path(linetype = 2) +
+  ylim(0, 1) + 
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
-  labs(y = "RSST", x = "Initial Data")
-RSST.plt
+  labs(y = "P(HT|X, Y)", x = "Initial Data")
+PPHT.plt

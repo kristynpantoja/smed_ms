@@ -1,13 +1,13 @@
 ################################################################################
-# last updated: 04/17/2021
-# purpose: to test seqmedgp for scenario 3:
-#   squared exponential vs. another squared exponential,
-#   where the true function is matern
+# last updated: 05/03/2021
+# purpose: to test seqmedgp for scenario 5:
+#   matern vs. periodic,
+#   where the true function is squared exponential
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = "gp_experiments/seqmed_scenario3_20210416/outputs"
+output_home = "gp_experiments/seqmed_scenario5_20210503/outputs"
 functions_home = "functions"
 
 # for seqmed design
@@ -117,11 +117,11 @@ x_spacefill3 = x_seq[x_spacefill3_idx]
 # input set 4 (uniform / random)
 
 ################################################################################
-# Scenario 3: Squared exponential vs. squared exponential, true = matern
+# Scenario 5: Matern vs. periodic, true = squared exponential
 ################################################################################
-type01 = c("squaredexponential", "squaredexponential")
-typeT = "matern"
-l01= c(0.005, 0.01)
+type01 = c("matern", "periodic")
+typeT = "squaredexponential"
+l01= c(0.01, 0.01)
 lT = 0.01
 
 ################################################################################
@@ -162,10 +162,10 @@ model1.s2 = list(type = type01[2], l = l01[2], signal.var = sigmasqs[1],
                  error.var = nugget.sm)
 
 ################################################################################
-# import matern functions
+# import sqexp functions
 simulated.functions = readRDS(paste0(
   output_home,
-  "/scenario3_simulated_functions", 
+  "/scenario5_simulated_functions", 
   "_seed", rng.seed,
   ".rds"))
 numSims = simulated.functions$numSims
@@ -180,7 +180,7 @@ y_seq_mat = simulated.functions$function_values_mat
 
 boxhills = readRDS(paste0(
   output_home, 
-  "/scenario3_boxhill_nuggetNULL", 
+  "/scenario5_boxhill_nuggetNULL", 
   "_input", input.type, 
   "_seed", rng.seed, 
   ".rds"
@@ -188,7 +188,7 @@ boxhills = readRDS(paste0(
 
 qs = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed",
+  "/scenario5_seqmed",
   "_obj", 2,
   "_input", input.type,
   "_seq", seq.type,
@@ -198,7 +198,7 @@ qs = readRDS(paste0(
 
 buffers = readRDS(paste0(
   output_home,
-  "/scenario3_buffer",
+  "/scenario5_buffer",
   "_obj", 1,
   "_input", input.type,
   "_seq", seq.type,
@@ -208,7 +208,7 @@ buffers = readRDS(paste0(
 
 seqmeds.n1 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed", 
+  "/scenario5_seqmed", 
   "_obj", 1,
   "_error", 1, 
   "_input", input.type, 
@@ -219,7 +219,7 @@ seqmeds.n1 = readRDS(paste0(
 
 seqmeds.n2 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed", 
+  "/scenario5_seqmed", 
   "_obj", 1,
   "_error", 2, 
   "_input", input.type, 
@@ -230,7 +230,7 @@ seqmeds.n2 = readRDS(paste0(
 
 seqmeds.s1 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed", 
+  "/scenario5_seqmed", 
   "_obj", 1,
   "_signal", 1, 
   "_input", input.type, 
@@ -241,7 +241,7 @@ seqmeds.s1 = readRDS(paste0(
 
 seqmeds.s2 = readRDS(paste0(
   output_home,
-  "/scenario3_seqmed", 
+  "/scenario5_seqmed", 
   "_obj", 1,
   "_signal", 2, 
   "_input", input.type, 

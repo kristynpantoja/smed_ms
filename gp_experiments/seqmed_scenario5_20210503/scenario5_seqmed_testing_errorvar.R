@@ -1,13 +1,13 @@
 ################################################################################
 # last updated: 05/03/2021
-# purpose: to test seqmedgp for scenario 3:
-#   matern vs. squared exponential,
-#   where the true function is periodic
+# purpose: to test seqmedgp for scenario 5:
+#   matern vs. periodic,
+#   where the true function is squared exponential
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = "gp_experiments/seqmed_scenario4_20210503/outputs"
+output_home = "gp_experiments/seqmed_scenario5_20210503/outputs"
 functions_home = "functions"
 
 # for seqmed design

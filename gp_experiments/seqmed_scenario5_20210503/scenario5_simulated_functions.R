@@ -58,7 +58,7 @@ numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
 
 ################################################################################
-# Scenario 4: Matern vs. squared exponential, true = periodic
+# Scenario 5: Matern vs. periodic, true = squared exponential
 ################################################################################
 type01 = c("matern", "periodic")
 typeT = "squaredexponential"
@@ -66,7 +66,7 @@ l01= c(0.01, 0.01)
 lT = 0.01
 
 ################################################################################
-# generate periodic functions 
+# generate sqexp functions 
 registerDoRNG(rng.seed)
 null_cov = getCov(x_seq, x_seq, typeT, lT)
 null_mean = rep(0, numx)

@@ -31,7 +31,7 @@ library(future)
 library(doFuture)
 library(parallel)
 registerDoFuture()
-nworkers = detectCores()
+nworkers = detectCores() - 2
 plan(multisession, workers = nworkers)
 
 library(rngtools)
@@ -60,9 +60,10 @@ xmax = 1
 numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
 
-# random settings
+# SeqMED settings
 sigmasq = 1
-nugget = NULL
+nuggets = c(1e-10, 1e-15)
+buffer = 0
 
 ################################################################################
 # input data
@@ -97,25 +98,18 @@ x_spacefill3 = x_seq[x_spacefill3_idx]
 # input set 4 (uniform / random)
 
 ################################################################################
-# Scenario 4: Matern vs. squared exponential, true = periodic
+# Scenario 5: Matern vs. periodic, true = squared exponential
 ################################################################################
-type01 = c("matern", "squaredexponential")
-typeT = "periodic"
+type01 = c("matern", "periodic")
+typeT = "squaredexponential"
 l01= c(0.01, 0.01)
 lT = 0.01
 
 ################################################################################
-# models
-model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
-              error.var = nugget)
-model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
-              error.var = nugget)
-
-################################################################################
-# import periodic functions
+# import sqexp functions
 simulated.functions = readRDS(paste0(
   output_home,
-  "/scenario4_simulated_functions", 
+  "/scenario5_simulated_functions", 
   "_seed", rng.seed,
   ".rds"))
 numSims = simulated.functions$numSims
@@ -126,52 +120,77 @@ null_mean = simulated.functions$null_mean
 y_seq_mat = simulated.functions$function_values_mat
 
 ################################################################################
-# space-filling design
+# generate seqmeds 
 
-for(j in 1:3){
-  
-  # j : input setting
-  input.type = j
-  # input set
-  if(input.type == 1){
-    x_input = x_in1
-    x_input_idx = x_in1_idx
-    # new points
-    x.new = x_spacefill1
-    x.new.idx = x_spacefill1_idx
-  } else if(input.type == 2){
-    x_input = x_in2
-    x_input_idx = x_in2_idx
-    # new points
-    x.new = x_spacefill2
-    x.new.idx = x_spacefill2_idx
-  } else if(input.type == 3){
-    x_input = x_in3
-    x_input_idx = x_in3_idx
-    # new points
-    x.new = x_spacefill3
-    x.new.idx = x_spacefill3_idx
+for(i in 1:2){
+  for(j in 1:3){
+    for(k in 1:2){
+      # i : signal setting
+      # models
+      errorvar.type = i
+      if(errorvar.type == 1){
+        model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
+                      error.var = nuggets[1])
+        model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
+                      error.var = nuggets[2])
+      } else if(errorvar.type == 2){
+        model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq,
+                      error.var = nuggets[2])
+        model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
+                      error.var = nuggets[1])
+      }
+      
+      # j : input setting
+      input.type = j
+      # input set
+      if(input.type == 1){
+        x_input = x_in1
+        x_input_idx = x_in1_idx
+      } else if(input.type == 2){
+        x_input = x_in2
+        x_input_idx = x_in2_idx
+      } else if(input.type == 3){
+        x_input = x_in3
+        x_input_idx = x_in3_idx
+      }
+      
+      # k : sequential setting
+      seq.type = k
+      if(seq.type == 1){
+        numSeq = 15
+        seqN = 1
+      } else if(seq.type == 2){
+        numSeq = 3
+        seqN = 5
+      }
+      
+      # simulations!
+      registerDoRNG(rng.seed)
+      seqmeds = foreach(
+        b = 1:numSims
+      ) %dorng% {
+        y_seq = y_seq_mat[ , b]
+        y_input = y_seq[x_input_idx]
+        SeqMEDgp(
+          y0 = y_input, x0 = x_input, x0.idx = x_input_idx, 
+          candidates = x_seq, function.values = y_seq, 
+          model0 = model0, model1 = model1, 
+          numSeq = numSeq, seqN = seqN, prints = FALSE, buffer = buffer, 
+          objective.type = 1)
+      }
+      
+      print(paste0("completed i = ", i, ", j = ", j, ", k = ", k, "!"))
+      saveRDS(seqmeds,
+              file = paste0(
+                output_home,
+                "/scenario5_seqmed",
+                "_obj", 1,
+                "_error", errorvar.type,
+                "_input", input.type,
+                "_seq", seq.type,
+                "_seed", rng.seed,
+                ".rds"))
+      
+    }
   }
-  
-  # simulations!
-  registerDoRNG(rng.seed)
-  randoms = foreach(
-    i = 1:numSims
-  ) %dorng% {
-    y_seq = y_seq_mat[ , i]
-    y_input = y_seq[x_input_idx]
-    # new points' y
-    y.new = y_seq[x.new.idx]
-    list(x = x_input, x.idx = x_input_idx, y = y_input, 
-         x.new = x.new, x.new.idx = x.new.idx, y.new = y.new, 
-         function.values = y_seq)
-  }
-  
-  saveRDS(randoms, 
-          file = paste0(
-            output_home,
-            "/scenario4_spacefilling", 
-            "_input", input.type, 
-            "_seed", rng.seed,
-            ".rds"))
 }

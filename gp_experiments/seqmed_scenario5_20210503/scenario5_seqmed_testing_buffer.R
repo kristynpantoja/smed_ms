@@ -1,13 +1,13 @@
 ################################################################################
 # last updated: 05/03/2021
-# purpose: to test seqmedgp for scenario 3:
-#   matern vs. squared exponential,
-#   where the true function is periodic
+# purpose: to test seqmedgp for scenario 5:
+#   matern vs. periodic,
+#   where the true function is squared exponential
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = "gp_experiments/seqmed_scenario4_20210503/outputs"
+output_home = "gp_experiments/seqmed_scenario5_20210503/outputs"
 functions_home = "functions"
 
 # for seqmed design
@@ -98,10 +98,10 @@ x_spacefill3 = x_seq[x_spacefill3_idx]
 # input set 4 (uniform / random)
 
 ################################################################################
-# Scenario 4: Matern vs. squared exponential, true = periodic
+# Scenario 5: Matern vs. periodic, true = squared exponential
 ################################################################################
-type01 = c("matern", "squaredexponential")
-typeT = "periodic"
+type01 = c("matern", "periodic")
+typeT = "squaredexponential"
 l01= c(0.01, 0.01)
 lT = 0.01
 
@@ -112,10 +112,10 @@ model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq,
               error.var = nugget)
 
 ################################################################################
-# import periodic functions
+# import sqexp functions
 simulated.functions = readRDS(paste0(
   output_home,
-  "/scenario4_simulated_functions", 
+  "/scenario5_simulated_functions", 
   "_seed", rng.seed,
   ".rds"))
 numSims = simulated.functions$numSims
@@ -174,7 +174,7 @@ for(j in 1:3){
     saveRDS(seqmeds,
             file = paste0(
               output_home,
-              "/scenario4_buffer",
+              "/scenario5_buffer",
               "_obj", 1,
               "_input", input.type,
               "_seq", seq.type,

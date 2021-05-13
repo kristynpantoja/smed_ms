@@ -74,12 +74,13 @@ x_seq = seq(from = xmin, to = xmax, length.out = numx)
 # SeqMED settings
 sigmasqs = c(1 - 1e-10, 1)
 nuggets = c(1e-5, 1e-10) # had to change, to fix solve() issue
-nugget.q = 1e-10 # nugget for q, random, and space-filling designs
-nugget.sm = 1e-10 # nugget for different signal variances and buffer
+nugget = 1e-10
+nugget.q = nugget # nugget for q, random, and space-filling designs
+nugget.sm = nugget # nugget for different signal variances and buffer
 buffer = 0
 
 # boxhill settings
-nugget.bh = 1e-10 #1e-10
+nugget.bh = nugget # wouldn't run without
 prior_probs = rep(1 / 2, 2)
 
 # shared settings
@@ -185,97 +186,76 @@ y_seq_mat = simulated.functions$function_values_mat
 ################################################################################
 # read in the data
 
-file_name_end = paste0(
+file_name_end0 = paste0(
   "_input", input.type, 
   "_seed", rng.seed,
   ".rds"
 )
+file_name_end = paste0(
+  "_nugget", strsplit(as.character(nugget), "-")[[1]][2], 
+  file_name_end0)
 
 boxhills = readRDS(paste0(
   output_home, 
   "/scenario2_boxhill", 
-  file_name_end
-))
+  file_name_end))
 
 qs = readRDS(paste0(
   output_home,
-  "/scenario2_seqmed",
-  "_obj", 2,
-  "_input", input.type,
+  "/scenario2_seqmed", 
+  "_obj", 2, 
   "_seq", seq.type,
-  "_seed", rng.seed,
-  ".rds"
-))
+  file_name_end))
 
 buffers = readRDS(paste0(
   output_home,
-  "/scenario2_buffer",
-  "_obj", 1,
-  "_input", input.type,
+  "/scenario2_seqmed", 
+  "_buffer", 
+  "_obj", 1, 
   "_seq", seq.type,
-  "_seed", rng.seed,
-  ".rds"
-))
+  file_name_end))
 
 randoms = readRDS(paste0(
   output_home, 
   "/scenario2_random", 
-  "_input", input.type, 
-  "_seed", rng.seed, 
-  ".rds"
-))
+  file_name_end0))
 
 spacefills = readRDS(paste0(
   output_home, 
   "/scenario2_spacefilling", 
-  "_input", input.type, 
-  "_seed", rng.seed, 
-  ".rds"
-))
+  file_name_end0))
 
 seqmeds.n1 = readRDS(paste0(
   output_home,
   "/scenario2_seqmed", 
-  "_obj", 1,
-  "_error", 1, 
-  "_input", input.type, 
+  "_error", 1,
+  "_obj", 1, 
   "_seq", seq.type,
-  "_seed", rng.seed,
-  ".rds"
-))
+  file_name_end))
 
 seqmeds.n2 = readRDS(paste0(
   output_home,
   "/scenario2_seqmed", 
-  "_obj", 1,
-  "_error", 2, 
-  "_input", input.type, 
+  "_error", 2,
+  "_obj", 1, 
   "_seq", seq.type,
-  "_seed", rng.seed,
-  ".rds"
-))
+  file_name_end))
 
 seqmeds.s1 = readRDS(paste0(
   output_home,
   "/scenario2_seqmed", 
-  "_obj", 1,
-  "_signal", 1, 
-  "_input", input.type, 
+  "_signal", 1,
+  "_obj", 1, 
   "_seq", seq.type,
-  "_seed", rng.seed,
-  ".rds"
-))
+  file_name_end))
 
 seqmeds.s2 = readRDS(paste0(
   output_home,
   "/scenario2_seqmed", 
-  "_obj", 1,
-  "_signal", 2, 
-  "_input", input.type, 
+  "_signal", 2,
+  "_obj", 1, 
   "_seq", seq.type,
-  "_seed", rng.seed,
-  ".rds"
-))
+  file_name_end))
 
 ################################################################################
 # make plots
@@ -284,9 +264,9 @@ PPHs_seq = list()
 
 # models
 model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq,
-              error.var = NULL)
+              error.var = nugget)
 model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
-              error.var = NULL)
+              error.var = nugget)
 
 getPPHseq = function(design, model0, model1){
   PPH0_seq = rep(NA, length(as.vector(na.omit(design$y.new))))

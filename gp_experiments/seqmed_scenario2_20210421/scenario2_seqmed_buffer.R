@@ -166,7 +166,7 @@ for(j in 1:3){
         y0 = y_input, x0 = x_input, x0.idx = x_input_idx, 
         candidates = x_seq, function.values = y_seq, 
         model0 = model0, model1 = model1, 
-        numSeq = numSeq, seqN = seqN, prints = TRUE, buffer = buffer, 
+        numSeq = numSeq, seqN = seqN, prints = FALSE, buffer = buffer, 
         objective.type = 1)
     }
     
@@ -193,7 +193,7 @@ for(j in 1:3){
       file_name_end)
   }
   
-  saveRDS(boxhills, 
+  saveRDS(seqmeds, 
           file = paste0(
             output_home,
             "/scenario2_seqmed", 

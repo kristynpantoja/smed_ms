@@ -180,7 +180,6 @@ for(i in 1:2){
       }
       
       print(paste0("completed i = ", i, ", j = ", j, ", k = ", k, "!"))
-      
       file_name_end = paste0(
         "_input", input.type, 
         "_seed", rng.seed,
@@ -191,7 +190,6 @@ for(i in 1:2){
           "_nugget", strsplit(as.character(nugget), "-")[[1]][2], 
           file_name_end)
       }
-      
       saveRDS(seqmeds, 
               file = paste0(
                 output_home,

@@ -170,6 +170,7 @@ for(j in 1:3){
         objective.type = 2)
     }
     
+    print(paste0("completed j = ", j, ", k = ", k, "!"))
     file_name_end = paste0(
       "_input", input.type, 
       "_seed", rng.seed,
@@ -180,7 +181,6 @@ for(j in 1:3){
         "_nugget", strsplit(as.character(nugget), "-")[[1]][2], 
         file_name_end)
     }
-    
     saveRDS(seqmeds, 
             file = paste0(
               output_home,

@@ -66,7 +66,9 @@ BHgp_m2 = function(
   n, # number of new points
   candidates, # domain over which the function is evaluated 
   function.values, # true function values, evaluated over the domain
-  seed = NULL#, 
+  noise = FALSE,
+  error.var = 1e-10,
+  seed = NULL
   # stopping.type = "tryCatch"
 ){
   if(!is.null(seed)) set.seed(seed)
@@ -76,6 +78,13 @@ BHgp_m2 = function(
     stop("BH_m2 : preliminary y  is given, but not corresponding x")
   } else if(is.null(y) & !is.null(x)){ # x is not null, y is null (get y)
     y = function.values[x.idx]
+    if(noise){
+      if(is.null(error.var)){
+        warning("SeqMEDgp: noise = TRUE, but error.var = NULL -- no noise to add.")
+      } else{
+        y = y + rnorm(length(x), 0, sqrt(error.var))
+      }
+    }
   } else if(is.null(x) & is.null(y)){ # both x and y are null, then us BH method
     stop("BHgp_m2: need input data, at least x!")
   } else{
@@ -130,6 +139,13 @@ BHgp_m2 = function(
     x.new.idx[i] = which.max(bhd_seq)
     x.new[i] = candidates[x.new.idx[i]]
     y.new[i] = function.values[x.new.idx[i]]
+    if(noise){
+      if(is.null(error.var)){
+        warning("SeqMEDgp: noise = TRUE, but error.var = NULL -- no noise to add.")
+      } else{
+        y.new[i] = y.new[i] + rnorm(1, 0, sqrt(error.var))
+      }
+    }
     # update current information
     x.cur = c(x.cur, x.new[i])
     y.cur = c(y.cur, y.new[i])

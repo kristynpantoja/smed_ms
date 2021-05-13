@@ -179,12 +179,12 @@ for(i in 1:2){
           objective.type = 1)
       }
       
+      print(paste0("completed i = ", i, ", j = ", j, ", k = ", k, "!"))
       file_name_end = paste0(
         "_input", input.type, 
         "_seed", rng.seed,
         ".rds"
       )
-      
       saveRDS(seqmeds, 
               file = paste0(
                 output_home,

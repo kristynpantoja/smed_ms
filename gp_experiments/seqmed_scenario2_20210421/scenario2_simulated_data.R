@@ -56,6 +56,7 @@ xmin = 0
 xmax = 1
 numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
+sigmasq_err = 1e-10
 
 ################################################################################
 # Scenario 2: Matern vs. periodic, true = periodic
@@ -71,6 +72,13 @@ registerDoRNG(rng.seed)
 null_cov = getCov(x_seq, x_seq, typeT, lT)
 null_mean = rep(0, numx)
 y_seq_mat = t(rmvnorm(n = numSims, mean = null_mean, sigma = null_cov)) # the function values
+filename_append = ""
+if(!is.null(sigmasq_err)){
+  y_seq_mat = y_seq_mat + matrix(rnorm(numx * numSims), 
+                                 nrow = nrow(y_seq_mat), ncol = ncol(y_seq_mat))
+  filename_append = paste0(
+    "_noise", strsplit(as.character(sigmasq_err), "-")[[1]][2])
+}
 
 saveRDS(
   list(
@@ -82,6 +90,6 @@ saveRDS(
   ), 
   file = paste0(
     output_home,
-    "/scenario2_simulated_functions", 
+    "/scenario2_simulated_functions", filename_append, 
     "_seed", rng.seed,
     ".rds"))

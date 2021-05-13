@@ -59,6 +59,7 @@ xmin = 0
 xmax = 1
 numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
+sigmasq_err = 1e-10
 
 # space-filling settings
 
@@ -111,9 +112,14 @@ model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq,
 
 ################################################################################
 # import periodic functions
+filename_append = ""
+if(!is.null(sigmasq_err)){
+  filename_append = paste0(
+    "_noise", strsplit(as.character(sigmasq_err), "-")[[1]][2])
+}
 simulated.functions = readRDS(paste0(
   output_home,
-  "/scenario2_simulated_functions", 
+  "/scenario2_simulated_functions", filename_append,
   "_seed", rng.seed,
   ".rds"))
 numSims = simulated.functions$numSims
@@ -153,7 +159,7 @@ for(j in 1:3){
   
   # simulations!
   registerDoRNG(rng.seed)
-  randoms = foreach(
+  spacefills = foreach(
     i = 1:numSims
   ) %dorng% {
     y_seq = y_seq_mat[ , i]
@@ -165,11 +171,16 @@ for(j in 1:3){
          function.values = y_seq)
   }
   
-  saveRDS(randoms, 
+  filename_append.tmp = filename_append
+  filename_append.tmp = paste0(
+    filename_append.tmp, 
+    "_input", input.type, 
+    "_seed", rng.seed,
+    ".rds"
+  )
+  saveRDS(spacefills, 
           file = paste0(
             output_home,
             "/scenario2_spacefilling", 
-            "_input", input.type, 
-            "_seed", rng.seed,
-            ".rds"))
+            filename_append.tmp))
 }

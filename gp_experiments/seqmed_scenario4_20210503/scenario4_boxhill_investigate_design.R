@@ -8,7 +8,7 @@
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = "gp_experiments/seqmed_scenario1_20210415/outputs"
+output_home = "gp_experiments/seqmed_scenario4_20210503/outputs"
 functions_home = "functions"
 
 # for seqmed design
@@ -101,11 +101,12 @@ x_spacefill3 = x_seq[x_spacefill3_idx]
 # input set 4 (uniform / random)
 
 ################################################################################
-# Scenario 1: Squared exponential vs. matern, true = matern
+# Scenario 4: Matern vs. squared exponential, true = periodic
 ################################################################################
-type01 = c("squaredexponential", "matern")
-l01= c(0.01, 0.01) # SIM SETTING
-# l01= c(0.1, 0.1) # DEMO SETTING
+type01 = c("matern", "squaredexponential")
+typeT = "periodic"
+l01= c(0.01, 0.01)
+lT = 0.01
 
 ################################################################################
 # models
@@ -118,7 +119,7 @@ model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq,
 # import matern functions
 simulated.functions = readRDS(paste0(
   output_home,
-  "/scenario1_simulated_functions", 
+  "/scenario4_simulated_functions", 
   "_seed", rng.seed,
   ".rds"))
 numSims = simulated.functions$numSims
@@ -152,15 +153,10 @@ i = 1
 
 y_seq = y_seq_mat[ , i]
 y_input = y_seq[x_input_idx]
-BHres1 = BHgp_m2(
+BHres = BHgp_m2(
   y_input, x_input, x_input_idx, prior_probs, model0, model1, Nnew, 
-  x_seq, y_seq, stopping.type = "tryCatch")
-BHres1$x.new
-BHres2 = BHgp_m2(
-  y_input, x_input, x_input_idx, prior_probs, model0, model1, Nnew, 
-  x_seq, y_seq, stopping.type = "pi = 0")
-BHres2$x.new
-all.equal(BHres1$x.new, BHres2$x.new)
+  x_seq, y_seq)
+BHres$x.new
 
 x_new_idx = BHres$x.new.idx
 x_new = BHres$x.new
@@ -169,16 +165,53 @@ y_new = y_seq[x_new_idx]
 # for(i in 1:numSims){
 #   y_seq = y_seq_mat[ , i]
 #   y_input = y_seq[x_input_idx]
-#   BHres1 = BHgp_m2(
+#   BHres = BHgp_m2(
 #     y_input, x_input, x_input_idx, prior_probs, model0, model1, Nnew, 
-#     x_seq, y_seq, stopping.type = "tryCatch")
-#   BHres2 = BHgp_m2(
-#     y_input, x_input, x_input_idx, prior_probs, model0, model1, Nnew, 
-#     x_seq, y_seq, stopping.type = "pi = 0")
-#   print(all.equal(BHres1$x.new, BHres2$x.new))
-#   # if(length(BHres$x.new) != Nnew) print("length(BHres$x.new) != Nnew")
+#     x_seq, y_seq)
+#   print(...)
 # }
 
+# models
+model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq,
+              error.var = NULL)
+model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
+              error.var = NULL)
+modelT = list(type = typeT, l = lT, signal.var = sigmasq, 
+              error.var = NULL)
+
+getPPHseq_scen3 = function(design, model0, model1, modelT){
+  PPH0_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
+  PPH1_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
+  PPHT_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
+  for(i in 1:length(as.vector(na.omit(design$y.new)))){
+    y.tmp = c(design$y, as.vector(na.omit(design$y.new))[1:i])
+    x.tmp = c(design$x, as.vector(na.omit(design$x.new))[1:i])
+    PPHs.tmp = getHypothesesPosteriors(
+      prior.probs = rep(1 / 3, 3), 
+      evidences = c(
+        Evidence_gp(y.tmp, x.tmp, model0),
+        Evidence_gp(y.tmp, x.tmp, model1), 
+        Evidence_gp(y.tmp, x.tmp, modelT)
+      )
+    )
+    PPH0_seq[i] = PPHs.tmp[1]
+    PPH1_seq[i] = PPHs.tmp[2]
+    PPHT_seq[i] = PPHs.tmp[3]
+  }
+  if(length(PPH0_seq) < Nnew){
+    PPH0_seq[(length(PPH0_seq) + 1):Nnew] = NA
+    PPH1_seq[(length(PPH1_seq) + 1):Nnew] = NA
+    PPHT_seq[(length(PPHT_seq) + 1):Nnew] = NA
+  }
+  return(data.frame(
+    index = 1:Nnew, 
+    PPH0 = PPH0_seq, 
+    PPH1 = PPH1_seq, 
+    PPHT = PPHT_seq
+  ))
+}
+
+getPPHseq_scen3(BHres, model0, model1, modelT)
 
 
 # plot

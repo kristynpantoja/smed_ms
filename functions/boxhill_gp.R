@@ -118,10 +118,10 @@ BHgp_m2 = function(
       bhd_seq = sapply(candidates, FUN = function(x) BHDgp_m2(
         y.cur, x.cur, post.probs.cur, x, model0, model1))
     # }
-    if(!all(!is.nan(bhd_seq))){
-      warning("Warning in BHgp_m2() : There were NaNs in Box & Hill criterion 
-              evaluation over the candidate set!!")
-    }
+    # if(!all(!is.nan(bhd_seq))){
+    #   warning("Warning in BHgp_m2() : There were NaNs in Box & Hill criterion 
+    #           evaluation over the candidate set!!")
+    # }
     if(all(is.nan(bhd_seq))){
       warning("Warning in BHgp_m2() : ***ALL*** NaNs in Box & Hill criterion
               evaluated over the candidate set!!")

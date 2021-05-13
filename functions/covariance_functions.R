@@ -22,18 +22,15 @@ phi_matern = function(Xi, Xj, l, nu = 3 / 2, signal.var = 1){
   if(is.null(signal.var)) signal.var = 1
   signal.var * RandomFieldsUtils::matern(abs(Xi - Xj), nu, scaling = "matern")
 }
-# periodic, but a generic version
-# phi_periodic = function(Xi, Xj, l){
-#   r = Xi - Xj
-#   exp(-2 * (sin(r / 2) / l)^2)
-# }
+
 # a periodic kernel that allows to adjust the period, p. 
+# https://www.cs.toronto.edu/~duvenaud/cookbook/
 phi_periodic = function(Xi, Xj, l, signal.var = 1){
   if(is.null(signal.var)) signal.var = 1
-  p = pi / 24
+  p = 0.25 # pi / 24
   r = abs(Xi - Xj)
   sinsq_arg = pi * r / p
-  signal.var * exp(-2 * (sin(sinsq_arg / 2) / l)^2)
+  signal.var * exp(-2 * (sin(sinsq_arg))^2 / l^2)
 }
 
 ### covariance matrix ---

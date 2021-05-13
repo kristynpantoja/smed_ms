@@ -435,6 +435,12 @@ seqmeds.s2.3 = readRDS(paste0(
 # make plots
 ################################################################################
 
+# models
+model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq,
+              error.var = NULL)
+model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
+              error.var = NULL)
+
 boxhills = list(boxhills1, boxhills2, boxhills3)
 qs = list(qs1, qs2, qs3)
 buffers = list(buffers1, buffers2, buffers3)
@@ -475,15 +481,15 @@ for(k in 1:3){
     s1 = seqmed.s1s[[k]][[j]]
     s2 = seqmed.s2s[[k]][[j]]
     # sequence of PPHs for each design
-    RSS.bh = getRSS01(bh, model0.bh, model1.bh)
-    RSS.q = getRSS01(q, model0.q, model1.q)
-    RSS.b = getRSS01(b, model0.sm, model1.sm)
-    RSS.r = getRSS01(r, model0.q, model1.q)
-    RSS.sf = getRSS01(sf, model0.q, model1.q)
-    RSS.n1 = getRSS01(n1, model0.n1, model1.n1)
-    RSS.n2 = getRSS01(n2, model0.n2, model1.n2)
-    RSS.s1 = getRSS01(s1, model0.s1, model1.s1)
-    RSS.s2 = getRSS01(s2, model0.s2, model1.s2)
+    RSS.bh = getRSS01(bh, model0, model1) # model0.bh, model1.bh)
+    RSS.q = getRSS01(q, model0, model1) # model0.other, model1.other)
+    RSS.b = getRSS01(b, model0, model1) # model0.other, model1.other)
+    RSS.r = getRSS01(r, model0, model1) # model0.other, model1.other)
+    RSS.sf = getRSS01(sf, model0, model1) # model0.other, model1.other)
+    RSS.n1 = getRSS01(n1, model0, model1) # model0.n1, model1.n1)
+    RSS.n2 = getRSS01(n2, model0, model1) # model0.n2, model1.n2)
+    RSS.s1 = getRSS01(s1, model0, model1) # model0.s1, model1.s1)
+    RSS.s2 = getRSS01(s2, model0, model1) # model0.s2, model1.s2)
     # master data frame
     RSS.bh$type = "boxhill"
     RSS.q$type = "q"
@@ -504,15 +510,15 @@ for(k in 1:3){
 }
 
 RSS0mean = aggregate(RSS.df$RSS0, by = list(RSS.df$type, RSS.df$input), 
-                         FUN = function(x) mean(x, na.rm = TRUE))
+                     FUN = function(x) mean(x, na.rm = TRUE))
 names(RSS0mean) = c("type", "input", "value")
 RSS0mean$RSS = "RSS0"
 RSS1mean = aggregate(RSS.df$RSS1, by = list(RSS.df$type, RSS.df$input), 
-                         FUN = function(x) mean(x, na.rm = TRUE))
+                     FUN = function(x) mean(x, na.rm = TRUE))
 names(RSS1mean) = c("type", "input", "value")
 RSS1mean$RSS = "RSS1"
 RSS01mean = aggregate(RSS.df$RSS01, by = list(RSS.df$type, RSS.df$input), 
-                     FUN = function(x) mean(x, na.rm = TRUE))
+                      FUN = function(x) mean(x, na.rm = TRUE))
 names(RSS01mean) = c("type", "input", "value")
 RSS01mean$RSS = "RSS01"
 
@@ -543,16 +549,3 @@ RSS01.plt = ggplot(dplyr::filter(RSSmean, RSS == "RSS01"),
         panel.grid.minor = element_blank()) +
   labs(y = "RSS01", x = "Initial Data")
 RSS01.plt
-
-# log(RSS01)
-logged.dat = dplyr::filter(RSSmean, RSS == "RSS01")
-logged.dat$value = log(logged.dat$value)
-logRSS01.plt = ggplot(logged.dat, 
-                   aes(x = input, y = value, group = type, color = type)) + 
-  geom_point() + 
-  geom_path(linetype = 2) +
-  theme_bw() +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank()) +
-  labs(y = "log(RSS01)", x = "Initial Data")
-logRSS01.plt

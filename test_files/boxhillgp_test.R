@@ -73,13 +73,15 @@ y_input = y_seq[x_input_idx]
 
 ################################################################################
 # box and hill method
-model0 = list(type = type01[1], l = l01[1])
-model1 = list(type = type01[2], l = l01[2])
+model0 = list(type = type01[1], l = l01[1], signal.var = 1, error.var = nugget)
+model1 = list(type = type01[2], l = l01[2], signal.var = 1, error.var = nugget)
 
 # calculate prior probabilities using preliminary data (input data)
 prior_probs = rep(1 / 2, 2)
 
-BHres = BHgp_m2(y_input, x_input, x_input_idx, prior_probs, model0, model1, N.new, x_seq, y_seq, nugget)
+BHres = BHgp_m2(
+  y_input, x_input, x_input_idx, prior_probs, model0, model1, N.new, x_seq, 
+  y_seq)
 
 x_new_idx = BHres$x.new.idx
 x_new = BHres$x.new
@@ -91,9 +93,9 @@ y_input.gg = y_input
 x_new.gg = x_new
 y_new.gg = y_new
 H0_predfn = getGPPredictive(x_seq, x_input.gg, y_input.gg, type01[1], l01[1],
-                            nugget = NULL)
+                            error.var = nugget)
 H1_predfn = getGPPredictive(x_seq, x_input.gg, y_input.gg, type01[2], l01[2],
-                            nugget = NULL)
+                            error.var = nugget)
 err0 = 2 * sqrt(diag(H0_predfn$pred_var))
 err1 = 2 * sqrt(diag(H1_predfn$pred_var))
 ggdata = data.table(
@@ -169,7 +171,7 @@ ggplot(post.probs.ggm, aes(x = x, y = value)) +
 
 # plot criterion for first point #
 BHcrit1 = sapply(x_seq, FUN = function(x) 
-  BHDgp_m2(y_input, x_input, prior_probs, x, model0, model1, nugget))
+  BHDgp_m2(y_input, x_input, prior_probs, x, model0, model1))
 BHD.gg = data.frame(
   x = x_seq, 
   y = BHcrit1
@@ -200,6 +202,38 @@ ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable),
         panel.grid.minor = element_blank()) +
   labs(y = "y", x = "x", fill = "Function", color = "Function")
 
+BHDs = matrix(NA, nrow = length(x_seq), ncol = N.new)
+KLijs = matrix(NA, nrow = length(x_seq), ncol = N.new)
+KLjis = matrix(NA, nrow = length(x_seq), ncol = N.new)
+for(i in 1:N.new){
+  xs = c(x_input, BHres$x.new)
+  ys = c(y_input, BHres$y.new)
+  x.tmp = xs[1:length(x_input) + i - 1]
+  y.tmp = ys[1:length(x_input) + i - 1]
+  probs.tmp = BHres$post.probs[i, ]
+  BHDs[, i] = sapply(x_seq, function(x) BHDgp_m2_testing(
+    y.tmp, x.tmp, probs.tmp, x, model0, model1)$bhd)
+  KLijs[, i] = sapply(x_seq, function(x) BHDgp_m2_testing(
+    y.tmp, x.tmp, probs.tmp, x, model0, model1)$KLij)
+  KLjis[, i] = sapply(x_seq, function(x) BHDgp_m2_testing(
+    y.tmp, x.tmp, probs.tmp, x, model0, model1)$KLji)
+}
+
+colnames(BHDs) = 1:N.new
+colnames(KLijs) = 1:N.new
+colnames(KLjis) = 1:N.new
+BHD.df = data.frame(rbind(BHDs, KLijs, KLjis))
+BHD.df$candidate = rep(x_seq, 3)
+BHD.df$type = c(rep("BH", numx), rep("KLij", numx), rep("KLji", numx))
+BHD.mlt = reshape2::melt(
+  BHD.df, id.vars = c("candidate", "type"), measure.vars = paste0("X", 1:N.new))
+logBHD.mlt = BHD.mlt
+logBHD.mlt$value = log(logBHD.mlt$value)
+ggplot(logBHD.mlt, 
+       aes(x = candidate, y = value, color = type, linetype = type, shape = type)) + 
+  facet_wrap(vars(variable)) + 
+  geom_path()
+  # geom_point()
 ################################################################################
 # seqmed
 

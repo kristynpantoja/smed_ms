@@ -5,7 +5,7 @@
 SeqMEDgp = function(
   y0 = NULL, x0 = NULL, x0.idx = NULL, candidates, function.values, 
   xmin = 0, xmax = 1, k = 4, p = 1, 
-  numSeq = 5, seqN = 3, alpha.seq = 1, buffer = 1e-15, objective.type = 1, 
+  numSeq = 5, seqN = 3, alpha.seq = 1, buffer = 0, objective.type = 1, 
   init.as.stage = FALSE, prints = FALSE, seed = NULL, 
   model0 = NULL, model1 = NULL
 ){

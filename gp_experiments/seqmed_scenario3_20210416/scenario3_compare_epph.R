@@ -180,7 +180,7 @@ y_seq_mat = simulated.functions$function_values_mat
 
 boxhills = readRDS(paste0(
   output_home, 
-  "/scenario3_boxhill_nuggetNULL", 
+  "/scenario3_boxhill", 
   "_input", input.type, 
   "_seed", rng.seed, 
   ".rds"
@@ -271,6 +271,11 @@ seqmeds.s2 = readRDS(paste0(
 ################################################################################
 PPHs_seq = list()
 
+# models
+model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq,
+              error.var = NULL)
+model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
+              error.var = NULL)
 modelT = list(type = typeT, l = lT, signal.var = sigmasq, error.var = NULL)
 
 getPPHseq_scen3 = function(design, model0, model1, modelT){
@@ -321,15 +326,15 @@ for(j in 1:numSims){
   s1 = seqmeds.s1[[j]]
   s2 = seqmeds.s2[[j]]
   # sequence of PPHs for each design
-  PPH_seq.bh = getPPHseq_scen3(bh, model0.bh, model1.bh, modelT)
-  PPH_seq.q = getPPHseq_scen3(q, model0.other, model1.other, modelT)
-  PPH_seq.b = getPPHseq_scen3(b, model0.other, model1.other, modelT)
-  PPH_seq.r = getPPHseq_scen3(r, model0.other, model1.other, modelT)
-  PPH_seq.sf = getPPHseq_scen3(sf, model0.other, model1.other, modelT)
-  PPH_seq.n1 = getPPHseq_scen3(n1, model0.n1, model1.n1, modelT)
-  PPH_seq.n2 = getPPHseq_scen3(n2, model0.n2, model1.n2, modelT)
-  PPH_seq.s1 = getPPHseq_scen3(s1, model0.s1, model1.s1, modelT)
-  PPH_seq.s2 = getPPHseq_scen3(s2, model0.s2, model1.s2, modelT)
+  PPH_seq.bh = getPPHseq_scen3(bh, model0, model1, modelT) # model0.bh, model1.bh, modelT)
+  PPH_seq.q = getPPHseq_scen3(q, model0, model1, modelT) #  model0.other, model1.other, modelT)
+  PPH_seq.b = getPPHseq_scen3(b, model0, model1, modelT) #  model0.other, model1.other, modelT)
+  PPH_seq.r = getPPHseq_scen3(r, model0, model1, modelT) # model0.other, model1.other, modelT)
+  PPH_seq.sf = getPPHseq_scen3(sf, model0, model1, modelT) # model0.other, model1.other, modelT)
+  PPH_seq.n1 = getPPHseq_scen3(n1, model0, model1, modelT) # model0.n1, model1.n1, modelT)
+  PPH_seq.n2 = getPPHseq_scen3(n2, model0, model1, modelT) # model0.n2, model1.n2, modelT)
+  PPH_seq.s1 = getPPHseq_scen3(s1, model0, model1, modelT) # model0.s1, model1.s1, modelT)
+  PPH_seq.s2 = getPPHseq_scen3(s2, model0, model1, modelT) # model0.s2, model1.s2, modelT)
   # master data frame
   PPH_seq.bh$type = "boxhill"
   PPH_seq.q$type = "q"

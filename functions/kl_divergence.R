@@ -19,7 +19,8 @@ KLN1 = function(
   mu1, sigma1, 
   mu2, sigma2
 ){
-  KL = log(sigma2) - log(sigma1) + ((sigma1^2 + (mu1 - mu2)^2) / (2 * sigma2^2)) - 0.5
+  KL = log(sigma2) - log(sigma1) + 
+    ((sigma1^2 + (mu1 - mu2)^2) / (2 * sigma2^2)) - 0.5
 }
 
 # KL between two normals (wrapper for univariate and multivariate)

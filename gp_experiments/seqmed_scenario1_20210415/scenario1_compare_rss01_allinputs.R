@@ -53,7 +53,7 @@ gg_color_hue = function(n) {
 # errorvar.type = 1 # 1 = phi0 with nugget, 2 = phi1 with nugget
 # signalvar.type = 2 # 1 = phi0 sigmasq != 1, 2 = phi1 sigmasq != 1
 # input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
-seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
+seq.type = 2 # 1 = fully sequential, 2 = stage-sequential 3x5
 
 # simulations settings
 numSims = 25
@@ -428,6 +428,12 @@ seqmeds.s2.3 = readRDS(paste0(
 # make plots
 ################################################################################
 
+# models
+model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq,
+              error.var = NULL)
+model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
+              error.var = NULL)
+
 boxhills = list(boxhills1, boxhills2, boxhills3)
 qs = list(qs1, qs2, qs3)
 buffers = list(buffers1, buffers2, buffers3)
@@ -468,15 +474,15 @@ for(k in 1:3){
     s1 = seqmed.s1s[[k]][[j]]
     s2 = seqmed.s2s[[k]][[j]]
     # sequence of PPHs for each design
-    RSS.bh = getRSS01(bh, model0.bh, model1.bh)
-    RSS.q = getRSS01(q, model0.other, model1.other)
-    RSS.b = getRSS01(b, model0.other, model1.other)
-    RSS.r = getRSS01(r, model0.other, model1.other)
-    RSS.sf = getRSS01(sf, model0.other, model1.other)
-    RSS.n1 = getRSS01(n1, model0.n1, model1.n1)
-    RSS.n2 = getRSS01(n2, model0.n2, model1.n2)
-    RSS.s1 = getRSS01(s1, model0.s1, model1.s1)
-    RSS.s2 = getRSS01(s2, model0.s2, model1.s2)
+    RSS.bh = getRSS01(bh, model0, model1) # model0.bh, model1.bh)
+    RSS.q = getRSS01(q, model0, model1) # model0.other, model1.other)
+    RSS.b = getRSS01(b, model0, model1) # model0.other, model1.other)
+    RSS.r = getRSS01(r, model0, model1) # model0.other, model1.other)
+    RSS.sf = getRSS01(sf, model0, model1) # model0.other, model1.other)
+    RSS.n1 = getRSS01(n1, model0, model1) # model0.n1, model1.n1)
+    RSS.n2 = getRSS01(n2, model0, model1) # model0.n2, model1.n2)
+    RSS.s1 = getRSS01(s1, model0, model1) # model0.s1, model1.s1)
+    RSS.s2 = getRSS01(s2, model0, model1) # model0.s2, model1.s2)
     # master data frame
     RSS.bh$type = "boxhill"
     RSS.q$type = "q"
@@ -537,15 +543,15 @@ RSS01.plt = ggplot(dplyr::filter(RSSmean, RSS == "RSS01"),
   labs(y = "RSS01", x = "Initial Data")
 RSS01.plt
 
-# log(RSS01)
-logged.dat = dplyr::filter(RSSmean, RSS == "RSS01")
-logged.dat$value = log(logged.dat$value)
-logRSS01.plt = ggplot(logged.dat, 
-                   aes(x = input, y = value, group = type, color = type)) + 
-  geom_point() + 
-  geom_path(linetype = 2) +
-  theme_bw() +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank()) +
-  labs(y = "log(RSS01)", x = "Initial Data")
-logRSS01.plt
+# # log(RSS01)
+# logged.dat = dplyr::filter(RSSmean, RSS == "RSS01")
+# logged.dat$value = log(logged.dat$value)
+# logRSS01.plt = ggplot(logged.dat, 
+#                    aes(x = input, y = value, group = type, color = type)) + 
+#   geom_point() + 
+#   geom_path(linetype = 2) +
+#   theme_bw() +
+#   theme(panel.grid.major = element_blank(),
+#         panel.grid.minor = element_blank()) +
+#   labs(y = "log(RSS01)", x = "Initial Data")
+# logRSS01.plt

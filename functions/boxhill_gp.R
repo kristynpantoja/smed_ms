@@ -32,14 +32,27 @@ BHDgp_m2 = function(
   pred.j = getGPPredictive(candidate, x, y, model.j$type, model.j$l, 
                            model.j$signal.var, model.j$error.var)
   # evaluate criterion D
-  KLij = rep(NA, length(candidate))
-  KLji = rep(NA, length(candidate))
   KLij = KLN(pred.i$pred_mean, pred.i$pred_var, 
              pred.j$pred_mean, pred.j$pred_var, dim = 1)
   KLji = KLN(pred.j$pred_mean, pred.j$pred_var, 
              pred.i$pred_mean, pred.i$pred_var, dim = 1)
   bhd = prod(post.probs) * (KLij + KLji)
   return(bhd)
+}
+
+BHDgp_m2_testing = function(y, x, post.probs, candidate, model.i, model.j){
+  # posterior predictive distributions
+  pred.i = getGPPredictive(candidate, x, y, model.i$type, model.i$l, 
+                           model.i$signal.var, model.i$error.var)
+  pred.j = getGPPredictive(candidate, x, y, model.j$type, model.j$l, 
+                           model.j$signal.var, model.j$error.var)
+  # evaluate criterion D
+  KLij = KLN(pred.i$pred_mean, pred.i$pred_var, 
+             pred.j$pred_mean, pred.j$pred_var, dim = 1)
+  KLji = KLN(pred.j$pred_mean, pred.j$pred_var, 
+             pred.i$pred_mean, pred.i$pred_var, dim = 1)
+  bhd = prod(post.probs) * (KLij + KLji)
+  return(list("bhd" = bhd, "KLij" = KLij, "KLji" = KLji))
 }
 
 # obtain the next n design points (fully sequential)
@@ -53,7 +66,8 @@ BHgp_m2 = function(
   n, # number of new points
   candidates, # domain over which the function is evaluated 
   function.values, # true function values, evaluated over the domain
-  seed = NULL
+  seed = NULL#, 
+  # stopping.type = "tryCatch"
 ){
   if(!is.null(seed)) set.seed(seed)
   
@@ -89,8 +103,21 @@ BHgp_m2 = function(
   x.cur = x
   for(i in 1:n){
     # evaluate criterion over x_seq
-    bhd_seq = sapply(candidates, FUN = function(x) BHDgp_m2(
-      y.cur, x.cur, post.probs.cur, x, model0, model1))
+    # if(stopping.type == 1 | stopping.type == "tryCatch"){
+    #   bhd_seq = tryCatch(
+    #     {
+    #       sapply(candidates, FUN = function(x) BHDgp_m2(
+    #         y.cur, x.cur, post.probs.cur, x, model0, model1))
+    #     }, 
+    #     error = function(e) {
+    #       return(NULL)
+    #     }
+    #   )
+    #   if(is.null(bhd_seq)) break # if BHDgp_m2 breaks, stop looping.
+    # } else {
+      bhd_seq = sapply(candidates, FUN = function(x) BHDgp_m2(
+        y.cur, x.cur, post.probs.cur, x, model0, model1))
+    # }
     if(!all(!is.nan(bhd_seq))){
       warning("Warning in BHgp_m2() : There were NaNs in Box & Hill criterion 
               evaluation over the candidate set!!")
@@ -114,10 +141,13 @@ BHgp_m2 = function(
       )
     )
     post.probs.mat[i + 1, ] = post.probs.cur
-    # check post.probs.cur -- if either is NaN, stop
-    if(sum(is.nan(post.probs.cur)) > 0) break
-    # check post.probs.cur -- if either equals 0 or 1
-    if(sum(post.probs.cur %in% c(0, 1)) > 0) break
+    
+    # if(!(stopping.type == 1 & stopping.type == "tryCatch")){
+      # check post.probs.cur -- if either is NaN, stop
+      if(sum(is.nan(post.probs.cur)) > 0) break ## don't do for "tryCatch"
+      # check post.probs.cur -- if either equals 0 or 1
+      if(sum(post.probs.cur %in% c(0, 1)) > 0) break  ## don't do for "tryCatch"
+    # }
   }
   return(list(
     x = x, 

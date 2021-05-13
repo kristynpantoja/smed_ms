@@ -51,7 +51,7 @@ gg_color_hue = function(n) {
 ################################################################################
 # errorvar.type = 1 # 1 = phi0 with nugget, 2 = phi1 with nugget
 # signalvar.type = 2 # 1 = phi0 sigmasq != 1, 2 = phi1 sigmasq != 1
-input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
+# input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
 seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
 
 # simulations settings
@@ -428,6 +428,13 @@ seqmeds.s2.3 = readRDS(paste0(
 # make plots
 ################################################################################
 
+# models
+model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq,
+              error.var = NULL)
+model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
+              error.var = NULL)
+modelT = list(type = typeT, l = lT, signal.var = sigmasq, error.var = NULL)
+
 boxhills = list(boxhills1, boxhills2, boxhills3)
 qs = list(qs1, qs2, qs3)
 buffers = list(buffers1, buffers2, buffers3)
@@ -440,16 +447,16 @@ seqmed.s2s = list(seqmeds.s2.1, seqmeds.s2.2, seqmeds.s2.3)
 
 # calculate the final posterior probability
 getPPH = function(design, model0, model1, modelT){
-    y.tmp = c(design$y, as.vector(na.omit(design$y.new)))
-    x.tmp = c(design$x, as.vector(na.omit(design$x.new)))
-    PPHs.tmp = getHypothesesPosteriors(
-      prior.probs = rep(1 / 3, 3), 
-      evidences = c(
-        Evidence_gp(y.tmp, x.tmp, model0),
-        Evidence_gp(y.tmp, x.tmp, model1),
-        Evidence_gp(y.tmp, x.tmp, modelT)
-      )
+  y.tmp = c(design$y, as.vector(na.omit(design$y.new)))
+  x.tmp = c(design$x, as.vector(na.omit(design$x.new)))
+  PPHs.tmp = getHypothesesPosteriors(
+    prior.probs = rep(1 / 3, 3), 
+    evidences = c(
+      Evidence_gp(y.tmp, x.tmp, model0),
+      Evidence_gp(y.tmp, x.tmp, model1),
+      Evidence_gp(y.tmp, x.tmp, modelT)
     )
+  )
   return(data.frame("H0" = PPHs.tmp[1], "H1" = PPHs.tmp[2], "HT" = PPHs.tmp[3]))
 }
 
@@ -472,15 +479,15 @@ for(k in 1:3){
     s1 = seqmed.s1s[[k]][[j]]
     s2 = seqmed.s2s[[k]][[j]]
     # sequence of PPHs for each design
-    PPH.bh = getPPH(bh, model0.bh, model1.bh, modelT)
-    PPH.q = getPPH(q, model0.other, model1.other, modelT)
-    PPH.b = getPPH(b, model0.other, model1.other, modelT)
-    PPH.r = getPPH(r, model0.other, model1.other, modelT)
-    PPH.sf = getPPH(sf, model0.other, model1.other, modelT)
-    PPH.n1 = getPPH(n1, model0.n1, model1.n1, modelT)
-    PPH.n2 = getPPH(n2, model0.n2, model1.n2, modelT)
-    PPH.s1 = getPPH(s1, model0.s1, model1.s1, modelT)
-    PPH.s2 = getPPH(s2, model0.s2, model1.s2, modelT)
+    PPH.bh = getPPH(bh, model0, model1, modelT) # model0.bh, model1.bh, modelT)
+    PPH.q = getPPH(q, model0, model1, modelT) # model0.other, model1.other, modelT)
+    PPH.b = getPPH(b, model0, model1, modelT) # model0.other, model1.other, modelT)
+    PPH.r = getPPH(r, model0, model1, modelT) # model0.other, model1.other, modelT)
+    PPH.sf = getPPH(sf, model0, model1, modelT) # model0.other, model1.other, modelT)
+    PPH.n1 = getPPH(n1, model0, model1, modelT) # model0.n1, model1.n1, modelT)
+    PPH.n2 = getPPH(n2, model0, model1, modelT) # model0.n2, model1.n2, modelT)
+    PPH.s1 = getPPH(s1, model0, model1, modelT) # model0.s1, model1.s1, modelT)
+    PPH.s2 = getPPH(s2, model0, model1, modelT) # model0.s2, model1.s2, modelT)
     # master data frame
     PPH.bh$type = "boxhill"
     PPH.q$type = "q"
@@ -501,11 +508,11 @@ for(k in 1:3){
 }
 
 PPH0mean = aggregate(PPH$H0, by = list(PPH$type, PPH$input), 
-                         FUN = function(x) mean(x, na.rm = TRUE))
+                     FUN = function(x) mean(x, na.rm = TRUE))
 names(PPH0mean) = c("type", "input", "value")
 PPH0mean$Hypothesis = "H0"
 PPH1mean = aggregate(PPH$H1, by = list(PPH$type, PPH$input), 
-                         FUN = function(x) mean(x, na.rm = TRUE))
+                     FUN = function(x) mean(x, na.rm = TRUE))
 names(PPH1mean) = c("type", "input", "value")
 PPH1mean$Hypothesis = "H1"
 PPHTmean = aggregate(PPH$HT, by = list(PPH$type, PPH$input), 

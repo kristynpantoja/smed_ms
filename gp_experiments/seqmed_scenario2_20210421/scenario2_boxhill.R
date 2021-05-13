@@ -157,11 +157,20 @@ for(j in 1:3){
       x_seq, y_seq)
   }
   
+  file_name_end = paste0(
+    "_input", input.type, 
+    "_seed", rng.seed,
+    ".rds"
+  )
+  if(!is.null(nugget)){
+    file_name_end = paste0(
+      "_nugget", strsplit(as.character(nugget), "-")[[1]][2], 
+      file_name_end)
+  }
+  
   saveRDS(boxhills, 
           file = paste0(
             output_home,
             "/scenario2_boxhill", 
-            "_input", input.type, 
-            "_seed", rng.seed,
-            ".rds"))
+            file_name_end))
 }

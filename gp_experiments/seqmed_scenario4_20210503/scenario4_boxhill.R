@@ -130,48 +130,47 @@ y_seq_mat = simulated.functions$function_values_mat
 # generate boxhills
 
 for(j in 1:3){
-    
-    # j : input setting
-    input.type = j
-    # input set
-    if(input.type == 1){
-      x_input = x_in1
-      x_input_idx = x_in1_idx
-    } else if(input.type == 2){
-      x_input = x_in2
-      x_input_idx = x_in2_idx
-    } else if(input.type == 3){
-      x_input = x_in3
-      x_input_idx = x_in3_idx
-    }
-    
-    # simulations!
-    registerDoRNG(rng.seed)
-    boxhills = foreach(
-      i = 1:numSims
-    ) %dorng% {
-      y_seq = y_seq_mat[ , i]
-      y_input = y_seq[x_input_idx]
-      BHgp_m2(
-        y_input, x_input, x_input_idx, prior_probs, model0, model1, Nnew, 
-        x_seq, y_seq)
-    }
-    
-    if(is.null(nugget)){
-      saveRDS(boxhills, 
-              file = paste0(
-                output_home,
-                "/scenario4_boxhill_nuggetNULL", 
-                "_input", input.type, 
-                "_seed", rng.seed,
-                ".rds"))
-    } else{
-      saveRDS(boxhills, 
-              file = paste0(
-                output_home,
-                "/scenario4_boxhill", 
-                "_input", input.type, 
-                "_seed", rng.seed,
-                ".rds"))
-    }
+  
+  # j : input setting
+  input.type = j
+  # input set
+  if(input.type == 1){
+    x_input = x_in1
+    x_input_idx = x_in1_idx
+  } else if(input.type == 2){
+    x_input = x_in2
+    x_input_idx = x_in2_idx
+  } else if(input.type == 3){
+    x_input = x_in3
+    x_input_idx = x_in3_idx
+  }
+  
+  # simulations!
+  registerDoRNG(rng.seed)
+  boxhills = foreach(
+    i = 1:numSims
+  ) %dorng% {
+    y_seq = y_seq_mat[ , i]
+    y_input = y_seq[x_input_idx]
+    BHgp_m2(
+      y_input, x_input, x_input_idx, prior_probs, model0, model1, Nnew, 
+      x_seq, y_seq)
+  }
+  
+  file_name_end = paste0(
+    "_input", input.type, 
+    "_seed", rng.seed,
+    ".rds"
+  )
+  if(!is.null(nugget)){
+    file_name_end = paste0(
+      "_nugget", strsplit(as.character(nugget), "-")[[1]][2], 
+      file_name_end)
+  }
+  
+  saveRDS(boxhills, 
+          file = paste0(
+            output_home,
+            "/scenario4_boxhill", 
+            file_name_end))
 }

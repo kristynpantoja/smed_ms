@@ -278,6 +278,12 @@ seqmeds.s2 = readRDS(paste0(
 ################################################################################
 PPHs_seq = list()
 
+# models
+model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq,
+              error.var = NULL)
+model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
+              error.var = NULL)
+
 getPPHseq = function(design, model0, model1){
   PPH0_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
   PPH1_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
@@ -320,15 +326,15 @@ for(j in 1:numSims){
   s1 = seqmeds.s1[[j]]
   s2 = seqmeds.s2[[j]]
   # sequence of PPHs for each design
-  PPH_seq.bh = getPPHseq(bh, model0.bh, model1.bh)
-  PPH_seq.q = getPPHseq(q, model0.q, model1.q)
-  PPH_seq.b = getPPHseq(b, model0.sm, model1.sm)
-  PPH_seq.r = getPPHseq(r, model0.q, model1.q)
-  PPH_seq.sf = getPPHseq(sf, model0.q, model1.q)
-  PPH_seq.n1 = getPPHseq(n1, model0.n1, model1.n1)
-  PPH_seq.n2 = getPPHseq(n2, model0.n2, model1.n2)
-  PPH_seq.s1 = getPPHseq(s1, model0.s1, model1.s1)
-  PPH_seq.s2 = getPPHseq(s2, model0.s2, model1.s2)
+  PPH_seq.bh = getPPHseq(bh, model0, model1) #model0.bh, model1.bh)
+  PPH_seq.q = getPPHseq(q, model0, model1) #model0.q, model1.q)
+  PPH_seq.b = getPPHseq(b, model0, model1) #model0.sm, model1.sm)
+  PPH_seq.r = getPPHseq(r, model0, model1) #model0.q, model1.q)
+  PPH_seq.sf = getPPHseq(sf, model0, model1) #model0.q, model1.q)
+  PPH_seq.n1 = getPPHseq(n1, model0, model1) #model0.n1, model1.n1)
+  PPH_seq.n2 = getPPHseq(n2, model0, model1) #model0.n2, model1.n2)
+  PPH_seq.s1 = getPPHseq(s1, model0, model1) #model0.s1, model1.s1)
+  PPH_seq.s2 = getPPHseq(s2, model0, model1) #model0.s2, model1.s2)
   # master data frame
   PPH_seq.bh$type = "boxhill"
   PPH_seq.q$type = "q"

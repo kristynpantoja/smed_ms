@@ -65,9 +65,7 @@ xmax = 1
 numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
 
-# random settings
-sigmasq = 1
-nugget = NULL
+# space-filling settings
 
 ################################################################################
 # input data

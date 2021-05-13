@@ -428,6 +428,9 @@ seqmeds.s2.3 = readRDS(paste0(
 # make plots
 ################################################################################
 
+# models
+modelT = list(type = typeT, l = lT, signal.var = sigmasq, error.var = NULL)
+
 boxhills = list(boxhills1, boxhills2, boxhills3)
 qs = list(qs1, qs2, qs3)
 buffers = list(buffers1, buffers2, buffers3)
@@ -441,14 +444,11 @@ seqmed.s2s = list(seqmeds.s2.1, seqmeds.s2.2, seqmeds.s2.3)
 # calculate the RSS01
 getRSST = function(design, model){
   pred.tmp = getGPPredictive(design$x.new, design$x, design$y, 
-                              model$type, model$l, 
-                              model$signal.var, model$error.var)
+                             model$type, model$l, 
+                             model$signal.var, model$error.var)
   RSST.tmp = sum((pred.tmp$pred_mean - design$y.new)^2, na.rm = TRUE) 
   return(data.frame("RSST" = RSST.tmp))
 }
-
-# true model
-modelT = list(type = typeT, l = lT, signal.var = sigmasq, error.var = NULL)
 
 RSS.df = data.frame(RSST = numeric(), 
                     type = character(), sim = numeric(), input = numeric())
@@ -494,12 +494,12 @@ for(k in 1:3){
 }
 
 RSSTmean = aggregate(RSS.df$RSST, by = list(RSS.df$type, RSS.df$input), 
-                         FUN = function(x) mean(x, na.rm = TRUE))
+                     FUN = function(x) mean(x, na.rm = TRUE))
 names(RSSTmean) = c("type", "input", "value")
 
 RSSTmean$type = factor(RSSTmean$type)
 RSSTmean$input = factor(RSSTmean$input, 
-                       labels = c("extrapolation", "inc spread", "even coverage"))
+                        labels = c("extrapolation", "inc spread", "even coverage"))
 
 # RSST
 RSST.plt = ggplot(RSSTmean, 

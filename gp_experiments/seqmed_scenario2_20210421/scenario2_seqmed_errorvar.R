@@ -184,11 +184,6 @@ for(i in 1:2){
         "_seed", rng.seed,
         ".rds"
       )
-      if(!is.null(nugget)){
-        file_name_end = paste0(
-          "_nugget", strsplit(as.character(nugget), "-")[[1]][2], 
-          file_name_end)
-      }
       
       saveRDS(seqmeds, 
               file = paste0(

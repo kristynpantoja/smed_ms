@@ -74,12 +74,12 @@ x_seq = seq(from = xmin, to = xmax, length.out = numx)
 # SeqMED settings
 sigmasqs = c(1 - 1e-10, 1)
 nuggets = c(1e-5, 1e-10) # had to change, to fix solve() issue
-nugget.q = NULL # nugget for q, random, and space-filling designs
+nugget.q = 1e-10 # nugget for q, random, and space-filling designs
 nugget.sm = 1e-10 # nugget for different signal variances and buffer
 buffer = 0
 
 # boxhill settings
-nugget.bh = NULL #1e-10
+nugget.bh = 1e-10 #1e-10
 prior_probs = rep(1 / 2, 2)
 
 # shared settings
@@ -185,12 +185,16 @@ y_seq_mat = simulated.functions$function_values_mat
 ################################################################################
 # read in the data
 
+file_name_end = paste0(
+  "_input", input.type, 
+  "_seed", rng.seed,
+  ".rds"
+)
+
 boxhills = readRDS(paste0(
   output_home, 
   "/scenario2_boxhill", 
-  "_input", input.type, 
-  "_seed", rng.seed, 
-  ".rds"
+  file_name_end
 ))
 
 qs = readRDS(paste0(

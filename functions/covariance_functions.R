@@ -27,7 +27,7 @@ phi_matern = function(Xi, Xj, l, nu = 3 / 2, signal.var = 1){
 # https://www.cs.toronto.edu/~duvenaud/cookbook/
 phi_periodic = function(Xi, Xj, l, signal.var = 1){
   if(is.null(signal.var)) signal.var = 1
-  p = 0.25 # pi / 24
+  p = 0.26 #0.25 # pi / 24
   r = abs(Xi - Xj)
   sinsq_arg = pi * r / p
   signal.var * exp(-2 * (sin(sinsq_arg))^2 / l^2)

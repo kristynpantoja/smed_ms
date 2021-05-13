@@ -231,7 +231,7 @@ seqmeds.n1 = readRDS(paste0(
   "_error", 1,
   "_obj", 1, 
   "_seq", seq.type,
-  file_name_end))
+  file_name_end0))
 
 seqmeds.n2 = readRDS(paste0(
   output_home,
@@ -239,7 +239,7 @@ seqmeds.n2 = readRDS(paste0(
   "_error", 2,
   "_obj", 1, 
   "_seq", seq.type,
-  file_name_end))
+  file_name_end0))
 
 seqmeds.s1 = readRDS(paste0(
   output_home,

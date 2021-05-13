@@ -79,7 +79,7 @@ nugget.sm = 1e-10 # nugget for different signal variances and buffer
 buffer = 0
 
 # boxhill settings
-nugget.bh = NULL #1e-10
+nugget.bh = 1e-15 # needed this to get it to run, bc H1: f ~ periodic
 prior_probs = rep(1 / 2, 2)
 
 # shared settings
@@ -187,21 +187,21 @@ y_seq_mat = simulated.functions$function_values_mat
 
 boxhills1 = readRDS(paste0(
   output_home, 
-  "/scenario2_boxhill", 
+  "/scenario2_boxhill_nugget15", 
   "_input", 1, 
   "_seed", rng.seed, 
   ".rds"
 ))
 boxhills2 = readRDS(paste0(
   output_home, 
-  "/scenario2_boxhill", 
+  "/scenario2_boxhill_nugget15", 
   "_input", 2, 
   "_seed", rng.seed, 
   ".rds"
 ))
 boxhills3 = readRDS(paste0(
   output_home, 
-  "/scenario2_boxhill", 
+  "/scenario2_boxhill_nugget15", 
   "_input", 3, 
   "_seed", rng.seed, 
   ".rds"

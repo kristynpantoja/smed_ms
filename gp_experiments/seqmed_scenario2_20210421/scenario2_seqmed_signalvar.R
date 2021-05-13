@@ -62,7 +62,7 @@ x_seq = seq(from = xmin, to = xmax, length.out = numx)
 
 # SeqMED settings
 sigmasqs = c(1 - 1e-10, 1)
-nugget = 1e-10
+nugget = 1e-10 # won't work if NULL
 buffer = 0
 
 ################################################################################
@@ -180,16 +180,26 @@ for(i in 1:2){
       }
       
       print(paste0("completed i = ", i, ", j = ", j, ", k = ", k, "!"))
-      saveRDS(seqmeds,
+      
+      file_name_end = paste0(
+        "_input", input.type, 
+        "_seed", rng.seed,
+        ".rds"
+      )
+      if(!is.null(nugget)){
+        file_name_end = paste0(
+          "_nugget", strsplit(as.character(nugget), "-")[[1]][2], 
+          file_name_end)
+      }
+      
+      saveRDS(seqmeds, 
               file = paste0(
                 output_home,
-                "/scenario2_seqmed",
-                "_obj", 1,
+                "/scenario2_seqmed", 
                 "_signal", signalvar.type,
-                "_input", input.type,
+                "_obj", 1, 
                 "_seq", seq.type,
-                "_seed", rng.seed,
-                ".rds"))
+                file_name_end))
       
     }
   }

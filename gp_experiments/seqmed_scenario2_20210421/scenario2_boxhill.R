@@ -62,7 +62,7 @@ x_seq = seq(from = xmin, to = xmax, length.out = numx)
 
 # boxhill settings
 sigmasq = 1
-nugget = 1e-15 # 1e-10
+nugget = 1e-10 # won't work with NULL
 prior_probs = rep(1 / 2, 2)
 
 ################################################################################

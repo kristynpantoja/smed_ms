@@ -72,6 +72,10 @@ null_cov = getCov(x_seq, x_seq, typeT, lT)
 null_mean = rep(0, numx)
 y_seq_mat = t(rmvnorm(n = numSims, mean = null_mean, sigma = null_cov)) # the function values
 
+# i = 1
+# plot(x_seq, y_seq_mat[, 1], type = "l")
+# abline(v = seq(from = 0, to = 1, length.out = 5), col = "gray")
+
 saveRDS(
   list(
     x = x_seq, 

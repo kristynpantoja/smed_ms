@@ -179,17 +179,20 @@ for(i in 1:2){
           objective.type = 1)
       }
       
-      print(paste0("completed i = ", i, ", j = ", j, ", k = ", k, "!"))
-      saveRDS(seqmeds,
+      file_name_end = paste0(
+        "_input", input.type, 
+        "_seed", rng.seed,
+        ".rds"
+      )
+      
+      saveRDS(seqmeds, 
               file = paste0(
                 output_home,
-                "/scenario4_seqmed",
-                "_obj", 1,
+                "/scenario4_seqmed", 
                 "_error", errorvar.type,
-                "_input", input.type,
+                "_obj", 1, 
                 "_seq", seq.type,
-                "_seed", rng.seed,
-                ".rds"))
+                file_name_end))
       
     }
   }

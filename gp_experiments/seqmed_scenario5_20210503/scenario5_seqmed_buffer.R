@@ -62,7 +62,7 @@ x_seq = seq(from = xmin, to = xmax, length.out = numx)
 
 # SeqMED settings
 sigmasq = 1
-nugget = 1e-15
+nugget = 1e-10
 buffer = 1e-15
 
 ################################################################################

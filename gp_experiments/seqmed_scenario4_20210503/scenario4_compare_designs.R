@@ -180,7 +180,7 @@ y_seq_mat = simulated.functions$function_values_mat
 
 boxhills = readRDS(paste0(
   output_home, 
-  "/scenario4_boxhill_nuggetNULL", 
+  "/scenario4_boxhill", 
   "_input", input.type, 
   "_seed", rng.seed, 
   ".rds"

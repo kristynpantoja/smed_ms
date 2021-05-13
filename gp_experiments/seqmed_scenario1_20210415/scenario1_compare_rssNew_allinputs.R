@@ -73,17 +73,16 @@ numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
 
 # SeqMED settings
+sigmasq = 1
 sigmasqs = c(1 - 1e-10, 1)
 nuggets = c(1e-10, 1e-15)
-nugget.sm = NULL
+nugget = NULL
+nugget.sm = nugget
 buffer = 0
 
 # boxhill settings
-nugget.bh = NULL
+nugget.bh = nugget
 prior_probs = rep(1 / 2, 2)
-
-# shared settings
-sigmasq = 1
 
 ################################################################################
 # input data
@@ -430,9 +429,9 @@ seqmeds.s2.3 = readRDS(paste0(
 
 # models
 model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq,
-              error.var = NULL)
+              error.var = nugget)
 model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
-              error.var = NULL)
+              error.var = nugget)
 
 boxhills = list(boxhills1, boxhills2, boxhills3)
 qs = list(qs1, qs2, qs3)
@@ -445,16 +444,23 @@ seqmed.s1s = list(seqmeds.s1.1, seqmeds.s1.2, seqmeds.s1.3)
 seqmed.s2s = list(seqmeds.s2.1, seqmeds.s2.2, seqmeds.s2.3)
 
 # calculate the RSSnew
-getRSS01 = function(design, model0, model1
+getRSS01 = function(
+  design, model0, model1, candidates, function.values, nugget = 1e-10, 
+  Nother = 50
 ){
-  pred0.tmp = getGPPredictive(design$x.new, design$x, design$y, 
+  x.other.idx = sample(1:length(candidates), Nother)
+  x.other = candidates[x.other.idx]
+  y.other = function.values[x.other.idx]
+  pred0.tmp = getGPPredictive(x.other, c(design$x, design$x.new), 
+                              c(design$y, design$y.new), 
                               model0$type, model0$l, 
-                              model0$signal.var, model0$error.var)
-  pred1.tmp = getGPPredictive(design$x.new, design$x, design$y, 
+                              model0$signal.var, nugget)
+  pred1.tmp = getGPPredictive(x.other, c(design$x, design$x.new), 
+                              c(design$y, design$y.new), 
                               model1$type, model1$l, 
-                              model1$signal.var, model1$error.var)
-  RSS0.tmp = sum((pred0.tmp$pred_mean - design$y.new)^2, na.rm = TRUE)  
-  RSS1.tmp = sum((pred1.tmp$pred_mean - design$y.new)^2, na.rm = TRUE)
+                              model1$signal.var, nugget)
+  RSS0.tmp = sum((pred0.tmp$pred_mean - y.other)^2, na.rm = TRUE)  
+  RSS1.tmp = sum((pred1.tmp$pred_mean - y.other)^2, na.rm = TRUE)
   RSS01.tmp = RSS0.tmp / RSS1.tmp
   return(data.frame("RSS0" = RSS0.tmp, "RSS1" = RSS1.tmp, "RSS01" = RSS01.tmp))
 }
@@ -474,15 +480,15 @@ for(k in 1:3){
     s1 = seqmed.s1s[[k]][[j]]
     s2 = seqmed.s2s[[k]][[j]]
     # sequence of PPHs for each design
-    RSS.bh = getRSS01(bh, model0, model1) # model0.bh, model1.bh)
-    RSS.q = getRSS01(q, model0, model1) # model0.other, model1.other)
-    RSS.b = getRSS01(b, model0, model1) # model0.other, model1.other)
-    RSS.r = getRSS01(r, model0, model1) # model0.other, model1.other)
-    RSS.sf = getRSS01(sf, model0, model1) # model0.other, model1.other)
-    RSS.n1 = getRSS01(n1, model0, model1) # model0.n1, model1.n1)
-    RSS.n2 = getRSS01(n2, model0, model1) # model0.n2, model1.n2)
-    RSS.s1 = getRSS01(s1, model0, model1) # model0.s1, model1.s1)
-    RSS.s2 = getRSS01(s2, model0, model1) # model0.s2, model1.s2)
+    RSS.bh = getRSS01(bh, model0, model1, x_seq, y_seq_mat[, j])
+    RSS.q = getRSS01(q, model0, model1, x_seq, y_seq_mat[, j])
+    RSS.b = getRSS01(b, model0, model1, x_seq, y_seq_mat[, j])
+    RSS.r = getRSS01(r, model0, model1, x_seq, y_seq_mat[, j])
+    RSS.sf = getRSS01(sf, model0, model1, x_seq, y_seq_mat[, j])
+    RSS.n1 = getRSS01(n1, model0, model1, x_seq, y_seq_mat[, j])
+    RSS.n2 = getRSS01(n2, model0, model1, x_seq, y_seq_mat[, j])
+    RSS.s1 = getRSS01(s1, model0, model1, x_seq, y_seq_mat[, j])
+    RSS.s2 = getRSS01(s2, model0, model1, x_seq, y_seq_mat[, j])
     # master data frame
     RSS.bh$type = "boxhill"
     RSS.q$type = "q"
@@ -523,9 +529,10 @@ RSSmean$input = factor(RSSmean$input,
 
 # RSS1
 RSS1.plt = ggplot(dplyr::filter(RSSmean, RSS == "RSS1"), 
-                  aes(x = input, y = value, group = type, color = type)) + 
+                  aes(x = input, y = value, group = type, color = type, 
+                      linetype = type)) + 
   geom_point() + 
-  geom_path(linetype = 2) +
+  geom_path() +
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
@@ -534,9 +541,10 @@ RSS1.plt
 
 # RSS01
 RSS01.plt = ggplot(dplyr::filter(RSSmean, RSS == "RSS01"), 
-                   aes(x = input, y = value, group = type, color = type)) + 
+                   aes(x = input, y = value, group = type, color = type, 
+                       linetype = type)) + 
   geom_point() + 
-  geom_path(linetype = 2) +
+  geom_path() +
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +

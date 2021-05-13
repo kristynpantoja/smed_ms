@@ -178,251 +178,82 @@ y_seq_mat = simulated.functions$function_values_mat
 ################################################################################
 # read in the data
 
-boxhills1 = readRDS(paste0(
-  output_home, 
-  "/scenario5_boxhill", 
-  "_input", 1, 
-  "_seed", rng.seed, 
-  ".rds"
-))
-boxhills2 = readRDS(paste0(
-  output_home, 
-  "/scenario5_boxhill", 
-  "_input", 2, 
-  "_seed", rng.seed, 
-  ".rds"
-))
-boxhills3 = readRDS(paste0(
-  output_home, 
-  "/scenario5_boxhill", 
-  "_input", 3, 
-  "_seed", rng.seed, 
-  ".rds"
-))
+boxhills = list()
+qs = list()
+buffers = list()
+randoms = list()
+spacefills = list()
+seqmed.n1s = list()
+seqmed.n2s = list()
+seqmed.s1s = list()
+seqmed.s2s = list()
 
-qs1 = readRDS(paste0(
-  output_home,
-  "/scenario5_seqmed",
-  "_obj", 2,
-  "_input", 1,
-  "_seq", seq.type,
-  "_seed", rng.seed,
-  ".rds"
-))
-qs2 = readRDS(paste0(
-  output_home,
-  "/scenario5_seqmed",
-  "_obj", 2,
-  "_input", 2,
-  "_seq", seq.type,
-  "_seed", rng.seed,
-  ".rds"
-))
-qs3 = readRDS(paste0(
-  output_home,
-  "/scenario5_seqmed",
-  "_obj", 2,
-  "_input", 3,
-  "_seq", seq.type,
-  "_seed", rng.seed,
-  ".rds"
-))
-
-buffers1 = readRDS(paste0(
-  output_home,
-  "/scenario5_buffer",
-  "_obj", 1,
-  "_input", 1,
-  "_seq", seq.type,
-  "_seed", rng.seed,
-  ".rds"
-))
-buffers2 = readRDS(paste0(
-  output_home,
-  "/scenario5_buffer",
-  "_obj", 1,
-  "_input", 2,
-  "_seq", seq.type,
-  "_seed", rng.seed,
-  ".rds"
-))
-buffers3 = readRDS(paste0(
-  output_home,
-  "/scenario5_buffer",
-  "_obj", 1,
-  "_input", 3,
-  "_seq", seq.type,
-  "_seed", rng.seed,
-  ".rds"
-))
-
-randoms1 = readRDS(paste0(
-  output_home, 
-  "/scenario5_random", 
-  "_input", 1, 
-  "_seed", rng.seed, 
-  ".rds"
-))
-randoms2 = readRDS(paste0(
-  output_home, 
-  "/scenario5_random", 
-  "_input", 2, 
-  "_seed", rng.seed, 
-  ".rds"
-))
-randoms3 = readRDS(paste0(
-  output_home, 
-  "/scenario5_random", 
-  "_input", 3, 
-  "_seed", rng.seed, 
-  ".rds"
-))
-
-spacefills1 = readRDS(paste0(
-  output_home, 
-  "/scenario5_spacefilling", 
-  "_input", 1, 
-  "_seed", rng.seed, 
-  ".rds"
-))
-spacefills2 = readRDS(paste0(
-  output_home, 
-  "/scenario5_spacefilling", 
-  "_input", 2, 
-  "_seed", rng.seed, 
-  ".rds"
-))
-spacefills3 = readRDS(paste0(
-  output_home, 
-  "/scenario5_spacefilling", 
-  "_input", 3, 
-  "_seed", rng.seed, 
-  ".rds"
-))
-
-seqmeds.n1.1 = readRDS(paste0(
-  output_home,
-  "/scenario5_seqmed", 
-  "_obj", 1,
-  "_error", 1, 
-  "_input", 1, 
-  "_seq", seq.type,
-  "_seed", rng.seed,
-  ".rds"
-))
-seqmeds.n1.2 = readRDS(paste0(
-  output_home,
-  "/scenario5_seqmed", 
-  "_obj", 1,
-  "_error", 1, 
-  "_input", 2, 
-  "_seq", seq.type,
-  "_seed", rng.seed,
-  ".rds"
-))
-seqmeds.n1.3 = readRDS(paste0(
-  output_home,
-  "/scenario5_seqmed", 
-  "_obj", 1,
-  "_error", 1, 
-  "_input", 3, 
-  "_seq", seq.type,
-  "_seed", rng.seed,
-  ".rds"
-))
-
-seqmeds.n2.1 = readRDS(paste0(
-  output_home,
-  "/scenario5_seqmed", 
-  "_obj", 1,
-  "_error", 2, 
-  "_input", 1, 
-  "_seq", seq.type,
-  "_seed", rng.seed,
-  ".rds"
-))
-seqmeds.n2.2 = readRDS(paste0(
-  output_home,
-  "/scenario5_seqmed", 
-  "_obj", 1,
-  "_error", 2, 
-  "_input", 2, 
-  "_seq", seq.type,
-  "_seed", rng.seed,
-  ".rds"
-))
-seqmeds.n2.3 = readRDS(paste0(
-  output_home,
-  "/scenario5_seqmed", 
-  "_obj", 1,
-  "_error", 2, 
-  "_input", 3, 
-  "_seq", seq.type,
-  "_seed", rng.seed,
-  ".rds"
-))
-
-seqmeds.s1.1 = readRDS(paste0(
-  output_home,
-  "/scenario5_seqmed", 
-  "_obj", 1,
-  "_signal", 1, 
-  "_input", 1, 
-  "_seq", seq.type,
-  "_seed", rng.seed,
-  ".rds"
-))
-seqmeds.s1.2 = readRDS(paste0(
-  output_home,
-  "/scenario5_seqmed", 
-  "_obj", 1,
-  "_signal", 1, 
-  "_input", 2, 
-  "_seq", seq.type,
-  "_seed", rng.seed,
-  ".rds"
-))
-seqmeds.s1.3 = readRDS(paste0(
-  output_home,
-  "/scenario5_seqmed", 
-  "_obj", 1,
-  "_signal", 1, 
-  "_input", 3, 
-  "_seq", seq.type,
-  "_seed", rng.seed,
-  ".rds"
-))
-
-seqmeds.s2.1 = readRDS(paste0(
-  output_home,
-  "/scenario5_seqmed", 
-  "_obj", 1,
-  "_signal", 2, 
-  "_input", 1, 
-  "_seq", seq.type,
-  "_seed", rng.seed,
-  ".rds"
-))
-seqmeds.s2.2 = readRDS(paste0(
-  output_home,
-  "/scenario5_seqmed", 
-  "_obj", 1,
-  "_signal", 2, 
-  "_input", 2, 
-  "_seq", seq.type,
-  "_seed", rng.seed,
-  ".rds"
-))
-seqmeds.s2.3 = readRDS(paste0(
-  output_home,
-  "/scenario5_seqmed", 
-  "_obj", 1,
-  "_signal", 2, 
-  "_input", 3, 
-  "_seq", seq.type,
-  "_seed", rng.seed,
-  ".rds"
-))
+for(i in 1:3){
+  
+  file_name_end0 = paste0(
+    "_input", i, 
+    "_seed", rng.seed,
+    ".rds"
+  )
+  file_name_end = paste0(
+    "_nugget", strsplit(as.character(nugget), "-")[[1]][2], 
+    file_name_end0)
+  
+  boxhills[[i]] = readRDS(paste0(
+    output_home, 
+    "/scenario5_boxhill", 
+    file_name_end))
+  qs[[i]] = readRDS(paste0(
+    output_home,
+    "/scenario5_seqmed", 
+    "_obj", 2, 
+    "_seq", seq.type,
+    file_name_end))
+  buffers[[i]] = readRDS(paste0(
+    output_home,
+    "/scenario5_seqmed", 
+    "_buffer", 
+    "_obj", 1, 
+    "_seq", seq.type,
+    file_name_end))
+  randoms[[i]] = readRDS(paste0(
+    output_home, 
+    "/scenario5_random", 
+    file_name_end0))
+  
+  spacefills[[i]] = readRDS(paste0(
+    output_home, 
+    "/scenario5_spacefilling", 
+    file_name_end0))
+  seqmed.n1s[[i]] = readRDS(paste0(
+    output_home,
+    "/scenario5_seqmed", 
+    "_error", 1,
+    "_obj", 1, 
+    "_seq", seq.type,
+    file_name_end0))
+  seqmed.n2s[[i]] = readRDS(paste0(
+    output_home,
+    "/scenario5_seqmed", 
+    "_error", 2,
+    "_obj", 1, 
+    "_seq", seq.type,
+    file_name_end0))
+  seqmed.s1s[[i]] = readRDS(paste0(
+    output_home,
+    "/scenario5_seqmed", 
+    "_signal", 1,
+    "_obj", 1, 
+    "_seq", seq.type,
+    file_name_end))
+  seqmed.s2s[[i]] = readRDS(paste0(
+    output_home,
+    "/scenario5_seqmed", 
+    "_signal", 2,
+    "_obj", 1, 
+    "_seq", seq.type,
+    file_name_end))
+}
 
 ################################################################################
 # make plots

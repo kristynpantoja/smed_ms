@@ -72,6 +72,7 @@ numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
 
 # SeqMED settings
+sigmasq = 1
 sigmasqs = c(1 - 1e-10, 1)
 nuggets = c(1e-5, 1e-10) # had to change, to fix solve() issue
 nugget = 1e-10
@@ -82,9 +83,6 @@ buffer = 0
 # boxhill settings
 nugget.bh = nugget # wouldn't run without
 prior_probs = rep(1 / 2, 2)
-
-# shared settings
-sigmasq = 1
 
 ################################################################################
 # input data

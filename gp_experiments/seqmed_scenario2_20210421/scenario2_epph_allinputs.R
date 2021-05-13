@@ -79,12 +79,18 @@ nugget.q = nugget # nugget for q, random, and space-filling designs
 nugget.sm = nugget # nugget for different signal variances and buffer
 buffer = 0
 
-# boxhill settings
-nugget.bh = nugget # wouldn't run without
-prior_probs = rep(1 / 2, 2)
-
-# shared settings
+# SeqMED settings
 sigmasq = 1
+sigmasqs = c(1 - 1e-10, 1)
+nuggets = c(1e-5, 1e-10) # had to change, to fix solve() issue
+nugget = 1e-10
+nugget.q = nugget # nugget for q, random, and space-filling designs
+nugget.sm = nugget # nugget for different signal variances and buffer
+buffer = 0
+
+# boxhill settings
+nugget.bh = NULL #1e-10
+prior_probs = rep(1 / 2, 2)
 
 ################################################################################
 # input data
@@ -347,9 +353,10 @@ PPHmean$input = factor(PPHmean$input,
                        labels = c("extrapolation", "inc spread", "even coverage"))
 
 PPH1.plt = ggplot(dplyr::filter(PPHmean, Hypothesis == "H1"), 
-                  aes(x = input, y = value, group = type, color = type)) + 
+                  aes(x = input, y = value, group = type, color = type, 
+                      linetype = type)) + 
   geom_point() + 
-  geom_path(linetype = 2) +
+  geom_path() +
   ylim(0, 1) + 
   theme_bw() +
   theme(panel.grid.major = element_blank(),

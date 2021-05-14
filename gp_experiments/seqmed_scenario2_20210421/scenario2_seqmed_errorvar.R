@@ -63,7 +63,7 @@ sigmasq_err = 1e-10
 
 # SeqMED settings
 sigmasq = 1
-nuggets = c(1e-10, 1e-15)
+nuggets = c(1e-5, 1e-10)
 buffer = 0
 
 ################################################################################

@@ -59,10 +59,11 @@ xmin = 0
 xmax = 1
 numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
+sigmasq_err = 1e-10
 
 # SeqMED settings
 sigmasq = 1
-nugget = NULL
+nugget = sigmasq_err
 buffer = 1e-15
 
 ################################################################################
@@ -167,19 +168,29 @@ for(j in 1:3){
         candidates = x_seq, function.values = y_seq, 
         model0 = model0, model1 = model1, 
         numSeq = numSeq, seqN = seqN, prints = FALSE, buffer = buffer, 
-        objective.type = 1)
+        objective.type = 1, noise = TRUE, error.var = sigmasq_err)
     }
     
     print(paste0("completed j = ", j, ", k = ", k, "!"))
-    saveRDS(seqmeds,
+    
+    filename_append.tmp = filename_append
+    if(!is.null(nugget)){
+      filename_append.tmp = paste0(
+        filename_append.tmp, 
+        "_nugget", strsplit(as.character(nugget), "-")[[1]][2])
+    }
+    filename_append.tmp = paste0(
+      filename_append.tmp, 
+      "_input", input.type, 
+      "_seed", rng.seed,
+      ".rds"
+    )
+    saveRDS(seqmeds, 
             file = paste0(
               output_home,
-              "/scenario3_buffer",
-              "_obj", 1,
-              "_input", input.type,
+              "/scenario3_seqmed", 
+              "_buffer", 
               "_seq", seq.type,
-              "_seed", rng.seed,
-              ".rds"))
+              filename_append.tmp))
   }
 }
-

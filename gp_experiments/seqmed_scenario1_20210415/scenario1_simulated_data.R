@@ -1,13 +1,15 @@
 ################################################################################
-# last updated: 05/03/2021
-# purpose: to test seqmedgp for scenario 5:
-#   matern vs. periodic,
-#   where the true function is squared exponential
+# last updated: 04/14/2021
+# purpose: to test seqmedgp for scenario 1:
+#   squared exponential vs. matern,
+#   where the true function is matern
+# trying out some (not necessarily MED) designs
+# changed SeqMEDgp to take in model0, model1
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = "gp_experiments/seqmed_scenario5_20210503/outputs"
+output_home = "gp_experiments/seqmed_scenario1_20210415/outputs"
 functions_home = "functions"
 
 # for seqmed design
@@ -59,15 +61,15 @@ x_seq = seq(from = xmin, to = xmax, length.out = numx)
 sigmasq_err = 1e-10
 
 ################################################################################
-# Scenario 5: Matern vs. periodic, true = squared exponential
+# Scenario 1: Squared exponential vs. matern, true = matern
 ################################################################################
-type01 = c("matern", "periodic")
-typeT = "squaredexponential"
+type01 = c("squaredexponential", "matern")
+typeT = type01[2]
 l01= c(0.01, 0.01)
-lT = 0.01
+lT = l01[2]
 
 ################################################################################
-# generate sqexp functions 
+# generate matern functions 
 registerDoRNG(rng.seed)
 null_cov = getCov(x_seq, x_seq, typeT, lT)
 null_mean = rep(0, numx)
@@ -80,10 +82,6 @@ if(!is.null(sigmasq_err)){
     "_noise", strsplit(as.character(sigmasq_err), "-")[[1]][2])
 }
 
-# i = 1
-# plot(x_seq, y_seq_mat[, 1], type = "l")
-# abline(v = seq(from = 0, to = 1, length.out = 5), col = "gray")
-
 saveRDS(
   list(
     x = x_seq, 
@@ -94,6 +92,6 @@ saveRDS(
   ), 
   file = paste0(
     output_home,
-    "/scenario5_simulated_functions", filename_append, 
+    "/scenario1_simulated_functions", filename_append, 
     "_seed", rng.seed,
     ".rds"))

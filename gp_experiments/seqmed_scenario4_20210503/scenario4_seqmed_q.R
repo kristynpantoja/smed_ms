@@ -59,10 +59,11 @@ xmin = 0
 xmax = 1
 numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
+sigmasq_err = 1e-10
 
 # SeqMED settings
 sigmasq = 1
-nugget = NULL
+nugget = sigmasq_err
 buffer = 0
 
 ################################################################################
@@ -113,9 +114,14 @@ model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq,
 
 ################################################################################
 # import periodic functions
+filename_append = ""
+if(!is.null(sigmasq_err)){
+  filename_append = paste0(
+    "_noise", strsplit(as.character(sigmasq_err), "-")[[1]][2])
+}
 simulated.functions = readRDS(paste0(
   output_home,
-  "/scenario4_simulated_functions", 
+  "/scenario4_simulated_functions", filename_append,
   "_seed", rng.seed,
   ".rds"))
 numSims = simulated.functions$numSims
@@ -167,28 +173,30 @@ for(j in 1:3){
         candidates = x_seq, function.values = y_seq, 
         model0 = model0, model1 = model1, 
         numSeq = numSeq, seqN = seqN, prints = FALSE, buffer = buffer, 
-        objective.type = 2)
+        objective.type = 2, noise = TRUE, error.var = sigmasq_err)
     }
     
     print(paste0("completed j = ", j, ", k = ", k, "!"))
-    file_name_end = paste0(
+    
+    filename_append.tmp = filename_append
+    if(!is.null(nugget)){
+      filename_append.tmp = paste0(
+        filename_append.tmp, 
+        "_nugget", strsplit(as.character(nugget), "-")[[1]][2])
+    }
+    filename_append.tmp = paste0(
+      filename_append.tmp, 
       "_input", input.type, 
       "_seed", rng.seed,
       ".rds"
     )
-    if(!is.null(nugget)){
-      file_name_end = paste0(
-        "_nugget", strsplit(as.character(nugget), "-")[[1]][2], 
-        file_name_end)
-    }
     saveRDS(seqmeds, 
             file = paste0(
               output_home,
               "/scenario4_seqmed", 
-              "_obj", 2, 
+              "_q", 
               "_seq", seq.type,
-              file_name_end))
-    
+              filename_append.tmp))
   }
 }
 

@@ -59,10 +59,11 @@ xmin = 0
 xmax = 1
 numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
+sigmasq_err = 1e-10
 
 # SeqMED settings
 sigmasqs = c(1 - 1e-10, 1)
-nugget = NULL
+nugget = sigmasq_err
 buffer = 0
 
 ################################################################################
@@ -107,9 +108,14 @@ lT = 0.01
 
 ################################################################################
 # import matern functions
+filename_append = ""
+if(!is.null(sigmasq_err)){
+  filename_append = paste0(
+    "_noise", strsplit(as.character(sigmasq_err), "-")[[1]][2])
+}
 simulated.functions = readRDS(paste0(
   output_home,
-  "/scenario3_simulated_functions", 
+  "/scenario3_simulated_functions", filename_append,
   "_seed", rng.seed,
   ".rds"))
 numSims = simulated.functions$numSims
@@ -176,21 +182,30 @@ for(i in 1:2){
           candidates = x_seq, function.values = y_seq, 
           model0 = model0, model1 = model1, 
           numSeq = numSeq, seqN = seqN, prints = FALSE, buffer = buffer, 
-          objective.type = 1)
+          objective.type = 1, noise = TRUE, error.var = sigmasq_err)
       }
       
       print(paste0("completed i = ", i, ", j = ", j, ", k = ", k, "!"))
-      saveRDS(seqmeds,
+      
+      filename_append.tmp = filename_append
+      if(!is.null(nugget)){
+        filename_append.tmp = paste0(
+          filename_append.tmp, 
+          "_nugget", strsplit(as.character(nugget), "-")[[1]][2])
+      }
+      filename_append.tmp = paste0(
+        filename_append.tmp, 
+        "_input", input.type, 
+        "_seed", rng.seed,
+        ".rds"
+      )
+      saveRDS(seqmeds, 
               file = paste0(
                 output_home,
-                "/scenario3_seqmed",
-                "_obj", 1,
+                "/scenario3_seqmed", 
                 "_signal", signalvar.type,
-                "_input", input.type,
                 "_seq", seq.type,
-                "_seed", rng.seed,
-                ".rds"))
-      
+                filename_append.tmp))
     }
   }
 }

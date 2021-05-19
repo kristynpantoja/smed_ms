@@ -63,10 +63,11 @@ xmin = 0
 xmax = 1
 numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
+sigmasq_err = 1e-10
 
 # boxhill settings
 sigmasq = 1
-nugget = NULL
+nugget = sigmasq_err
 prior_probs = rep(1 / 2, 2)
 
 ################################################################################
@@ -105,8 +106,9 @@ x_spacefill3 = x_seq[x_spacefill3_idx]
 # Scenario 1: Squared exponential vs. matern, true = matern
 ################################################################################
 type01 = c("squaredexponential", "matern")
-l01= c(0.01, 0.01) # SIM SETTING
-# l01= c(0.1, 0.1) # DEMO SETTING
+typeT = type01[2]
+l01= c(0.01, 0.01)
+lT = l01[2]
 
 ################################################################################
 # models
@@ -117,9 +119,14 @@ model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq,
 
 ################################################################################
 # import matern functions
+filename_append = ""
+if(!is.null(sigmasq_err)){
+  filename_append = paste0(
+    "_noise", strsplit(as.character(sigmasq_err), "-")[[1]][2])
+}
 simulated.functions = readRDS(paste0(
   output_home,
-  "/scenario1_simulated_functions", 
+  "/scenario1_simulated_functions", filename_append,
   "_seed", rng.seed,
   ".rds"))
 numSims = simulated.functions$numSims
@@ -160,20 +167,21 @@ for(j in 1:3){
       x_seq, y_seq)
   }
   
-  file_name_end = paste0(
+  filename_append.tmp = filename_append
+  if(!is.null(nugget)){
+    filename_append.tmp = paste0(
+      filename_append.tmp, 
+      "_nugget", strsplit(as.character(nugget), "-")[[1]][2])
+  }
+  filename_append.tmp = paste0(
+    filename_append.tmp, 
     "_input", input.type, 
     "_seed", rng.seed,
     ".rds"
   )
-  if(!is.null(nugget)){
-    file_name_end = paste0(
-      "_nugget", strsplit(as.character(nugget), "-")[[1]][2], 
-      file_name_end)
-  }
-  
   saveRDS(boxhills, 
           file = paste0(
             output_home,
             "/scenario1_boxhill", 
-            file_name_end))
+            filename_append.tmp))
 }

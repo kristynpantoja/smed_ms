@@ -104,13 +104,6 @@ l01= c(0.01, 0.01)
 lT = l01[2]
 
 ################################################################################
-# models
-model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
-              error.var = nugget)
-model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
-              error.var = nugget)
-
-################################################################################
 # import periodic functions
 filename_append = ""
 if(!is.null(sigmasq_err)){

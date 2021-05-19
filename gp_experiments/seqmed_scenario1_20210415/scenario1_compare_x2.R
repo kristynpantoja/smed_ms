@@ -5,6 +5,7 @@
 #   where the true function is matern
 # trying out some (not necessarily MED) designs
 # changed SeqMEDgp to take in model0, model1
+# NOTE: THIS EVALUATION IS OUTDATED. DOESN'T TAKE THE NEW DESIGN INTO ACCOUNT.
 
 ################################################################################
 # Sources/Libraries
@@ -72,19 +73,19 @@ xmin = 0
 xmax = 1
 numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
+sigmasq_err = 1e-10
 
 # SeqMED settings
 sigmasqs = c(1 - 1e-10, 1)
 nuggets = c(1e-10, 1e-15)
-nugget.sm = NULL
 buffer = 0
 
 # boxhill settings
-nugget.bh = NULL
 prior_probs = rep(1 / 2, 2)
 
 # shared settings
 sigmasq = 1
+nugget = sigmasq_err
 
 ################################################################################
 # input data
@@ -122,8 +123,9 @@ x_spacefill3 = x_seq[x_spacefill3_idx]
 # Scenario 1: Squared exponential vs. matern, true = matern
 ################################################################################
 type01 = c("squaredexponential", "matern")
-l01= c(0.01, 0.01) # SIM SETTING
-# l01= c(0.1, 0.1) # DEMO SETTING
+typeT = type01[2]
+l01= c(0.01, 0.01)
+lT = l01[2]
 
 ################################################################################
 # models - BoxHill

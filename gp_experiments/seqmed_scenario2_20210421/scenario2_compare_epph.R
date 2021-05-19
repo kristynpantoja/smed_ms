@@ -1,5 +1,5 @@
 ################################################################################
-# last updated: 04/21/2021
+# last updated: 05/19/2021
 # purpose: to test seqmedgp for scenario 2:
 #   matern vs. periodic,
 #   where the true function is periodic
@@ -70,19 +70,19 @@ xmin = 0
 xmax = 1
 numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
+sigmasq_err = 1e-10
 
 # SeqMED settings
-sigmasq = 1
 sigmasqs = c(1 - 1e-10, 1)
-nuggets = c(1e-5, 1e-10) # had to change, to fix solve() issue
-nugget = 1e-10
-nugget.q = nugget # nugget for q, random, and space-filling designs
-nugget.sm = nugget # nugget for different signal variances and buffer
+nuggets = c(1e-5, 1e-10)
 buffer = 0
 
 # boxhill settings
-nugget.bh = nugget # wouldn't run without
 prior_probs = rep(1 / 2, 2)
+
+# shared settings
+sigmasq = 1
+nugget = sigmasq_err
 
 ################################################################################
 # input data
@@ -125,53 +125,15 @@ l01= c(0.01, 0.01)
 lT = l01[2]
 
 ################################################################################
-# models - BoxHill
-model0.bh = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
-                 error.var = nugget.bh)
-model1.bh = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
-                 error.var = nugget.bh)
-
-# models - q, random, space-filling, \sout{buffer}
-model0.q = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
-                    error.var = nugget.q)
-model1.q = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
-                    error.var = nugget.q)
-
-# models - different buffer
-model0.sm = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
-                    error.var = nugget.sm)
-model1.sm = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
-                    error.var = nugget.sm)
-
-# models - SeqMED with different nugget term
-# errorvar.type == 1
-model0.n1 = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
-                 error.var = nuggets[1])
-model1.n1 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
-                 error.var = nuggets[2])
-# errorvar.type == 2
-model0.n2 = list(type = type01[1], l = l01[1], signal.var = sigmasq,
-                 error.var = nuggets[2])
-model1.n2 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
-                 error.var = nuggets[1])
-
-# models - SeqMED with different signal variance
-# signalvar.type == 1
-model0.s1 = list(type = type01[1], l = l01[1], signal.var = sigmasqs[1], 
-                 error.var = nugget.sm)
-model1.s1 = list(type = type01[2], l = l01[2], signal.var = sigmasqs[2], 
-                 error.var = nugget.sm)
-# signalvar.type == 2
-model0.s2 = list(type = type01[1], l = l01[1], signal.var = sigmasqs[2],
-                 error.var = nugget.sm)
-model1.s2 = list(type = type01[2], l = l01[2], signal.var = sigmasqs[1], 
-                 error.var = nugget.sm)
-
-################################################################################
 # import periodic functions
+filename_append = ""
+if(!is.null(sigmasq_err)){
+  filename_append = paste0(
+    "_noise", strsplit(as.character(sigmasq_err), "-")[[1]][2])
+}
 simulated.functions = readRDS(paste0(
   output_home,
-  "/scenario2_simulated_functions", 
+  "/scenario2_simulated_functions", filename_append,
   "_seed", rng.seed,
   ".rds"))
 numSims = simulated.functions$numSims
@@ -184,87 +146,122 @@ y_seq_mat = simulated.functions$function_values_mat
 ################################################################################
 # read in the data
 
-file_name_end0 = paste0(
-  "_input", input.type, 
-  "_seed", rng.seed,
-  ".rds"
-)
-file_name_end = paste0(
-  "_nugget", strsplit(as.character(nugget), "-")[[1]][2], 
-  file_name_end0)
+boxhills = list()
+qs = list()
+buffers = list()
+randoms = list()
+spacefills = list()
+seqmed.n1s = list()
+seqmed.n2s = list()
+seqmed.s1s = list()
+seqmed.s2s = list()
 
-boxhills = readRDS(paste0(
-  output_home, 
-  "/scenario2_boxhill", 
-  file_name_end))
-
-qs = readRDS(paste0(
-  output_home,
-  "/scenario2_seqmed", 
-  "_obj", 2, 
-  "_seq", seq.type,
-  file_name_end))
-
-buffers = readRDS(paste0(
-  output_home,
-  "/scenario2_seqmed", 
-  "_buffer", 
-  "_obj", 1, 
-  "_seq", seq.type,
-  file_name_end))
-
-randoms = readRDS(paste0(
-  output_home, 
-  "/scenario2_random", 
-  file_name_end0))
-
-spacefills = readRDS(paste0(
-  output_home, 
-  "/scenario2_spacefilling", 
-  file_name_end0))
-
-seqmeds.n1 = readRDS(paste0(
-  output_home,
-  "/scenario2_seqmed", 
-  "_error", 1,
-  "_obj", 1, 
-  "_seq", seq.type,
-  file_name_end0))
-
-seqmeds.n2 = readRDS(paste0(
-  output_home,
-  "/scenario2_seqmed", 
-  "_error", 2,
-  "_obj", 1, 
-  "_seq", seq.type,
-  file_name_end0))
-
-seqmeds.s1 = readRDS(paste0(
-  output_home,
-  "/scenario2_seqmed", 
-  "_signal", 1,
-  "_obj", 1, 
-  "_seq", seq.type,
-  file_name_end))
-
-seqmeds.s2 = readRDS(paste0(
-  output_home,
-  "/scenario2_seqmed", 
-  "_signal", 2,
-  "_obj", 1, 
-  "_seq", seq.type,
-  file_name_end))
+for(i in 1:3){
+  # filename_append.tmp for boxhills, buffers, qs, signal seqmeds
+  filename_append.tmp = filename_append
+  if(!is.null(nugget)){
+    filename_append.tmp = paste0(
+      filename_append.tmp, 
+      "_nugget", strsplit(as.character(nugget), "-")[[1]][2])
+  }
+  filename_append.tmp = paste0(
+    filename_append.tmp, 
+    "_input", i, 
+    "_seed", rng.seed,
+    ".rds")
+  boxhills[[i]] = readRDS(paste0(
+    output_home,
+    "/scenario1_boxhill", 
+    filename_append.tmp))
+  buffers[[i]] = readRDS(paste0(
+    output_home,
+    "/scenario1_seqmed", 
+    "_buffer", 
+    "_seq", seq.type,
+    filename_append.tmp))
+  qs[[i]] = readRDS(paste0(
+    output_home,
+    "/scenario1_seqmed", 
+    "_q",
+    "_seq", seq.type,
+    filename_append.tmp))
+  seqmed.s1s[[i]] = readRDS(paste0(
+    output_home,
+    "/scenario1_seqmed", 
+    "_signal", 1,
+    "_seq", seq.type,
+    filename_append.tmp))
+  seqmed.s2s[[i]] = readRDS(paste0(
+    output_home,
+    "/scenario1_seqmed", 
+    "_signal", 2,
+    "_seq", seq.type,
+    filename_append.tmp))
+  
+  # filename_append.tmp for random, space-filling
+  filename_append.tmp = filename_append
+  filename_append.tmp = paste0(
+    filename_append.tmp, 
+    "_input", i, 
+    "_seed", rng.seed,
+    ".rds")
+  randoms[[i]] = readRDS(paste0(
+    output_home, 
+    "/scenario1_random", 
+    filename_append.tmp))
+  spacefills[[i]] = readRDS(paste0(
+    output_home, 
+    "/scenario1_spacefilling", 
+    filename_append.tmp))
+  
+  # filename_append.tmp for error seqmeds
+  filename_append.tmp = filename_append
+  nuggets_vals = strsplit(as.character(nuggets), "-")
+  nuggets_vals = paste0(nuggets_vals[[1]][2], nuggets_vals[[2]][2])
+  filename_append.tmp = paste0(
+    filename_append.tmp,
+    "_nuggets", nuggets_vals)
+  filename_append.tmp = paste0(
+    filename_append.tmp, 
+    "_input", i, 
+    "_seed", rng.seed,
+    ".rds"
+  )
+  seqmed.n1s[[i]] = readRDS(paste0(
+    output_home,
+    "/scenario1_seqmed", 
+    "_error", 1,
+    "_seq", seq.type,
+    filename_append.tmp))
+  seqmed.n2s[[i]] = readRDS(paste0(
+    output_home,
+    "/scenario1_seqmed", 
+    "_error", 2,
+    "_seq", seq.type,
+    filename_append.tmp))
+}
 
 ################################################################################
 # make plots
 ################################################################################
 PPHs_seq = list()
 
+# input set
+bh.in = boxhills[[input.type]]
+q.in = qs[[input.type]]
+buf.in = buffers[[input.type]]
+ran.in = randoms[[input.type]]
+sf.in = spacefills[[input.type]]
+n1.in = seqmed.n1s[[input.type]]
+n2.in = seqmed.n2s[[input.type]]
+s1.in = seqmed.s1s[[input.type]]
+s2.in = seqmed.s2s[[input.type]]
+
 # models
 model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq,
-              error.var = nugget)
+              error.var = NULL)
 model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
-              error.var = nugget)
+              error.var = NULL)
 
 getPPHseq = function(design, model0, model1){
   PPH0_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
@@ -298,15 +295,15 @@ PPH_seq = data.frame(
   type = character(), sim = numeric())
 for(j in 1:numSims){
   # designs at sim b
-  bh = boxhills[[j]]
-  q = qs[[j]]
-  b = buffers[[j]]
-  r = randoms[[j]]
-  sf = spacefills[[j]]
-  n1 = seqmeds.n1[[j]]
-  n2 = seqmeds.n2[[j]]
-  s1 = seqmeds.s1[[j]]
-  s2 = seqmeds.s2[[j]]
+  bh = bh.in[[j]]
+  q = q.in[[j]]
+  b = buf.in[[j]]
+  r = ran.in[[j]]
+  sf = sf.in[[j]]
+  n1 = n1.in[[j]]
+  n2 = n2.in[[j]]
+  s1 = s1.in[[j]]
+  s2 = s2.in[[j]]
   # sequence of PPHs for each design
   PPH_seq.bh = getPPHseq(bh, model0, model1) #model0.bh, model1.bh)
   PPH_seq.q = getPPHseq(q, model0, model1) #model0.q, model1.q)

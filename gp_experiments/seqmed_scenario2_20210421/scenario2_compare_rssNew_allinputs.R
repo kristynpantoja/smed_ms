@@ -1,5 +1,5 @@
 ################################################################################
-# last updated: 04/28/2021
+# last updated: 05/19/2021
 # purpose: to test seqmedgp for scenario 2:
 #   matern vs. periodic,
 #   where the true function is periodic
@@ -203,7 +203,6 @@ seqmed.s1s = list()
 seqmed.s2s = list()
 
 for(i in 1:3){
-  
   file_name_end0 = paste0(
     "_input", i, 
     "_seed", rng.seed,
@@ -234,7 +233,6 @@ for(i in 1:3){
     output_home, 
     "/scenario2_random", 
     file_name_end0))
-  
   spacefills[[i]] = readRDS(paste0(
     output_home, 
     "/scenario2_spacefilling", 
@@ -281,8 +279,7 @@ model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq,
 
 # calculate the RSSnew
 getRSS01 = function(
-  design, model0, model1, candidates, function.values, nugget = 1e-10, 
-  Nother = 51
+  design, model0, model1, candidates, function.values, Nother = 51
 ){
   x.other.idx = 1 + 0:(Nother - 1) * floor(length(candidates) / (Nother - 1))
   x.other = candidates[x.other.idx]
@@ -292,10 +289,10 @@ getRSS01 = function(
   y.tmp = as.vector(na.omit(c(design$y, design$y.new)))
   pred0.tmp = getGPPredictive(x.other, x.tmp, y.tmp, 
                               model0$type, model0$l, 
-                              1, nugget)
+                              1, model0$error.var)
   pred1.tmp = getGPPredictive(x.other, x.tmp, y.tmp, 
                               model1$type, model1$l, 
-                              1, nugget)
+                              1, model1$error.var)
   RSS0.tmp = sum((pred0.tmp$pred_mean - y.other)^2, na.rm = TRUE)  
   RSS1.tmp = sum((pred1.tmp$pred_mean - y.other)^2, na.rm = TRUE)
   RSS01.tmp = RSS0.tmp / RSS1.tmp

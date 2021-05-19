@@ -114,9 +114,14 @@ model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq,
 
 ################################################################################
 # import sqexp functions
+filename_append = ""
+if(!is.null(sigmasq_err)){
+  filename_append = paste0(
+    "_noise", strsplit(as.character(sigmasq_err), "-")[[1]][2])
+}
 simulated.functions = readRDS(paste0(
   output_home,
-  "/scenario5_simulated_functions", 
+  "/scenario5_simulated_functions", filename_append,
   "_seed", rng.seed,
   ".rds"))
 numSims = simulated.functions$numSims

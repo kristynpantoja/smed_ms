@@ -9,7 +9,7 @@
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = "gp_experiments/seqmed_testing_20210415/outputs"
+output_home = "gp_experiments/seqmed_scenario1_20210415/outputs"
 functions_home = "functions"
 
 # for seqmed design
@@ -116,7 +116,7 @@ if(!is.null(sigmasq_err)){
 }
 simulated.functions = readRDS(paste0(
   output_home,
-  "/scenario2_simulated_functions", filename_append,
+  "/scenario1_simulated_functions", filename_append,
   "_seed", rng.seed,
   ".rds"))
 numSims = simulated.functions$numSims

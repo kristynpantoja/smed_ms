@@ -9,7 +9,7 @@
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = "gp_experiments/seqmed_testing_20210415/outputs"
+output_home = "gp_experiments/seqmed_scenario1_20210415/outputs"
 functions_home = "functions"
 
 # for seqmed design

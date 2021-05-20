@@ -1,13 +1,15 @@
 ################################################################################
-# last updated: 04/21/2021
+# last updated: 05/20/2021
 # purpose: to test seqmedgp for scenario 2:
 #   matern vs. periodic,
 #   where the true function is periodic
 
+scenario = 2
+
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = "gp_experiments/seqmed_scenario2_20210421/outputs"
+output_home = paste0("gp_experiments/scenario", scenario, "/outputs")
 functions_home = "functions"
 
 # for seqmed design
@@ -112,7 +114,7 @@ if(!is.null(sigmasq_err)){
 }
 simulated.functions = readRDS(paste0(
   output_home,
-  "/scenario2_simulated_functions", filename_append,
+  "/scenario", scenario, "_simulated_functions", filename_append,
   "_seed", rng.seed,
   ".rds"))
 numSims = simulated.functions$numSims
@@ -167,7 +169,7 @@ for(j in 1:3){
   saveRDS(randoms, 
           file = paste0(
             output_home,
-            "/scenario2_random", 
+            "/scenario", scenario, "_random", 
             filename_append.tmp))
   
 }

@@ -1,15 +1,15 @@
 ################################################################################
-# last updated: 05/19/2021
+# last updated: 05/20/2021
 # purpose: to test seqmedgp for scenario 1:
 #   squared exponential vs. matern,
 #   where the true function is matern
-# trying out some (not necessarily MED) designs
-# changed SeqMEDgp to take in model0, model1
+
+scenario = 1
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = "gp_experiments/scenario1/outputs"
+output_home = paste0("gp_experiments/scenario", scenario, "/outputs")
 functions_home = "functions"
 
 # for seqmed design
@@ -126,7 +126,7 @@ if(!is.null(sigmasq_err)){
 }
 simulated.functions = readRDS(paste0(
   output_home,
-  "/scenario1_simulated_functions", filename_append,
+  "/scenario", scenario, "_simulated_functions", filename_append,
   "_seed", rng.seed,
   ".rds"))
 numSims = simulated.functions$numSims
@@ -182,6 +182,6 @@ for(j in 1:3){
   saveRDS(boxhills, 
           file = paste0(
             output_home,
-            "/scenario1_boxhill", 
+            "/scenario", scenario, "_boxhill", 
             filename_append.tmp))
 }

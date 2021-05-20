@@ -1,14 +1,15 @@
 ################################################################################
-# last updated: 05/12/2021
-# purpose: to test seqmedgp for scenario 1:
-#   squared exponential vs. matern,
-#   where the true function is matern
-# testing box and hill to see when/why/how it gets NaNs
+# last updated: 05/20/2021
+# purpose: to test seqmedgp for scenario 4:
+#   matern vs. squared exponential,
+#   where the true function is periodic
+
+scenario = 4
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = "gp_experiments/seqmed_scenario4_20210503/outputs"
+output_home = paste0("gp_experiments/scenario", scenario, "/outputs")
 functions_home = "functions"
 
 # for seqmed design

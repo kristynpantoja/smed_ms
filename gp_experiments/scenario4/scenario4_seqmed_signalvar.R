@@ -1,13 +1,15 @@
 ################################################################################
-# last updated: 05/03/2021
+# last updated: 05/20/2021
 # purpose: to test seqmedgp for scenario 4:
 #   matern vs. squared exponential,
 #   where the true function is periodic
 
+scenario = 4
+
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = "gp_experiments/seqmed_scenario4_20210503/outputs"
+output_home = paste0("gp_experiments/scenario", scenario, "/outputs")
 functions_home = "functions"
 
 # for seqmed design
@@ -115,7 +117,7 @@ if(!is.null(sigmasq_err)){
 }
 simulated.functions = readRDS(paste0(
   output_home,
-  "/scenario4_simulated_functions", filename_append,
+  "/scenario", scenario, "_simulated_functions", filename_append,
   "_seed", rng.seed,
   ".rds"))
 numSims = simulated.functions$numSims
@@ -202,7 +204,7 @@ for(i in 1:2){
       saveRDS(seqmeds, 
               file = paste0(
                 output_home,
-                "/scenario4_seqmed", 
+                "/scenario", scenario, "_seqmed", 
                 "_signal", signalvar.type,
                 "_seq", seq.type,
                 filename_append.tmp))

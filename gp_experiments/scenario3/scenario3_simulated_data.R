@@ -1,5 +1,5 @@
 ################################################################################
-# last updated: 04/16/2021
+# last updated: 05/20/2021
 # purpose: to test seqmedgp for scenario 3:
 #   squared exponential vs. another squared exponential,
 #   where the true function is matern

@@ -1,5 +1,5 @@
 ################################################################################
-# last updated: 05/03/2021
+# last updated: 05/20/2021
 # purpose: to test seqmedgp for scenario 4:
 #   matern vs. squared exponential,
 #   where the true function is periodic

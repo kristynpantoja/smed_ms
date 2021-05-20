@@ -1,11 +1,10 @@
 ################################################################################
-# last updated: 05/19/2021
-# purpose: to test seqmedgp for scenario 1:
-#   squared exponential vs. matern,
+# last updated: 04/28/2021
+# purpose: to test seqmedgp for scenario 3:
+#   squared exponential vs. another squared exponential,
 #   where the true function is matern
 
-scenario = 2 # scenarios: 1, 2
-input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
+scenario = 3 # scenarios: 3, 4, 5, 6
 seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
 
 ################################################################################
@@ -74,9 +73,9 @@ sigmasq_err = 1e-10
 
 # SeqMED settings
 sigmasqs = c(1 - 1e-10, 1)
-if(scenario == 1){
+if(scenario %in% c(3, 4)){
   nuggets = c(1e-10, 1e-15)
-} else if(scenario == 2){
+} else if(scenario == 5){
   nuggets = c(1e-5, 1e-10)
 }
 
@@ -120,18 +119,23 @@ x_spacefill3 = x_seq[x_spacefill3_idx]
 # input set 4 (uniform / random)
 
 ################################################################################
-# Scenario 1: Squared exponential vs. matern, true = matern
+# Scenario settings
 ################################################################################
-if(scenario == 1){
-  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
-                error.var = nugget)
-  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
-                error.var = nugget)
-} else if(scenario == 2){
-  type01 = c("matern", "periodic")
-  typeT = type01[2]
+if(scenario == 3){
+  type01 = c("squaredexponential", "squaredexponential")
+  typeT = "matern"
+  l01= c(0.005, 0.01)
+  lT = 0.01
+} else if(scenario == 4){
+  type01 = c("matern", "squaredexponential")
+  typeT = "periodic"
   l01= c(0.01, 0.01)
-  lT = l01[2]
+  lT = 0.01
+} else if(scenario == 5){
+  type01 = c("matern", "periodic")
+  typeT = "squaredexponential"
+  l01= c(0.01, 0.01)
+  lT = 0.01
 }
 
 ################################################################################
@@ -255,59 +259,98 @@ for(i in 1:3){
 # make plots
 ################################################################################
 
-# input set
-bh.in = boxhills[[input.type]]
-q.in = qs[[input.type]]
-buf.in = buffers[[input.type]]
-ran.in = randoms[[input.type]]
-sf.in = spacefills[[input.type]]
-n1.in = seqmed.n1s[[input.type]]
-n2.in = seqmed.n2s[[input.type]]
-s1.in = seqmed.s1s[[input.type]]
-s2.in = seqmed.s2s[[input.type]]
-if(input.type == 1){
-  x_input = x_in1
-  x_input_idx = x_in1_idx
-} else if(input.type == 2){
-  x_input = x_in2
-  x_input_idx = x_in2_idx
-} else if(input.type == 3){
-  x_input = x_in3
-  x_input_idx = x_in3_idx
+# models
+model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq,
+              error.var = nugget)
+model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
+              error.var = nugget)
+modelT = list(type = typeT, l = lT, signal.var = sigmasq, error.var = nugget)
+
+# calculate the final posterior probability
+getPPH = function(design, model0, model1, modelT){
+  y.tmp = c(design$y, as.vector(na.omit(design$y.new)))
+  x.tmp = c(design$x, as.vector(na.omit(design$x.new)))
+  PPHs.tmp = getHypothesesPosteriors(
+    prior.probs = rep(1 / 3, 3), 
+    evidences = c(
+      Evidence_gp(y.tmp, x.tmp, model0),
+      Evidence_gp(y.tmp, x.tmp, model1),
+      Evidence_gp(y.tmp, x.tmp, modelT)
+    )
+  )
+  return(data.frame("H0" = PPHs.tmp[1], "H1" = PPHs.tmp[2], "HT" = PPHs.tmp[3]))
 }
 
-# all 6 designs
-idx = 1
-designs = list(bh.in[[idx]], q.in[[idx]], buf.in[[idx]], 
-               n1.in[[idx]], n2.in[[idx]], 
-               s1.in[[idx]], s2.in[[idx]])
-design.names = c(
-  "bh", "q", "buffer", "nugget1", "nugget2", "signal1", "signal2")
-design.levels = c(
-  "nugget1", "nugget2", "signal1", "signal2", "buffer", "q", "bh")
-
-x.new.mat = matrix(NA, nrow = Nnew, ncol = length(designs))
-for(i in 1:length(designs)){
-  x.new.mat[, i] = designs[[i]]$x.new
+PPH = data.frame(
+  PPH0 = numeric(), PPH1 = numeric(), PPHT = numeric(), 
+  type = character(), sim = numeric(), input = numeric())
+for(k in 1:3){
+  for(j in 1:numSims){
+    # designs at sim b
+    bh = boxhills[[k]][[j]]
+    q = qs[[k]][[j]]
+    b = buffers[[k]][[j]]
+    r = randoms[[k]][[j]]
+    sf = spacefills[[k]][[j]]
+    n1 = seqmed.n1s[[k]][[j]]
+    n2 = seqmed.n2s[[k]][[j]]
+    s1 = seqmed.s1s[[k]][[j]]
+    s2 = seqmed.s2s[[k]][[j]]
+    # sequence of PPHs for each design
+    PPH.bh = getPPH(bh, model0, model1, modelT) # model0.bh, model1.bh, modelT)
+    PPH.q = getPPH(q, model0, model1, modelT) # model0.other, model1.other, modelT)
+    PPH.b = getPPH(b, model0, model1, modelT) # model0.other, model1.other, modelT)
+    PPH.r = getPPH(r, model0, model1, modelT) # model0.other, model1.other, modelT)
+    PPH.sf = getPPH(sf, model0, model1, modelT) # model0.other, model1.other, modelT)
+    PPH.n1 = getPPH(n1, model0, model1, modelT) # model0.n1, model1.n1, modelT)
+    PPH.n2 = getPPH(n2, model0, model1, modelT) # model0.n2, model1.n2, modelT)
+    PPH.s1 = getPPH(s1, model0, model1, modelT) # model0.s1, model1.s1, modelT)
+    PPH.s2 = getPPH(s2, model0, model1, modelT) # model0.s2, model1.s2, modelT)
+    # master data frame
+    PPH.bh$type = "boxhill"
+    PPH.q$type = "q"
+    PPH.b$type = "buffer"
+    PPH.r$type = "random"
+    PPH.sf$type = "spacefill"
+    PPH.n1$type = "nugget1"
+    PPH.n2$type = "nugget2"
+    PPH.s1$type = "signal1"
+    PPH.s2$type = "signal2"
+    PPH.tmp = rbind(
+      PPH.bh, PPH.q, PPH.b, PPH.r, PPH.sf, 
+      PPH.n1, PPH.n2, PPH.s1, PPH.s2)
+    PPH.tmp$sim = j
+    PPH.tmp$input = k
+    PPH = rbind(PPH, PPH.tmp)
+  }
 }
 
-data.gg = data.frame(
-  index = as.character(rep(1:Nnew, length(designs))), 
-  type = factor(rep(design.names, each = Nnew), levels = design.levels), 
-  value = as.vector(x.new.mat)
-)
-data.gg0 = data.frame(
-  type = factor(rep(design.names, each = Nin), levels = design.levels), 
-  input = rep(x_input, length(designs))
-)
-text.gg = dplyr::filter(data.gg, index %in% as.character(1:10))
-ggplot() + 
-  geom_point(data = data.gg0, 
-             mapping = aes(x = input, y = type)) +
-  geom_point(data = data.gg, 
-             mapping = aes(x = value, y = type, color = type), 
-             inherit.aes = FALSE) + 
-  geom_text(data = text.gg, 
-            aes(x = value, y = type, label = index), 
-            vjust = -0.65 * as.numeric(paste(text.gg$index)), size = 2) +
-  xlim(c(xmin, xmax))
+PPH0mean = aggregate(PPH$H0, by = list(PPH$type, PPH$input), 
+                     FUN = function(x) mean(x, na.rm = TRUE))
+names(PPH0mean) = c("type", "input", "value")
+PPH0mean$Hypothesis = "H0"
+PPH1mean = aggregate(PPH$H1, by = list(PPH$type, PPH$input), 
+                     FUN = function(x) mean(x, na.rm = TRUE))
+names(PPH1mean) = c("type", "input", "value")
+PPH1mean$Hypothesis = "H1"
+PPHTmean = aggregate(PPH$HT, by = list(PPH$type, PPH$input), 
+                     FUN = function(x) mean(x, na.rm = TRUE))
+names(PPHTmean) = c("type", "input", "value")
+PPHTmean$Hypothesis = "HT"
+
+PPHmean = rbind(PPH0mean, PPH1mean, PPHTmean)
+PPHmean$type = factor(PPHmean$type)
+PPHmean$Hypothesis = factor(PPHmean$Hypothesis)
+PPHmean$input = factor(PPHmean$input, 
+                       labels = c("extrapolation", "inc spread", "even coverage"))
+
+PPHT.plt = ggplot(dplyr::filter(PPHmean, Hypothesis == "HT"), 
+                  aes(x = input, y = value, group = type, color = type)) + 
+  geom_point() + 
+  geom_path(linetype = 2) +
+  ylim(0, 1) + 
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  labs(y = "P(HT|X, Y)", x = "Initial Data")
+PPHT.plt

@@ -1,10 +1,10 @@
 ################################################################################
 # last updated: 05/19/2021
-# purpose: to test seqmedgp for scenario 1:
-#   squared exponential vs. matern,
+# purpose: to test seqmedgp for scenario 3:
+#   squared exponential vs. another squared exponential,
 #   where the true function is matern
 
-scenario = 2 # scenarios: 1, 2
+scenario = 3 # scenarios: 3, 4, 5, 6
 input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
 seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
 
@@ -65,7 +65,7 @@ if(seq.type == 1){
   seqN = 5
 }
 Nnew = numSeq * seqN
-Nttl = Nin + Nnew
+Nttl = Nin + Nnew 
 xmin = 0
 xmax = 1
 numx = 10^3 + 1
@@ -74,9 +74,9 @@ sigmasq_err = 1e-10
 
 # SeqMED settings
 sigmasqs = c(1 - 1e-10, 1)
-if(scenario == 1){
+if(scenario %in% c(3, 4)){
   nuggets = c(1e-10, 1e-15)
-} else if(scenario == 2){
+} else if(scenario == 5){
   nuggets = c(1e-5, 1e-10)
 }
 
@@ -120,18 +120,23 @@ x_spacefill3 = x_seq[x_spacefill3_idx]
 # input set 4 (uniform / random)
 
 ################################################################################
-# Scenario 1: Squared exponential vs. matern, true = matern
+# Scenario settings
 ################################################################################
-if(scenario == 1){
-  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
-                error.var = nugget)
-  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
-                error.var = nugget)
-} else if(scenario == 2){
-  type01 = c("matern", "periodic")
-  typeT = type01[2]
+if(scenario == 3){
+  type01 = c("squaredexponential", "squaredexponential")
+  typeT = "matern"
+  l01= c(0.005, 0.01)
+  lT = 0.01
+} else if(scenario == 4){
+  type01 = c("matern", "squaredexponential")
+  typeT = "periodic"
   l01= c(0.01, 0.01)
-  lT = l01[2]
+  lT = 0.01
+} else if(scenario == 5){
+  type01 = c("matern", "periodic")
+  typeT = "squaredexponential"
+  l01= c(0.01, 0.01)
+  lT = 0.01
 }
 
 ################################################################################

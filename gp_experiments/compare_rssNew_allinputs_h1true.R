@@ -3,9 +3,9 @@
 # purpose: to test seqmedgp for scenario 1:
 #   squared exponential vs. matern,
 #   where the true function is matern
+# trying out some (not necessarily MED) designs
 
 scenario = 2 # scenarios: 1, 2
-input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
 seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
 
 ################################################################################
@@ -73,6 +73,7 @@ x_seq = seq(from = xmin, to = xmax, length.out = numx)
 sigmasq_err = 1e-10
 
 # SeqMED settings
+sigmasqs = c(1 - 1e-10, 1)
 sigmasqs = c(1 - 1e-10, 1)
 if(scenario == 1){
   nuggets = c(1e-10, 1e-15)
@@ -255,59 +256,130 @@ for(i in 1:3){
 # make plots
 ################################################################################
 
-# input set
-bh.in = boxhills[[input.type]]
-q.in = qs[[input.type]]
-buf.in = buffers[[input.type]]
-ran.in = randoms[[input.type]]
-sf.in = spacefills[[input.type]]
-n1.in = seqmed.n1s[[input.type]]
-n2.in = seqmed.n2s[[input.type]]
-s1.in = seqmed.s1s[[input.type]]
-s2.in = seqmed.s2s[[input.type]]
-if(input.type == 1){
-  x_input = x_in1
-  x_input_idx = x_in1_idx
-} else if(input.type == 2){
-  x_input = x_in2
-  x_input_idx = x_in2_idx
-} else if(input.type == 3){
-  x_input = x_in3
-  x_input_idx = x_in3_idx
+# models
+model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq,
+              error.var = nugget)
+model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
+              error.var = nugget)
+
+# calculate the RSSnew
+getRSS01 = function(
+  design, model0, model1, candidates, function.values, Nother = 51
+){
+  x.other.idx = 1 + 0:(Nother - 1) * floor(length(candidates) / (Nother - 1))
+  x.other = candidates[x.other.idx]
+  y.other = function.values[x.other.idx]
+  
+  x.tmp = as.vector(na.omit(c(design$x, design$x.new)))
+  y.tmp = as.vector(na.omit(c(design$y, design$y.new)))
+  pred0.tmp = getGPPredictive(x.other, x.tmp, y.tmp, 
+                              model0$type, model0$l, 
+                              1, model0$error.var)
+  pred1.tmp = getGPPredictive(x.other, x.tmp, y.tmp, 
+                              model1$type, model1$l, 
+                              1, model1$error.var)
+  RSS0.tmp = sum((pred0.tmp$pred_mean - y.other)^2, na.rm = TRUE)  
+  RSS1.tmp = sum((pred1.tmp$pred_mean - y.other)^2, na.rm = TRUE)
+  RSS01.tmp = RSS0.tmp / RSS1.tmp
+  return(data.frame("RSS0" = RSS0.tmp, "RSS1" = RSS1.tmp, "RSS01" = RSS01.tmp))
 }
 
-# all 6 designs
-idx = 1
-designs = list(bh.in[[idx]], q.in[[idx]], buf.in[[idx]], 
-               n1.in[[idx]], n2.in[[idx]], 
-               s1.in[[idx]], s2.in[[idx]])
-design.names = c(
-  "bh", "q", "buffer", "nugget1", "nugget2", "signal1", "signal2")
-design.levels = c(
-  "nugget1", "nugget2", "signal1", "signal2", "buffer", "q", "bh")
-
-x.new.mat = matrix(NA, nrow = Nnew, ncol = length(designs))
-for(i in 1:length(designs)){
-  x.new.mat[, i] = designs[[i]]$x.new
+RSS.df = data.frame(RSS0 = numeric(), RSS1 = numeric(), RSS01 = numeric(), 
+                    type = character(), sim = numeric(), input = numeric())
+for(k in 1:3){
+  for(j in 1:numSims){
+    # designs at sim b
+    bh = boxhills[[k]][[j]]
+    q = qs[[k]][[j]]
+    b = buffers[[k]][[j]]
+    r = randoms[[k]][[j]]
+    sf = spacefills[[k]][[j]]
+    n1 = seqmed.n1s[[k]][[j]]
+    n2 = seqmed.n2s[[k]][[j]]
+    s1 = seqmed.s1s[[k]][[j]]
+    s2 = seqmed.s2s[[k]][[j]]
+    # sequence of PPHs for each design
+    RSS.bh = getRSS01(bh, model0, model1, x_seq, y_seq_mat[, j])
+    RSS.q = getRSS01(q, model0, model1, x_seq, y_seq_mat[, j])
+    RSS.b = getRSS01(b, model0, model1, x_seq, y_seq_mat[, j])
+    RSS.r = getRSS01(r, model0, model1, x_seq, y_seq_mat[, j])
+    RSS.sf = getRSS01(sf, model0, model1, x_seq, y_seq_mat[, j])
+    RSS.n1 = getRSS01(n1, model0, model1, x_seq, y_seq_mat[, j])
+    RSS.n2 = getRSS01(n2, model0, model1, x_seq, y_seq_mat[, j])
+    RSS.s1 = getRSS01(s1, model0, model1, x_seq, y_seq_mat[, j])
+    RSS.s2 = getRSS01(s2, model0, model1, x_seq, y_seq_mat[, j])
+    # master data frame
+    RSS.bh$type = "boxhill"
+    RSS.q$type = "q"
+    RSS.b$type = "buffer"
+    RSS.r$type = "random"
+    RSS.sf$type = "spacefill"
+    RSS.n1$type = "nugget1"
+    RSS.n2$type = "nugget2"
+    RSS.s1$type = "signal1"
+    RSS.s2$type = "signal2"
+    RSS.tmp = rbind(
+      RSS.bh, RSS.q, RSS.b, RSS.r, RSS.sf, 
+      RSS.n1, RSS.n2, RSS.s1, RSS.s2)
+    RSS.tmp$sim = j
+    RSS.tmp$input = k
+    RSS.df = rbind(RSS.df, RSS.tmp)
+  }
 }
 
-data.gg = data.frame(
-  index = as.character(rep(1:Nnew, length(designs))), 
-  type = factor(rep(design.names, each = Nnew), levels = design.levels), 
-  value = as.vector(x.new.mat)
-)
-data.gg0 = data.frame(
-  type = factor(rep(design.names, each = Nin), levels = design.levels), 
-  input = rep(x_input, length(designs))
-)
-text.gg = dplyr::filter(data.gg, index %in% as.character(1:10))
-ggplot() + 
-  geom_point(data = data.gg0, 
-             mapping = aes(x = input, y = type)) +
-  geom_point(data = data.gg, 
-             mapping = aes(x = value, y = type, color = type), 
-             inherit.aes = FALSE) + 
-  geom_text(data = text.gg, 
-            aes(x = value, y = type, label = index), 
-            vjust = -0.65 * as.numeric(paste(text.gg$index)), size = 2) +
-  xlim(c(xmin, xmax))
+RSS0mean = aggregate(RSS.df$RSS0, by = list(RSS.df$type, RSS.df$input), 
+                     FUN = function(x) mean(x, na.rm = TRUE))
+names(RSS0mean) = c("type", "input", "value")
+RSS0mean$RSS = "RSS0"
+RSS1mean = aggregate(RSS.df$RSS1, by = list(RSS.df$type, RSS.df$input), 
+                     FUN = function(x) mean(x, na.rm = TRUE))
+names(RSS1mean) = c("type", "input", "value")
+RSS1mean$RSS = "RSS1"
+RSS01mean = aggregate(RSS.df$RSS01, by = list(RSS.df$type, RSS.df$input), 
+                      FUN = function(x) mean(x, na.rm = TRUE))
+names(RSS01mean) = c("type", "input", "value")
+RSS01mean$RSS = "RSS01"
+
+RSSmean = rbind(RSS0mean, RSS1mean, RSS01mean)
+RSSmean$type = factor(RSSmean$type)
+RSSmean$RSS = factor(RSSmean$RSS)
+RSSmean$input = factor(RSSmean$input, 
+                       labels = c("extrapolation", "inc spread", "even coverage"))
+
+# RSS1
+RSS1.plt = ggplot(dplyr::filter(RSSmean, RSS == "RSS1"), 
+                  aes(x = input, y = value, group = type, color = type, 
+                      linetype = type)) + 
+  geom_point() + 
+  
+  geom_path() +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  labs(y = "RSS1", x = "Initial Data") 
+RSS1.plt
+
+# RSS01
+RSS01.plt = ggplot(dplyr::filter(RSSmean, RSS == "RSS01"), 
+                   aes(x = input, y = value, group = type, color = type, 
+                       linetype = type)) + 
+  geom_point() + 
+  geom_path() +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  labs(y = "RSS01", x = "Initial Data")
+RSS01.plt
+
+# # log(RSS01)
+# logged.dat = dplyr::filter(RSSmean, RSS == "RSS01")
+# logged.dat$value = log(logged.dat$value)
+# logRSS01.plt = ggplot(logged.dat, 
+#                    aes(x = input, y = value, group = type, color = type)) + 
+#   geom_point() + 
+#   geom_path(linetype = 2) +
+#   theme_bw() +
+#   theme(panel.grid.major = element_blank(),
+#         panel.grid.minor = element_blank()) +
+#   labs(y = "log(RSS01)", x = "Initial Data")
+# logRSS01.plt

@@ -5,10 +5,14 @@
 #   where the true function is matern
 # testing box and hill to see when/why/how it gets NaNs
 
+scenario = 2 # scenarios: 1, 2
+input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
+seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
+
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = "gp_experiments/scenario1/outputs"
+output_home = paste0("gp_experiments/scenario", scenario, "/outputs")
 functions_home = "functions"
 
 # for seqmed design
@@ -106,7 +110,11 @@ x_spacefill3 = x_seq[x_spacefill3_idx]
 ################################################################################
 # Scenario 1: Squared exponential vs. matern, true = matern
 ################################################################################
-type01 = c("squaredexponential", "matern")
+if(scenario == 1){
+  type01 = c("squaredexponential", "matern")
+} else if(scenario == 2){
+  type01 = c("matern", "periodic")
+}
 typeT = type01[2]
 l01= c(0.01, 0.01)
 lT = l01[2]
@@ -127,7 +135,7 @@ if(!is.null(sigmasq_err)){
 }
 simulated.functions = readRDS(paste0(
   output_home,
-  "/scenario1_simulated_functions", filename_append,
+  "/scenario", scenario, "_simulated_functions", filename_append,
   "_seed", rng.seed,
   ".rds"))
 numSims = simulated.functions$numSims
@@ -186,10 +194,10 @@ ggdata = data.table(
   `True Function` = y_seq, 
   `H0 Predictive Mean` = H0_predfn$pred_mean, 
   `H1 Predictive Mean` = H1_predfn$pred_mean,
-  lower0 = H0_predfn$pred_mean - err0, 
-  lower1 = H1_predfn$pred_mean - err1, 
-  upper0 = H0_predfn$pred_mean + err0,
-  upper1 = H1_predfn$pred_mean + err1
+  lower0 = H0_predfn$pred_mean - 2 * err0, 
+  lower1 = H1_predfn$pred_mean - 2 * err1, 
+  upper0 = H0_predfn$pred_mean + 2 * err0,
+  upper1 = H1_predfn$pred_mean + 2 * err1
 )
 yrange = range(ggdata$lower0, ggdata$lower1, 
                ggdata$upper0, ggdata$upper1, 
@@ -237,111 +245,111 @@ ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable),
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
   labs(y = "y", x = "x", fill = "Function", color = "Function")
-
-# post probs #
-post.probs.gg = data.frame(
-  x = 1:dim(BHres$post.probs)[1],
-  H0 = BHres$post.probs[, 1], 
-  H1 = BHres$post.probs[, 2]
-)
-post.probs.ggm = reshape2::melt(
-  post.probs.gg, id.vars = c("x"))
-ggplot(post.probs.ggm, aes(x = x, y = value)) + 
-  facet_wrap(vars(variable)) + 
-  geom_path() + 
-  theme_bw() + 
-  ylab("posterior probability of hypothesis")
-
-# plot criterion for first point #
-BHcrit1 = sapply(x_seq, FUN = function(x) 
-  BHDgp_m2(y_input, x_input, prior_probs, x, model0, model1))
-BHD.gg = data.frame(
-  x = x_seq, 
-  y = BHcrit1
-)
-ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable), 
-       linetype = 1) + 
-  geom_path() + 
-  geom_ribbon(aes(ymin = lower, ymax = upper, fill = variable), 
-              alpha = 0.1, linetype = 0) +
-  scale_linetype_manual(values = c(1, 1, 2, 2)) + 
-  scale_fill_manual(values = c(NA, "#00BFC4", "#C77CFF")) + 
-  scale_color_manual(values = c(1, "#00BFC4", "#C77CFF")) + 
-  geom_point(data = ggdata_pts, mapping = aes(x = x, y = y), 
-             inherit.aes = FALSE, color = ggdata_pts$color, 
-             shape = ggdata_pts$shape, 
-             size = 3, alpha = 0.25) +
-  geom_label(label = c(rep(NA, length(x_input.gg)), c(1:length(x_new.gg))), 
-             data = ggdata_pts, mapping = aes(x = x, y = y + 0.3), 
-             inherit.aes = FALSE, alpha = 0.25) +
-  geom_point(data = ggdata_pts, mapping = aes(x = x, y = yrange[1]), 
-             inherit.aes = FALSE, color = ggdata_pts$color, 
-             shape = ggdata_pts$shape, 
-             size = 3, alpha = 0.25) + 
-  geom_path(data = BHD.gg, aes(x = x, y = (1/1e7) * y - 3), inherit.aes = FALSE, color = 3) + 
-  scale_y_continuous(limits = yrange) +
-  theme_bw() + 
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank()) +
-  labs(y = "y", x = "x", fill = "Function", color = "Function")
-
-BHDs = matrix(NA, nrow = length(x_seq), ncol = Nnew)
-KLijs = matrix(NA, nrow = length(x_seq), ncol = Nnew)
-KLjis = matrix(NA, nrow = length(x_seq), ncol = Nnew)
-for(i in 1:Nnew){
-  xs = c(x_input, BHres$x.new)
-  ys = c(y_input, BHres$y.new)
-  x.tmp = xs[1:length(x_input) + i - 1]
-  y.tmp = ys[1:length(x_input) + i - 1]
-  probs.tmp = BHres$post.probs[i, ]
-  BHDs[, i] = sapply(x_seq, function(x) BHDgp_m2_testing(
-    y.tmp, x.tmp, probs.tmp, x, model0, model1)$bhd)
-  KLijs[, i] = sapply(x_seq, function(x) BHDgp_m2_testing(
-    y.tmp, x.tmp, probs.tmp, x, model0, model1)$KLij)
-  KLjis[, i] = sapply(x_seq, function(x) BHDgp_m2_testing(
-    y.tmp, x.tmp, probs.tmp, x, model0, model1)$KLji)
-}
-
-colnames(BHDs) = paste0("X", 1:Nnew)
-colnames(KLijs) = colnames(BHDs)
-colnames(KLjis) = colnames(BHDs)
-BHD.df = data.frame(rbind(BHDs, KLijs, KLjis))
-BHD.df$candidate = rep(x_seq, 3)
-BHD.df$type = c(rep("BH", numx), rep("KLij", numx), rep("KLji", numx))
-BHD.mlt = reshape2::melt(
-  BHD.df, id.vars = c("candidate", "type"), measure.vars = colnames(BHDs))
-
-# plot BH criterion at particular new points
-ggplot(dplyr::filter(BHD.mlt, type == "BH", variable %in% paste0("X", 1:4)), 
-       aes(x = candidate, y = value, color = type)) + 
-  facet_wrap(vars(variable), scales = "free_y") +
-  geom_vline(xintercept = x_input, color = "gray") + 
-  geom_path() + 
-  theme(text = element_text(size = 15)) + 
-  xlim(0, 0.5)
-
-# plot BH criterion at first point, and also get the 
-idx = 1
-BHDx.mlt = dplyr::filter(BHD.mlt, type == "BH", variable == paste0("X", idx))
-ggplot(BHDx.mlt, 
-       aes(x = candidate, y = value)) + 
-  geom_vline(xintercept = x_input, color = "gray", size = 1) + 
-  geom_vline(xintercept = dplyr::filter(BHDx.mlt, is.nan(value))$candidate, 
-             color = "orchid", linetype = 2, size = 1) + 
-  geom_path(size = 1) + 
-  theme(text = element_text(size = 15)) + 
-  xlim(0, 0.5)
-
-# what do the KLs look like in the criterion? pick a specific new point
-ggdata.tmp = dplyr::filter(BHD.mlt, variable == paste0("X", idx))
-ggplot(ggdata.tmp, 
-       aes(x = candidate, y = log(value), color = type)) + 
-  facet_wrap(vars(type)) +
-  geom_vline(xintercept = x_input, color = "gray", size = 1) + 
-  geom_vline(xintercept = dplyr::filter(BHDx.mlt, is.nan(value))$candidate, 
-             color = "orchid", linetype = 2, size = 1) + 
-  geom_path(size = 1) + 
-  theme(text = element_text(size = 15)) + 
-  # theme_classic() + 
-  xlim(0, 0.5)
-# geom_point()
+# 
+# # post probs #
+# post.probs.gg = data.frame(
+#   x = 1:dim(BHres$post.probs)[1],
+#   H0 = BHres$post.probs[, 1], 
+#   H1 = BHres$post.probs[, 2]
+# )
+# post.probs.ggm = reshape2::melt(
+#   post.probs.gg, id.vars = c("x"))
+# ggplot(post.probs.ggm, aes(x = x, y = value)) + 
+#   facet_wrap(vars(variable)) + 
+#   geom_path() + 
+#   theme_bw() + 
+#   ylab("posterior probability of hypothesis")
+# 
+# # plot criterion for first point #
+# BHcrit1 = sapply(x_seq, FUN = function(x) 
+#   BHDgp_m2(y_input, x_input, prior_probs, x, model0, model1))
+# BHD.gg = data.frame(
+#   x = x_seq, 
+#   y = BHcrit1
+# )
+# ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable), 
+#        linetype = 1) + 
+#   geom_path() + 
+#   geom_ribbon(aes(ymin = lower, ymax = upper, fill = variable), 
+#               alpha = 0.1, linetype = 0) +
+#   scale_linetype_manual(values = c(1, 1, 2, 2)) + 
+#   scale_fill_manual(values = c(NA, "#00BFC4", "#C77CFF")) + 
+#   scale_color_manual(values = c(1, "#00BFC4", "#C77CFF")) + 
+#   geom_point(data = ggdata_pts, mapping = aes(x = x, y = y), 
+#              inherit.aes = FALSE, color = ggdata_pts$color, 
+#              shape = ggdata_pts$shape, 
+#              size = 3, alpha = 0.25) +
+#   geom_label(label = c(rep(NA, length(x_input.gg)), c(1:length(x_new.gg))), 
+#              data = ggdata_pts, mapping = aes(x = x, y = y + 0.3), 
+#              inherit.aes = FALSE, alpha = 0.25) +
+#   geom_point(data = ggdata_pts, mapping = aes(x = x, y = yrange[1]), 
+#              inherit.aes = FALSE, color = ggdata_pts$color, 
+#              shape = ggdata_pts$shape, 
+#              size = 3, alpha = 0.25) + 
+#   geom_path(data = BHD.gg, aes(x = x, y = (1/1e7) * y - 3), inherit.aes = FALSE, color = 3) + 
+#   scale_y_continuous(limits = yrange) +
+#   theme_bw() + 
+#   theme(panel.grid.major = element_blank(),
+#         panel.grid.minor = element_blank()) +
+#   labs(y = "y", x = "x", fill = "Function", color = "Function")
+# 
+# BHDs = matrix(NA, nrow = length(x_seq), ncol = Nnew)
+# KLijs = matrix(NA, nrow = length(x_seq), ncol = Nnew)
+# KLjis = matrix(NA, nrow = length(x_seq), ncol = Nnew)
+# for(i in 1:Nnew){
+#   xs = c(x_input, BHres$x.new)
+#   ys = c(y_input, BHres$y.new)
+#   x.tmp = xs[1:length(x_input) + i - 1]
+#   y.tmp = ys[1:length(x_input) + i - 1]
+#   probs.tmp = BHres$post.probs[i, ]
+#   BHDs[, i] = sapply(x_seq, function(x) BHDgp_m2_testing(
+#     y.tmp, x.tmp, probs.tmp, x, model0, model1)$bhd)
+#   KLijs[, i] = sapply(x_seq, function(x) BHDgp_m2_testing(
+#     y.tmp, x.tmp, probs.tmp, x, model0, model1)$KLij)
+#   KLjis[, i] = sapply(x_seq, function(x) BHDgp_m2_testing(
+#     y.tmp, x.tmp, probs.tmp, x, model0, model1)$KLji)
+# }
+# 
+# colnames(BHDs) = paste0("X", 1:Nnew)
+# colnames(KLijs) = colnames(BHDs)
+# colnames(KLjis) = colnames(BHDs)
+# BHD.df = data.frame(rbind(BHDs, KLijs, KLjis))
+# BHD.df$candidate = rep(x_seq, 3)
+# BHD.df$type = c(rep("BH", numx), rep("KLij", numx), rep("KLji", numx))
+# BHD.mlt = reshape2::melt(
+#   BHD.df, id.vars = c("candidate", "type"), measure.vars = colnames(BHDs))
+# 
+# # plot BH criterion at particular new points
+# ggplot(dplyr::filter(BHD.mlt, type == "BH", variable %in% paste0("X", 1:4)), 
+#        aes(x = candidate, y = value, color = type)) + 
+#   facet_wrap(vars(variable), scales = "free_y") +
+#   geom_vline(xintercept = x_input, color = "gray") + 
+#   geom_path() + 
+#   theme(text = element_text(size = 15)) + 
+#   xlim(0, 0.5)
+# 
+# # plot BH criterion at first point, and also get the 
+# idx = 1
+# BHDx.mlt = dplyr::filter(BHD.mlt, type == "BH", variable == paste0("X", idx))
+# ggplot(BHDx.mlt, 
+#        aes(x = candidate, y = value)) + 
+#   geom_vline(xintercept = x_input, color = "gray", size = 1) + 
+#   geom_vline(xintercept = dplyr::filter(BHDx.mlt, is.nan(value))$candidate, 
+#              color = "orchid", linetype = 2, size = 1) + 
+#   geom_path(size = 1) + 
+#   theme(text = element_text(size = 15)) + 
+#   xlim(0, 0.5)
+# 
+# # what do the KLs look like in the criterion? pick a specific new point
+# ggdata.tmp = dplyr::filter(BHD.mlt, variable == paste0("X", idx))
+# ggplot(ggdata.tmp, 
+#        aes(x = candidate, y = log(value), color = type)) + 
+#   facet_wrap(vars(type)) +
+#   geom_vline(xintercept = x_input, color = "gray", size = 1) + 
+#   geom_vline(xintercept = dplyr::filter(BHDx.mlt, is.nan(value))$candidate, 
+#              color = "orchid", linetype = 2, size = 1) + 
+#   geom_path(size = 1) + 
+#   theme(text = element_text(size = 15)) + 
+#   # theme_classic() + 
+#   xlim(0, 0.5)
+# # geom_point()

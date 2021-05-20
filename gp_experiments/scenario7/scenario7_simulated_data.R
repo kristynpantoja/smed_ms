@@ -77,7 +77,7 @@ null_mean = rep(0, numx)
 y_seq_mat = t(rmvnorm(n = numSims, mean = null_mean, sigma = null_cov)) # the function values
 filename_append = ""
 if(!is.null(sigmasq_err)){
-  y_seq_mat = y_seq_mat + matrix(rnorm(numx * numSims), 
+  y_seq_mat = y_seq_mat + matrix(rnorm(numx * numSims, 1, sqrt(sigmasq_err)), 
                                  nrow = nrow(y_seq_mat), ncol = ncol(y_seq_mat))
   filename_append = paste0(
     "_noise", strsplit(as.character(sigmasq_err), "-")[[1]][2])

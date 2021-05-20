@@ -4,10 +4,12 @@
 #   matern vs. periodic,
 #   where the true function is squared exponential
 
+scenario = 5
+
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = "gp_experiments/seqmed_scenario5_20210503/outputs"
+output_home = paste0("gp_experiments/scenario", scenario, "/outputs")
 functions_home = "functions"
 
 # for seqmed design
@@ -74,7 +76,7 @@ null_mean = rep(0, numx)
 y_seq_mat = t(rmvnorm(n = numSims, mean = null_mean, sigma = null_cov)) # the function values
 filename_append = ""
 if(!is.null(sigmasq_err)){
-  y_seq_mat = y_seq_mat + matrix(rnorm(numx * numSims), 
+  y_seq_mat = y_seq_mat + matrix(rnorm(numx * numSims, 1, sqrt(sigmasq_err)), 
                                  nrow = nrow(y_seq_mat), ncol = ncol(y_seq_mat))
   filename_append = paste0(
     "_noise", strsplit(as.character(sigmasq_err), "-")[[1]][2])
@@ -94,6 +96,6 @@ saveRDS(
   ), 
   file = paste0(
     output_home,
-    "/scenario5_simulated_functions", filename_append, 
+    "/scenario", scenario, "_simulated_functions", filename_append, 
     "_seed", rng.seed,
     ".rds"))

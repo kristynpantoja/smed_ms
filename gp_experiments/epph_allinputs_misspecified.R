@@ -4,7 +4,7 @@
 #   squared exponential vs. another squared exponential,
 #   where the true function is matern
 
-scenario = 3 # scenarios: 3, 4, 5, 6
+scenario = 5 # scenarios: 3, 4, 5, 6
 seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
 
 ################################################################################
@@ -297,15 +297,15 @@ for(k in 1:3){
     s1 = seqmed.s1s[[k]][[j]]
     s2 = seqmed.s2s[[k]][[j]]
     # sequence of PPHs for each design
-    PPH.bh = getPPH(bh, model0, model1, modelT) # model0.bh, model1.bh, modelT)
-    PPH.q = getPPH(q, model0, model1, modelT) # model0.other, model1.other, modelT)
-    PPH.b = getPPH(b, model0, model1, modelT) # model0.other, model1.other, modelT)
-    PPH.r = getPPH(r, model0, model1, modelT) # model0.other, model1.other, modelT)
-    PPH.sf = getPPH(sf, model0, model1, modelT) # model0.other, model1.other, modelT)
-    PPH.n1 = getPPH(n1, model0, model1, modelT) # model0.n1, model1.n1, modelT)
-    PPH.n2 = getPPH(n2, model0, model1, modelT) # model0.n2, model1.n2, modelT)
-    PPH.s1 = getPPH(s1, model0, model1, modelT) # model0.s1, model1.s1, modelT)
-    PPH.s2 = getPPH(s2, model0, model1, modelT) # model0.s2, model1.s2, modelT)
+    PPH.bh = getPPH(bh, model0, model1, modelT)
+    PPH.q = getPPH(q, model0, model1, modelT)
+    PPH.b = getPPH(b, model0, model1, modelT)
+    PPH.r = getPPH(r, model0, model1, modelT)
+    PPH.sf = getPPH(sf, model0, model1, modelT)
+    PPH.n1 = getPPH(n1, model0, model1, modelT)
+    PPH.n2 = getPPH(n2, model0, model1, modelT)
+    PPH.s1 = getPPH(s1, model0, model1, modelT)
+    PPH.s2 = getPPH(s2, model0, model1, modelT)
     # master data frame
     PPH.bh$type = "boxhill"
     PPH.q$type = "q"
@@ -352,5 +352,5 @@ PPHT.plt = ggplot(dplyr::filter(PPHmean, Hypothesis == "HT"),
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
-  labs(y = "P(HT|X, Y)", x = "Initial Data")
+  labs(y = "E[P(HT|X, Y)|X]", x = "Initial Data")
 PPHT.plt

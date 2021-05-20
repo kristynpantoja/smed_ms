@@ -1,13 +1,16 @@
 ################################################################################
-# last updated: 04/16/2021
-# purpose: to test seqmedgp for scenario 3:
-#   squared exponential vs. another squared exponential,
-#   where the true function is matern
+# last updated: 05/20/2021
+# purpose: to test seqmedgp for scenario 7:
+#   squared exponential vs. periodic,
+#   where the true function is periodic
+#   (as opposed to comparing a matern to a periodic, like in scenario 2)
+
+scenario = 7
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = "gp_experiments/scenario3/outputs"
+output_home = paste0("gp_experiments/scenario", scenario, "/outputs")
 functions_home = "functions"
 
 # for seqmed design
@@ -31,7 +34,7 @@ library(future)
 library(doFuture)
 library(parallel)
 registerDoFuture()
-nworkers = detectCores()
+nworkers = detectCores() - 2
 plan(multisession, workers = nworkers)
 
 library(rngtools)
@@ -61,10 +64,10 @@ numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
 sigmasq_err = 1e-10
 
-# boxhill settings
-sigmasq = 1
+# SeqMED settings
+sigmasqs = c(1 - 1e-10, 1)
 nugget = sigmasq_err
-prior_probs = rep(1 / 2, 2)
+buffer = 0
 
 ################################################################################
 # input data
@@ -99,22 +102,15 @@ x_spacefill3 = x_seq[x_spacefill3_idx]
 # input set 4 (uniform / random)
 
 ################################################################################
-# Scenario 3: Squared exponential vs. squared exponential, true = matern
+# Scenario 7: Squared exponential vs. periodic, true = periodic
 ################################################################################
-type01 = c("squaredexponential", "squaredexponential")
-typeT = "matern"
-l01= c(0.005, 0.01)
-lT = 0.01
+type01 = c("squaredexponential", "periodic")
+typeT = type01[2]
+l01= c(0.01, 0.01)
+lT = l01[2]
 
 ################################################################################
-# models
-model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
-              error.var = nugget)
-model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
-              error.var = nugget)
-
-################################################################################
-# import matern functions
+# import periodic functions
 filename_append = ""
 if(!is.null(sigmasq_err)){
   filename_append = paste0(
@@ -122,7 +118,7 @@ if(!is.null(sigmasq_err)){
 }
 simulated.functions = readRDS(paste0(
   output_home,
-  "/scenario3_simulated_functions", filename_append,
+  "/scenario", scenario, "_simulated_functions", filename_append,
   "_seed", rng.seed,
   ".rds"))
 numSims = simulated.functions$numSims
@@ -133,51 +129,86 @@ null_mean = simulated.functions$null_mean
 y_seq_mat = simulated.functions$function_values_mat
 
 ################################################################################
-# generate boxhills
+# generate seqmeds 
 
-for(j in 1:3){
-    
-    # j : input setting
-    input.type = j
-    # input set
-    if(input.type == 1){
-      x_input = x_in1
-      x_input_idx = x_in1_idx
-    } else if(input.type == 2){
-      x_input = x_in2
-      x_input_idx = x_in2_idx
-    } else if(input.type == 3){
-      x_input = x_in3
-      x_input_idx = x_in3_idx
-    }
-    
-    # simulations!
-    registerDoRNG(rng.seed)
-    boxhills = foreach(
-      i = 1:numSims
-    ) %dorng% {
-      y_seq = y_seq_mat[ , i]
-      y_input = y_seq[x_input_idx]
-      BHgp_m2(
-        y_input, x_input, x_input_idx, prior_probs, model0, model1, Nnew, 
-        x_seq, y_seq, noise = TRUE, error.var = sigmasq_err)
-    }
-    
-    filename_append.tmp = filename_append
-    if(!is.null(nugget)){
+for(i in 1:2){
+  for(j in 1:3){
+    for(k in 1:2){
+      # i : signal setting
+      # models
+      signalvar.type = i
+      if(signalvar.type == 1){
+        model0 = list(type = type01[1], l = l01[1], signal.var = sigmasqs[1], 
+                      error.var = nugget)
+        model1 = list(type = type01[2], l = l01[2], signal.var = sigmasqs[2], 
+                      error.var = nugget)
+      } else if(signalvar.type == 2){
+        model0 = list(type = type01[1], l = l01[1], signal.var = sigmasqs[2],
+                      error.var = nugget)
+        model1 = list(type = type01[2], l = l01[2], signal.var = sigmasqs[1], 
+                      error.var = nugget)
+      }
+      
+      # j : input setting
+      input.type = j
+      # input set
+      if(input.type == 1){
+        x_input = x_in1
+        x_input_idx = x_in1_idx
+      } else if(input.type == 2){
+        x_input = x_in2
+        x_input_idx = x_in2_idx
+      } else if(input.type == 3){
+        x_input = x_in3
+        x_input_idx = x_in3_idx
+      }
+      
+      # k : sequential setting
+      seq.type = k
+      if(seq.type == 1){
+        numSeq = 15
+        seqN = 1
+      } else if(seq.type == 2){
+        numSeq = 3
+        seqN = 5
+      }
+      
+      # simulations!
+      registerDoRNG(rng.seed)
+      seqmeds = foreach(
+        b = 1:numSims
+      ) %dorng% {
+        y_seq = y_seq_mat[ , b]
+        y_input = y_seq[x_input_idx]
+        SeqMEDgp(
+          y0 = y_input, x0 = x_input, x0.idx = x_input_idx, 
+          candidates = x_seq, function.values = y_seq, 
+          model0 = model0, model1 = model1, 
+          numSeq = numSeq, seqN = seqN, prints = FALSE, buffer = buffer, 
+          objective.type = 1, noise = TRUE, error.var = sigmasq_err)
+      }
+      
+      print(paste0("completed i = ", i, ", j = ", j, ", k = ", k, "!"))
+      
+      filename_append.tmp = filename_append
+      if(!is.null(nugget)){
+        filename_append.tmp = paste0(
+          filename_append.tmp, 
+          "_nugget", strsplit(as.character(nugget), "-")[[1]][2])
+      }
       filename_append.tmp = paste0(
         filename_append.tmp, 
-        "_nugget", strsplit(as.character(nugget), "-")[[1]][2])
+        "_input", input.type, 
+        "_seed", rng.seed,
+        ".rds"
+      )
+      saveRDS(seqmeds, 
+              file = paste0(
+                output_home,
+                "/scenario", scenario, "_seqmed", 
+                "_signal", signalvar.type,
+                "_seq", seq.type,
+                filename_append.tmp))
     }
-    filename_append.tmp = paste0(
-      filename_append.tmp, 
-      "_input", input.type, 
-      "_seed", rng.seed,
-      ".rds"
-    )
-    saveRDS(boxhills, 
-            file = paste0(
-              output_home,
-              "/scenario3_boxhill", 
-              filename_append.tmp))
+  }
 }

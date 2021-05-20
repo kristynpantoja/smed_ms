@@ -4,7 +4,8 @@
 #   squared exponential vs. another squared exponential,
 #   where the true function is matern
 
-scenario = 3 # scenarios: 3, 4, 5, 6
+scenario = 5 # scenarios: 3, 4, 5, 6
+input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
 seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
 
 ################################################################################
@@ -278,7 +279,7 @@ model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq,
               error.var = nugget)
 modelT = list(type = typeT, l = lT, signal.var = sigmasq, error.var = nugget)
 
-getPPHseq_scen3 = function(design, model0, model1, modelT){
+getPPHseq = function(design, model0, model1, modelT){
   PPH0_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
   PPH1_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
   PPHT_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
@@ -305,9 +306,9 @@ getPPHseq_scen3 = function(design, model0, model1, modelT){
   }
   return(data.frame(
     index = 1:Nnew, 
-    PPH0 = PPH0_seq, 
-    PPH1 = PPH1_seq, 
-    PPHT = PPHT_seq
+    "H0" = PPH0_seq, 
+    "H1" = PPH1_seq, 
+    "HT" = PPHT_seq
   ))
 }
 
@@ -326,15 +327,15 @@ for(j in 1:numSims){
   s1 = s1.in[[j]]
   s2 = s2.in[[j]]
   # sequence of PPHs for each design
-  PPH_seq.bh = getPPHseq_scen3(bh, model0, model1, modelT) # model0.bh, model1.bh, modelT)
-  PPH_seq.q = getPPHseq_scen3(q, model0, model1, modelT) #  model0.other, model1.other, modelT)
-  PPH_seq.b = getPPHseq_scen3(b, model0, model1, modelT) #  model0.other, model1.other, modelT)
-  PPH_seq.r = getPPHseq_scen3(r, model0, model1, modelT) # model0.other, model1.other, modelT)
-  PPH_seq.sf = getPPHseq_scen3(sf, model0, model1, modelT) # model0.other, model1.other, modelT)
-  PPH_seq.n1 = getPPHseq_scen3(n1, model0, model1, modelT) # model0.n1, model1.n1, modelT)
-  PPH_seq.n2 = getPPHseq_scen3(n2, model0, model1, modelT) # model0.n2, model1.n2, modelT)
-  PPH_seq.s1 = getPPHseq_scen3(s1, model0, model1, modelT) # model0.s1, model1.s1, modelT)
-  PPH_seq.s2 = getPPHseq_scen3(s2, model0, model1, modelT) # model0.s2, model1.s2, modelT)
+  PPH_seq.bh = getPPHseq(bh, model0, model1, modelT)
+  PPH_seq.q = getPPHseq(q, model0, model1, modelT)
+  PPH_seq.b = getPPHseq(b, model0, model1, modelT)
+  PPH_seq.r = getPPHseq(r, model0, model1, modelT)
+  PPH_seq.sf = getPPHseq(sf, model0, model1, modelT)
+  PPH_seq.n1 = getPPHseq(n1, model0, model1, modelT)
+  PPH_seq.n2 = getPPHseq(n2, model0, model1, modelT)
+  PPH_seq.s1 = getPPHseq(s1, model0, model1, modelT)
+  PPH_seq.s2 = getPPHseq(s2, model0, model1, modelT)
   # master data frame
   PPH_seq.bh$type = "boxhill"
   PPH_seq.q$type = "q"
@@ -352,15 +353,15 @@ for(j in 1:numSims){
   PPH_seq = rbind(PPH_seq, PPH_seq.tmp)
 }
 
-PPH0mean_seq = aggregate(PPH_seq$PPH0, by = list(PPH_seq$index, PPH_seq$type), 
+PPH0mean_seq = aggregate(PPH_seq$H0, by = list(PPH_seq$index, PPH_seq$type), 
                          FUN = function(x) mean(x, na.rm = TRUE))
 names(PPH0mean_seq) = c("index", "type", "value")
 PPH0mean_seq$Hypothesis = "H0"
-PPH1mean_seq = aggregate(PPH_seq$PPH1, by = list(PPH_seq$index, PPH_seq$type), 
+PPH1mean_seq = aggregate(PPH_seq$H1, by = list(PPH_seq$index, PPH_seq$type), 
                          FUN = function(x) mean(x, na.rm = TRUE))
 names(PPH1mean_seq) = c("index", "type", "value")
 PPH1mean_seq$Hypothesis = "H1"
-PPHTmean_seq = aggregate(PPH_seq$PPHT, by = list(PPH_seq$index, PPH_seq$type), 
+PPHTmean_seq = aggregate(PPH_seq$HT, by = list(PPH_seq$index, PPH_seq$type), 
                          FUN = function(x) mean(x, na.rm = TRUE))
 names(PPHTmean_seq) = c("index", "type", "value")
 PPHTmean_seq$Hypothesis = "HT"

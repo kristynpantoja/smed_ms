@@ -7,7 +7,7 @@
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = "gp_experiments/seqmed_scenario5_20210503/outputs"
+output_home = "gp_experiments/scenario5/outputs"
 functions_home = "functions"
 
 # for seqmed design
@@ -160,7 +160,7 @@ for(j in 1:3){
     y_input = y_seq[x_input_idx]
     BHgp_m2(
       y_input, x_input, x_input_idx, prior_probs, model0, model1, Nnew, 
-      x_seq, y_seq)
+      x_seq, y_seq, noise = TRUE, error.var = sigmasq_err)
   }
   
   filename_append.tmp = filename_append

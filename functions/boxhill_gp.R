@@ -66,8 +66,8 @@ BHgp_m2 = function(
   n, # number of new points
   candidates, # domain over which the function is evaluated 
   function.values, # true function values, evaluated over the domain
-  noise = FALSE,
-  error.var = 1e-10,
+  noise = TRUE,
+  error.var = NULL,
   seed = NULL
   # stopping.type = "tryCatch"
 ){
@@ -80,7 +80,7 @@ BHgp_m2 = function(
     y = function.values[x.idx]
     if(noise){
       if(is.null(error.var)){
-        warning("SeqMEDgp: noise = TRUE, but error.var = NULL -- no noise to add.")
+        stop("SeqMEDgp: noise = TRUE, but error.var = NULL.")
       } else{
         y = y + rnorm(length(x), 0, sqrt(error.var))
       }
@@ -127,10 +127,10 @@ BHgp_m2 = function(
       bhd_seq = sapply(candidates, FUN = function(x) BHDgp_m2(
         y.cur, x.cur, post.probs.cur, x, model0, model1))
     # }
-    # if(!all(!is.nan(bhd_seq))){
-    #   warning("Warning in BHgp_m2() : There were NaNs in Box & Hill criterion 
-    #           evaluation over the candidate set!!")
-    # }
+    if(!all(!is.nan(bhd_seq))){
+      warning("Warning in BHgp_m2() : There were NaNs in Box & Hill criterion
+              evaluation over the candidate set!!")
+    }
     if(all(is.nan(bhd_seq))){
       warning("Warning in BHgp_m2() : ***ALL*** NaNs in Box & Hill criterion
               evaluated over the candidate set!!")

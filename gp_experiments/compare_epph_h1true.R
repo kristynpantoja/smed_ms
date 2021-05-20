@@ -6,7 +6,7 @@
 
 scenario = 2 # scenarios: 1, 2
 input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
-seq.type = 2 # 1 = fully sequential, 2 = stage-sequential 3x5
+seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
 
 ################################################################################
 # Sources/Libraries
@@ -121,19 +121,16 @@ x_spacefill3 = x_seq[x_spacefill3_idx]
 # input set 4 (uniform / random)
 
 ################################################################################
-# Scenario 1: Squared exponential vs. matern, true = matern
+# Scenario settings
 ################################################################################
 if(scenario == 1){
-  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
-                error.var = nugget)
-  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
-                error.var = nugget)
+  type01 = c("squaredexponential", "matern")
 } else if(scenario == 2){
   type01 = c("matern", "periodic")
-  typeT = type01[2]
-  l01= c(0.01, 0.01)
-  lT = l01[2]
 }
+typeT = type01[2]
+l01= c(0.01, 0.01)
+lT = l01[2]
 
 ################################################################################
 # import matern functions

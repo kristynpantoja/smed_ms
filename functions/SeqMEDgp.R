@@ -7,7 +7,7 @@ SeqMEDgp = function(
   xmin = 0, xmax = 1, k = 4, p = 1, 
   numSeq = 5, seqN = 3, alpha.seq = 1, buffer = 0, objective.type = 1, 
   init.as.stage = FALSE, prints = FALSE, seed = NULL, 
-  model0 = NULL, model1 = NULL, noise = FALSE, error.var = 1e-10
+  model0 = NULL, model1 = NULL, noise = TRUE, error.var = NULL
 ){
   if(!is.null(seed)) set.seed(seed)
   if(numSeq > 1 & length(seqN) == 1) seqN = rep(seqN, numSeq)
@@ -76,7 +76,7 @@ SeqMEDgp = function(
     yt = function.values[Dt$indices]
     if(noise){
       if(is.null(error.var)){
-        warning("SeqMEDgp: noise = TRUE, but error.var = NULL -- no noise to add.")
+        stop("SeqMEDgp: noise = TRUE, but error.var = NULL.")
       } else{
         yt = yt + rnorm(seqN[t], 0, sqrt(error.var))
       }

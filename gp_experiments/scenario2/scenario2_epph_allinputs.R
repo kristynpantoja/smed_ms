@@ -1,5 +1,5 @@
 ################################################################################
-# last updated: 04/28/2021
+# last updated: 05/19/2021
 # purpose: to test seqmedgp for scenario 2:
 #   matern vs. periodic,
 #   where the true function is periodic
@@ -49,8 +49,6 @@ gg_color_hue = function(n) {
 ################################################################################
 # simulation settings, shared for both scenarios
 ################################################################################
-# errorvar.type = 1 # 1 = phi0 with nugget, 2 = phi1 with nugget
-# signalvar.type = 2 # 1 = phi0 sigmasq != 1, 2 = phi1 sigmasq != 1
 # input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
 seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
 
@@ -133,53 +131,15 @@ l01= c(0.01, 0.01)
 lT = l01[2]
 
 ################################################################################
-# models - BoxHill
-model0.bh = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
-                 error.var = nugget.bh)
-model1.bh = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
-                 error.var = nugget.bh)
-
-# models - q, random, space-filling, \sout{buffer}
-model0.q = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
-                error.var = nugget.q)
-model1.q = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
-                error.var = nugget.q)
-
-# models - different buffer
-model0.sm = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
-                 error.var = nugget.sm)
-model1.sm = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
-                 error.var = nugget.sm)
-
-# models - SeqMED with different nugget term
-# errorvar.type == 1
-model0.n1 = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
-                 error.var = nuggets[1])
-model1.n1 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
-                 error.var = nuggets[2])
-# errorvar.type == 2
-model0.n2 = list(type = type01[1], l = l01[1], signal.var = sigmasq,
-                 error.var = nuggets[2])
-model1.n2 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
-                 error.var = nuggets[1])
-
-# models - SeqMED with different signal variance
-# signalvar.type == 1
-model0.s1 = list(type = type01[1], l = l01[1], signal.var = sigmasqs[1], 
-                 error.var = nugget.sm)
-model1.s1 = list(type = type01[2], l = l01[2], signal.var = sigmasqs[2], 
-                 error.var = nugget.sm)
-# signalvar.type == 2
-model0.s2 = list(type = type01[1], l = l01[1], signal.var = sigmasqs[2],
-                 error.var = nugget.sm)
-model1.s2 = list(type = type01[2], l = l01[2], signal.var = sigmasqs[1], 
-                 error.var = nugget.sm)
-
-################################################################################
 # import periodic functions
+filename_append = ""
+if(!is.null(sigmasq_err)){
+  filename_append = paste0(
+    "_noise", strsplit(as.character(sigmasq_err), "-")[[1]][2])
+}
 simulated.functions = readRDS(paste0(
   output_home,
-  "/scenario2_simulated_functions", 
+  "/scenario2_simulated_functions", filename_append,
   "_seed", rng.seed,
   ".rds"))
 numSims = simulated.functions$numSims
@@ -203,70 +163,88 @@ seqmed.s1s = list()
 seqmed.s2s = list()
 
 for(i in 1:3){
-  
-  file_name_end0 = paste0(
+  # filename_append.tmp for boxhills, buffers, qs, signal seqmeds
+  filename_append.tmp = filename_append
+  if(!is.null(nugget)){
+    filename_append.tmp = paste0(
+      filename_append.tmp, 
+      "_nugget", strsplit(as.character(nugget), "-")[[1]][2])
+  }
+  filename_append.tmp = paste0(
+    filename_append.tmp, 
     "_input", i, 
     "_seed", rng.seed,
-    ".rds"
-  )
-  file_name_end = paste0(
-    "_nugget", strsplit(as.character(nugget), "-")[[1]][2], 
-    file_name_end0)
-  
+    ".rds")
   boxhills[[i]] = readRDS(paste0(
-    output_home, 
-    "/scenario2_boxhill", 
-    file_name_end))
-  qs[[i]] = readRDS(paste0(
     output_home,
-    "/scenario2_seqmed", 
-    "_obj", 2, 
-    "_seq", seq.type,
-    file_name_end))
+    "/scenario2_boxhill", 
+    filename_append.tmp))
   buffers[[i]] = readRDS(paste0(
     output_home,
     "/scenario2_seqmed", 
     "_buffer", 
-    "_obj", 1, 
     "_seq", seq.type,
-    file_name_end))
-  randoms[[i]] = readRDS(paste0(
-    output_home, 
-    "/scenario2_random", 
-    file_name_end0))
-  
-  spacefills[[i]] = readRDS(paste0(
-    output_home, 
-    "/scenario2_spacefilling", 
-    file_name_end0))
-  seqmed.n1s[[i]] = readRDS(paste0(
+    filename_append.tmp))
+  qs[[i]] = readRDS(paste0(
     output_home,
     "/scenario2_seqmed", 
-    "_error", 1,
-    "_obj", 1, 
+    "_q",
     "_seq", seq.type,
-    file_name_end0))
-  seqmed.n2s[[i]] = readRDS(paste0(
-    output_home,
-    "/scenario2_seqmed", 
-    "_error", 2,
-    "_obj", 1, 
-    "_seq", seq.type,
-    file_name_end0))
+    filename_append.tmp))
   seqmed.s1s[[i]] = readRDS(paste0(
     output_home,
     "/scenario2_seqmed", 
     "_signal", 1,
-    "_obj", 1, 
     "_seq", seq.type,
-    file_name_end))
+    filename_append.tmp))
   seqmed.s2s[[i]] = readRDS(paste0(
     output_home,
     "/scenario2_seqmed", 
     "_signal", 2,
-    "_obj", 1, 
     "_seq", seq.type,
-    file_name_end))
+    filename_append.tmp))
+  
+  # filename_append.tmp for random, space-filling
+  filename_append.tmp = filename_append
+  filename_append.tmp = paste0(
+    filename_append.tmp, 
+    "_input", i, 
+    "_seed", rng.seed,
+    ".rds")
+  randoms[[i]] = readRDS(paste0(
+    output_home, 
+    "/scenario2_random", 
+    filename_append.tmp))
+  spacefills[[i]] = readRDS(paste0(
+    output_home, 
+    "/scenario2_spacefilling", 
+    filename_append.tmp))
+  
+  # filename_append.tmp for error seqmeds
+  filename_append.tmp = filename_append
+  nuggets_vals = strsplit(as.character(nuggets), "-")
+  nuggets_vals = paste0(nuggets_vals[[1]][2], nuggets_vals[[2]][2])
+  filename_append.tmp = paste0(
+    filename_append.tmp,
+    "_nuggets", nuggets_vals)
+  filename_append.tmp = paste0(
+    filename_append.tmp, 
+    "_input", i, 
+    "_seed", rng.seed,
+    ".rds"
+  )
+  seqmed.n1s[[i]] = readRDS(paste0(
+    output_home,
+    "/scenario2_seqmed", 
+    "_error", 1,
+    "_seq", seq.type,
+    filename_append.tmp))
+  seqmed.n2s[[i]] = readRDS(paste0(
+    output_home,
+    "/scenario2_seqmed", 
+    "_error", 2,
+    "_seq", seq.type,
+    filename_append.tmp))
 }
 
 ################################################################################
@@ -281,15 +259,15 @@ model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq,
 
 # calculate the final posterior probability
 getPPH = function(design, model0, model1){
-    y.tmp = c(design$y, as.vector(na.omit(design$y.new)))
-    x.tmp = c(design$x, as.vector(na.omit(design$x.new)))
-    PPHs.tmp = getHypothesesPosteriors(
-      prior.probs = prior_probs, 
-      evidences = c(
-        Evidence_gp(y.tmp, x.tmp, model0),
-        Evidence_gp(y.tmp, x.tmp, model1)
-      )
+  y.tmp = c(design$y, as.vector(na.omit(design$y.new)))
+  x.tmp = c(design$x, as.vector(na.omit(design$x.new)))
+  PPHs.tmp = getHypothesesPosteriors(
+    prior.probs = prior_probs, 
+    evidences = c(
+      Evidence_gp(y.tmp, x.tmp, model0),
+      Evidence_gp(y.tmp, x.tmp, model1)
     )
+  )
   return(data.frame("H0" = PPHs.tmp[1], "H1" = PPHs.tmp[2]))
 }
 
@@ -338,11 +316,11 @@ for(k in 1:3){
 }
 
 PPH0mean = aggregate(PPH$H0, by = list(PPH$type, PPH$input), 
-                         FUN = function(x) mean(x, na.rm = TRUE))
+                     FUN = function(x) mean(x, na.rm = TRUE))
 names(PPH0mean) = c("type", "input", "value")
 PPH0mean$Hypothesis = "H0"
 PPH1mean = aggregate(PPH$H1, by = list(PPH$type, PPH$input), 
-                         FUN = function(x) mean(x, na.rm = TRUE))
+                     FUN = function(x) mean(x, na.rm = TRUE))
 names(PPH1mean) = c("type", "input", "value")
 PPH1mean$Hypothesis = "H1"
 

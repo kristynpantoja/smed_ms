@@ -49,8 +49,6 @@ gg_color_hue = function(n) {
 ################################################################################
 # simulation settings, shared for both scenarios
 ################################################################################
-# errorvar.type = 1 # 1 = phi0 with nugget, 2 = phi1 with nugget
-# signalvar.type = 2 # 1 = phi0 sigmasq != 1, 2 = phi1 sigmasq != 1
 # input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
 seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
 
@@ -70,19 +68,19 @@ xmin = 0
 xmax = 1
 numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
+sigmasq_err = 1e-10
 
 # SeqMED settings
 sigmasqs = c(1 - 1e-10, 1)
-nuggets = c(1e-10, 1e-15)
-nugget.sm = NULL
+nuggets = c(1e-5, 1e-10)
 buffer = 0
 
 # boxhill settings
-nugget.bh = NULL #1e-10
 prior_probs = rep(1 / 2, 2)
 
 # shared settings
 sigmasq = 1
+nugget = sigmasq_err
 
 ################################################################################
 # input data
@@ -125,47 +123,15 @@ l01= c(0.005, 0.01)
 lT = 0.01
 
 ################################################################################
-# models - BoxHill
-model0.bh = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
-                 error.var = nugget.bh)
-model1.bh = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
-                 error.var = nugget.bh)
-
-# models - q, random, space-filling, buffer
-model0.other = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
-                    error.var = nugget.sm)
-model1.other = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
-                    error.var = nugget.sm)
-
-# models - SeqMED with different nugget term
-# errorvar.type == 1
-model0.n1 = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
-                 error.var = nuggets[1])
-model1.n1 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
-                 error.var = nuggets[2])
-# errorvar.type == 2
-model0.n2 = list(type = type01[1], l = l01[1], signal.var = sigmasq,
-                 error.var = nuggets[2])
-model1.n2 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
-                 error.var = nuggets[1])
-
-# models - SeqMED with different signal variance
-# signalvar.type == 1
-model0.s1 = list(type = type01[1], l = l01[1], signal.var = sigmasqs[1], 
-                 error.var = nugget.sm)
-model1.s1 = list(type = type01[2], l = l01[2], signal.var = sigmasqs[2], 
-                 error.var = nugget.sm)
-# signalvar.type == 2
-model0.s2 = list(type = type01[1], l = l01[1], signal.var = sigmasqs[2],
-                 error.var = nugget.sm)
-model1.s2 = list(type = type01[2], l = l01[2], signal.var = sigmasqs[1], 
-                 error.var = nugget.sm)
-
-################################################################################
 # import matern functions
+filename_append = ""
+if(!is.null(sigmasq_err)){
+  filename_append = paste0(
+    "_noise", strsplit(as.character(sigmasq_err), "-")[[1]][2])
+}
 simulated.functions = readRDS(paste0(
   output_home,
-  "/scenario3_simulated_functions", 
+  "/scenario3_simulated_functions", filename_append,
   "_seed", rng.seed,
   ".rds"))
 numSims = simulated.functions$numSims

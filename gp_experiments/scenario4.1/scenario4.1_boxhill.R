@@ -1,10 +1,10 @@
 ################################################################################
-# last updated: 05/20/2021
-# purpose: to test seqmedgp for scenario 1:
-#   squared exponential vs. matern,
-#   where the true function is matern
+# last updated: 05/24/2021
+# purpose: to test seqmedgp for scenario 4:
+#   matern vs. squared exponential,
+#   where the true function is periodic
 
-scenario = 1.1
+scenario = 4.1
 
 ################################################################################
 # Sources/Libraries
@@ -65,7 +65,10 @@ numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
 sigmasq_measuremt = 1e-10
 
-# random settings
+# boxhill settings
+sigmasq = 1
+nuggets = c(1e-15, sigmasq_measuremt)
+prior_probs = rep(1 / 2, 2)
 
 ################################################################################
 # input data
@@ -100,12 +103,19 @@ x_spacefill3 = x_seq[x_spacefill3_idx]
 # input set 4 (uniform / random)
 
 ################################################################################
-# Scenario 1: Squared exponential vs. matern, true = matern
+# Scenario 4: Matern vs. squared exponential, true = periodic
 ################################################################################
-type01 = c("squaredexponential", "matern")
-typeT = type01[2]
+type01 = c("matern", "squaredexponential")
+typeT = "periodic"
 l01= c(0.01, 0.01)
-lT = l01[2]
+lT = 0.01
+
+################################################################################
+# models
+model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
+              measurement.var = nuggets[1])
+model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq, 
+              measurement.var = nuggets[2])
 
 ################################################################################
 # import matern functions
@@ -127,7 +137,7 @@ null_mean = simulated.functions$null_mean
 y_seq_mat = simulated.functions$function_values_mat
 
 ################################################################################
-# generate random designs (sample x ~ U[xmin, xmax])
+# generate boxhills
 
 for(j in 1:3){
   
@@ -147,31 +157,25 @@ for(j in 1:3){
   
   # simulations!
   registerDoRNG(rng.seed)
-  randoms = foreach(
+  boxhills = foreach(
     i = 1:numSims
   ) %dorng% {
     y_seq = y_seq_mat[ , i]
     y_input = y_seq[x_input_idx]
-    
-    x.new.idx  = sample(1:numx, Nnew)
-    x.new = x_seq[x.new.idx]
-    y.new = y_seq[x.new.idx]
-    list(x = x_input, x.idx = x_input_idx, y = y_input, 
-         x.new = x.new, x.new.idx = x.new.idx, y.new = y.new, 
-         function.values = y_seq)
+    BHgp_m2(
+      y_input, x_input, x_input_idx, prior_probs, model0, model1, Nnew, 
+      x_seq, y_seq, noise = TRUE, measurement.var = sigmasq_measuremt)
   }
   
-  filename_append.tmp = filename_append
   filename_append.tmp = paste0(
-    filename_append.tmp, 
+    filename_append, 
     "_input", input.type, 
     "_seed", rng.seed,
     ".rds"
   )
-  saveRDS(randoms, 
+  saveRDS(boxhills, 
           file = paste0(
             output_home,
-            "/scenario", scenario, "_random", 
+            "/scenario", scenario, "_boxhill", 
             filename_append.tmp))
-  
 }

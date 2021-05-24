@@ -1,10 +1,10 @@
 ################################################################################
 # last updated: 05/24/2021
-# purpose: to test seqmedgp for scenario 2:
-#   matern vs. periodic,
+# purpose: to test seqmedgp for scenario 4:
+#   matern vs. squared exponential,
 #   where the true function is periodic
 
-scenario = 2.1
+scenario = 4.1
 
 ################################################################################
 # Sources/Libraries
@@ -65,7 +65,7 @@ sigmasq_measuremt = 1e-10
 
 # SeqMED settings
 sigmasq = 1
-nuggets = c(1e-5, sigmasq_measuremt)
+nuggets = c(1e-15, sigmasq_measuremt)
 buffer = 0
 
 ################################################################################
@@ -101,12 +101,12 @@ x_spacefill3 = x_seq[x_spacefill3_idx]
 # input set 4 (uniform / random)
 
 ################################################################################
-# Scenario 2: Matern vs. periodic, true = periodic
+# Scenario 4: Matern vs. squared exponential, true = periodic
 ################################################################################
-type01 = c("matern", "periodic")
-typeT = type01[2]
+type01 = c("matern", "squaredexponential")
+typeT = "periodic"
 l01= c(0.01, 0.01)
-lT = l01[2]
+lT = 0.01
 
 ################################################################################
 model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq, 
@@ -175,7 +175,7 @@ for(j in 1:3){
         candidates = x_seq, function.values = y_seq, 
         model0 = model0, model1 = model1, 
         numSeq = numSeq, seqN = seqN, prints = FALSE, buffer = buffer, 
-        objective.type = 2, noise = TRUE, measurement.var = sigmasq_measuremt)
+        objective.type = 1, noise = TRUE, measurement.var = sigmasq_measuremt)
     }
     
     print(paste0("completed j = ", j, ", k = ", k, "!"))
@@ -190,7 +190,7 @@ for(j in 1:3){
             file = paste0(
               output_home,
               "/scenario", scenario, "_seqmed", 
-              "_q", 
+              "_buffer", 
               "_seq", seq.type,
               filename_append.tmp))
   }

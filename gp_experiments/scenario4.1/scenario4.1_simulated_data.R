@@ -1,10 +1,10 @@
 ################################################################################
 # last updated: 05/24/2021
-# purpose: to test seqmedgp for scenario 3:
-#   squared exponential vs. another squared exponential,
-#   where the true function is matern
+# purpose: to test seqmedgp for scenario 4:
+#   matern vs. squared exponential,
+#   where the true function is periodic
 
-scenario = 3.1
+scenario = 4.1
 
 ################################################################################
 # Sources/Libraries
@@ -61,11 +61,11 @@ x_seq = seq(from = xmin, to = xmax, length.out = numx)
 sigmasq_measuremt = 1e-10
 
 ################################################################################
-# Scenario 3: Squared exponential vs. squared exponential, true = matern
+# Scenario 4: Matern vs. squared exponential, true = periodic
 ################################################################################
-type01 = c("squaredexponential", "squaredexponential")
-typeT = "matern"
-l01= c(0.005, 0.01)
+type01 = c("matern", "squaredexponential")
+typeT = "periodic"
+l01= c(0.01, 0.01)
 lT = 0.01
 
 ################################################################################

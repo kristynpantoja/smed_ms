@@ -1,11 +1,11 @@
 ################################################################################
 # last updated: 05/24/2021
-# purpose: to test seqmedgp for scenario 1:
-#   squared exponential vs. matern,
+# purpose: to test seqmedgp for scenario 3:
+#   squared exponential vs. another squared exponential,
 #   where the true function is matern
 # renamed errorvar to measvar, arbitrarily chose this one over signalvar
 
-scenario = 1.1
+scenario = 3.1
 
 ################################################################################
 # Sources/Libraries
@@ -102,12 +102,12 @@ x_spacefill3 = x_seq[x_spacefill3_idx]
 # input set 4 (uniform / random)
 
 ################################################################################
-# Scenario 1: Squared exponential vs. matern, true = matern
+# Scenario 3: Squared exponential vs. squared exponential, true = matern
 ################################################################################
-type01 = c("squaredexponential", "matern")
-typeT = type01[2]
-l01= c(0.01, 0.01)
-lT = l01[2]
+type01 = c("squaredexponential", "squaredexponential")
+typeT = "matern"
+l01= c(0.005, 0.01)
+lT = 0.01
 
 ################################################################################
 model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq, 

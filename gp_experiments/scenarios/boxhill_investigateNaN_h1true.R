@@ -12,7 +12,7 @@ seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = paste0("gp_experiments/scenario", scenario, "/outputs")
+output_home = paste0("gp_experiments/scenarios/scenario", scenario, "/outputs")
 functions_home = "functions"
 
 # for seqmed design

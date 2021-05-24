@@ -10,7 +10,7 @@ seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = paste0("gp_experiments/scenario", scenario, "/outputs")
+output_home = paste0("gp_experiments/scenarios/scenario", scenario, "/outputs")
 functions_home = "functions"
 
 # for seqmed design
@@ -355,9 +355,10 @@ PPHmean$input = factor(PPHmean$input,
                        labels = c("extrapolation", "inc spread", "even coverage"))
 
 PPHT.plt = ggplot(dplyr::filter(PPHmean, Hypothesis == "HT"), 
-                  aes(x = input, y = value, group = type, color = type)) + 
+                  aes(x = input, y = value, group = type, color = type, 
+                      linetype = type)) + 
   geom_point() + 
-  geom_path(linetype = 2) +
+  geom_path() +
   ylim(0, 1) + 
   theme_bw() +
   theme(panel.grid.major = element_blank(),
@@ -366,38 +367,39 @@ PPHT.plt = ggplot(dplyr::filter(PPHmean, Hypothesis == "HT"),
 PPHT.plt
 
 
-### average over largest index of last point
-
-# data.max.index = dplyr::filter(PPH, index == max(PPH$index))
-PPH0mean2 = aggregate(PPH$H0, 
-                     by = list(PPH$type, PPH$input, PPH$index), 
-                     FUN = function(x) mean(x, na.rm = TRUE))
-names(PPH0mean2) = c("type", "input", "index", "value")
-PPH0mean2$Hypothesis = "H0"
-PPH1mean2 = aggregate(PPH$H1, 
-                      by = list(PPH$type, PPH$input, PPH$index), 
-                     FUN = function(x) mean(x, na.rm = TRUE))
-names(PPH1mean2) = c("type", "input", "index", "value")
-PPH1mean2$Hypothesis = "H1"
-PPHTmean2 = aggregate(PPH$HT, 
-                      by = list(PPH$type, PPH$input, PPH$index),  
-                     FUN = function(x) mean(x, na.rm = TRUE))
-names(PPHTmean2) = c("type", "input", "index", "value")
-PPHTmean2$Hypothesis = "HT"
-
-PPHmean2 = rbind(PPH0mean2, PPH1mean2, PPHTmean2)
-PPHmean2$type = factor(PPHmean2$type)
-PPHmean2$Hypothesis = factor(PPHmean2$Hypothesis)
-PPHmean2$input = factor(PPHmean2$input, 
-                       labels = c("extrapolation", "inc spread", "even coverage"))
-
-PPHT.plt2 = ggplot(dplyr::filter(PPHmean2, Hypothesis == "HT"), 
-                  aes(x = input, y = value, group = type, color = type)) + 
-  geom_point() + 
-  geom_path(linetype = 2) +
-  ylim(0, 1) + 
-  theme_bw() +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank()) +
-  labs(y = "E[P(HT|X, Y)|X]", x = "Initial Data")
-PPHT.plt2
+# ### average over largest index of last point
+# 
+# # data.max.index = dplyr::filter(PPH, index == max(PPH$index))
+# PPH0mean2 = aggregate(PPH$H0, 
+#                      by = list(PPH$type, PPH$input, PPH$index), 
+#                      FUN = function(x) mean(x, na.rm = TRUE))
+# names(PPH0mean2) = c("type", "input", "index", "value")
+# PPH0mean2$Hypothesis = "H0"
+# PPH1mean2 = aggregate(PPH$H1, 
+#                       by = list(PPH$type, PPH$input, PPH$index), 
+#                      FUN = function(x) mean(x, na.rm = TRUE))
+# names(PPH1mean2) = c("type", "input", "index", "value")
+# PPH1mean2$Hypothesis = "H1"
+# PPHTmean2 = aggregate(PPH$HT, 
+#                       by = list(PPH$type, PPH$input, PPH$index),  
+#                      FUN = function(x) mean(x, na.rm = TRUE))
+# names(PPHTmean2) = c("type", "input", "index", "value")
+# PPHTmean2$Hypothesis = "HT"
+# 
+# PPHmean2 = rbind(PPH0mean2, PPH1mean2, PPHTmean2)
+# PPHmean2$type = factor(PPHmean2$type)
+# PPHmean2$Hypothesis = factor(PPHmean2$Hypothesis)
+# PPHmean2$input = factor(PPHmean2$input, 
+#                        labels = c("extrapolation", "inc spread", "even coverage"))
+# 
+# PPHT.plt2 = ggplot(dplyr::filter(PPHmean2, Hypothesis == "HT"), 
+#                   aes(x = input, y = value, group = type, color = type, 
+#                       linetype = type)) + 
+#   geom_point() + 
+#   geom_line() +
+#   ylim(0, 1) + 
+#   theme_bw() +
+#   theme(panel.grid.major = element_blank(),
+#         panel.grid.minor = element_blank()) +
+#   labs(y = "E[P(HT|X, Y)|X]", x = "Initial Data")
+# PPHT.plt2

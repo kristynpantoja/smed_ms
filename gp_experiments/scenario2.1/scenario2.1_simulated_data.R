@@ -1,8 +1,8 @@
 ################################################################################
-# last updated: 05/20/2021
-# purpose: to test seqmedgp for scenario 1:
-#   squared exponential vs. matern,
-#   where the true function is matern
+# last updated: 05/24/2021
+# purpose: to test seqmedgp for scenario 2:
+#   matern vs. periodic,
+#   where the true function is periodic
 
 scenario = 2.1
 

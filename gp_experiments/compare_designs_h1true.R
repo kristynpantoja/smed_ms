@@ -4,7 +4,7 @@
 #   squared exponential vs. matern,
 #   where the true function is matern
 
-scenario = 2 # scenarios: 1, 2
+scenario = 7 # scenarios: 1, 2, 7
 input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
 seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
 
@@ -76,7 +76,7 @@ sigmasq_err = 1e-10
 sigmasqs = c(1 - 1e-10, 1)
 if(scenario == 1){
   nuggets = c(1e-10, 1e-15)
-} else if(scenario == 2){
+} else if(scenario %in% c(2, 7)){
   nuggets = c(1e-5, 1e-10)
 }
 
@@ -126,6 +126,8 @@ if(scenario == 1){
   type01 = c("squaredexponential", "matern")
 } else if(scenario == 2){
   type01 = c("matern", "periodic")
+} else if(scenario == 7){
+  type01 = c("squaredexponential", "periodic")
 }
 typeT = type01[2]
 l01= c(0.01, 0.01)

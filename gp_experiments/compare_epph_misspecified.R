@@ -4,7 +4,7 @@
 #   squared exponential vs. another squared exponential,
 #   where the true function is matern
 
-scenario = 5 # scenarios: 3, 4, 5, 6
+scenario = 3 # scenarios: 3, 4, 5, 6
 input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
 seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
 
@@ -76,7 +76,7 @@ sigmasq_err = 1e-10
 sigmasqs = c(1 - 1e-10, 1)
 if(scenario %in% c(3, 4)){
   nuggets = c(1e-10, 1e-15)
-} else if(scenario == 5){
+} else if(scenario %in% c(5, 6)){
   nuggets = c(1e-5, 1e-10)
 }
 
@@ -135,6 +135,11 @@ if(scenario == 3){
 } else if(scenario == 5){
   type01 = c("matern", "periodic")
   typeT = "squaredexponential"
+  l01= c(0.01, 0.01)
+  lT = 0.01
+} else if(scenario == 6){
+  type01 = c("squaredexponential", "periodic")
+  typeT = "matern"
   l01= c(0.01, 0.01)
   lT = 0.01
 }
@@ -283,7 +288,6 @@ getPPHseq = function(design, model0, model1, modelT){
   PPH0_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
   PPH1_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
   PPHT_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
-  # modelT$error.var = min(model0$error.var, model1$error.var, modelT$error.var)
   for(i in 1:length(as.vector(na.omit(design$y.new)))){
     y.tmp = c(design$y, as.vector(na.omit(design$y.new))[1:i])
     x.tmp = c(design$x, as.vector(na.omit(design$x.new))[1:i])
@@ -372,3 +376,59 @@ ggplot(PPHmean_seq, aes(x = index, y = value, color = type, linetype = type)) +
   geom_path() + 
   theme_bw() +
   ylim(0, 1)
+
+# what's the box and hill values?
+names(PPHmean_seq)
+boxhill_in1 = dplyr::filter(PPHmean_seq, type == "boxhill" & Hypothesis == "HT")
+
+# credible intervals
+PPH0ci_seq = aggregate(PPH_seq$H0, by = list(PPH_seq$index, PPH_seq$type), 
+                       FUN = function(x) quantile(
+                         x, probs = c(0.025, 0.5, 0.975), na.rm = TRUE))
+PPH0ci_seq = data.frame(
+  "index" = PPH0ci_seq[, 1],
+  "type" = PPHci_seq[, 2],
+  "lower" = as.matrix(PPH0ci_seq[, 3])[, 1], 
+  "median" = as.matrix(PPH0ci_seq[, 3])[, 2], 
+  "upper" = as.matrix(PPH0ci_seq[, 3])[, 3]
+  )
+PPH0ci_seq$Hypothesis = "H0"
+PPH1ci_seq = aggregate(PPH_seq$H1, by = list(PPH_seq$index, PPH_seq$type), 
+                       FUN = function(x) quantile(
+                         x, probs = c(0.025, 0.5, 0.975), na.rm = TRUE))
+PPH1ci_seq = data.frame(
+  "index" = PPH1ci_seq[, 1],
+  "type" = PPH1ci_seq[, 2],
+  "lower" = as.matrix(PPH1ci_seq[, 3])[, 1], 
+  "median" = as.matrix(PPH1ci_seq[, 3])[, 2], 
+  "upper" = as.matrix(PPH1ci_seq[, 3])[, 3]
+)
+PPH1ci_seq$Hypothesis = "H1"
+PPHTci_seq = aggregate(PPH_seq$HT, by = list(PPH_seq$index, PPH_seq$type), 
+                       FUN = function(x) quantile(
+                         x, probs = c(0.025, 0.5, 0.975), na.rm = TRUE))
+PPHTci_seq = data.frame(
+  "index" = PPHTci_seq[, 1],
+  "type" = PPHTci_seq[, 2],
+  "lower" = as.matrix(PPHTci_seq[, 3])[, 1], 
+  "median" = as.matrix(PPHTci_seq[, 3])[, 2], 
+  "upper" = as.matrix(PPHTci_seq[, 3])[, 3]
+)
+PPHTci_seq$Hypothesis = "HT"
+
+PPHci_seq = rbind(PPH0ci_seq, PPH1ci_seq, PPHTci_seq)
+# all.equal(PPHci_seq$index, PPHmean_seq$index)
+# 
+# PPHci_seq.mlt = reshape2::melt(
+#   PPHci_seq, id.vars = c("index", "type", "Hypothesis"))
+# PPHmean_seq.mlt = PPHmean_seq
+# PPHmean_seq.mlt$variable = "mean"
+# PPHall_seq = rbind(PPHci_seq.mlt, PPHmean_seq.mlt)
+ggplot(PPHci_seq, aes(x = index)) + 
+  facet_wrap(vars(Hypothesis)) + 
+  geom_line(aes(y = median, color = type)) + 
+  facet_grid(rows = vars(Hypothesis), cols = vars(type)) +
+  geom_ribbon(aes(ymin = lower, ymax = upper, fill = type, color = type), alpha = 0.1) + 
+  theme_bw() +
+  ylim(0, 1)
+

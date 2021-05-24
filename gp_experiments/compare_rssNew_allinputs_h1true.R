@@ -5,7 +5,7 @@
 #   where the true function is matern
 # trying out some (not necessarily MED) designs
 
-scenario = 2 # scenarios: 1, 2
+scenario = 7 # scenarios: 1, 2, 7
 seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
 
 ################################################################################
@@ -77,7 +77,7 @@ sigmasqs = c(1 - 1e-10, 1)
 sigmasqs = c(1 - 1e-10, 1)
 if(scenario == 1){
   nuggets = c(1e-10, 1e-15)
-} else if(scenario == 2){
+} else if(scenario %in% c(2, 7)){
   nuggets = c(1e-5, 1e-10)
 }
 
@@ -127,6 +127,8 @@ if(scenario == 1){
   type01 = c("squaredexponential", "matern")
 } else if(scenario == 2){
   type01 = c("matern", "periodic")
+} else if(scenario == 7){
+  type01 = c("squaredexponential", "periodic")
 }
 typeT = type01[2]
 l01= c(0.01, 0.01)
@@ -357,16 +359,16 @@ RSS1.plt = ggplot(dplyr::filter(RSSmean, RSS == "RSS1"),
 RSS1.plt
 
 # RSS01
-RSS01.plt = ggplot(dplyr::filter(RSSmean, RSS == "RSS01"), 
-                   aes(x = input, y = value, group = type, color = type, 
-                       linetype = type)) + 
-  geom_point() + 
-  geom_path() +
-  theme_bw() +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank()) +
-  labs(y = "RSS01", x = "Initial Data")
-RSS01.plt
+# RSS01.plt = ggplot(dplyr::filter(RSSmean, RSS == "RSS01"), 
+#                    aes(x = input, y = value, group = type, color = type, 
+#                        linetype = type)) + 
+#   geom_point() + 
+#   geom_path() +
+#   theme_bw() +
+#   theme(panel.grid.major = element_blank(),
+#         panel.grid.minor = element_blank()) +
+#   labs(y = "RSS01", x = "Initial Data")
+# RSS01.plt
 
 # # log(RSS01)
 # logged.dat = dplyr::filter(RSSmean, RSS == "RSS01")

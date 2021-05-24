@@ -4,7 +4,7 @@
 #   squared exponential vs. another squared exponential,
 #   where the true function is matern
 
-scenario = 5 # scenarios: 3, 4, 5, 6
+scenario = 3 # scenarios: 3, 4, 5, 6
 seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
 
 ################################################################################
@@ -75,7 +75,7 @@ sigmasq_err = 1e-10
 sigmasqs = c(1 - 1e-10, 1)
 if(scenario %in% c(3, 4)){
   nuggets = c(1e-10, 1e-15)
-} else if(scenario == 5){
+} else if(scenario %in% c(5, 6)){
   nuggets = c(1e-5, 1e-10)
 }
 
@@ -134,6 +134,11 @@ if(scenario == 3){
 } else if(scenario == 5){
   type01 = c("matern", "periodic")
   typeT = "squaredexponential"
+  l01= c(0.01, 0.01)
+  lT = 0.01
+} else if(scenario == 6){
+  type01 = c("squaredexponential", "periodic")
+  typeT = "matern"
   l01= c(0.01, 0.01)
   lT = 0.01
 }
@@ -268,6 +273,7 @@ modelT = list(type = typeT, l = lT, signal.var = sigmasq, error.var = nugget)
 
 # calculate the final posterior probability
 getPPH = function(design, model0, model1, modelT){
+  index = length(as.vector(na.omit(design$y.new)))
   y.tmp = c(design$y, as.vector(na.omit(design$y.new)))
   x.tmp = c(design$x, as.vector(na.omit(design$x.new)))
   PPHs.tmp = getHypothesesPosteriors(
@@ -278,7 +284,9 @@ getPPH = function(design, model0, model1, modelT){
       Evidence_gp(y.tmp, x.tmp, modelT)
     )
   )
-  return(data.frame("H0" = PPHs.tmp[1], "H1" = PPHs.tmp[2], "HT" = PPHs.tmp[3]))
+  return(data.frame(
+    index = index, 
+    "H0" = PPHs.tmp[1], "H1" = PPHs.tmp[2], "HT" = PPHs.tmp[3]))
 }
 
 PPH = data.frame(
@@ -325,6 +333,8 @@ for(k in 1:3){
   }
 }
 
+### average over all, regardless of index of last point
+
 PPH0mean = aggregate(PPH$H0, by = list(PPH$type, PPH$input), 
                      FUN = function(x) mean(x, na.rm = TRUE))
 names(PPH0mean) = c("type", "input", "value")
@@ -354,3 +364,40 @@ PPHT.plt = ggplot(dplyr::filter(PPHmean, Hypothesis == "HT"),
         panel.grid.minor = element_blank()) +
   labs(y = "E[P(HT|X, Y)|X]", x = "Initial Data")
 PPHT.plt
+
+
+### average over largest index of last point
+
+# data.max.index = dplyr::filter(PPH, index == max(PPH$index))
+PPH0mean2 = aggregate(PPH$H0, 
+                     by = list(PPH$type, PPH$input, PPH$index), 
+                     FUN = function(x) mean(x, na.rm = TRUE))
+names(PPH0mean2) = c("type", "input", "index", "value")
+PPH0mean2$Hypothesis = "H0"
+PPH1mean2 = aggregate(PPH$H1, 
+                      by = list(PPH$type, PPH$input, PPH$index), 
+                     FUN = function(x) mean(x, na.rm = TRUE))
+names(PPH1mean2) = c("type", "input", "index", "value")
+PPH1mean2$Hypothesis = "H1"
+PPHTmean2 = aggregate(PPH$HT, 
+                      by = list(PPH$type, PPH$input, PPH$index),  
+                     FUN = function(x) mean(x, na.rm = TRUE))
+names(PPHTmean2) = c("type", "input", "index", "value")
+PPHTmean2$Hypothesis = "HT"
+
+PPHmean2 = rbind(PPH0mean2, PPH1mean2, PPHTmean2)
+PPHmean2$type = factor(PPHmean2$type)
+PPHmean2$Hypothesis = factor(PPHmean2$Hypothesis)
+PPHmean2$input = factor(PPHmean2$input, 
+                       labels = c("extrapolation", "inc spread", "even coverage"))
+
+PPHT.plt2 = ggplot(dplyr::filter(PPHmean2, Hypothesis == "HT"), 
+                  aes(x = input, y = value, group = type, color = type)) + 
+  geom_point() + 
+  geom_path(linetype = 2) +
+  ylim(0, 1) + 
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  labs(y = "E[P(HT|X, Y)|X]", x = "Initial Data")
+PPHT.plt2

@@ -71,17 +71,17 @@ SeqMEDgp_batch = function(
   # old_initD = initD
   
   # posterior distribution of beta
-  if(is.null(model0$error.var)){
+  if(is.null(model0$measurement.var)){
     Kinv0 = solve(getCov(initD, initD, model0$type, model0$l))
   } else{
     Kinv0 = solve(getCov(initD, initD, model0$type, model0$l) + 
-                    model0$error.var * diag(initN))
+                    model0$measurement.var * diag(initN))
   }
-  if(is.null(model1$error.var)){
+  if(is.null(model1$measurement.var)){
     Kinv1 = solve(getCov(initD, initD, model1$type, model1$l))
   } else{
     Kinv1 = solve(getCov(initD, initD, model1$type, model1$l) + 
-                    model1$error.var * diag(initN))
+                    model1$measurement.var * diag(initN))
   }
   
   D = rep(NA, N2)

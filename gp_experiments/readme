@@ -1,0 +1,9 @@
+last updated: 05/24/2021
+
+scenarios
+     contains scenarios 1-7
+     only seqmeds with different nuggets/signal variances have different models
+
+scenarios1
+     contains scenarios 1.1-6.1
+     all designs (that take in models) use different nuggets

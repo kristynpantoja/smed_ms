@@ -2,11 +2,11 @@
 #   -- should I be using the posterior predictive, instead?
 Evidence_gp = function(y, x, model){
   null_mean_vec = rep(0, length(y))
-  if(is.null(model$error.var)){
+  if(is.null(model$measurement.var)){
     K_obs = getCov(x, x, model$type, model$l, model$signal.var)
   } else{
     K_obs = getCov(x, x, model$type, model$l, model$signal.var) + 
-      model$error.var * diag(length(y))
+      model$measurement.var * diag(length(y))
   }
   evidence = dmvnorm(
     y, mean = null_mean_vec, sigma = K_obs, log = FALSE)
@@ -28,9 +28,9 @@ BHDgp_m2 = function(
 ){
   # posterior predictive distributions
   pred.i = getGPPredictive(candidate, x, y, model.i$type, model.i$l, 
-                           model.i$signal.var, model.i$error.var)
+                           model.i$signal.var, model.i$measurement.var)
   pred.j = getGPPredictive(candidate, x, y, model.j$type, model.j$l, 
-                           model.j$signal.var, model.j$error.var)
+                           model.j$signal.var, model.j$measurement.var)
   # evaluate criterion D
   KLij = KLN(pred.i$pred_mean, pred.i$pred_var, 
              pred.j$pred_mean, pred.j$pred_var, dim = 1)
@@ -43,9 +43,9 @@ BHDgp_m2 = function(
 BHDgp_m2_testing = function(y, x, post.probs, candidate, model.i, model.j){
   # posterior predictive distributions
   pred.i = getGPPredictive(candidate, x, y, model.i$type, model.i$l, 
-                           model.i$signal.var, model.i$error.var)
+                           model.i$signal.var, model.i$measurement.var)
   pred.j = getGPPredictive(candidate, x, y, model.j$type, model.j$l, 
-                           model.j$signal.var, model.j$error.var)
+                           model.j$signal.var, model.j$measurement.var)
   # evaluate criterion D
   KLij = KLN(pred.i$pred_mean, pred.i$pred_var, 
              pred.j$pred_mean, pred.j$pred_var, dim = 1)
@@ -67,7 +67,7 @@ BHgp_m2 = function(
   candidates, # domain over which the function is evaluated 
   function.values, # true function values, evaluated over the domain
   noise = TRUE,
-  error.var = NULL,
+  measurement.var = NULL,
   seed = NULL
   # stopping.type = "tryCatch"
 ){
@@ -79,10 +79,10 @@ BHgp_m2 = function(
   } else if(is.null(y) & !is.null(x)){ # x is not null, y is null (get y)
     y = function.values[x.idx]
     if(noise){
-      if(is.null(error.var)){
-        stop("SeqMEDgp: noise = TRUE, but error.var = NULL.")
+      if(is.null(measurement.var)){
+        stop("SeqMEDgp: noise = TRUE, but measurement.var = NULL.")
       } else{
-        y = y + rnorm(length(x), 0, sqrt(error.var))
+        y = y + rnorm(length(x), 0, sqrt(measurement.var))
       }
     }
   } else if(is.null(x) & is.null(y)){ # both x and y are null, then us BH method
@@ -140,10 +140,10 @@ BHgp_m2 = function(
     x.new[i] = candidates[x.new.idx[i]]
     y.new[i] = function.values[x.new.idx[i]]
     if(noise){
-      if(is.null(error.var)){
-        warning("SeqMEDgp: noise = TRUE, but error.var = NULL -- no noise to add.")
+      if(is.null(measurement.var)){
+        warning("SeqMEDgp: noise = TRUE, but measurement.var = NULL -- no noise to add.")
       } else{
-        y.new[i] = y.new[i] + rnorm(1, 0, sqrt(error.var))
+        y.new[i] = y.new[i] + rnorm(1, 0, sqrt(measurement.var))
       }
     }
     # update current information

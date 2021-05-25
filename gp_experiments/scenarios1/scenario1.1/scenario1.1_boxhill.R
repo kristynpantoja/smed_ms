@@ -9,7 +9,7 @@ scenario = 1.1
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = paste0("gp_experiments/scenario", scenario, "/outputs")
+output_home = paste0("gp_experiments/scenarios1/scenario", scenario, "/outputs")
 functions_home = "functions"
 
 # for seqmed design

@@ -11,7 +11,7 @@ scenario = 6.1
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = paste0("gp_experiments/scenario", scenario, "/outputs")
+output_home = paste0("gp_experiments/scenarios1/scenario", scenario, "/outputs")
 functions_home = "functions"
 
 # for seqmed design
@@ -68,7 +68,7 @@ sigmasq_measuremt = 1e-10
 # SeqMED settings
 sigmasq = 1
 nuggets = c(1e-5, sigmasq_measuremt)
-buffer = 0
+buffer = 1e-15
 
 ################################################################################
 # input data

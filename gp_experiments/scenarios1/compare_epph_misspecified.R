@@ -1,3 +1,4 @@
+rm(list = ls())
 ################################################################################
 # last updated: 05/25/2021
 # purpose: to test seqmedgp for scenario 3:
@@ -32,20 +33,6 @@ source(paste(functions_home, "/boxhill_gp.R", sep = ""))
 source(paste(functions_home, "/kl_divergence.R", sep = ""))
 
 library(mvtnorm)
-
-# set up parallelization
-library(foreach)
-library(future)
-library(doFuture)
-library(parallel)
-registerDoFuture()
-nworkers = detectCores()
-plan(multisession, workers = nworkers)
-
-library(rngtools)
-library(doRNG)
-rng.seed = 123 # 123, 345
-registerDoRNG(rng.seed)
 
 library(ggplot2)
 library(reshape2)
@@ -323,60 +310,5 @@ ggsave(
   width = 6, height = 4, units = c("in")
 )
 
-################################################################################
-
-# what's the box and hill values?
-names(PPHmean_seq)
-boxhill_in1 = dplyr::filter(PPHmean_seq, type == "boxhill" & Hypothesis == "HT")
-
-# credible intervals
-PPH0ci_seq = aggregate(PPH_seq$H0, by = list(PPH_seq$index, PPH_seq$type), 
-                       FUN = function(x) quantile(
-                         x, probs = c(0.025, 0.5, 0.975), na.rm = TRUE))
-PPH0ci_seq = data.frame(
-  "index" = PPH0ci_seq[, 1],
-  "type" = PPH0ci_seq[, 2],
-  "lower" = as.matrix(PPH0ci_seq[, 3])[, 1], 
-  "median" = as.matrix(PPH0ci_seq[, 3])[, 2], 
-  "upper" = as.matrix(PPH0ci_seq[, 3])[, 3]
-  )
-PPH0ci_seq$Hypothesis = "H0"
-PPH1ci_seq = aggregate(PPH_seq$H1, by = list(PPH_seq$index, PPH_seq$type), 
-                       FUN = function(x) quantile(
-                         x, probs = c(0.025, 0.5, 0.975), na.rm = TRUE))
-PPH1ci_seq = data.frame(
-  "index" = PPH1ci_seq[, 1],
-  "type" = PPH1ci_seq[, 2],
-  "lower" = as.matrix(PPH1ci_seq[, 3])[, 1], 
-  "median" = as.matrix(PPH1ci_seq[, 3])[, 2], 
-  "upper" = as.matrix(PPH1ci_seq[, 3])[, 3]
-)
-PPH1ci_seq$Hypothesis = "H1"
-PPHTci_seq = aggregate(PPH_seq$HT, by = list(PPH_seq$index, PPH_seq$type), 
-                       FUN = function(x) quantile(
-                         x, probs = c(0.025, 0.5, 0.975), na.rm = TRUE))
-PPHTci_seq = data.frame(
-  "index" = PPHTci_seq[, 1],
-  "type" = PPHTci_seq[, 2],
-  "lower" = as.matrix(PPHTci_seq[, 3])[, 1], 
-  "median" = as.matrix(PPHTci_seq[, 3])[, 2], 
-  "upper" = as.matrix(PPHTci_seq[, 3])[, 3]
-)
-PPHTci_seq$Hypothesis = "HT"
-
-PPHci_seq = rbind(PPH0ci_seq, PPH1ci_seq, PPHTci_seq)
-# all.equal(PPHci_seq$index, PPHmean_seq$index)
-# 
-# PPHci_seq.mlt = reshape2::melt(
-#   PPHci_seq, id.vars = c("index", "type", "Hypothesis"))
-# PPHmean_seq.mlt = PPHmean_seq
-# PPHmean_seq.mlt$variable = "mean"
-# PPHall_seq = rbind(PPHci_seq.mlt, PPHmean_seq.mlt)
-ggplot(PPHci_seq, aes(x = index)) + 
-  facet_wrap(vars(Hypothesis)) + 
-  geom_line(aes(y = median, color = type)) + 
-  facet_grid(rows = vars(Hypothesis), cols = vars(type)) +
-  geom_ribbon(aes(ymin = lower, ymax = upper, fill = type, color = type), alpha = 0.1) + 
-  theme_bw() +
-  ylim(0, 1)
-
+print(paste("scenario", scenario, ", input ", input.type, 
+            "################################################################"))

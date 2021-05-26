@@ -1,3 +1,4 @@
+rm(list = ls())
 ################################################################################
 # last updated: 05/25/2021
 # purpose: to test seqmedgp for scenario 3:
@@ -31,20 +32,6 @@ source(paste(functions_home, "/boxhill_gp.R", sep = ""))
 source(paste(functions_home, "/kl_divergence.R", sep = ""))
 
 library(mvtnorm)
-
-# set up parallelization
-library(foreach)
-library(future)
-library(doFuture)
-library(parallel)
-registerDoFuture()
-nworkers = detectCores()
-plan(multisession, workers = nworkers)
-
-library(rngtools)
-library(doRNG)
-rng.seed = 123 # 123, 345
-registerDoRNG(rng.seed)
 
 library(ggplot2)
 library(reshape2)
@@ -314,40 +301,5 @@ ggsave(
   plot = PPHT.plt, 
   width = 6, height = 4, units = c("in")
 )
-
-# ### average over largest index of last point
-# 
-# # data.max.index = dplyr::filter(PPH, index == max(PPH$index))
-# PPH0mean2 = aggregate(PPH$H0, 
-#                      by = list(PPH$type, PPH$input, PPH$index), 
-#                      FUN = function(x) mean(x, na.rm = TRUE))
-# names(PPH0mean2) = c("type", "input", "index", "value")
-# PPH0mean2$Hypothesis = "H0"
-# PPH1mean2 = aggregate(PPH$H1, 
-#                       by = list(PPH$type, PPH$input, PPH$index), 
-#                      FUN = function(x) mean(x, na.rm = TRUE))
-# names(PPH1mean2) = c("type", "input", "index", "value")
-# PPH1mean2$Hypothesis = "H1"
-# PPHTmean2 = aggregate(PPH$HT, 
-#                       by = list(PPH$type, PPH$input, PPH$index),  
-#                      FUN = function(x) mean(x, na.rm = TRUE))
-# names(PPHTmean2) = c("type", "input", "index", "value")
-# PPHTmean2$Hypothesis = "HT"
-# 
-# PPHmean2 = rbind(PPH0mean2, PPH1mean2, PPHTmean2)
-# PPHmean2$type = factor(PPHmean2$type)
-# PPHmean2$Hypothesis = factor(PPHmean2$Hypothesis)
-# PPHmean2$input = factor(PPHmean2$input, 
-#                        labels = c("extrapolation", "inc spread", "even coverage"))
-# 
-# PPHT.plt2 = ggplot(dplyr::filter(PPHmean2, Hypothesis == "HT"), 
-#                   aes(x = input, y = value, group = type, color = type, 
-#                       linetype = type)) + 
-#   geom_point() + 
-#   geom_line() +
-#   ylim(0, 1) + 
-#   theme_bw() +
-#   theme(panel.grid.major = element_blank(),
-#         panel.grid.minor = element_blank()) +
-#   labs(y = "E[P(HT|X, Y)|X]", x = "Initial Data")
-# PPHT.plt2
+print(paste("scenario", scenario, 
+            "################################################################"))

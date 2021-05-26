@@ -1,3 +1,4 @@
+rm(list = ls())
 ################################################################################
 # last updated: 05/25/2021
 # purpose: to test seqmedgp for scenario 1:
@@ -31,20 +32,6 @@ source(paste(functions_home, "/boxhill_gp.R", sep = ""))
 source(paste(functions_home, "/kl_divergence.R", sep = ""))
 
 library(mvtnorm)
-
-# set up parallelization
-library(foreach)
-library(future)
-library(doFuture)
-library(parallel)
-registerDoFuture()
-nworkers = detectCores()
-plan(multisession, workers = nworkers)
-
-library(rngtools)
-library(doRNG)
-rng.seed = 123 # 123, 345
-registerDoRNG(rng.seed)
 
 library(ggplot2)
 library(reshape2)
@@ -289,3 +276,5 @@ ggsave(
   plot = PPH1.plt, 
   width = 6, height = 4, units = c("in")
   )
+print(paste("scenario", scenario,
+            "################################################################"))

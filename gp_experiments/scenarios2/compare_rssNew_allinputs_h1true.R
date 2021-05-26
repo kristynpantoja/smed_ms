@@ -1,3 +1,4 @@
+rm(list = ls())
 ################################################################################
 # last updated: 05/25/2021
 # purpose: to test seqmedgp for scenario 1:
@@ -31,20 +32,6 @@ source(paste(functions_home, "/boxhill_gp.R", sep = ""))
 source(paste(functions_home, "/kl_divergence.R", sep = ""))
 
 library(mvtnorm)
-
-# set up parallelization
-library(foreach)
-library(future)
-library(doFuture)
-library(parallel)
-registerDoFuture()
-nworkers = detectCores()
-plan(multisession, workers = nworkers)
-
-library(rngtools)
-library(doRNG)
-rng.seed = 123 # 123, 345
-registerDoRNG(rng.seed)
 
 library(ggplot2)
 library(reshape2)
@@ -298,28 +285,5 @@ ggsave(
   plot = RSS1.plt, 
   width = 6, height = 4, units = c("in")
 )
-
-# RSS01
-# RSS01.plt = ggplot(dplyr::filter(RSSmean, RSS == "RSS01"), 
-#                    aes(x = input, y = value, group = type, color = type, 
-#                        linetype = type)) + 
-#   geom_point() + 
-#   geom_path() +
-#   theme_bw() +
-#   theme(panel.grid.major = element_blank(),
-#         panel.grid.minor = element_blank()) +
-#   labs(y = "RSS01", x = "Initial Data")
-# RSS01.plt
-
-# # log(RSS01)
-# logged.dat = dplyr::filter(RSSmean, RSS == "RSS01")
-# logged.dat$value = log(logged.dat$value)
-# logRSS01.plt = ggplot(logged.dat, 
-#                    aes(x = input, y = value, group = type, color = type)) + 
-#   geom_point() + 
-#   geom_path(linetype = 2) +
-#   theme_bw() +
-#   theme(panel.grid.major = element_blank(),
-#         panel.grid.minor = element_blank()) +
-#   labs(y = "log(RSS01)", x = "Initial Data")
-# logRSS01.plt
+print(paste("scenario", scenario, 
+            "################################################################"))

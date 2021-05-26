@@ -32,6 +32,7 @@ source(paste(functions_home, "/boxhill_gp.R", sep = ""))
 source(paste(functions_home, "/kl_divergence.R", sep = ""))
 
 library(mvtnorm)
+rng.seed = 123
 
 library(ggplot2)
 library(reshape2)

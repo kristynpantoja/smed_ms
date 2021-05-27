@@ -3,7 +3,7 @@
 # purpose: to test seqmedgp for scenarios 3, 4, 5, or 6
 #   where both hypotheses are misspecified
 
-scenario = 3
+scenario = 4
 
 ################################################################################
 # Sources/Libraries

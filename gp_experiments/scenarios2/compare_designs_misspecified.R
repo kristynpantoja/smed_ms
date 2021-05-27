@@ -5,7 +5,7 @@ rm(list = ls())
 #   squared exponential vs. another squared exponential,
 #   where the true function is matern
 
-scenario = 6.2 # scenarios: 3.2, 4.2, 5.2, 6.2
+scenario = 4.2 # scenarios: 3.2, 4.2, 5.2, 6.2
 input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
 seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
 
@@ -224,8 +224,8 @@ if(input.type == 1){
 idx = 1
 designs = list(bh.in[[idx]], q.in[[idx]], buf.in[[idx]], m.in[[idx]])
 design.names = c(
-  "bh", "q", "augdist", "signal")
-design.levels = c("signal", "augdist", "q", "bh")
+  "bh", "q", "augdist", "seqmed")
+design.levels = c("seqmed", "augdist", "q", "bh")
 
 x.new.mat = matrix(NA, nrow = Nnew, ncol = length(designs))
 for(i in 1:length(designs)){

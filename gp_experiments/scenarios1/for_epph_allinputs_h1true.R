@@ -1,5 +1,4 @@
 for(scenario in c(1.1, 2.1)){
-  rm(list = ls())
   ################################################################################
   # last updated: 05/25/2021
   # purpose: to test seqmedgp for scenario 1:
@@ -239,7 +238,7 @@ for(scenario in c(1.1, 2.1)){
       PPH.b$type = "augdist"
       PPH.r$type = "random"
       PPH.sf$type = "spacefill"
-      PPH.m$type = "measmt"
+      PPH.m$type = "seqmed"
       PPH.tmp = rbind(
         PPH.bh, PPH.q, PPH.b, PPH.r, PPH.sf, PPH.m)
       PPH.tmp$sim = j

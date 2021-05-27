@@ -235,7 +235,7 @@ for(scenario in c(1.2, 2.2)){
       PPH.b$type = "augdist"
       PPH.r$type = "random"
       PPH.sf$type = "spacefill"
-      PPH.m$type = "signal"
+      PPH.m$type = "seqmed"
       PPH.tmp = rbind(
         PPH.bh, PPH.q, PPH.b, PPH.r, PPH.sf, PPH.m)
       PPH.tmp$sim = j

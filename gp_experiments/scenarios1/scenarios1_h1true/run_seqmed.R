@@ -1,6 +1,6 @@
 ################################################################################
 # last updated: 05/27/2021
-# purpose: to test seqmedgp for scenarios 1.1 or 1.2 (H0, H1 different sigmasq_measuremt)
+# purpose: to test seqmedgp for scenarios 1.1 or 2.1 (H0, H1 different sigmasq_measuremt)
 #   where H1 is true
 
 scenario = 1.1

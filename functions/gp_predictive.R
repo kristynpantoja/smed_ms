@@ -5,7 +5,7 @@ getGPPredictive = function(
     K_obs = getCov(x.input, x.input, type, l, signal.var)
   } else{
     K_obs = getCov(x.input, x.input, type, l, signal.var) + 
-      measurement.var * diag(length(y.input))
+      sqrt(measurement.var) * diag(length(y.input))
   }
   pred_mean = t(k_star) %*% solve(K_obs, y.input)
   pred_cov = getCov(x, x, type, l) - (t(k_star) %*% solve(K_obs, k_star))

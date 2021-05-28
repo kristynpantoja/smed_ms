@@ -6,7 +6,7 @@ Evidence_gp = function(y, x, model){
     K_obs = getCov(x, x, model$type, model$l, model$signal.var)
   } else{
     K_obs = getCov(x, x, model$type, model$l, model$signal.var) + 
-      model$measurement.var * diag(length(y))
+      sqrt(model$measurement.var) * diag(length(y))
   }
   evidence = dmvnorm(
     y, mean = null_mean_vec, sigma = K_obs, log = FALSE)

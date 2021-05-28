@@ -1,36 +1,31 @@
 ### kernel functions ---
 
-phi_sqexp = function(Xi, Xj, l, signal.var = 1){
-  if(is.null(signal.var)) signal.var = 1
-  signal.var * exp(-0.5 * (sum((Xi - Xj)^2)) / l ^ 2) # Xi, Xj could be vectors
+phi_sqexp = function(Xi, Xj, l){
+  exp(-0.5 * (sum((Xi - Xj)^2)) / l ^ 2) # Xi, Xj could be vectors
 }
 # phi_sqexp = function(Xi,Xj, l) exp(-0.5 * (Xi - Xj) ^ 2 / l ^ 2)
 
 # exponential, a.k.a. matern, nu = 1/2
-phi_exp = function(Xi, Xj, l, signal.var = 1){
-  if(is.null(signal.var)) signal.var = 1
-  signal.var * exp(- abs(Xi - Xj) / l)
+phi_exp = function(Xi, Xj, l){
+  exp(- abs(Xi - Xj) / l)
 }
 # matern, nu = 3/2
-phi_matern2 = function(Xi, Xj, l, signal.var = 1){
-  if(is.null(signal.var)) signal.var = 1
+phi_matern2 = function(Xi, Xj, l){
   r = abs(Xi - Xj)
-  signal.var * (1 + (sqrt(3) * r / l)) * exp(- sqrt(3) * r / l)
+  (1 + (sqrt(3) * r / l)) * exp(- sqrt(3) * r / l)
 }
 # general matern, using RandomFieldsUtils package
-phi_matern = function(Xi, Xj, l, nu = 3 / 2, signal.var = 1){
-  if(is.null(signal.var)) signal.var = 1
-  signal.var * RandomFieldsUtils::matern(abs(Xi - Xj), nu, scaling = "matern")
+phi_matern = function(Xi, Xj, l, nu = 3 / 2){
+  RandomFieldsUtils::matern(abs(Xi - Xj), nu, scaling = "matern")
 }
 
 # a periodic kernel that allows to adjust the period, p. 
 # https://www.cs.toronto.edu/~duvenaud/cookbook/
-phi_periodic = function(Xi, Xj, l, signal.var = 1){
-  if(is.null(signal.var)) signal.var = 1
+phi_periodic = function(Xi, Xj, l){
   p = 0.26 #0.25 # pi / 24
   r = abs(Xi - Xj)
   sinsq_arg = pi * r / p
-  signal.var * exp(-2 * (sin(sinsq_arg))^2 / l^2)
+  exp(-2 * (sin(sinsq_arg))^2 / l^2)
 }
 
 ### covariance matrix ---
@@ -58,8 +53,8 @@ getCov = function(X1, X2, type, l = 1, signal.var = 1){
   Sigma = matrix(NA, nrow=dim(X1)[1], ncol = dim(X2)[1])
   for (i in 1:nrow(Sigma)) {
     for (j in 1:ncol(Sigma)) {
-      Sigma[i,j] = phi(X1[i, , drop = FALSE], X2[j, , drop = FALSE], 
-                       l, signal.var)
+      Sigma[i,j] = sqrt(signal.var) * 
+        phi(X1[i, , drop = FALSE], X2[j, , drop = FALSE], l)
     }
   }
   return(Sigma)

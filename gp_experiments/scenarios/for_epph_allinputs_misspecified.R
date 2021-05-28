@@ -1,21 +1,18 @@
-for(scenario in c(3.1, 4.1, 5.1, 6.1)){
+for(scenario in c(3, 4, 5, 6)){
   ################################################################################
   # last updated: 05/25/2021
   # purpose: to test seqmedgp for scenario 3:
   #   squared exponential vs. another squared exponential,
   #   where the true function is matern
   
-  # scenario = 6.1 # scenarios: 3.1, 4.1, 5.1, 6.1
+  scenario = 4 # scenarios: 3, 4, 5, 6
   seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
   
   ################################################################################
   # Sources/Libraries
   ################################################################################
-  scenario_subtypes = unlist(strsplit(as.character(scenario), split = "\\."))
-  output_home = paste0( # works for scenarios1 OR scenarios2 simulations
-    "gp_experiments/scenarios", 
-    scenario_subtypes[2],
-    "/scenario", scenario, "/outputs")
+  output_home = paste0("gp_experiments/scenarios/scenarios_misspecified/outputs/")
+  data_home = "gp_experiments/simulated_data"
   functions_home = "functions"
   
   # for seqmed design
@@ -65,13 +62,7 @@ for(scenario in c(3.1, 4.1, 5.1, 6.1)){
   sigmasq_signal = 1
   
   # shared settings
-  if(scenario_subtypes[1] %in% c(3, 4)){
-    nuggets = c(1e-15, sigmasq_measuremt)
-  } else if(scenario_subtypes[1] %in% c(5, 6)){
-    nuggets = c(1e-5, sigmasq_measuremt)
-  } else{
-    stop("invalid scenario")
-  }
+  nugget = sigmasq_measuremt
   prior_probs = rep(1 / 2, 2)
   
   ################################################################################
@@ -109,22 +100,22 @@ for(scenario in c(3.1, 4.1, 5.1, 6.1)){
   ################################################################################
   # Scenario settings
   ################################################################################
-  if(scenario_subtypes[1] == 3){
+  if(scenario == 3){
     type01 = c("squaredexponential", "squaredexponential")
     typeT = "matern"
     l01= c(0.005, 0.01)
     lT = 0.01
-  } else if(scenario_subtypes[1] == 4){
+  } else if(scenario == 4){
     type01 = c("matern", "squaredexponential")
     typeT = "periodic"
     l01= c(0.01, 0.01)
     lT = 0.01
-  } else if(scenario_subtypes[1] == 5){
+  } else if(scenario == 5){
     type01 = c("matern", "periodic")
     typeT = "squaredexponential"
     l01= c(0.01, 0.01)
     lT = 0.01
-  } else if(scenario_subtypes[1] == 6){
+  } else if(scenario == 6){
     type01 = c("squaredexponential", "periodic")
     typeT = "matern"
     l01= c(0.01, 0.01)
@@ -132,23 +123,24 @@ for(scenario in c(3.1, 4.1, 5.1, 6.1)){
   }
   
   ################################################################################
-  # import matern functions
+  # import data
   filename_append = ""
   if(!is.null(sigmasq_measuremt)){
-    filename_append = paste0(
-      "_noise", strsplit(as.character(sigmasq_measuremt), "-")[[1]][2])
+    filename_append = "_noise"
   }
-  simulated.functions = readRDS(paste0(
-    output_home,
-    "/scenario", scenario, "_simulated_functions", filename_append,
+  simulated.data = readRDS(paste0(
+    data_home,
+    "/", typeT,
+    "_l", lT,
+    filename_append, 
     "_seed", rng.seed,
     ".rds"))
-  numSims = simulated.functions$numSims
-  x_seq = simulated.functions$x
+  numSims = simulated.data$numSims
+  x_seq = simulated.data$x
   numx = length(x_seq)
-  null_cov = simulated.functions$null_cov
-  null_mean = simulated.functions$null_mean
-  y_seq_mat = simulated.functions$function_values_mat
+  null_cov = simulated.data$null_cov
+  null_mean = simulated.data$null_mean
+  y_seq_mat = simulated.data$function_values_mat
   
   ################################################################################
   # read in the data
@@ -158,7 +150,6 @@ for(scenario in c(3.1, 4.1, 5.1, 6.1)){
   buffers = list()
   randoms = list()
   spacefills = list()
-  seqmed.ms = list()
   
   for(i in 1:3){
     # filename_append.tmp for all methods alike
@@ -186,19 +177,14 @@ for(scenario in c(3.1, 4.1, 5.1, 6.1)){
       filename_append.tmp))
     
     randoms[[i]] = readRDS(paste0(
-      output_home, 
-      "/scenario", scenario, "_random", 
+      "gp_experiments/spacefilling_designs/outputs/random", 
+      "_", typeT,
+      "_l", lT,
       filename_append.tmp))
     spacefills[[i]] = readRDS(paste0(
-      output_home, 
-      "/scenario", scenario, "_spacefilling", 
-      filename_append.tmp))
-    
-    seqmed.ms[[i]] = readRDS(paste0(
-      output_home,
-      "/scenario", scenario, "_seqmed", 
-      "_error", 
-      "_seq", seq.type,
+      "gp_experiments/spacefilling_designs/outputs/grid", 
+      "_", typeT,
+      "_l", lT,
       filename_append.tmp))
   }
   
@@ -207,10 +193,10 @@ for(scenario in c(3.1, 4.1, 5.1, 6.1)){
   ################################################################################
   
   # models
-  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal,
-                measurement.var = nuggets[1])
+  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
+                measurement.var = nugget)
   model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
-                measurement.var = nuggets[2])
+                measurement.var = nugget)
   modelT = list(type = typeT, l = lT, signal.var = sigmasq_signal, 
                 measurement.var = sigmasq_measuremt)
   
@@ -243,7 +229,6 @@ for(scenario in c(3.1, 4.1, 5.1, 6.1)){
       b = buffers[[k]][[j]]
       r = randoms[[k]][[j]]
       sf = spacefills[[k]][[j]]
-      m = seqmed.ms[[k]][[j]]
       # sequence of PPHs for each design
       PPH.bh = getPPH(bh, model0, model1, modelT)
       PPH.q = getPPH(q, model0, model1, modelT)
@@ -257,9 +242,8 @@ for(scenario in c(3.1, 4.1, 5.1, 6.1)){
       PPH.b$type = "augdist"
       PPH.r$type = "random"
       PPH.sf$type = "spacefill"
-      PPH.m$type = "seqmed"
       PPH.tmp = rbind(
-        PPH.bh, PPH.q, PPH.b, PPH.r, PPH.sf, PPH.m)
+        PPH.bh, PPH.q, PPH.b, PPH.r, PPH.sf)
       PPH.tmp$sim = j
       PPH.tmp$input = k
       PPH = rbind(PPH, PPH.tmp)

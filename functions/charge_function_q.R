@@ -40,7 +40,7 @@ q_vs = function(
 q_gp = function(
   x, Kinv0, Kinv1, initD, y, p, alpha = 1, buffer = 0, model0, model1
 ){
-  browser()
+  # browser()
   W = WNgp(x, Kinv0, Kinv1, initD, y, model0, model1) + buffer
   q_exponent = alpha / (2 * p)
   return(1.0 / (W)^q_exponent)

@@ -3,12 +3,13 @@
 # purpose: to test seqmedgp for scenarios 1 or 2
 #   where H1 is true
 
-scenario = 2
+scenario = 1
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = paste0("gp_experiments/scenarios/scenarios_h1true/outputs")
+output_home = "gp_experiments/scenarios/scenarios_h1true/outputs"
+data_home = "gp_experiments/simulated_data"
 functions_home = "functions"
 
 # for seqmed design
@@ -121,23 +122,24 @@ model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal,
               measurement.var = nugget)
 
 ################################################################################
-# import functions
+# import data
 filename_append = ""
 if(!is.null(sigmasq_measuremt)){
-  filename_append = paste0(
-    "_noise", strsplit(as.character(sigmasq_measuremt), "-")[[1]][2])
+  filename_append = "_noise"
 }
-simulated.functions = readRDS(paste0(
-  output_home,
-  "/scenario", scenario, "_simulated_functions", filename_append,
+simulated.data = readRDS(paste0(
+  data_home,
+  "/", typeT,
+  "_l", lT,
+  filename_append, 
   "_seed", rng.seed,
   ".rds"))
-numSims = simulated.functions$numSims
-x_seq = simulated.functions$x
+numSims = simulated.data$numSims
+x_seq = simulated.data$x
 numx = length(x_seq)
-null_cov = simulated.functions$null_cov
-null_mean = simulated.functions$null_mean
-y_seq_mat = simulated.functions$function_values_mat
+null_cov = simulated.data$null_cov
+null_mean = simulated.data$null_mean
+y_seq_mat = simulated.data$function_values_mat
 
 ################################################################################
 # generate boxhills
@@ -167,7 +169,7 @@ for(j in 1:3){
     y_input = y_seq[x_input_idx]
     BHgp_m2(
       y_input, x_input, x_input_idx, prior_probs, model0, model1, Nnew, 
-      x_seq, y_seq, noise = TRUE, measurement.var = sigmasq_measuremt)
+      x_seq, y_seq, noise = FALSE, measurement.var = sigmasq_measuremt)
   }
   
   filename_append.tmp = paste0(

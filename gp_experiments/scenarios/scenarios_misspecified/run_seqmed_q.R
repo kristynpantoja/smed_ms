@@ -9,6 +9,7 @@ scenario = 4
 # Sources/Libraries
 ################################################################################
 output_home = paste0("gp_experiments/scenarios/scenarios_misspecified/outputs")
+data_home = "gp_experiments/simulated_data"
 functions_home = "functions"
 
 # for seqmed design
@@ -133,23 +134,24 @@ model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal,
               measurement.var = nugget)
 
 ################################################################################
-# import functions
+# import data
 filename_append = ""
 if(!is.null(sigmasq_measuremt)){
-  filename_append = paste0(
-    "_noise", strsplit(as.character(sigmasq_measuremt), "-")[[1]][2])
+  filename_append = "_noise"
 }
-simulated.functions = readRDS(paste0(
-  output_home,
-  "/scenario", scenario, "_simulated_functions", filename_append,
+simulated.data = readRDS(paste0(
+  data_home,
+  "/", typeT,
+  "_l", lT,
+  filename_append, 
   "_seed", rng.seed,
   ".rds"))
-numSims = simulated.functions$numSims
-x_seq = simulated.functions$x
+numSims = simulated.data$numSims
+x_seq = simulated.data$x
 numx = length(x_seq)
-null_cov = simulated.functions$null_cov
-null_mean = simulated.functions$null_mean
-y_seq_mat = simulated.functions$function_values_mat
+null_cov = simulated.data$null_cov
+null_mean = simulated.data$null_mean
+y_seq_mat = simulated.data$function_values_mat
 
 ################################################################################
 # generate seqmeds 
@@ -193,7 +195,7 @@ for(j in 1:3){
         candidates = x_seq, function.values = y_seq, 
         model0 = model0, model1 = model1, 
         numSeq = numSeq, seqN = seqN, prints = FALSE, buffer = buffer, 
-        objective.type = 2, noise = TRUE, measurement.var = sigmasq_measuremt)
+        objective.type = 2, noise = FALSE, measurement.var = sigmasq_measuremt)
     }
     
     print(paste0("completed j = ", j, ", k = ", k, "!"))

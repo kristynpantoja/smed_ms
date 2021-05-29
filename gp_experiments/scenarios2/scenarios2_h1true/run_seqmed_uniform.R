@@ -1,15 +1,15 @@
 ################################################################################
 # last updated: 05/27/2021
-# purpose: to test seqmedgp for scenarios 1.1 or 2.1 (H0, H1 different sigmasq_measuremt)
+# purpose: to test seqmedgp for scenarios 1.2 or 2.2 (H0, H1 different sigmasq_signal)
 #   where H1 is true
 
-scenario = 1.1
+scenario = 1.2
 scenario_subtypes = unlist(strsplit(as.character(scenario), split = "\\."))
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = paste0("gp_experiments/scenarios1/scenarios1_h1true/outputs")
+output_home = paste0("gp_experiments/scenarios2/scenarios2_h1true/outputs")
 data_home = "gp_experiments/simulated_data"
 functions_home = "functions"
 
@@ -66,7 +66,8 @@ sigmasq_measuremt = 1e-10
 sigmasq_signal = 1
 
 # SeqMED settings
-nuggets = c(1e-15, sigmasq_measuremt)
+sigmasq_signals = c(1 - 1e-10, 1)
+nugget = sigmasq_measuremt
 buffer = 0
 
 ################################################################################
@@ -114,10 +115,11 @@ l01= c(0.01, 0.01)
 lT = l01[2]
 
 ################################################################################
-model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
-              measurement.var = nuggets[1])
-model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
-              measurement.var = nuggets[2])
+# models
+model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signals[1], 
+              measurement.var = nugget)
+model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signals[2], 
+              measurement.var = nugget)
 
 ################################################################################
 # import data
@@ -181,7 +183,7 @@ for(j in 1:3){
         candidates = x_seq, function.values = y_seq, 
         model0 = model0, model1 = model1, 
         numSeq = numSeq, seqN = seqN, prints = FALSE, buffer = buffer, 
-        objective.type = 2, noise = FALSE, measurement.var = sigmasq_measuremt)
+        objective.type = 3, noise = FALSE, measurement.var = sigmasq_measuremt)
     }
     
     print(paste0("completed j = ", j, ", k = ", k, "!"))

@@ -1,15 +1,14 @@
 ################################################################################
 # last updated: 05/27/2021
-# purpose: to test seqmedgp for scenarios 1.1 or 2.1 (H0, H1 different sigmasq_measuremt)
-#   where H1 is true
+# purpose: to test seqmedgp for scenarios 3, 4, 5, or 6
+#   where both hypotheses are misspecified
 
-scenario = 1.1
-scenario_subtypes = unlist(strsplit(as.character(scenario), split = "\\."))
+scenario = 3
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = paste0("gp_experiments/scenarios1/scenarios1_h1true/outputs")
+output_home = paste0("gp_experiments/scenarios/scenarios_misspecified/outputs")
 data_home = "gp_experiments/simulated_data"
 functions_home = "functions"
 
@@ -66,7 +65,7 @@ sigmasq_measuremt = 1e-10
 sigmasq_signal = 1
 
 # SeqMED settings
-nuggets = c(1e-15, sigmasq_measuremt)
+nugget = sigmasq_measuremt
 buffer = 0
 
 ################################################################################
@@ -104,20 +103,35 @@ x_spacefill3 = x_seq[x_spacefill3_idx]
 ################################################################################
 # Scenario settings
 ################################################################################
-if(scenario_subtypes[1] == 1){
-  type01 = c("squaredexponential", "matern")
-} else if(scenario_subtypes[1] == 2){
+if(scenario == 3){
+  type01 = c("squaredexponential", "squaredexponential")
+  typeT = "matern"
+  l01= c(0.005, 0.01)
+  lT = 0.01
+} else if(scenario == 4){
+  type01 = c("matern", "squaredexponential")
+  typeT = "periodic"
+  l01= c(0.01, 0.01)
+  lT = 0.01
+} else if(scenario == 5){
   type01 = c("matern", "periodic")
+  typeT = "squaredexponential"
+  l01= c(0.01, 0.01)
+  lT = 0.01
+} else if(scenario == 6){
+  type01 = c("squaredexponential", "periodic")
+  typeT = "matern"
+  l01= c(0.01, 0.01)
+  lT = 0.01
+} else{
+  stop("invalid scenario number")
 }
-typeT = type01[2]
-l01= c(0.01, 0.01)
-lT = l01[2]
 
 ################################################################################
 model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
-              measurement.var = nuggets[1])
+              measurement.var = nugget)
 model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
-              measurement.var = nuggets[2])
+              measurement.var = nugget)
 
 ################################################################################
 # import data
@@ -181,7 +195,7 @@ for(j in 1:3){
         candidates = x_seq, function.values = y_seq, 
         model0 = model0, model1 = model1, 
         numSeq = numSeq, seqN = seqN, prints = FALSE, buffer = buffer, 
-        objective.type = 2, noise = FALSE, measurement.var = sigmasq_measuremt)
+        objective.type = 3, noise = FALSE, measurement.var = sigmasq_measuremt)
     }
     
     print(paste0("completed j = ", j, ", k = ", k, "!"))

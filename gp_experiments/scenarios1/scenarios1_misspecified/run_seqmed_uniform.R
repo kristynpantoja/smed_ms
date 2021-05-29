@@ -1,15 +1,15 @@
 ################################################################################
 # last updated: 05/27/2021
-# purpose: to test seqmedgp for scenarios 1.1 or 2.1 (H0, H1 different sigmasq_measuremt)
-#   where H1 is true
+# purpose: to test seqmedgp for scenarios 3.1, 4.1, 5.1, or 6.1 (H0, H1 different sigmasq_measuremt)
+#   where both hypotheses are misspecified
 
-scenario = 1.1
+scenario = 3.1
 scenario_subtypes = unlist(strsplit(as.character(scenario), split = "\\."))
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = paste0("gp_experiments/scenarios1/scenarios1_h1true/outputs")
+output_home = paste0("gp_experiments/scenarios1/scenarios1_misspecified/outputs")
 data_home = "gp_experiments/simulated_data"
 functions_home = "functions"
 
@@ -104,14 +104,29 @@ x_spacefill3 = x_seq[x_spacefill3_idx]
 ################################################################################
 # Scenario settings
 ################################################################################
-if(scenario_subtypes[1] == 1){
-  type01 = c("squaredexponential", "matern")
-} else if(scenario_subtypes[1] == 2){
+if(scenario_subtypes[1] == 3){
+  type01 = c("squaredexponential", "squaredexponential")
+  typeT = "matern"
+  l01= c(0.005, 0.01)
+  lT = 0.01
+} else if(scenario_subtypes[1] == 4){
+  type01 = c("matern", "squaredexponential")
+  typeT = "periodic"
+  l01= c(0.01, 0.01)
+  lT = 0.01
+} else if(scenario_subtypes[1] == 5){
   type01 = c("matern", "periodic")
+  typeT = "squaredexponential"
+  l01= c(0.01, 0.01)
+  lT = 0.01
+} else if(scenario_subtypes[1] == 6){
+  type01 = c("squaredexponential", "periodic")
+  typeT = "matern"
+  l01= c(0.01, 0.01)
+  lT = 0.01
+} else{
+  stop("invalid scenario number")
 }
-typeT = type01[2]
-l01= c(0.01, 0.01)
-lT = l01[2]
 
 ################################################################################
 model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
@@ -181,7 +196,7 @@ for(j in 1:3){
         candidates = x_seq, function.values = y_seq, 
         model0 = model0, model1 = model1, 
         numSeq = numSeq, seqN = seqN, prints = FALSE, buffer = buffer, 
-        objective.type = 2, noise = FALSE, measurement.var = sigmasq_measuremt)
+        objective.type = 3, noise = FALSE, measurement.var = sigmasq_measuremt)
     }
     
     print(paste0("completed j = ", j, ", k = ", k, "!"))

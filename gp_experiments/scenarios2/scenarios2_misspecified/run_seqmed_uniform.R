@@ -213,7 +213,7 @@ for(j in 1:3){
             file = paste0(
               output_home,
               "/scenario", scenario, "_seqmed", 
-              "_q", 
+              "_uniform", 
               "_seq", seq.type,
               filename_append.tmp))
   }

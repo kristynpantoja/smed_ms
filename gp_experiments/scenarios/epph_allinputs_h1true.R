@@ -1,17 +1,17 @@
-for(scenario in c(3, 4, 5, 6)){
+for(scenario in c(1, 2)){
   ################################################################################
   # last updated: 05/25/2021
-  # purpose: to test seqmedgp for scenario 3:
-  #   squared exponential vs. another squared exponential,
+  # purpose: to test seqmedgp for scenario 1:
+  #   squared exponential vs. matern,
   #   where the true function is matern
   
-  scenario = 4 # scenarios: 3, 4, 5, 6
+  # scenario = 1 # scenarios: 1, 2
   seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
   
   ################################################################################
   # Sources/Libraries
   ################################################################################
-  output_home = paste0("gp_experiments/scenarios/scenarios_misspecified/outputs/")
+  output_home = paste0("gp_experiments/scenarios/scenarios_h1true/outputs/")
   data_home = "gp_experiments/simulated_data"
   functions_home = "functions"
   
@@ -100,27 +100,16 @@ for(scenario in c(3, 4, 5, 6)){
   ################################################################################
   # Scenario settings
   ################################################################################
-  if(scenario == 3){
-    type01 = c("squaredexponential", "squaredexponential")
-    typeT = "matern"
-    l01= c(0.005, 0.01)
-    lT = 0.01
-  } else if(scenario == 4){
-    type01 = c("matern", "squaredexponential")
-    typeT = "periodic"
-    l01= c(0.01, 0.01)
-    lT = 0.01
-  } else if(scenario == 5){
+  if(scenario == 1){
+    type01 = c("squaredexponential", "matern")
+  } else if(scenario == 2){
     type01 = c("matern", "periodic")
-    typeT = "squaredexponential"
-    l01= c(0.01, 0.01)
-    lT = 0.01
-  } else if(scenario == 6){
-    type01 = c("squaredexponential", "periodic")
-    typeT = "matern"
-    l01= c(0.01, 0.01)
-    lT = 0.01
+  } else{
+    stop("invalid scenario")
   }
+  typeT = type01[2]
+  l01= c(0.01, 0.01)
+  lT = l01[2]
   
   ################################################################################
   # import data
@@ -197,29 +186,23 @@ for(scenario in c(3, 4, 5, 6)){
                 measurement.var = nugget)
   model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
                 measurement.var = nugget)
-  modelT = list(type = typeT, l = lT, signal.var = sigmasq_signal, 
-                measurement.var = sigmasq_measuremt)
   
   # calculate the final posterior probability
-  getPPH = function(design, model0, model1, modelT){
-    index = length(as.vector(na.omit(design$y.new)))
+  getPPH = function(design, model0, model1){
     y.tmp = c(design$y, as.vector(na.omit(design$y.new)))
     x.tmp = c(design$x, as.vector(na.omit(design$x.new)))
     PPHs.tmp = getHypothesesPosteriors(
-      prior.probs = rep(1 / 3, 3), 
+      prior.probs = prior_probs, 
       evidences = c(
         Evidence_gp(y.tmp, x.tmp, model0),
-        Evidence_gp(y.tmp, x.tmp, model1),
-        Evidence_gp(y.tmp, x.tmp, modelT)
+        Evidence_gp(y.tmp, x.tmp, model1)
       )
     )
-    return(data.frame(
-      index = index, 
-      "H0" = PPHs.tmp[1], "H1" = PPHs.tmp[2], "HT" = PPHs.tmp[3]))
+    return(data.frame("H0" = PPHs.tmp[1], "H1" = PPHs.tmp[2]))
   }
   
   PPH = data.frame(
-    PPH0 = numeric(), PPH1 = numeric(), PPHT = numeric(), 
+    PPH0 = numeric(), PPH1 = numeric(), 
     type = character(), sim = numeric(), input = numeric())
   for(k in 1:3){
     for(j in 1:numSims){
@@ -230,12 +213,11 @@ for(scenario in c(3, 4, 5, 6)){
       r = randoms[[k]][[j]]
       sf = spacefills[[k]][[j]]
       # sequence of PPHs for each design
-      PPH.bh = getPPH(bh, model0, model1, modelT)
-      PPH.q = getPPH(q, model0, model1, modelT)
-      PPH.b = getPPH(b, model0, model1, modelT)
-      PPH.r = getPPH(r, model0, model1, modelT)
-      PPH.sf = getPPH(sf, model0, model1, modelT)
-      PPH.m = getPPH(m, model0, model1, modelT)
+      PPH.bh = getPPH(bh, model0, model1)
+      PPH.q = getPPH(q, model0, model1)
+      PPH.b = getPPH(b, model0, model1)
+      PPH.r = getPPH(r, model0, model1)
+      PPH.sf = getPPH(sf, model0, model1)
       # master data frame
       PPH.bh$type = "boxhill"
       PPH.q$type = "q"
@@ -250,8 +232,6 @@ for(scenario in c(3, 4, 5, 6)){
     }
   }
   
-  ### average over all, regardless of index of last point
-  
   PPH0mean = aggregate(PPH$H0, by = list(PPH$type, PPH$input), 
                        FUN = function(x) mean(x, na.rm = TRUE))
   names(PPH0mean) = c("type", "input", "value")
@@ -260,18 +240,14 @@ for(scenario in c(3, 4, 5, 6)){
                        FUN = function(x) mean(x, na.rm = TRUE))
   names(PPH1mean) = c("type", "input", "value")
   PPH1mean$Hypothesis = "H1"
-  PPHTmean = aggregate(PPH$HT, by = list(PPH$type, PPH$input), 
-                       FUN = function(x) mean(x, na.rm = TRUE))
-  names(PPHTmean) = c("type", "input", "value")
-  PPHTmean$Hypothesis = "HT"
   
-  PPHmean = rbind(PPH0mean, PPH1mean, PPHTmean)
+  PPHmean = rbind(PPH0mean, PPH1mean)
   PPHmean$type = factor(PPHmean$type)
   PPHmean$Hypothesis = factor(PPHmean$Hypothesis)
   PPHmean$input = factor(PPHmean$input, 
                          labels = c("extrapolation", "inc spread", "even coverage"))
   
-  PPHT.plt = ggplot(dplyr::filter(PPHmean, Hypothesis == "HT"), 
+  PPH1.plt = ggplot(dplyr::filter(PPHmean, Hypothesis == "H1"), 
                     aes(x = input, y = value, group = type, color = type, 
                         linetype = type)) + 
     geom_point() + 
@@ -280,15 +256,15 @@ for(scenario in c(3, 4, 5, 6)){
     theme_bw() +
     theme(panel.grid.major = element_blank(),
           panel.grid.minor = element_blank()) +
-    labs(y = "E[P(HT|X, Y)|X]", x = "Initial Data")
-  PPHT.plt
+    labs(y = "P(H1|X, Y)", x = "Initial Data")
+  PPH1.plt
   
   ggsave(
     filename = paste0("20210525_scen", scenario, "_eppht.pdf"), 
-    plot = PPHT.plt, 
+    plot = PPH1.plt, 
     width = 6, height = 4, units = c("in")
   )
-  print(paste("scenario", scenario, 
+  print(paste("scenario", scenario,
               "################################################################"))
   
 }

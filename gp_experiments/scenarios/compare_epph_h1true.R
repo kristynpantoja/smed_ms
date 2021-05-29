@@ -13,7 +13,7 @@ for(scenario in c(1, 2)){
     ################################################################################
     # Sources/Libraries
     ################################################################################
-    output_home = paste0("gp_experiments/scenarios/scenarios_h1true/outputs/")
+    output_home = paste0("gp_experiments/scenarios/scenarios_h1true/outputs")
     data_home = "gp_experiments/simulated_data"
     functions_home = "functions"
     

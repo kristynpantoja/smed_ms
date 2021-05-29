@@ -9,7 +9,7 @@ scenario_subtypes = unlist(strsplit(as.character(scenario), split = "\\."))
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = paste0("gp_experiments/scenarios1/scenarios1_misspecified/outputs")
+output_home = paste0("gp_experiments/scenarios2/scenarios2_misspecified/outputs")
 data_home = "gp_experiments/simulated_data"
 functions_home = "functions"
 

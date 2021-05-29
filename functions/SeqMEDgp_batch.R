@@ -66,7 +66,7 @@ obj_gp = function(
     result = q_cand^k * sum_q_D
   }
   ### no other objective.type options
-  if(objective.type != 1 & objective.type != 2){
+  if(!(objective.type %in% c(1, 2, 3))){
     stop("obj_gp: invalid objective.type value")
   }
   return(result)

@@ -3,7 +3,7 @@
 # purpose: to test seqmedgp for scenarios 1.2 or 2.2 (H0, H1 different sigmasq_signal)
 #   where H1 is true
 
-scenario = 2.2
+scenario = 1.2
 scenario_subtypes = unlist(strsplit(as.character(scenario), split = "\\."))
 
 ################################################################################
@@ -183,7 +183,7 @@ for(j in 1:3){
         candidates = x_seq, function.values = y_seq, 
         model0 = model0, model1 = model1, 
         numSeq = numSeq, seqN = seqN, prints = FALSE, buffer = buffer, 
-        objective.type = 2, noise = FALSE, measurement.var = sigmasq_measuremt)
+        objective.type = 3, noise = FALSE, measurement.var = sigmasq_measuremt)
     }
     
     print(paste0("completed j = ", j, ", k = ", k, "!"))

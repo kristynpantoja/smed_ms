@@ -244,14 +244,14 @@ for(scenario in c(1, 2)){
   PPHmean = rbind(PPH0mean, PPH1mean)
   PPHmean$type = factor(PPHmean$type)
   PPHmean$Hypothesis = factor(PPHmean$Hypothesis)
-  PPHmean$input = factor(PPHmean$input, 
-                         labels = c("extrapolation", "inc spread", "even coverage"))
+  PPHmean$input = factor(
+    PPHmean$input, labels = c("extrapolation", "inc spread", "even coverage"))
   
   PPH1.plt = ggplot(dplyr::filter(PPHmean, Hypothesis == "H1"), 
                     aes(x = input, y = value, group = type, color = type, 
-                        linetype = type)) + 
-    geom_point() + 
+                        linetype = type, shape = type)) + 
     geom_path() +
+    geom_point() +
     ylim(0, 1) + 
     theme_bw() +
     theme(panel.grid.major = element_blank(),

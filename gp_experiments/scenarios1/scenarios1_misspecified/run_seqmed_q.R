@@ -3,7 +3,7 @@
 # purpose: to test seqmedgp for scenarios 3.1, 4.1, 5.1, or 6.1 (H0, H1 different sigmasq_measuremt)
 #   where both hypotheses are misspecified
 
-scenario = 6.1
+scenario = 3.1
 scenario_subtypes = unlist(strsplit(as.character(scenario), split = "\\."))
 
 ################################################################################
@@ -196,7 +196,7 @@ for(j in 1:3){
         candidates = x_seq, function.values = y_seq, 
         model0 = model0, model1 = model1, 
         numSeq = numSeq, seqN = seqN, prints = FALSE, buffer = buffer, 
-        objective.type = 2, noise = FALSE, measurement.var = sigmasq_measuremt)
+        objective.type = 3, noise = FALSE, measurement.var = sigmasq_measuremt)
     }
     
     print(paste0("completed j = ", j, ", k = ", k, "!"))

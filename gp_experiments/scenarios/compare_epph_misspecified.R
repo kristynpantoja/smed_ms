@@ -283,9 +283,11 @@ for(scenario in c(3, 4, 5, 6)){
     PPHTmean_seq$Hypothesis = "HT"
     
     PPHmean_seq = rbind(PPH0mean_seq, PPH1mean_seq, PPHTmean_seq)
-    epph.plt = ggplot(PPHmean_seq, aes(x = index, y = value, color = type, linetype = type)) + 
+    epph.plt = ggplot(PPHmean_seq, aes(x = index, y = value, color = type, 
+                                       linetype = type, shape = type)) + 
       facet_wrap(~Hypothesis) + 
       geom_path() + 
+      geom_point() +
       theme_bw() +
       ylim(0, 1)
     epph.plt

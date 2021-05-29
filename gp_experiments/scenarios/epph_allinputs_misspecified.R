@@ -274,9 +274,9 @@ for(scenario in c(3, 4, 5, 6)){
   
   PPHT.plt = ggplot(dplyr::filter(PPHmean, Hypothesis == "HT"), 
                     aes(x = input, y = value, group = type, color = type, 
-                        linetype = type)) + 
-    geom_point() + 
+                        linetype = type, shape = type)) + 
     geom_path() +
+    geom_point() +
     ylim(0, 1) + 
     theme_bw() +
     theme(panel.grid.major = element_blank(),

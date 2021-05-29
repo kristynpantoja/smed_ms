@@ -11,9 +11,7 @@ obj_gp = function(
   p = 1, k = 4, alpha = 1, buffer = 0, objective.type = 1, model0, model1
 ){
   ### objective.type == 1 is the SeqMEDgp() case that is actually a MED. ###
-  if(objective.type == 1 | 
-     objective.type == "SeqMED" | 
-     objective.type == "MED"){
+  if(objective.type == 1 | objective.type %in% c("SeqMED", "MED", "med")){
     # q(x), x in C
     q_cand = q_gp(candidate, Kinv0, Kinv1, initD, y, p, alpha, buffer, 
                   model0, model1) # no need for buffer here, jsyk
@@ -34,8 +32,7 @@ obj_gp = function(
     result = q_cand^k * sum_q_D
   }
   ### objective.type == 2 is just optimizing q(x) over x \in C ###
-  if(objective.type == 2 | 
-     objective.type == "q"){
+  if(objective.type == 2 | objective.type == "q"){
     # no need for buffer in this case
     q_cand = q_gp(candidate, Kinv0, Kinv1, initD, y, p, alpha, buffer = 0, 
                   model0, model1)
@@ -48,6 +45,25 @@ obj_gp = function(
            sqrt((x_i - candidate)^2))^k))
       result = q_cand^k * sum_q_D
     }
+  }
+  ### objective.type == 2 is just optimizing q(x) over x \in C ###
+  if(objective.type == 3 | objective.type %in% c("uniform", "spacefilling")){
+    # q(x), x in C
+    q_cand = q_gp(candidate, Kinv0, Kinv1, initD, y, p, alpha, buffer = 0, 
+                  model0, model1)
+    # the other terms in the summation
+    # q(xi), xi in the observed set, D_t^c
+    sum_q_D = sum(sapply(initD, function(x_i) 
+      (1 / sqrt((x_i - candidate)^2))^k)) # q = 1 for xi in this case
+    if(!is.null(D)){ # when N2 > 1
+      # q(xi), xi in the unobserved design points D^{(t)}
+      sum_q_D = sum_q_D + 
+        sum(sapply(D, function(x_i) 
+          (q_gp(x_i, Kinv0, Kinv1, initD, y, p, alpha, buffer = 0, 
+                model0, model1) / 
+             sqrt((x_i - candidate)^2))^k))
+    }
+    result = q_cand^k * sum_q_D
   }
   ### no other objective.type options
   if(objective.type != 1 & objective.type != 2){

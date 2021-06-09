@@ -6,13 +6,14 @@ rm(list = ls())
 #   where the true function is matern
 # testing box and hill to see when/why/how it gets NaNs
 
-scenario = 1 # scenarios: 1.1, 2.1
+scenario = 1.1 # scenarios: 1.1, 2.1
+scenario_subtypes = unlist(strsplit(as.character(scenario), split = "\\."))
 input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = "gp_experiments/scenarios/scenarios_h1true/outputs"
+output_home = "gp_experiments/scenarios1/scenarios1_h1true/outputs"
 data_home = "gp_experiments/simulated_data"
 functions_home = "functions"
 
@@ -60,6 +61,7 @@ sigmasq_measuremt = 1e-10
 sigmasq_signal = 1
 
 # boxhill settings
+nuggets = c(1e-15, sigmasq_measuremt)
 prior_probs = rep(1 / 2, 2)
 
 ################################################################################
@@ -97,9 +99,9 @@ x_spacefill3 = x_seq[x_spacefill3_idx]
 ################################################################################
 # Scenario settings
 ################################################################################
-if(scenario == 1){
+if(scenario_subtypes[1] == 1){
   type01 = c("squaredexponential", "matern")
-} else if(scenario == 2){
+} else if(scenario_subtypes[1] == 2){
   type01 = c("matern", "periodic")
 }
 typeT = type01[2]
@@ -109,9 +111,9 @@ lT = l01[2]
 ################################################################################
 # models
 model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
-              measurement.var = sigmasq_measuremt)
+              measurement.var = nuggets[1])
 model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
-              measurement.var = sigmasq_measuremt)
+              measurement.var = nuggets[2])
 
 ################################################################################
 # import data
@@ -170,10 +172,10 @@ x_new.gg = x_new
 y_new.gg = y_new
 H0_predfn = getGPPredictive(
   x_seq, x_input.gg, y_input.gg, type01[1], l01[1],
-  signal.var = sigmasq_signal, measurement.var = sigmasq_measuremt)
+  signal.var = sigmasq_signal, measurement.var = nuggets[1])
 H1_predfn = getGPPredictive(
   x_seq, x_input.gg, y_input.gg, type01[2], l01[2],
-  signal.var = sigmasq_signal, measurement.var = sigmasq_measuremt)
+  signal.var = sigmasq_signal, measurement.var = nuggets[2])
 err0 = 2 * sqrt(diag(H0_predfn$pred_var))
 err1 = 2 * sqrt(diag(H1_predfn$pred_var))
 ggdata = data.table(

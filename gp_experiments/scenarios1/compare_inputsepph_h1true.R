@@ -1,19 +1,20 @@
-for(scenario in c(3, 4, 5, 6)){
+for(scenario in c(1.1, 2.1)){
   for(input.type in 1:3){
     ################################################################################
     # last updated: 05/25/2021
-    # purpose: to test seqmedgp for scenario 3:
-    #   squared exponential vs. another squared exponential,
+    # purpose: to test seqmedgp for scenario 1:
+    #   squared exponential vs. matern,
     #   where the true function is matern
     
-    # scenario = 4 # scenarios: 3, 4, 5, 6
+    # scenario = 1 # scenarios: 1.1, 2.1
+    scenario_subtypes = unlist(strsplit(as.character(scenario), split = "\\."))
     # input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
     seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
     
     ################################################################################
     # Sources/Libraries
     ################################################################################
-    output_home = paste0("gp_experiments/scenarios/scenarios_misspecified/outputs")
+    output_home = paste0("gp_experiments/scenarios1/scenarios1_h1true/outputs")
     data_home = "gp_experiments/simulated_data"
     functions_home = "functions"
     
@@ -55,7 +56,7 @@ for(scenario in c(3, 4, 5, 6)){
       seqN = 5
     }
     Nnew = numSeq * seqN
-    Nttl = Nin + Nnew 
+    Nttl = Nin + Nnew
     xmin = 0
     xmax = 1
     numx = 10^3 + 1
@@ -64,7 +65,7 @@ for(scenario in c(3, 4, 5, 6)){
     sigmasq_signal = 1
     
     # shared settings
-    nugget = sigmasq_measuremt
+    nuggets = c(1e-15, sigmasq_measuremt)
     prior_probs = rep(1 / 2, 2)
     
     ################################################################################
@@ -102,27 +103,14 @@ for(scenario in c(3, 4, 5, 6)){
     ################################################################################
     # Scenario settings
     ################################################################################
-    if(scenario == 3){
-      type01 = c("squaredexponential", "squaredexponential")
-      typeT = "matern"
-      l01= c(0.005, 0.01)
-      lT = 0.01
-    } else if(scenario == 4){
-      type01 = c("matern", "squaredexponential")
-      typeT = "periodic"
-      l01= c(0.01, 0.01)
-      lT = 0.01
-    } else if(scenario == 5){
+    if(scenario_subtypes[1] == 1){
+      type01 = c("squaredexponential", "matern")
+    } else if(scenario_subtypes[1] == 2){
       type01 = c("matern", "periodic")
-      typeT = "squaredexponential"
-      l01= c(0.01, 0.01)
-      lT = 0.01
-    } else if(scenario == 6){
-      type01 = c("squaredexponential", "periodic")
-      typeT = "matern"
-      l01= c(0.01, 0.01)
-      lT = 0.01
     }
+    typeT = type01[2]
+    l01= c(0.01, 0.01)
+    lT = l01[2]
     
     ################################################################################
     # import data
@@ -149,8 +137,8 @@ for(scenario in c(3, 4, 5, 6)){
     
     boxhills = list()
     qs = list()
-    buffers = list()
     q1s = list()
+    buffers = list()
     randoms = list()
     spacefills = list()
     
@@ -201,6 +189,12 @@ for(scenario in c(3, 4, 5, 6)){
     # make plots
     ################################################################################
     
+    # models
+    model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
+                 measurement.var = nuggets[1])
+    model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
+                  measurement.var = nuggets[2])
+    
     # input set
     bh.in = boxhills[[input.type]]
     q.in = qs[[input.type]]
@@ -208,6 +202,8 @@ for(scenario in c(3, 4, 5, 6)){
     buf.in = buffers[[input.type]]
     ran.in = randoms[[input.type]]
     sf.in = spacefills[[input.type]]
+    
+    # input set
     if(input.type == 1){
       x_input = x_in1
       x_input_idx = x_in1_idx
@@ -219,45 +215,28 @@ for(scenario in c(3, 4, 5, 6)){
       x_input_idx = x_in3_idx
     }
     
-    # all 6 designs
-    idx = 1
-    designs = list(bh.in[[idx]], q.in[[idx]], q1.in[[idx]], buf.in[[idx]])
-    design.names = c("boxhill", "q", "seqmed,q1", "augdist")
-    design.levels = c("augdist", "seqmed,q1", "q", "boxhill")
-    
-    x.new.mat = matrix(NA, nrow = Nnew, ncol = length(designs))
-    for(i in 1:length(designs)){
-      x.new.mat[, i] = designs[[i]]$x.new
+    getPPHinit = function(y, x, model0, model1){
+      PPHs.tmp = getHypothesesPosteriors(
+        prior.probs = prior_probs, 
+        evidences = c(
+          Evidence_gp(y, x, model0),
+          Evidence_gp(y, x, model1)
+        )
+      )
+      return(data.frame(H0 = PPHs.tmp[1], H1 = PPHs.tmp[2]))
     }
     
-    data.gg = data.frame(
-      index = as.character(rep(1:Nnew, length(designs))), 
-      type = factor(rep(design.names, each = Nnew), levels = design.levels), 
-      value = as.vector(x.new.mat)
-    )
-    data.gg0 = data.frame(
-      type = factor(rep(design.names, each = Nin), levels = design.levels), 
-      input = rep(x_input, length(designs))
-    )
-    text.gg = dplyr::filter(data.gg, index %in% as.character(1:Nnew))
-    des.plt = ggplot() + 
-      geom_point(data = data.gg0, 
-                 mapping = aes(x = input, y = type)) +
-      geom_point(data = data.gg, 
-                 mapping = aes(x = value, y = type, color = type), 
-                 inherit.aes = FALSE) + 
-      geom_text(data = text.gg, 
-                aes(x = value, y = type, label = index), 
-                vjust = -0.65 * as.numeric(paste(text.gg$index)), size = 2) +
-      xlim(c(xmin, xmax))
-    des.plt
+    PPHs = data.frame(
+      H0 = numeric(), H1 = numeric())
+    for(j in 1:numSims){
+      y_seq = y_seq_mat[, j]
+      y_input = y_seq[x_input_idx]
+      PPH.tmp = getPPHinit(y_input, x_input, model0, model1)
+      PPHs = rbind(PPHs, PPH.tmp)
+    }
+    PPHmeans = colMeans(PPHs)
     
-    ggsave(
-      filename = paste0("20210530_scen", scenario, "_in", input.type, "_design.pdf"), 
-      plot = des.plt, 
-      width = 6, height = 4, units = c("in")
-    )
-    print(paste("scenario", scenario, ", input ", input.type, 
+    print(paste0("scenario", scenario, ", input ", input.type, ", EPPH = ", paste(as.character(round(PPHmeans, 3)), collapse = ", "), 
                 "################################################################"))
     
   }

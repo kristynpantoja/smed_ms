@@ -1,17 +1,18 @@
-for(scenario in c(1, 2)){
+for(scenario in c(1.2, 2.2)){
   ################################################################################
   # last updated: 05/25/2021
   # purpose: to test seqmedgp for scenario 1:
   #   squared exponential vs. matern,
   #   where the true function is matern
   
-  # scenario = 1 # scenarios: 1, 2
+  # scenario = 1 # scenarios: 1.2, 2.2
+  scenario_subtypes = unlist(strsplit(as.character(scenario), split = "\\."))
   seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
   
   ################################################################################
   # Sources/Libraries
   ################################################################################
-  output_home = paste0("gp_experiments/scenarios/scenarios_h1true/outputs")
+  output_home = paste0("gp_experiments/scenarios2/scenarios2_h1true/outputs")
   data_home = "gp_experiments/simulated_data"
   functions_home = "functions"
   
@@ -62,7 +63,7 @@ for(scenario in c(1, 2)){
   sigmasq_signal = 1
   
   # shared settings
-  nugget = sigmasq_measuremt
+  sigmasq_signals = c(1 - 1e-10, sigmasq_signal)
   prior_probs = rep(1 / 2, 2)
   
   ################################################################################
@@ -100,12 +101,10 @@ for(scenario in c(1, 2)){
   ################################################################################
   # Scenario settings
   ################################################################################
-  if(scenario == 1){
+  if(scenario_subtypes[1] == 1){
     type01 = c("squaredexponential", "matern")
-  } else if(scenario == 2){
+  } else if(scenario_subtypes[1] == 2){
     type01 = c("matern", "periodic")
-  } else{
-    stop("invalid scenario")
   }
   typeT = type01[2]
   l01= c(0.01, 0.01)
@@ -137,6 +136,7 @@ for(scenario in c(1, 2)){
   boxhills = list()
   qs = list()
   q1s = list()
+  seqmeds = list()
   buffers = list()
   randoms = list()
   spacefills = list()
@@ -171,6 +171,11 @@ for(scenario in c(1, 2)){
       "_uniform",
       "_seq", seq.type,
       filename_append.tmp))
+    seqmeds[[i]] = readRDS(paste0(
+      output_home,
+      "/scenario", scenario, "_seqmed", 
+      "_seq", seq.type,
+      filename_append.tmp))
     
     randoms[[i]] = readRDS(paste0(
       "gp_experiments/spacefilling_designs/outputs/random", 
@@ -189,92 +194,106 @@ for(scenario in c(1, 2)){
   ################################################################################
   
   # models
-  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
-                measurement.var = nugget)
-  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
-                measurement.var = nugget)
+  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signals[1], 
+                measurement.var = sigmasq_measuremt)
+  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signals[2], 
+                measurement.var = sigmasq_measuremt)
   
-  # calculate the final posterior probability
-  getPPH = function(design, model0, model1){
-    y.tmp = c(design$y, as.vector(na.omit(design$y.new)))
-    x.tmp = c(design$x, as.vector(na.omit(design$x.new)))
-    PPHs.tmp = getHypothesesPosteriors(
-      prior.probs = prior_probs, 
-      evidences = c(
-        Evidence_gp(y.tmp, x.tmp, model0),
-        Evidence_gp(y.tmp, x.tmp, model1)
-      )
-    )
-    return(data.frame("H0" = PPHs.tmp[1], "H1" = PPHs.tmp[2]))
+  # calculate the RSSnew
+  getRSS01 = function(
+    design, model0, model1, candidates, function.values, Nother = 51
+  ){
+    x.other.idx = 1 + 0:(Nother - 1) * floor(length(candidates) / (Nother - 1))
+    x.other = candidates[x.other.idx]
+    y.other = function.values[x.other.idx]
+    
+    x.tmp = as.vector(na.omit(c(design$x, design$x.new)))
+    y.tmp = as.vector(na.omit(c(design$y, design$y.new)))
+    pred0.tmp = getGPPredictive(x.other, x.tmp, y.tmp, 
+                                model0$type, model0$l, 
+                                sigmasq_signal, model0$measurement.var)
+    pred1.tmp = getGPPredictive(x.other, x.tmp, y.tmp, 
+                                model1$type, model1$l, 
+                                sigmasq_signal, model1$measurement.var)
+    RSS0.tmp = sum((pred0.tmp$pred_mean - y.other)^2, na.rm = TRUE)  
+    RSS1.tmp = sum((pred1.tmp$pred_mean - y.other)^2, na.rm = TRUE)
+    RSS01.tmp = RSS0.tmp / RSS1.tmp
+    return(data.frame("RSS0" = RSS0.tmp, "RSS1" = RSS1.tmp, "RSS01" = RSS01.tmp))
   }
   
-  PPH = data.frame(
-    PPH0 = numeric(), PPH1 = numeric(), 
-    type = character(), sim = numeric(), input = numeric())
+  RSS.df = data.frame(RSS0 = numeric(), RSS1 = numeric(), RSS01 = numeric(), 
+                      type = character(), sim = numeric(), input = numeric())
   for(k in 1:3){
     for(j in 1:numSims){
       # designs at sim b
       bh = boxhills[[k]][[j]]
       q = qs[[k]][[j]]
       q1 = q1s[[k]][[j]]
+      sm = seqmeds[[k]][[j]]
       b = buffers[[k]][[j]]
       r = randoms[[k]][[j]]
       sf = spacefills[[k]][[j]]
       # sequence of PPHs for each design
-      PPH.bh = getPPH(bh, model0, model1)
-      PPH.q = getPPH(q, model0, model1)
-      PPH.q1 = getPPH(q1, model0, model1)
-      PPH.b = getPPH(b, model0, model1)
-      PPH.r = getPPH(r, model0, model1)
-      PPH.sf = getPPH(sf, model0, model1)
+      RSS.bh = getRSS01(bh, model0, model1, x_seq, y_seq_mat[, j])
+      RSS.q = getRSS01(q, model0, model1, x_seq, y_seq_mat[, j])
+      RSS.q1 = getRSS01(q1, model0, model1, x_seq, y_seq_mat[, j])
+      RSS.sm = getRSS01(sm, model0, model1, x_seq, y_seq_mat[, j])
+      RSS.b = getRSS01(b, model0, model1, x_seq, y_seq_mat[, j])
+      RSS.r = getRSS01(r, model0, model1, x_seq, y_seq_mat[, j])
+      RSS.sf = getRSS01(sf, model0, model1, x_seq, y_seq_mat[, j])
       # master data frame
-      PPH.bh$type = "boxhill"
-      PPH.q$type = "q"
-      PPH.q1$type = "seqmed,q1"
-      PPH.b$type = "augdist"
-      PPH.r$type = "random"
-      PPH.sf$type = "spacefill"
-      PPH.tmp = rbind(
-        PPH.bh, PPH.q, PPH.q1, PPH.b, PPH.r, PPH.sf)
-      PPH.tmp$sim = j
-      PPH.tmp$input = k
-      PPH = rbind(PPH, PPH.tmp)
+      RSS.bh$type = "boxhill"
+      RSS.q$type = "q"
+      RSS.q1$type = "seqmed,q1"
+      RSS.sm$type = "seqmed"
+      RSS.b$type = "augdist"
+      RSS.r$type = "random"
+      RSS.sf$type = "spacefill"
+      RSS.tmp = rbind(
+        RSS.bh, RSS.q, RSS.q1, RSS.sm, RSS.b, RSS.r, RSS.sf)
+      RSS.tmp$sim = j
+      RSS.tmp$input = k
+      RSS.df = rbind(RSS.df, RSS.tmp)
     }
   }
   
-  PPH0mean = aggregate(PPH$H0, by = list(PPH$type, PPH$input), 
+  RSS0mean = aggregate(RSS.df$RSS0, by = list(RSS.df$type, RSS.df$input), 
                        FUN = function(x) mean(x, na.rm = TRUE))
-  names(PPH0mean) = c("type", "input", "value")
-  PPH0mean$Hypothesis = "H0"
-  PPH1mean = aggregate(PPH$H1, by = list(PPH$type, PPH$input), 
+  names(RSS0mean) = c("type", "input", "value")
+  RSS0mean$RSS = "RSS0"
+  RSS1mean = aggregate(RSS.df$RSS1, by = list(RSS.df$type, RSS.df$input), 
                        FUN = function(x) mean(x, na.rm = TRUE))
-  names(PPH1mean) = c("type", "input", "value")
-  PPH1mean$Hypothesis = "H1"
+  names(RSS1mean) = c("type", "input", "value")
+  RSS1mean$RSS = "RSS1"
+  RSS01mean = aggregate(RSS.df$RSS01, by = list(RSS.df$type, RSS.df$input), 
+                        FUN = function(x) mean(x, na.rm = TRUE))
+  names(RSS01mean) = c("type", "input", "value")
+  RSS01mean$RSS = "RSS01"
   
-  PPHmean = rbind(PPH0mean, PPH1mean)
-  PPHmean$type = factor(PPHmean$type)
-  PPHmean$Hypothesis = factor(PPHmean$Hypothesis)
-  PPHmean$input = factor(
-    PPHmean$input, labels = c("extrapolation", "inc spread", "even coverage"))
+  RSSmean = rbind(RSS0mean, RSS1mean, RSS01mean)
+  RSSmean$type = factor(RSSmean$type)
+  RSSmean$RSS = factor(RSSmean$RSS)
+  RSSmean$input = factor(RSSmean$input, 
+                         labels = c("extrapolation", "inc spread", "even coverage"))
   
-  PPH1.plt = ggplot(dplyr::filter(PPHmean, Hypothesis == "H1"), 
+  # RSS1
+  RSS1.plt = ggplot(dplyr::filter(RSSmean, RSS == "RSS1"), 
                     aes(x = input, y = value, group = type, color = type, 
-                        linetype = type, shape = type)) + 
+                        linetype = type)) + 
+    geom_point() + 
+    
     geom_path() +
-    geom_point() +
-    ylim(0, 1) + 
     theme_bw() +
     theme(panel.grid.major = element_blank(),
           panel.grid.minor = element_blank()) +
-    labs(y = "P(H1|X, Y)", x = "Initial Data")
-  PPH1.plt
+    labs(y = "RSS1", x = "Initial Data") 
+  RSS1.plt
   
   ggsave(
-    filename = paste0("20210530_scen", scenario, "_eppht.pdf"), 
-    plot = PPH1.plt, 
+    filename = paste0("20210604_scen", scenario, "_rsst.pdf"), 
+    plot = RSS1.plt, 
     width = 6, height = 4, units = c("in")
   )
-  print(paste("scenario", scenario,
+  print(paste("scenario", scenario, 
               "################################################################"))
-  
 }

@@ -66,8 +66,7 @@ sigmasq_measuremt = 1e-10
 sigmasq_signal = 1
 
 # SeqMED settings
-sigmasq_signals = c(1 - 1e-10, 1)
-nugget = sigmasq_measuremt
+sigmasq_signals = c(1 - 1e-10, sigmasq_signal)
 buffer = 1e-15
 
 ################################################################################
@@ -117,9 +116,9 @@ lT = l01[2]
 ################################################################################
 # models
 model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signals[1], 
-              measurement.var = nugget)
+              measurement.var = sigmasq_measuremt)
 model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signals[2], 
-              measurement.var = nugget)
+              measurement.var = sigmasq_measuremt)
 
 ################################################################################
 # import data

@@ -40,10 +40,18 @@ q_vs = function(
 q_gp = function(
   x, Kinv0, Kinv1, initD, y, p, alpha = 1, buffer = 0, model0, model1
 ){
-  # browser()
   W = WNgp(x, Kinv0, Kinv1, initD, y, model0, model1) + buffer
   q_exponent = alpha / (2 * p)
   return(1.0 / (W)^q_exponent)
+}
+q_gp_cap = function(
+  x, Kinv0, Kinv1, initD, y, p, alpha = 1, model0, model1, cap = 1e20,
+){
+  W = WNgp(x, Kinv0, Kinv1, initD, y, model0, model1)
+  q_exponent = alpha / (2 * p)
+  q = 1.0 / (W)^q_exponent
+  q_prime = max(q, cap)
+  return(q_prime)
 }
 
 # # for D1, ..., DT in multivariate gp models

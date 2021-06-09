@@ -150,6 +150,7 @@ for(scenario in c(3, 4, 5, 6)){
   boxhills = list()
   qs = list()
   buffers = list()
+  q1s = list()
   randoms = list()
   spacefills = list()
   
@@ -175,6 +176,12 @@ for(scenario in c(3, 4, 5, 6)){
       output_home,
       "/scenario", scenario, "_seqmed", 
       "_q",
+      "_seq", seq.type,
+      filename_append.tmp))
+    q1s[[i]] = readRDS(paste0(
+      output_home,
+      "/scenario", scenario, "_seqmed", 
+      "_uniform",
       "_seq", seq.type,
       filename_append.tmp))
     
@@ -228,23 +235,26 @@ for(scenario in c(3, 4, 5, 6)){
       # designs at sim b
       bh = boxhills[[k]][[j]]
       q = qs[[k]][[j]]
+      q1 = q1s[[k]][[j]]
       b = buffers[[k]][[j]]
       r = randoms[[k]][[j]]
       sf = spacefills[[k]][[j]]
       # sequence of PPHs for each design
       PPH.bh = getPPH(bh, model0, model1, modelT)
       PPH.q = getPPH(q, model0, model1, modelT)
+      PPH.q1 = getPPH(q1, model0, model1, modelT)
       PPH.b = getPPH(b, model0, model1, modelT)
       PPH.r = getPPH(r, model0, model1, modelT)
       PPH.sf = getPPH(sf, model0, model1, modelT)
       # master data frame
       PPH.bh$type = "boxhill"
       PPH.q$type = "q"
+      PPH.q1$type = "seqmed,q1"
       PPH.b$type = "augdist"
       PPH.r$type = "random"
       PPH.sf$type = "spacefill"
       PPH.tmp = rbind(
-        PPH.bh, PPH.q, PPH.b, PPH.r, PPH.sf)
+        PPH.bh, PPH.q, PPH.q1, PPH.b, PPH.r, PPH.sf)
       PPH.tmp$sim = j
       PPH.tmp$input = k
       PPH = rbind(PPH, PPH.tmp)
@@ -285,7 +295,7 @@ for(scenario in c(3, 4, 5, 6)){
   PPHT.plt
   
   ggsave(
-    filename = paste0("20210525_scen", scenario, "_eppht.pdf"), 
+    filename = paste0("20210530_scen", scenario, "_eppht.pdf"), 
     plot = PPHT.plt, 
     width = 6, height = 4, units = c("in")
   )

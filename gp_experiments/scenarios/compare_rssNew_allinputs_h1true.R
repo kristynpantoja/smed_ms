@@ -134,6 +134,7 @@ for(scenario in c(1, 2)){
   
   boxhills = list()
   qs = list()
+  q1s = list()
   buffers = list()
   randoms = list()
   spacefills = list()
@@ -160,6 +161,12 @@ for(scenario in c(1, 2)){
       output_home,
       "/scenario", scenario, "_seqmed", 
       "_q",
+      "_seq", seq.type,
+      filename_append.tmp))
+    q1s[[i]] = readRDS(paste0(
+      output_home,
+      "/scenario", scenario, "_seqmed", 
+      "_uniform",
       "_seq", seq.type,
       filename_append.tmp))
     
@@ -214,23 +221,26 @@ for(scenario in c(1, 2)){
       # designs at sim b
       bh = boxhills[[k]][[j]]
       q = qs[[k]][[j]]
+      q1 = q1s[[k]][[j]]
       b = buffers[[k]][[j]]
       r = randoms[[k]][[j]]
       sf = spacefills[[k]][[j]]
       # sequence of PPHs for each design
       RSS.bh = getRSS01(bh, model0, model1, x_seq, y_seq_mat[, j])
       RSS.q = getRSS01(q, model0, model1, x_seq, y_seq_mat[, j])
+      RSS.q1 = getRSS01(q1, model0, model1, x_seq, y_seq_mat[, j])
       RSS.b = getRSS01(b, model0, model1, x_seq, y_seq_mat[, j])
       RSS.r = getRSS01(r, model0, model1, x_seq, y_seq_mat[, j])
       RSS.sf = getRSS01(sf, model0, model1, x_seq, y_seq_mat[, j])
       # master data frame
       RSS.bh$type = "boxhill"
       RSS.q$type = "q"
+      RSS.q1$type = "seqmed,q1"
       RSS.b$type = "augdist"
       RSS.r$type = "random"
       RSS.sf$type = "spacefill"
       RSS.tmp = rbind(
-        RSS.bh, RSS.q, RSS.b, RSS.r, RSS.sf)
+        RSS.bh, RSS.q, RSS.q1, RSS.b, RSS.r, RSS.sf)
       RSS.tmp$sim = j
       RSS.tmp$input = k
       RSS.df = rbind(RSS.df, RSS.tmp)
@@ -270,7 +280,7 @@ for(scenario in c(1, 2)){
   RSS1.plt
   
   ggsave(
-    filename = paste0("20210525_scen", scenario, "_rsst.pdf"), 
+    filename = paste0("20210530_scen", scenario, "_rsst.pdf"), 
     plot = RSS1.plt, 
     width = 6, height = 4, units = c("in")
   )

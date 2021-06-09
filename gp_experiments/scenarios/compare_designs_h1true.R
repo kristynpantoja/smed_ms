@@ -144,6 +144,7 @@ for(scenario in c(1, 2)){
     
     boxhills = list()
     qs = list()
+    q1s = list()
     buffers = list()
     randoms = list()
     spacefills = list()
@@ -172,6 +173,12 @@ for(scenario in c(1, 2)){
         "_q",
         "_seq", seq.type,
         filename_append.tmp))
+      q1s[[i]] = readRDS(paste0(
+        output_home,
+        "/scenario", scenario, "_seqmed", 
+        "_uniform",
+        "_seq", seq.type,
+        filename_append.tmp))
       
       randoms[[i]] = readRDS(paste0(
         "gp_experiments/spacefilling_designs/outputs/random", 
@@ -192,6 +199,7 @@ for(scenario in c(1, 2)){
     # input set
     bh.in = boxhills[[input.type]]
     q.in = qs[[input.type]]
+    q1.in = q1s[[input.type]]
     buf.in = buffers[[input.type]]
     ran.in = randoms[[input.type]]
     sf.in = spacefills[[input.type]]
@@ -208,9 +216,9 @@ for(scenario in c(1, 2)){
     
     # all 6 designs
     idx = 1
-    designs = list(bh.in[[idx]], q.in[[idx]], buf.in[[idx]])
-    design.names = c("bh", "q", "augdist")
-    design.levels = c("augdist", "q", "bh")
+    designs = list(bh.in[[idx]], q.in[[idx]], q1.in[[idx]], buf.in[[idx]])
+    design.names = c("bh", "q", "seqmed,q1", "augdist")
+    design.levels = c("augdist", "seqmed,q1", "q", "bh")
     
     x.new.mat = matrix(NA, nrow = Nnew, ncol = length(designs))
     for(i in 1:length(designs)){
@@ -240,7 +248,7 @@ for(scenario in c(1, 2)){
     des.plt
     
     ggsave(
-      filename = paste0("20210525_scen", scenario, "_in", input.type, "_design.pdf"), 
+      filename = paste0("20210530_scen", scenario, "_in", input.type, "_design.pdf"), 
       plot = des.plt, 
       width = 6, height = 4, units = c("in")
     )

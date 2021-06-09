@@ -150,6 +150,7 @@ for(scenario in c(3, 4, 5, 6)){
     boxhills = list()
     qs = list()
     buffers = list()
+    q1s = list()
     randoms = list()
     spacefills = list()
     
@@ -175,6 +176,12 @@ for(scenario in c(3, 4, 5, 6)){
         output_home,
         "/scenario", scenario, "_seqmed", 
         "_q",
+        "_seq", seq.type,
+        filename_append.tmp))
+      q1s[[i]] = readRDS(paste0(
+        output_home,
+        "/scenario", scenario, "_seqmed", 
+        "_uniform",
         "_seq", seq.type,
         filename_append.tmp))
       
@@ -205,6 +212,7 @@ for(scenario in c(3, 4, 5, 6)){
     # input set
     bh.in = boxhills[[input.type]]
     q.in = qs[[input.type]]
+    q1.in = q1s[[input.type]]
     buf.in = buffers[[input.type]]
     ran.in = randoms[[input.type]]
     sf.in = spacefills[[input.type]]
@@ -248,23 +256,26 @@ for(scenario in c(3, 4, 5, 6)){
       # designs at sim b
       bh = bh.in[[j]]
       q = q.in[[j]]
+      q1 = q1.in[[j]]
       b = buf.in[[j]]
       r = ran.in[[j]]
       sf = sf.in[[j]]
       # sequence of PPHs for each design
       PPH_seq.bh = getPPHseq(bh, model0, model1, modelT)
       PPH_seq.q = getPPHseq(q, model0, model1, modelT)
+      PPH_seq.q1 = getPPHseq(q1, model0, model1, modelT)
       PPH_seq.b = getPPHseq(b, model0, model1, modelT)
       PPH_seq.r = getPPHseq(r, model0, model1, modelT)
       PPH_seq.sf = getPPHseq(sf, model0, model1, modelT)
       # master data frame
       PPH_seq.bh$type = "boxhill"
       PPH_seq.q$type = "q"
+      PPH_seq.q1$type = "seqmed,q1"
       PPH_seq.b$type = "augdist"
       PPH_seq.r$type = "random"
       PPH_seq.sf$type = "spacefill"
       PPH_seq.tmp = rbind(
-        PPH_seq.bh, PPH_seq.q, PPH_seq.b, PPH_seq.r, PPH_seq.sf)
+        PPH_seq.bh, PPH_seq.q, PPH_seq.q1, PPH_seq.b, PPH_seq.r, PPH_seq.sf)
       PPH_seq.tmp$sim = j
       PPH_seq = rbind(PPH_seq, PPH_seq.tmp)
     }
@@ -293,7 +304,7 @@ for(scenario in c(3, 4, 5, 6)){
     epph.plt
     
     ggsave(
-      filename = paste0("20210525_scen", scenario, "_in", input.type, "_epph.pdf"), 
+      filename = paste0("20210530_scen", scenario, "_in", input.type, "_epph.pdf"), 
       plot = epph.plt, 
       width = 6, height = 4, units = c("in")
     )

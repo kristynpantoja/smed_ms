@@ -1,19 +1,21 @@
-for(scenario in c(3, 4, 5, 6)){
+for(scenario in c(1.2, 2.2)){
   for(input.type in 1:3){
+    # rm(list = ls())
     ################################################################################
     # last updated: 05/25/2021
-    # purpose: to test seqmedgp for scenario 3:
-    #   squared exponential vs. another squared exponential,
+    # purpose: to test seqmedgp for scenario 1:
+    #   squared exponential vs. matern,
     #   where the true function is matern
     
-    # scenario = 4 # scenarios: 3, 4, 5, 6
+    # scenario = 1 # scenarios: 1.2, 2.2
+    scenario_subtypes = unlist(strsplit(as.character(scenario), split = "\\."))
     # input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
     seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
     
     ################################################################################
     # Sources/Libraries
     ################################################################################
-    output_home = paste0("gp_experiments/scenarios/scenarios_misspecified/outputs")
+    output_home = paste0("gp_experiments/scenarios2/scenarios2_h1true/outputs")
     data_home = "gp_experiments/simulated_data"
     functions_home = "functions"
     
@@ -55,7 +57,7 @@ for(scenario in c(3, 4, 5, 6)){
       seqN = 5
     }
     Nnew = numSeq * seqN
-    Nttl = Nin + Nnew 
+    Nttl = Nin + Nnew
     xmin = 0
     xmax = 1
     numx = 10^3 + 1
@@ -64,7 +66,7 @@ for(scenario in c(3, 4, 5, 6)){
     sigmasq_signal = 1
     
     # shared settings
-    nugget = sigmasq_measuremt
+    sigmasq_signals = c(1 - 1e-10, sigmasq_signal)
     prior_probs = rep(1 / 2, 2)
     
     ################################################################################
@@ -102,27 +104,14 @@ for(scenario in c(3, 4, 5, 6)){
     ################################################################################
     # Scenario settings
     ################################################################################
-    if(scenario == 3){
-      type01 = c("squaredexponential", "squaredexponential")
-      typeT = "matern"
-      l01= c(0.005, 0.01)
-      lT = 0.01
-    } else if(scenario == 4){
-      type01 = c("matern", "squaredexponential")
-      typeT = "periodic"
-      l01= c(0.01, 0.01)
-      lT = 0.01
-    } else if(scenario == 5){
+    if(scenario_subtypes[1] == 1){
+      type01 = c("squaredexponential", "matern")
+    } else if(scenario_subtypes[1] == 2){
       type01 = c("matern", "periodic")
-      typeT = "squaredexponential"
-      l01= c(0.01, 0.01)
-      lT = 0.01
-    } else if(scenario == 6){
-      type01 = c("squaredexponential", "periodic")
-      typeT = "matern"
-      l01= c(0.01, 0.01)
-      lT = 0.01
     }
+    typeT = type01[2]
+    l01= c(0.01, 0.01)
+    lT = l01[2]
     
     ################################################################################
     # import data
@@ -149,8 +138,9 @@ for(scenario in c(3, 4, 5, 6)){
     
     boxhills = list()
     qs = list()
-    buffers = list()
     q1s = list()
+    seqmeds = list()
+    buffers = list()
     randoms = list()
     spacefills = list()
     
@@ -184,6 +174,11 @@ for(scenario in c(3, 4, 5, 6)){
         "_uniform",
         "_seq", seq.type,
         filename_append.tmp))
+      seqmeds[[i]] = readRDS(paste0(
+        output_home,
+        "/scenario", scenario, "_seqmed", 
+        "_seq", seq.type,
+        filename_append.tmp))
       
       randoms[[i]] = readRDS(paste0(
         "gp_experiments/spacefilling_designs/outputs/random", 
@@ -205,6 +200,7 @@ for(scenario in c(3, 4, 5, 6)){
     bh.in = boxhills[[input.type]]
     q.in = qs[[input.type]]
     q1.in = q1s[[input.type]]
+    sm.in = seqmeds[[input.type]]
     buf.in = buffers[[input.type]]
     ran.in = randoms[[input.type]]
     sf.in = spacefills[[input.type]]
@@ -221,9 +217,9 @@ for(scenario in c(3, 4, 5, 6)){
     
     # all 6 designs
     idx = 1
-    designs = list(bh.in[[idx]], q.in[[idx]], q1.in[[idx]], buf.in[[idx]])
-    design.names = c("boxhill", "q", "seqmed,q1", "augdist")
-    design.levels = c("augdist", "seqmed,q1", "q", "boxhill")
+    designs = list(bh.in[[idx]], q.in[[idx]], q1.in[[idx]], sm.in[[idx]], buf.in[[idx]])
+    design.names = c("bh", "q", "seqmed,q1", "seqmed", "augdist")
+    design.levels = c("augdist", "seqmed", "seqmed,q1", "q", "bh")
     
     x.new.mat = matrix(NA, nrow = Nnew, ncol = length(designs))
     for(i in 1:length(designs)){
@@ -253,7 +249,7 @@ for(scenario in c(3, 4, 5, 6)){
     des.plt
     
     ggsave(
-      filename = paste0("20210530_scen", scenario, "_in", input.type, "_design.pdf"), 
+      filename = paste0("20210604_scen", scenario, "_in", input.type, "_design.pdf"), 
       plot = des.plt, 
       width = 6, height = 4, units = c("in")
     )

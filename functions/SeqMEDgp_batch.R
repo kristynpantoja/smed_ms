@@ -10,8 +10,9 @@ obj_gp = function(
   candidate, D = NULL, Kinv0, Kinv1, initD, y, 
   p = 1, k = 4, alpha = 1, buffer = 0, objective.type = 1, model0, model1
 ){
-  ### objective.type == 1 is the SeqMEDgp() case that is actually a MED. ###
-  if(objective.type == 1 | objective.type %in% c("SeqMED", "MED", "med")){
+  ### objective.type == 1 adds a buffer to the wasserstein distance ###
+  if(objective.type == 1 | objective.type %in% 
+     c("buffer", "augdist", "augmenteddistance")){
     # q(x), x in C
     q_cand = q_gp(candidate, Kinv0, Kinv1, initD, y, p, alpha, buffer, 
                   model0, model1) # no need for buffer here, jsyk
@@ -46,7 +47,7 @@ obj_gp = function(
       result = q_cand^k * sum_q_D
     }
   }
-  ### objective.type == 2 is just optimizing q(x) over x \in C ###
+  ### objective.type == 3 gives uniform charge to input points ###
   if(objective.type == 3 | objective.type %in% c("uniform", "spacefilling")){
     # q(x), x in C
     q_cand = q_gp(candidate, Kinv0, Kinv1, initD, y, p, alpha, buffer = 0, 
@@ -65,8 +66,30 @@ obj_gp = function(
     }
     result = q_cand^k * sum_q_D
   }
+  ### objective.type == 4 caps q ###
+  if(objective.type == 1 | objective.type %in% 
+     c("buffer", "augdist", "augmenteddistance")){
+    # q(x), x in C
+    q_cand = q_gp_cap(candidate, Kinv0, Kinv1, initD, y, p, alpha, 
+                      model0, model1) # no capping needed
+    # the other terms in the summation
+    # q(xi), xi in the observed set, D_t^c
+    sum_q_D = sum(sapply(initD, function(x_i) 
+      (q_gp_cap(x_i, Kinv0, Kinv1, initD, y, p, alpha, 
+                model0, model1) / 
+         sqrt((x_i - candidate)^2))^k))
+    if(!is.null(D)){ # when N2 > 1
+      # q(xi), xi in the unobserved design points D^{(t)}
+      sum_q_D = sum_q_D + 
+        sum(sapply(D, function(x_i)  # no capping needed here, either
+          (q_gp_cap(x_i, Kinv0, Kinv1, initD, y, p, alpha, 
+                    model0, model1) / 
+             sqrt((x_i - candidate)^2))^k))
+    }
+    result = q_cand^k * sum_q_D
+  }
   ### no other objective.type options
-  if(!(objective.type %in% c(1, 2, 3))){
+  if(!(objective.type %in% c(1, 2, 3, 4))){
     stop("obj_gp: invalid objective.type value")
   }
   return(result)

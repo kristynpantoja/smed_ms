@@ -7,8 +7,10 @@ SeqMEDgp = function(
   xmin = 0, xmax = 1, k = 4, p = 1, 
   numSeq = 5, seqN = 3, alpha.seq = 1, buffer = 0, objective.type = 1, 
   init.as.stage = FALSE, prints = FALSE, seed = NULL, 
-  model0 = NULL, model1 = NULL, noise = TRUE, measurement.var = NULL
+  model0 = NULL, model1 = NULL, noise = TRUE, measurement.var = NULL, 
+  newq = TRUE
 ){
+  # browser()
   if(!is.null(seed)) set.seed(seed)
   if(numSeq > 1 & length(seqN) == 1) seqN = rep(seqN, numSeq)
   if(numSeq > 1 & is.null(alpha.seq)) alpha.seq = rep(1, numSeq)
@@ -59,6 +61,38 @@ SeqMEDgp = function(
     tStart = 1
   }
   
+  # q evaluated at input points
+  if(!newq){
+    if(is.null(model0$measurement.var)){
+      Kinv0 = solve(getCov(initD, initD, model0$type, model0$l))
+    } else{
+      Kinv0 = solve(getCov(initD, initD, model0$type, model0$l) + 
+                      sqrt(model0$measurement.var) * diag(initN))
+    }
+    if(is.null(model1$measurement.var)){
+      Kinv1 = solve(getCov(initD, initD, model1$type, model1$l))
+    } else{
+      Kinv1 = solve(getCov(initD, initD, model1$type, model1$l) + 
+                      sqrt(model1$measurement.var) * diag(initN))
+    }
+    qs = rep(NA, length(D))
+    if(!(objective.type %in% c(1, 3, 4))){
+      stop("to keep q, need objective.type == 1, 3, or 4")
+    } else{
+      if(objective.type == 1){
+        qs = sapply(D, function(x_i) 
+          q_gp(x_i, Kinv0, Kinv1, D, y, p, alpha, buffer, model0, model1))
+      }
+      if(objective.type == 3){
+        qs = rep(1, length(D))
+      }
+      if(objective.type == 4){
+        qs = sapply(D, function(x_i) 
+          qcap_gp(x_i, Kinv0, Kinv1, D, y, p, alpha, buffer, model0, model1))
+      }
+    }
+  }
+  
   for(t in tStart:numSeq){
     
     if(tStart == 2){
@@ -66,12 +100,27 @@ SeqMEDgp = function(
     } else{
       batch.idx = t
     }
-    Dt = SeqMEDgp_batch(
-      initD = D, y = y, N2 = seqN[t],
-      k = k, p = p, xmin = xmin, xmax = xmax,
-      alpha = alpha.seq[t], candidates = candidates, batch.idx = batch.idx, 
-      buffer = buffer, objective.type = objective.type, 
-      model0 = model0, model1 = model1)
+    
+    if(newq){
+      Dt = SeqMEDgp_newq_batch(
+        initD = D, y = y, N2 = seqN[t], numCandidates = numCandidates, k = k, p = p, 
+        xmin = xmin, xmax = xmax, alpha = alpha.seq[t], candidates = candidates, 
+        batch.idx = batch.idx, buffer = buffer, objective.type = objective.type, 
+        model0 = model0, model1 = model1)
+    } else{
+      Dt = SeqMEDgp_keepq_batch(
+        initD = D, y = y, N2 = seqN[t], numCandidates = numCandidates, k = k, p = p, 
+        xmin = xmin, xmax = xmax, alpha = alpha.seq[t], candidates = candidates, 
+        batch.idx = batch.idx, buffer = buffer, objective.type = objective.type,
+        model0 = model0, model1 = model1, qs = qs)
+      qs = c(qs, Dt$q.neq)
+    }
+    # Dt = SeqMEDgp_batch(
+    #   initD = D, y = y, N2 = seqN[t],
+    #   k = k, p = p, xmin = xmin, xmax = xmax,
+    #   alpha = alpha.seq[t], candidates = candidates, batch.idx = batch.idx, 
+    #   buffer = buffer, objective.type = objective.type, 
+    #   model0 = model0, model1 = model1)
     
     yt = function.values[Dt$indices]
     if(noise){

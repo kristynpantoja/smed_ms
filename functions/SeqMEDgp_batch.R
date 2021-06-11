@@ -67,23 +67,22 @@ obj_gp = function(
     result = q_cand^k * sum_q_D
   }
   ### objective.type == 4 caps q ###
-  if(objective.type == 1 | objective.type %in% 
-     c("buffer", "augdist", "augmenteddistance")){
+  if(objective.type == 4 | objective.type %in% c("cap", "capq")){
     # q(x), x in C
-    q_cand = q_gp_cap(candidate, Kinv0, Kinv1, initD, y, p, alpha, 
-                      model0, model1) # no capping needed
+    q_cand = qcap_gp(candidate, Kinv0, Kinv1, initD, y, p, alpha, 
+                     model0, model1) # no capping needed
     # the other terms in the summation
     # q(xi), xi in the observed set, D_t^c
     sum_q_D = sum(sapply(initD, function(x_i) 
-      (q_gp_cap(x_i, Kinv0, Kinv1, initD, y, p, alpha, 
-                model0, model1) / 
+      (qcap_gp(x_i, Kinv0, Kinv1, initD, y, p, alpha, 
+               model0, model1) / 
          sqrt((x_i - candidate)^2))^k))
     if(!is.null(D)){ # when N2 > 1
       # q(xi), xi in the unobserved design points D^{(t)}
       sum_q_D = sum_q_D + 
         sum(sapply(D, function(x_i)  # no capping needed here, either
-          (q_gp_cap(x_i, Kinv0, Kinv1, initD, y, p, alpha, 
-                    model0, model1) / 
+          (qcap_gp(x_i, Kinv0, Kinv1, initD, y, p, alpha, 
+                   model0, model1) / 
              sqrt((x_i - candidate)^2))^k))
     }
     result = q_cand^k * sum_q_D
@@ -95,8 +94,7 @@ obj_gp = function(
   return(result)
 }
 
-# MMED_gp_batch, add_MED_ms_oneatatime_data_gp, add_MMEDgp_oneatatime
-SeqMEDgp_batch = function(
+SeqMEDgp_newq_batch = function(
   initD, y, N2 = 11, numCandidates = 10^5, k = 4, p = 1, 
   xmin = 0, xmax = 1, alpha = NULL, candidates = NULL, 
   batch.idx = 1, buffer = 0, objective.type = 1, model0, model1
@@ -130,8 +128,8 @@ SeqMEDgp_batch = function(
     w_candidates = sapply(candidates, FUN = function(x) WNgp(
       x, Kinv0, Kinv1, initD, y, model0, model1))
     w_opt = which.max(w_candidates)
-    xopt = candidates[w_opt]
-    is_x_max_in_initD = any(sapply(initD, function(x) x == xopt))
+    x_w_opt = candidates[w_opt]
+    is_x_max_in_initD = any(sapply(initD, function(x) x == x_w_opt))
   } else{
     is_x_max_in_initD = TRUE
   }
@@ -147,12 +145,12 @@ SeqMEDgp_batch = function(
       stop("SeqMEDgp_batch: all candidates result in objective function = Inf.")
     }
     f_opt = which.min(f_min_candidates)
-    xnew = candidates[f_opt]
+    x_f_opt = candidates[f_opt]
     # Update set of design points (D) and plot new point
-    D[1] = xnew
+    D[1] = x_f_opt
     D_ind[1] = f_opt
   } else{
-    D[1] = xopt
+    D[1] = x_w_opt
     D_ind[1] = w_opt
   }
   
@@ -179,6 +177,179 @@ SeqMEDgp_batch = function(
     "D" = c(initD, D),
     "candidates" = candidates, 
     "indices" = D_ind
+  ))
+}
+
+obj_keepq_gp = function(
+  candidate, D = NULL, Kinv0, Kinv1, initD, y, 
+  p = 1, k = 4, alpha = 1, buffer = 0, objective.type = 1, model0, model1, qs
+){
+  ### objective.type == 1 adds a buffer to the wasserstein distance ###
+  if(objective.type == 1 | objective.type %in% 
+     c("buffer", "augdist", "augmenteddistance")){
+    # q(x), x in C
+    q_cand = q_gp(candidate, Kinv0, Kinv1, initD, y, p, alpha, buffer, 
+                  model0, model1) # no need for buffer here, jsyk
+    # the other terms in the summation
+    # q(xi), xi in the observed set, D_t^c
+    sum_q_D = sum(sapply(qs, function(q_i) 
+      (q_i / sqrt((x_i - candidate)^2))^k)) ######################################
+    if(!is.null(D)){ # when N2 > 1
+      # q(xi), xi in the unobserved design points D^{(t)}
+      sum_q_D = sum_q_D + 
+        sum(sapply(D, function(x_i)  # no need for buffer here, either fyi
+          (q_gp(x_i, Kinv0, Kinv1, initD, y, p, alpha, buffer, 
+                model0, model1) / 
+             sqrt((x_i - candidate)^2))^k))
+    }
+    result = q_cand^k * sum_q_D
+  }
+  ### objective.type == 2 is just optimizing q(x) over x \in C ###
+  if(objective.type == 2 | objective.type == "q"){
+    # no need for buffer in this case
+    q_cand = q_gp(candidate, Kinv0, Kinv1, initD, y, p, alpha, buffer = 0, 
+                  model0, model1)
+    if(is.null(D)){ # when N2 = 1, and batch.idx != 1
+      result = q_cand^k
+    } else{ # when N2 > 1
+      sum_q_D = sum(sapply(D, function(x_i) # disregard initD
+        (q_gp(x_i, Kinv0, Kinv1, initD, y, p, alpha, buffer = 0, 
+              model0, model1) / 
+           sqrt((x_i - candidate)^2))^k))
+      result = q_cand^k * sum_q_D
+    }
+  }
+  ### objective.type == 3 gives uniform charge to input points ###
+  if(objective.type == 3 | objective.type %in% c("uniform", "spacefilling")){
+    # q(x), x in C
+    q_cand = q_gp(candidate, Kinv0, Kinv1, initD, y, p, alpha, buffer = 0, 
+                  model0, model1)
+    # the other terms in the summation
+    # q(xi), xi in the observed set, D_t^c
+    sum_q_D = sum(sapply(qs, function(q_i) 
+      (q_i / sqrt((x_i - candidate)^2))^k)) # q = 1 for xi in this case #########
+    if(!is.null(D)){ # when N2 > 1
+      # q(xi), xi in the unobserved design points D^{(t)}
+      sum_q_D = sum_q_D + 
+        sum(sapply(D, function(x_i) 
+          (q_gp(x_i, Kinv0, Kinv1, initD, y, p, alpha, buffer = 0, 
+                model0, model1) / 
+             sqrt((x_i - candidate)^2))^k))
+    }
+    result = q_cand^k * sum_q_D
+  }
+  ### objective.type == 4 caps q ###
+  if(objective.type == 4 | objective.type %in% c("cap", "capq")){
+    # q(x), x in C
+    q_cand = qcap_gp(candidate, Kinv0, Kinv1, initD, y, p, alpha, 
+                     model0, model1) # no capping needed
+    # the other terms in the summation
+    # q(xi), xi in the observed set, D_t^c
+    sum_q_D = sum(sapply(qs, function(q_i) 
+      (q_i / sqrt((x_i - candidate)^2))^k)) ######################################
+    if(!is.null(D)){ # when N2 > 1
+      # q(xi), xi in the unobserved design points D^{(t)}
+      sum_q_D = sum_q_D + 
+        sum(sapply(D, function(x_i)  # no capping needed here, either
+          (qcap_gp(x_i, Kinv0, Kinv1, initD, y, p, alpha, 
+                   model0, model1) / 
+             sqrt((x_i - candidate)^2))^k))
+    }
+    result = q_cand^k * sum_q_D
+  }
+  ### no other objective.type options
+  if(!(objective.type %in% c(1, 2, 3, 4))){
+    stop("obj_keepq_gp: invalid objective.type value")
+  }
+  return(c(objectives = result, q.candidates = q_cand))
+}
+
+SeqMEDgp_keepq_batch = function(
+  initD, y, N2 = 11, numCandidates = 10^5, k = 4, p = 1, 
+  xmin = 0, xmax = 1, alpha = NULL, candidates = NULL, 
+  batch.idx = 1, buffer = 0, objective.type = 1, model0, model1, qs
+){
+  initN = length(initD)
+  if(length(y) != initN) stop("length of y does not match length of initial input data, initD")
+  if(is.null(qs)) stop("SeqMEDgp_keepq_batch: qs == NULL!")
+  # check if any points in initD give Wasserstein distance of 0 (in which case we don't want to use it since 1/0 in q)
+  # turns out, that's not necessary
+  
+  # old_initD = initD
+  
+  # posterior distribution of beta
+  if(is.null(model0$measurement.var)){
+    Kinv0 = solve(getCov(initD, initD, model0$type, model0$l))
+  } else{
+    Kinv0 = solve(getCov(initD, initD, model0$type, model0$l) + 
+                    sqrt(model0$measurement.var) * diag(initN))
+  }
+  if(is.null(model1$measurement.var)){
+    Kinv1 = solve(getCov(initD, initD, model1$type, model1$l))
+  } else{
+    Kinv1 = solve(getCov(initD, initD, model1$type, model1$l) + 
+                    sqrt(model1$measurement.var) * diag(initN))
+  }
+  
+  D = rep(NA, N2)
+  D_ind = rep(NA, N2)
+  if(batch.idx == 1){
+    # -- Initialize 1st additional design point-- #
+    w_candidates = sapply(candidates, FUN = function(x) WNgp(
+      x, Kinv0, Kinv1, initD, y, model0, model1))
+    w_opt = which.max(w_candidates)
+    x_w_opt = candidates[w_opt]
+    is_x_max_in_initD = any(sapply(initD, function(x) x == x_w_opt))
+  } else{
+    is_x_max_in_initD = TRUE
+  }
+  # Find f_opt: minimum of f_min --- pulled this out of the below if statement
+  f_min_candidates = sapply(
+    candidates, 
+    function(x) obj_keepq_gp(
+      x, NULL, 
+      Kinv0, Kinv1, initD, y, p, k, alpha, buffer, objective.type, 
+      model0, model1, qs))
+  if(all(f_min_candidates$objectives == Inf)){
+    stop("SeqMEDgp_batch: all candidates result in objective function = Inf.")
+  }
+  f_opt = which.min(f_min_candidates$objectives)
+  x_f_opt = candidates[f_opt]
+  # Update set of design points (D) and plot new point
+  if(is_x_max_in_initD){
+    D[1] = x_f_opt
+    D_ind[1] = f_opt
+    q.new = f_min_candidates$q.candidates[f_opt]
+  } else{
+    D[1] = x_w_opt
+    D_ind[1] = w_opt
+    q.new = f_min_candidates$q.candidates[w_opt]
+  }
+  
+  if(N2 > 1){
+    for(i in 2:N2){
+      # Find f_opt: minimum of f_min
+      f_min_candidates = sapply(
+        candidates, 
+        function(x) obj_keepq_gp(
+          x, D[1:(i - 1)], 
+          Kinv0, Kinv1, initD, y, p, k, alpha, buffer, objective.type, 
+          model0, model1, qs))
+      f_opt = which.min(f_min_candidates$objectives)
+      xnew = candidates[f_opt]
+      # Update set of design points (D) and plot new point
+      D[i] = xnew
+      D_ind[i] = f_opt
+    }
+  }
+  
+  return(list(
+    "initD" = initD, 
+    "addD" = D, 
+    "D" = c(initD, D),
+    "candidates" = candidates, 
+    "indices" = D_ind,
+    "q.new" = q.new
   ))
 }
 

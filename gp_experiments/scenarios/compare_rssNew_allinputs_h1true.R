@@ -169,6 +169,12 @@ for(scenario in c(1, 2)){
       "_uniform",
       "_seq", seq.type,
       filename_append.tmp))
+    qcaps[[i]] = readRDS(paste0(
+      output_home,
+      "/scenario", scenario, "_seqmed", 
+      "_cap",
+      "_seq", seq.type,
+      filename_append.tmp))
     
     randoms[[i]] = readRDS(paste0(
       "gp_experiments/spacefilling_designs/outputs/random", 
@@ -280,7 +286,7 @@ for(scenario in c(1, 2)){
   RSS1.plt
   
   ggsave(
-    filename = paste0("20210530_scen", scenario, "_rsst.pdf"), 
+    filename = paste0("20210613_scen", scenario, "_rsst.pdf"), 
     plot = RSS1.plt, 
     width = 6, height = 4, units = c("in")
   )

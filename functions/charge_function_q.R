@@ -48,7 +48,7 @@ qcap_gp = function(
   x, Kinv0, Kinv1, initD, y, p, alpha = 1, model0, model1, cap = 1e20
 ){
   q_val = q_gp(x, Kinv0, Kinv1, initD, y, p, alpha, buffer, model0, model1)
-  q_prime = max(q_val, cap)
+  q_prime = min(q_val, cap)
   return(q_prime)
 }
 

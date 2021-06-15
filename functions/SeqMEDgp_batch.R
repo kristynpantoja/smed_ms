@@ -192,7 +192,7 @@ obj_keepq_gp = function(
                   model0, model1) # no need for buffer here, jsyk
     # the other terms in the summation
     # q(xi), xi in the observed set, D_t^c
-    sum_q_D = sum((qs / sqrt((D - candidate)^2))^k)
+    sum_q_D = sum((qs / sqrt((initD - candidate)^2))^k)
     # sum_q_D = sum(sapply(qs, function(q_i) 
     #   (q_i / sqrt((x_i - candidate)^2))^k)) ######################################
     if(!is.null(D)){ # when N2 > 1
@@ -205,21 +205,6 @@ obj_keepq_gp = function(
     }
     result = q_cand^k * sum_q_D
   }
-  ### objective.type == 2 is just optimizing q(x) over x \in C ###
-  if(objective.type == 2 | objective.type == "q"){
-    # no need for buffer in this case
-    q_cand = q_gp(candidate, Kinv0, Kinv1, initD, y, p, alpha, buffer = 0, 
-                  model0, model1)
-    if(is.null(D)){ # when N2 = 1, and batch.idx != 1
-      result = q_cand^k
-    } else{ # when N2 > 1
-      sum_q_D = sum(sapply(D, function(x_i) # disregard initD
-        (q_gp(x_i, Kinv0, Kinv1, initD, y, p, alpha, buffer = 0, 
-              model0, model1) / 
-           sqrt((x_i - candidate)^2))^k))
-      result = q_cand^k * sum_q_D
-    }
-  }
   ### objective.type == 3 gives uniform charge to input points ###
   if(objective.type == 3 | objective.type %in% c("uniform", "spacefilling")){
     # q(x), x in C
@@ -227,7 +212,7 @@ obj_keepq_gp = function(
                   model0, model1)
     # the other terms in the summation
     # q(xi), xi in the observed set, D_t^c
-    sum_q_D = sum((qs / sqrt((D - candidate)^2))^k)
+    sum_q_D = sum((qs / sqrt((initD - candidate)^2))^k)
     # sum_q_D = sum(sapply(qs, function(q_i) 
     #   (q_i / sqrt((x_i - candidate)^2))^k)) # q = 1 for xi in this case #########
     if(!is.null(D)){ # when N2 > 1
@@ -247,7 +232,7 @@ obj_keepq_gp = function(
                      model0, model1) # no capping needed
     # the other terms in the summation
     # q(xi), xi in the observed set, D_t^c
-    sum_q_D = sum((qs / sqrt((D - candidate)^2))^k)
+    sum_q_D = sum((qs / sqrt((initD - candidate)^2))^k)
     # sum_q_D = sum(sapply(qs, function(q_i) 
     #   (q_i / sqrt((x_i - candidate)^2))^k)) ######################################
     if(!is.null(D)){ # when N2 > 1
@@ -333,7 +318,7 @@ SeqMEDgp_keepq_batch = function(
   if(N2 > 1){
     for(i in 2:N2){
       # Find f_opt: minimum of f_min
-      f_min_candidates = sapply(
+      f_min_candidates = lapply(
         candidates, 
         function(x) obj_keepq_gp(
           x, D[1:(i - 1)], 

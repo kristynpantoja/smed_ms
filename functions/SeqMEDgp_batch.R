@@ -192,8 +192,9 @@ obj_keepq_gp = function(
                   model0, model1) # no need for buffer here, jsyk
     # the other terms in the summation
     # q(xi), xi in the observed set, D_t^c
-    sum_q_D = sum(sapply(qs, function(q_i) 
-      (q_i / sqrt((x_i - candidate)^2))^k)) ######################################
+    sum_q_D = sum((qs / sqrt((D - candidate)^2))^k)
+    # sum_q_D = sum(sapply(qs, function(q_i) 
+    #   (q_i / sqrt((x_i - candidate)^2))^k)) ######################################
     if(!is.null(D)){ # when N2 > 1
       # q(xi), xi in the unobserved design points D^{(t)}
       sum_q_D = sum_q_D + 
@@ -226,8 +227,9 @@ obj_keepq_gp = function(
                   model0, model1)
     # the other terms in the summation
     # q(xi), xi in the observed set, D_t^c
-    sum_q_D = sum(sapply(qs, function(q_i) 
-      (q_i / sqrt((x_i - candidate)^2))^k)) # q = 1 for xi in this case #########
+    sum_q_D = sum((qs / sqrt((D - candidate)^2))^k)
+    # sum_q_D = sum(sapply(qs, function(q_i) 
+    #   (q_i / sqrt((x_i - candidate)^2))^k)) # q = 1 for xi in this case #########
     if(!is.null(D)){ # when N2 > 1
       # q(xi), xi in the unobserved design points D^{(t)}
       sum_q_D = sum_q_D + 
@@ -245,8 +247,9 @@ obj_keepq_gp = function(
                      model0, model1) # no capping needed
     # the other terms in the summation
     # q(xi), xi in the observed set, D_t^c
-    sum_q_D = sum(sapply(qs, function(q_i) 
-      (q_i / sqrt((x_i - candidate)^2))^k)) ######################################
+    sum_q_D = sum((qs / sqrt((D - candidate)^2))^k)
+    # sum_q_D = sum(sapply(qs, function(q_i) 
+    #   (q_i / sqrt((x_i - candidate)^2))^k)) ######################################
     if(!is.null(D)){ # when N2 > 1
       # q(xi), xi in the unobserved design points D^{(t)}
       sum_q_D = sum_q_D + 

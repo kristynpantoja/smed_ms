@@ -66,7 +66,7 @@ sigmasq_signal = 1
 
 # SeqMED settings
 nugget = sigmasq_measuremt
-buffer = 0
+buffer = 1e-15
 
 ################################################################################
 # input data
@@ -195,7 +195,8 @@ for(j in 1:3){
         candidates = x_seq, function.values = y_seq, 
         model0 = model0, model1 = model1, 
         numSeq = numSeq, seqN = seqN, prints = FALSE, buffer = buffer, 
-        objective.type = 4, noise = FALSE, measurement.var = sigmasq_measuremt)
+        objective.type = 1, noise = FALSE, measurement.var = sigmasq_measuremt, 
+        newq = FALSE)
     }
     
     print(paste0("completed j = ", j, ", k = ", k, "!"))
@@ -210,7 +211,7 @@ for(j in 1:3){
             file = paste0(
               output_home,
               "/scenario", scenario, "_seqmed", 
-              "_cap", 
+              "_buffer_persist", 
               "_seq", seq.type,
               filename_append.tmp))
   }

@@ -3,7 +3,7 @@
 # purpose: to test seqmedgp for scenarios 1.1 or 2.1 (H0, H1 different sigmasq_measuremt)
 #   where H1 is true
 
-scenario = 2.1
+scenario = 1.1
 scenario_subtypes = unlist(strsplit(as.character(scenario), split = "\\."))
 
 ################################################################################

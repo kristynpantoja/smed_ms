@@ -1,14 +1,14 @@
 ################################################################################
 # last updated: 05/27/2021
-# purpose: to test seqmedgp for scenarios 3, 4, 5, or 6
-#   where both hypotheses are misspecified
+# purpose: to test seqmedgp for scenarios 1 or 2
+#   where H1 is true
 
-scenario = 6
+scenario = 2
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = paste0("gp_experiments/scenarios/scenarios_misspecified/outputs")
+output_home = paste0("gp_experiments/scenarios/scenarios_h1true/outputs")
 data_home = "gp_experiments/simulated_data"
 functions_home = "functions"
 
@@ -103,29 +103,14 @@ x_spacefill3 = x_seq[x_spacefill3_idx]
 ################################################################################
 # Scenario settings
 ################################################################################
-if(scenario == 3){
-  type01 = c("squaredexponential", "squaredexponential")
-  typeT = "matern"
-  l01= c(0.005, 0.01)
-  lT = 0.01
-} else if(scenario == 4){
-  type01 = c("matern", "squaredexponential")
-  typeT = "periodic"
-  l01= c(0.01, 0.01)
-  lT = 0.01
-} else if(scenario == 5){
+if(scenario == 1){
+  type01 = c("squaredexponential", "matern")
+} else if(scenario == 2){
   type01 = c("matern", "periodic")
-  typeT = "squaredexponential"
-  l01= c(0.01, 0.01)
-  lT = 0.01
-} else if(scenario == 6){
-  type01 = c("squaredexponential", "periodic")
-  typeT = "matern"
-  l01= c(0.01, 0.01)
-  lT = 0.01
-} else{
-  stop("invalid scenario number")
 }
+typeT = type01[2]
+l01= c(0.01, 0.01)
+lT = l01[2]
 
 ################################################################################
 model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
@@ -195,7 +180,7 @@ for(j in 1:3){
         candidates = x_seq, function.values = y_seq, 
         model0 = model0, model1 = model1, 
         numSeq = numSeq, seqN = seqN, prints = FALSE, buffer = buffer, 
-        objective.type = 3, noise = FALSE, measurement.var = sigmasq_measuremt, 
+        objective.type = 4, noise = FALSE, measurement.var = sigmasq_measuremt, 
         newq = FALSE)
     }
     
@@ -211,7 +196,7 @@ for(j in 1:3){
             file = paste0(
               output_home,
               "/scenario", scenario, "_seqmed", 
-              "_uniform_persist", 
+              "_cap_persist", 
               "_seq", seq.type,
               filename_append.tmp))
   }

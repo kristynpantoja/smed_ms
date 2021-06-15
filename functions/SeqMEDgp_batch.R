@@ -261,7 +261,7 @@ obj_keepq_gp = function(
   if(!(objective.type %in% c(1, 2, 3, 4))){
     stop("obj_keepq_gp: invalid objective.type value")
   }
-  return(c(objectives = result, q.candidates = q_cand))
+  return(data.frame(objectives = result, q.candidates = q_cand))
 }
 
 SeqMEDgp_keepq_batch = function(
@@ -304,12 +304,13 @@ SeqMEDgp_keepq_batch = function(
     is_x_max_in_initD = TRUE
   }
   # Find f_opt: minimum of f_min --- pulled this out of the below if statement
-  f_min_candidates = sapply(
+  f_min_candidates = lapply(
     candidates, 
     function(x) obj_keepq_gp(
       x, NULL, 
       Kinv0, Kinv1, initD, y, p, k, alpha, buffer, objective.type, 
       model0, model1, qs))
+  f_min_candidates = do.call("rbind", f_min_candidates)
   if(all(f_min_candidates$objectives == Inf)){
     stop("SeqMEDgp_batch: all candidates result in objective function = Inf.")
   }
@@ -335,6 +336,7 @@ SeqMEDgp_keepq_batch = function(
           x, D[1:(i - 1)], 
           Kinv0, Kinv1, initD, y, p, k, alpha, buffer, objective.type, 
           model0, model1, qs))
+      f_min_candidates = do.call("rbind", f_min_candidates)
       f_opt = which.min(f_min_candidates$objectives)
       xnew = candidates[f_opt]
       # Update set of design points (D) and plot new point

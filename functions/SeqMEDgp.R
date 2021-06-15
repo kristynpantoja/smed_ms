@@ -64,16 +64,16 @@ SeqMEDgp = function(
   # q evaluated at input points
   if(!newq){
     if(is.null(model0$measurement.var)){
-      Kinv0 = solve(getCov(initD, initD, model0$type, model0$l))
+      Kinv0 = solve(getCov(D, D, model0$type, model0$l))
     } else{
-      Kinv0 = solve(getCov(initD, initD, model0$type, model0$l) + 
-                      sqrt(model0$measurement.var) * diag(initN))
+      Kinv0 = solve(getCov(D, D, model0$type, model0$l) + 
+                      sqrt(model0$measurement.var) * diag(length(D)))
     }
     if(is.null(model1$measurement.var)){
-      Kinv1 = solve(getCov(initD, initD, model1$type, model1$l))
+      Kinv1 = solve(getCov(D, D, model1$type, model1$l))
     } else{
-      Kinv1 = solve(getCov(initD, initD, model1$type, model1$l) + 
-                      sqrt(model1$measurement.var) * diag(initN))
+      Kinv1 = solve(getCov(D, D, model1$type, model1$l) + 
+                      sqrt(model1$measurement.var) * diag(length(D)))
     }
     qs = rep(NA, length(D))
     if(!(objective.type %in% c(1, 3, 4))){
@@ -81,14 +81,14 @@ SeqMEDgp = function(
     } else{
       if(objective.type == 1){
         qs = sapply(D, function(x_i) 
-          q_gp(x_i, Kinv0, Kinv1, D, y, p, alpha, buffer, model0, model1))
+          q_gp(x_i, Kinv0, Kinv1, D, y, p, alpha.seq[1], buffer, model0, model1))
       }
       if(objective.type == 3){
         qs = rep(1, length(D))
       }
       if(objective.type == 4){
         qs = sapply(D, function(x_i) 
-          qcap_gp(x_i, Kinv0, Kinv1, D, y, p, alpha, buffer, model0, model1))
+          qcap_gp(x_i, Kinv0, Kinv1, D, y, p, alpha.seq[1], model0, model1))
       }
     }
   }

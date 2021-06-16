@@ -331,6 +331,7 @@ SeqMEDgp_keepq_batch = function(
       # Update set of design points (D) and plot new point
       D[i] = xnew
       D_ind[i] = f_opt
+      q.new = c(q.new, f_min_candidates$q.candidates[f_opt])
     }
   }
   

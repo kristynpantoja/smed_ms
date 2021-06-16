@@ -113,7 +113,7 @@ SeqMEDgp = function(
         xmin = xmin, xmax = xmax, alpha = alpha.seq[t], candidates = candidates, 
         batch.idx = batch.idx, buffer = buffer, objective.type = objective.type,
         model0 = model0, model1 = model1, qs = qs)
-      qs = c(qs, Dt$q.neq)
+      qs = c(qs, Dt$q.new)
     }
     # Dt = SeqMEDgp_batch(
     #   initD = D, y = y, N2 = seqN[t],

@@ -184,6 +184,7 @@ obj_keepq_gp = function(
   candidate, D = NULL, Kinv0, Kinv1, initD, y, 
   p = 1, k = 4, alpha = 1, buffer = 0, objective.type = 1, model0, model1, qs
 ){
+  if(length(initD) != length(qs)) stop("obj_keepq_gp: length(initD) != length(qs)")
   ### objective.type == 1 adds a buffer to the wasserstein distance ###
   if(objective.type == 1 | objective.type %in% 
      c("buffer", "augdist", "augmenteddistance")){

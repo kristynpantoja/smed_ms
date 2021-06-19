@@ -33,16 +33,16 @@ WN = function(mu1, mu2, var1, var2, dim = 1){
 # 1 dimension, or with transformations of x
 # formerly named Wasserstein_distance_postpred
 WNlm = function(
-  x, postmean0, postmean1, postvar0, postvar1, signal.var, type, dim = 1){
+  x, postmean0, postmean1, postvar0, postvar1, error.var, type, dim = 1){
   x0 = t(constructDesignX(x, 1, type[1]))
   x1 = t(constructDesignX(x, 1, type[2]))
   
   # posterior predictive distribution of y, for candidate x
   postpredy_mu0 = t(x0) %*% postmean0
-  postpredy_var0 = t(x0) %*% postvar0 %*% x0 + signal.var
+  postpredy_var0 = t(x0) %*% postvar0 %*% x0 + error.var
   
   postpredy_mu1 = t(x1) %*% postmean1
-  postpredy_var1 = t(x1) %*% postvar1 %*% x1 + signal.var
+  postpredy_var1 = t(x1) %*% postvar1 %*% x1 + error.var
   
   W = WN(postpredy_mu0, postpredy_mu1, postpredy_var0, postpredy_var1)
   return(as.numeric(W))

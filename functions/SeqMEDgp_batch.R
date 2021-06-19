@@ -6,7 +6,7 @@
 ### SeqMED GP, one-at-a-time greedy algorithm ###
 #################################################
 
-obj_gp = function(
+obj_newq_gp = function(
   candidate, D = NULL, Kinv0, Kinv1, initD, y, 
   p = 1, k = 4, alpha = 1, buffer = 0, objective.type = 1, model0, model1
 ){
@@ -89,7 +89,7 @@ obj_gp = function(
   }
   ### no other objective.type options
   if(!(objective.type %in% c(1, 2, 3, 4))){
-    stop("obj_gp: invalid objective.type value")
+    stop("obj_newq_gp: invalid objective.type value")
   }
   return(result)
 }
@@ -137,7 +137,7 @@ SeqMEDgp_newq_batch = function(
     # Find f_opt: minimum of f_min
     f_min_candidates = sapply(
       candidates, 
-      function(x) obj_gp(
+      function(x) obj_newq_gp(
         x, NULL, 
         Kinv0, Kinv1, initD, y, p, k, alpha, buffer, objective.type, 
         model0, model1))
@@ -159,7 +159,7 @@ SeqMEDgp_newq_batch = function(
       # Find f_opt: minimum of f_min
       f_min_candidates = sapply(
         candidates, 
-        function(x) obj_gp(
+        function(x) obj_newq_gp(
           x, D[1:(i - 1)], 
           Kinv0, Kinv1, initD, y, p, k, alpha, buffer, objective.type, 
           model0, model1))
@@ -328,7 +328,7 @@ SeqMEDgp_keepq_batch = function(
       f_min_candidates = do.call("rbind", f_min_candidates)
       f_opt = which.min(f_min_candidates$objectives)
       xnew = candidates[f_opt]
-      # Update set of design points (D) and plot new point
+      # Update set of design points, D
       D[i] = xnew
       D_ind[i] = f_opt
       q.new = c(q.new, f_min_candidates$q.candidates[f_opt])

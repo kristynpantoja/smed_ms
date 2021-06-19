@@ -10,7 +10,6 @@ SeqMEDgp = function(
   model0 = NULL, model1 = NULL, noise = TRUE, measurement.var = NULL, 
   newq = TRUE
 ){
-  # browser()
   if(!is.null(seed)) set.seed(seed)
   if(numSeq > 1 & length(seqN) == 1) seqN = rep(seqN, numSeq)
   if(numSeq > 1 & is.null(alpha.seq)) alpha.seq = rep(1, numSeq)

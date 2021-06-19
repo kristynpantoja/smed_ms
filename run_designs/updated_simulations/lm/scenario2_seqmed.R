@@ -93,9 +93,29 @@ for(i in 1:numSims){
     D1 = NULL, y1 = NULL, true_beta = betaT, true_type = typeT, 
     beta.mean0 = mu0, beta.mean1 = mu1, beta.var0 = V0, beta.var1 = V1, 
     error.var = sigmasq, f0 = f0, f1 = f1, type = type01, xmin = xmin, xmax = xmax, 
-    candidates = candidates, numSeq = numSeq, seqN = seqN, seed = 123 + i
+    candidates = candidates, numSeq = numSeq, seqN = seqN, seed = 123 + i, 
+    newq = FALSE
   )
-  # hist(seqmed_list[[i]]$D)
+  seqmed_keepq = seqmed_list[[i]]
+  hist(seqmed_list[[i]]$D)
+  ggplot(data = data.frame(x = seqmed_list[[i]]$D), aes(x = x)) + 
+    geom_histogram(binwidth = 0.08)
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  ggplot(data = data.frame(x = seqmed_newq$D), aes(x = x)) + 
+    geom_histogram(binwidth = 0.08)
+  ggplot(data = data.frame(x = seqmed_keepq$D), aes(x = x)) + 
+    geom_histogram(binwidth = 0.08)
 }
 saveRDS(seqmed_list, paste(output_home, "/seqmed/scenario2_seqmed_simulations",
                            "_numSeq", numSeq,

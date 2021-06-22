@@ -75,14 +75,14 @@ SeqMEDgp = function(
                       sqrt(model1$measurement.var) * diag(length(D)))
     }
     qs = rep(NA, length(D))
-    if(!(objective.type %in% c(1, 3, 4))){
-      stop("to keep q, need objective.type == 1, 3, or 4")
+    if(!(objective.type %in% c(1, 3, 4, 5))){
+      stop("to keep q, need objective.type == 1, 3, 4, or 5")
     } else{
       if(objective.type == 1){
         qs = sapply(D, function(x_i) 
           q_gp(x_i, Kinv0, Kinv1, D, y, p, alpha.seq[1], buffer, model0, model1))
       }
-      if(objective.type == 3){
+      if(objective.type %in% c(3, 5)){
         qs = rep(1, length(D))
       }
       if(objective.type == 4){

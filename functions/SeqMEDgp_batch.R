@@ -87,8 +87,34 @@ obj_newq_gp = function(
     }
     result = q_cand^k * sum_q_D
   }
+  ### objective.type == 5 leaves out each x_i in D^{(t)} in q(x_i) calc ###
+  if(objective.type == 5 | objective.type %in% 
+     c("loo", "leaveout", "leaveoneout")){
+    # q(x), x in C
+    q_cand = q_gp(candidate, Kinv0, Kinv1, initD, y, p, alpha, buffer = 0, 
+                  model0, model1) # no need to leave anything out here, jsyk
+    # the other terms in the summation
+    # q(xi), xi in the observed set, D_t^c
+    terms_q_D = rep(NA, length(initD))
+    for(i in 1:length(initD)){
+      terms_q_D[i] = (q_gp(
+        initD[i], Kinv0[-i, -i, drop = FALSE], Kinv1[-i, -i, drop = FALSE], 
+        initD[-i], y[-i], p, alpha, buffer = 0, model0, model1) / 
+          sqrt((initD[i] - candidate)^2))^k
+    }
+    sum_q_D = sum(terms_q_D)
+    if(!is.null(D)){ # when N2 > 1
+      # q(xi), xi in the unobserved design points D^{(t)}
+      sum_q_D = sum_q_D + 
+        sum(sapply(D, function(x_i) # no leave out necessary here, either
+          (q_gp(x_i, Kinv0, Kinv1, initD, y, p, alpha, buffer = 0, 
+                model0, model1) / 
+             sqrt((x_i - candidate)^2))^k))
+    }
+    result = q_cand^k * sum_q_D
+  }
   ### no other objective.type options
-  if(!(objective.type %in% c(1, 2, 3, 4))){
+  if(!(objective.type %in% c(1, 2, 3, 4, 5))){
     stop("obj_newq_gp: invalid objective.type value")
   }
   return(result)
@@ -185,29 +211,6 @@ obj_keepq_gp = function(
   p = 1, k = 4, alpha = 1, buffer = 0, objective.type = 1, model0, model1, qs
 ){
   if(length(initD) != length(qs)) stop("obj_keepq_gp: length(initD) != length(qs)")
-  ### objective.type == 1 adds a buffer to the wasserstein distance ###
-  if(objective.type == 1 | objective.type %in% 
-     c("buffer", "augdist", "augmenteddistance")){
-    # q(x), x in C
-    q_cand = q_gp(candidate, Kinv0, Kinv1, initD, y, p, alpha, buffer, 
-                  model0, model1) # no need for buffer here, jsyk
-    # the other terms in the summation
-    # q(xi), xi in the observed set, D_t^c
-    sum_q_D = sum((qs / sqrt((initD - candidate)^2))^k)
-    # sum_q_D = sum(sapply(qs, function(q_i) 
-    #   (q_i / sqrt((x_i - candidate)^2))^k)) ######################################
-    if(!is.null(D)){ # when N2 > 1
-      # q(xi), xi in the unobserved design points D^{(t)}
-      sum_q_D = sum_q_D + 
-        sum(sapply(D, function(x_i)  # no need for buffer here, either fyi
-          (q_gp(x_i, Kinv0, Kinv1, initD, y, p, alpha, buffer, 
-                model0, model1) / 
-             sqrt((x_i - candidate)^2))^k))
-    }
-    result = q_cand^k * sum_q_D
-  }
-  ### objective.type == 3 gives uniform charge to input points ###
-  if(objective.type == 3 | objective.type %in% c("uniform", "spacefilling")){
     # q(x), x in C
     q_cand = q_gp(candidate, Kinv0, Kinv1, initD, y, p, alpha, buffer = 0, 
                   model0, model1)
@@ -225,31 +228,7 @@ obj_keepq_gp = function(
              sqrt((x_i - candidate)^2))^k))
     }
     result = q_cand^k * sum_q_D
-  }
-  ### objective.type == 4 caps q ###
-  if(objective.type == 4 | objective.type %in% c("cap", "capq")){
-    # q(x), x in C
-    q_cand = qcap_gp(candidate, Kinv0, Kinv1, initD, y, p, alpha, 
-                     model0, model1) # no capping needed
-    # the other terms in the summation
-    # q(xi), xi in the observed set, D_t^c
-    sum_q_D = sum((qs / sqrt((initD - candidate)^2))^k)
-    # sum_q_D = sum(sapply(qs, function(q_i) 
-    #   (q_i / sqrt((x_i - candidate)^2))^k)) ######################################
-    if(!is.null(D)){ # when N2 > 1
-      # q(xi), xi in the unobserved design points D^{(t)}
-      sum_q_D = sum_q_D + 
-        sum(sapply(D, function(x_i)  # no capping needed here, either
-          (qcap_gp(x_i, Kinv0, Kinv1, initD, y, p, alpha, 
-                   model0, model1) / 
-             sqrt((x_i - candidate)^2))^k))
-    }
-    result = q_cand^k * sum_q_D
-  }
-  ### no other objective.type options
-  if(!(objective.type %in% c(1, 2, 3, 4))){
-    stop("obj_keepq_gp: invalid objective.type value")
-  }
+  
   return(data.frame(objectives = result, q.candidates = q_cand))
 }
 
@@ -317,6 +296,9 @@ SeqMEDgp_keepq_batch = function(
   }
   
   if(N2 > 1){
+    if(N2 < 2){
+      stop("SeqMED_keepq_batch: To do a batch with N_batch > 2 using leave-out method, need to have at least 2 observations, to be able to leave one out!")
+    }
     for(i in 2:N2){
       # Find f_opt: minimum of f_min
       f_min_candidates = lapply(

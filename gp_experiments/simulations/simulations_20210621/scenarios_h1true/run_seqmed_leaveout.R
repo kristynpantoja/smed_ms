@@ -150,7 +150,6 @@ k = 1
   
   filename_append.tmp = paste0(
     filename_append, 
-    "_input", input.type, 
     "_seed", rng.seed,
     ".rds"
   )

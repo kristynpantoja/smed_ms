@@ -145,8 +145,6 @@ for(k in 1:2){
       objective.type = 4, noise = FALSE, measurement.var = sigmasq_measuremt)
   }
   
-  print(paste0("completed j = ", j, ", k = ", k, "!"))
-  
   filename_append.tmp = paste0(
     filename_append, 
     "_seed", rng.seed,

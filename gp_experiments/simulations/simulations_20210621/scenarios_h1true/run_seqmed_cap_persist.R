@@ -146,8 +146,6 @@ for(k in 1:2){
       newq = FALSE)
   }
   
-  print(paste0("completed j = ", j, ", k = ", k, "!"))
-  
   filename_append.tmp = paste0(
     filename_append, 
     "_seed", rng.seed,

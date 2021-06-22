@@ -132,7 +132,8 @@ x_input = x_seq[x_input_idx]
 ################################################################################
 # generate seqmeds 
 
-for(k in 1:2){
+# for(k in 1:2){
+k = 1
   
   # k : sequential setting
   seq.type = k
@@ -156,8 +157,7 @@ for(k in 1:2){
       candidates = x_seq, function.values = y_seq, 
       model0 = model0, model1 = model1, 
       numSeq = numSeq, seqN = seqN, prints = FALSE, buffer = buffer, 
-      objective.type = 4, noise = FALSE, measurement.var = sigmasq_measuremt, 
-      newq = FALSE)
+      objective.type = 5, noise = FALSE, measurement.var = sigmasq_measuremt)
   }
   
   filename_append.tmp = paste0(
@@ -169,7 +169,7 @@ for(k in 1:2){
           file = paste0(
             output_home,
             "/scenario", scenario, "_seqmed", 
-            "_cap_persist", 
+            "_leaveout", 
             "_seq", seq.type,
             filename_append.tmp))
-}
+# }

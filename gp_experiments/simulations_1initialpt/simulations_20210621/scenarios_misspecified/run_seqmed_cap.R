@@ -8,7 +8,7 @@ scenario = 6
 ################################################################################
 # Sources/Libraries
 ################################################################################
-sims_dir = "gp_experiments/simulations"
+sims_dir = "gp_experiments/simulations_1initialpt"
 modelsel_sims_dir = paste0(sims_dir, "/simulations_20210621")
 output_home = paste0(modelsel_sims_dir, "/scenarios_misspecified/outputs")
 data_home = "gp_experiments/simulated_data"
@@ -132,8 +132,7 @@ x_input = x_seq[x_input_idx]
 ################################################################################
 # generate seqmeds 
 
-# for(k in 1:2){
-k = 1
+for(k in 1:2){
   
   # k : sequential setting
   seq.type = k
@@ -157,7 +156,7 @@ k = 1
       candidates = x_seq, function.values = y_seq, 
       model0 = model0, model1 = model1, 
       numSeq = numSeq, seqN = seqN, prints = FALSE, buffer = buffer, 
-      objective.type = 5, noise = FALSE, measurement.var = sigmasq_measuremt)
+      objective.type = 4, noise = FALSE, measurement.var = sigmasq_measuremt)
   }
   
   filename_append.tmp = paste0(
@@ -169,7 +168,7 @@ k = 1
           file = paste0(
             output_home,
             "/scenario", scenario, "_seqmed", 
-            "_leaveout", 
+            "_cap", 
             "_seq", seq.type,
             filename_append.tmp))
-# }
+}

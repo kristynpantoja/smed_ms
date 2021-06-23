@@ -1,16 +1,16 @@
 ################################################################################
-# last updated: 06/21/2021
-# purpose: to test seqmedgp for scenarios 1 or 2
-#   where H1 is true
+# last updated: 05/27/2021
+# purpose: to test seqmedgp for scenarios 3, 4, 5, or 6
+#   where both hypotheses are misspecified
 
-scenario = 2
+scenario = 6
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
-sims_dir = "gp_experiments/simulations"
+sims_dir = "gp_experiments/simulations_1initialpt"
 modelsel_sims_dir = paste0(sims_dir, "/simulations_20210621")
-output_home = paste0(modelsel_sims_dir, "/scenarios_h1true/outputs")
+output_home = paste0(modelsel_sims_dir, "/scenarios_misspecified/outputs")
 data_home = "gp_experiments/simulated_data"
 functions_home = "functions"
 
@@ -71,23 +71,31 @@ nugget = sigmasq_measuremt
 buffer = 0
 
 ################################################################################
-# input data
-################################################################################
-
-x_input_idx = ceiling(numx / 2)
-x_input = x_seq[x_input_idx]
-
-################################################################################
 # Scenario settings
 ################################################################################
-if(scenario == 1){
-  type01 = c("squaredexponential", "matern")
-} else if(scenario == 2){
+if(scenario == 3){
+  type01 = c("squaredexponential", "squaredexponential")
+  typeT = "matern"
+  l01= c(0.005, 0.01)
+  lT = 0.01
+} else if(scenario == 4){
+  type01 = c("matern", "squaredexponential")
+  typeT = "periodic"
+  l01= c(0.01, 0.01)
+  lT = 0.01
+} else if(scenario == 5){
   type01 = c("matern", "periodic")
+  typeT = "squaredexponential"
+  l01= c(0.01, 0.01)
+  lT = 0.01
+} else if(scenario == 6){
+  type01 = c("squaredexponential", "periodic")
+  typeT = "matern"
+  l01= c(0.01, 0.01)
+  lT = 0.01
+} else{
+  stop("invalid scenario number")
 }
-typeT = type01[2]
-l01= c(0.01, 0.01)
-lT = l01[2]
 
 ################################################################################
 model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
@@ -116,9 +124,16 @@ null_mean = simulated.data$null_mean
 y_seq_mat = simulated.data$function_values_mat
 
 ################################################################################
+# initial design
+
+x_input_idx = ceiling(numx / 2)
+x_input = x_seq[x_input_idx]
+
+################################################################################
 # generate seqmeds 
 
-for(k in 1:2){
+# for(k in 1:2){
+k = 1
   
   # k : sequential setting
   seq.type = k
@@ -142,7 +157,7 @@ for(k in 1:2){
       candidates = x_seq, function.values = y_seq, 
       model0 = model0, model1 = model1, 
       numSeq = numSeq, seqN = seqN, prints = FALSE, buffer = buffer, 
-      objective.type = 4, noise = FALSE, measurement.var = sigmasq_measuremt)
+      objective.type = 5, noise = FALSE, measurement.var = sigmasq_measuremt)
   }
   
   filename_append.tmp = paste0(
@@ -157,5 +172,4 @@ for(k in 1:2){
             "_leaveout", 
             "_seq", seq.type,
             filename_append.tmp))
-}
-
+# }

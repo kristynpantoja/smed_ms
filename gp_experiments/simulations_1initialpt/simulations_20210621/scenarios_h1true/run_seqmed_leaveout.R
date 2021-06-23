@@ -8,7 +8,7 @@ scenario = 2
 ################################################################################
 # Sources/Libraries
 ################################################################################
-sims_dir = "gp_experiments/simulations"
+sims_dir = "gp_experiments/simulations_1initialpt"
 modelsel_sims_dir = paste0(sims_dir, "/simulations_20210621")
 output_home = paste0(modelsel_sims_dir, "/scenarios_h1true/outputs")
 data_home = "gp_experiments/simulated_data"
@@ -71,13 +71,6 @@ nugget = sigmasq_measuremt
 buffer = 0
 
 ################################################################################
-# input data
-################################################################################
-
-x_input_idx = ceiling(numx / 2)
-x_input = x_seq[x_input_idx]
-
-################################################################################
 # Scenario settings
 ################################################################################
 if(scenario == 1){
@@ -116,10 +109,15 @@ null_mean = simulated.data$null_mean
 y_seq_mat = simulated.data$function_values_mat
 
 ################################################################################
+# initial design
+
+x_input_idx = ceiling(numx / 2)
+x_input = x_seq[x_input_idx]
+
+################################################################################
 # generate seqmeds 
 
 # for(k in 1:2){
-# sequential with 1 point doesn't work yet
 k = 1
   
   # k : sequential setting
@@ -144,8 +142,7 @@ k = 1
       candidates = x_seq, function.values = y_seq, 
       model0 = model0, model1 = model1, 
       numSeq = numSeq, seqN = seqN, prints = FALSE, buffer = buffer, 
-      objective.type = 5, noise = FALSE, measurement.var = sigmasq_measuremt, 
-      newq = FALSE)
+      objective.type = 5, noise = FALSE, measurement.var = sigmasq_measuremt)
   }
   
   filename_append.tmp = paste0(
@@ -157,7 +154,7 @@ k = 1
           file = paste0(
             output_home,
             "/scenario", scenario, "_seqmed", 
-            "_leaveout_persist", 
+            "_leaveout", 
             "_seq", seq.type,
             filename_append.tmp))
 # }

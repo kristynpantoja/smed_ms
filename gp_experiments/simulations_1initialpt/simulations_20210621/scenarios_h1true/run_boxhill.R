@@ -1,16 +1,16 @@
 ################################################################################
-# last updated: 05/27/2021
-# purpose: to test seqmedgp for scenarios 3, 4, 5, or 6
-#   where both hypotheses are misspecified
+# last updated: 06/21/2021
+# purpose: to test seqmedgp for scenarios 1 or 2
+#   where H1 is true
 
-scenario = 6
+scenario = 1
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
-sims_dir = "gp_experiments/simulations"
+sims_dir = "gp_experiments/simulations_1initialpt"
 modelsel_sims_dir = paste0(sims_dir, "/simulations_20210621")
-output_home = paste0(modelsel_sims_dir, "/scenarios_misspecified/outputs")
+output_home = paste0(modelsel_sims_dir, "/scenarios_h1true/outputs")
 data_home = "gp_experiments/simulated_data"
 functions_home = "functions"
 
@@ -57,9 +57,7 @@ gg_color_hue = function(n) {
 # simulations settings
 numSims = 25
 Nin = 1
-numSeq = 15
-seqN = 1
-Nnew = numSeq * seqN
+Nnew = 15
 Nttl = Nin + Nnew
 xmin = 0
 xmax = 1
@@ -75,29 +73,14 @@ prior_probs = rep(1 / 2, 2)
 ################################################################################
 # Scenario settings
 ################################################################################
-if(scenario == 3){
-  type01 = c("squaredexponential", "squaredexponential")
-  typeT = "matern"
-  l01= c(0.005, 0.01)
-  lT = 0.01
-} else if(scenario == 4){
-  type01 = c("matern", "squaredexponential")
-  typeT = "periodic"
-  l01= c(0.01, 0.01)
-  lT = 0.01
-} else if(scenario == 5){
+if(scenario == 1){
+  type01 = c("squaredexponential", "matern")
+} else if(scenario == 2){
   type01 = c("matern", "periodic")
-  typeT = "squaredexponential"
-  l01= c(0.01, 0.01)
-  lT = 0.01
-} else if(scenario == 6){
-  type01 = c("squaredexponential", "periodic")
-  typeT = "matern"
-  l01= c(0.01, 0.01)
-  lT = 0.01
-} else{
-  stop("invalid scenario number")
 }
+typeT = type01[2]
+l01= c(0.01, 0.01)
+lT = l01[2]
 
 ################################################################################
 # models
@@ -134,27 +117,28 @@ x_input = x_seq[x_input_idx]
 
 ################################################################################
 # generate boxhills
-  
-  # simulations!
-  registerDoRNG(rng.seed)
-  boxhills = foreach(
-    i = 1:numSims
-  ) %dorng% {
-    y_seq = y_seq_mat[ , i]
-    y_input = y_seq[x_input_idx]
-    BHgp_m2(
-      y_input, x_input, x_input_idx, prior_probs, model0, model1, Nnew, 
-      x_seq, y_seq, noise = FALSE, measurement.var = sigmasq_measuremt)
-  }
-  
-  filename_append.tmp = paste0(
-    filename_append, 
-    "_seed", rng.seed,
-    ".rds"
-  )
-  saveRDS(boxhills, 
-          file = paste0(
-            output_home,
-            "/scenario", scenario, "_boxhill", 
-            filename_append.tmp))
+
+# simulations!
+registerDoRNG(rng.seed)
+boxhills = foreach(
+  i = 1:numSims
+) %dorng% {
+  y_seq = y_seq_mat[ , i]
+  y_input = y_seq[x_input_idx]
+  BHgp_m2(
+    y_input, x_input, x_input_idx, prior_probs, model0, model1, Nnew, 
+    x_seq, y_seq, noise = FALSE, measurement.var = sigmasq_measuremt)
+}
+
+filename_append.tmp = paste0(
+  filename_append, 
+  "_seed", rng.seed,
+  ".rds"
+)
+saveRDS(boxhills, 
+        file = paste0(
+          output_home,
+          "/scenario", scenario, "_boxhill", 
+          filename_append.tmp))
+
 

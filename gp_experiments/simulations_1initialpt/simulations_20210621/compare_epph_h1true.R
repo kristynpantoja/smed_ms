@@ -47,7 +47,7 @@ for(scenario in c(1, 2)){
     
     # simulations settings
     numSims = 25
-    Nin = 6
+    Nin = 1
     if(seq.type == 1){
       numSeq = 15
       seqN = 1

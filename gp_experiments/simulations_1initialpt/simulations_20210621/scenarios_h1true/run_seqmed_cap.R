@@ -153,7 +153,7 @@ for(k in 1:2){
           file = paste0(
             output_home,
             "/scenario", scenario, "_seqmed", 
-            "_leaveout", 
+            "_cap", 
             "_seq", seq.type,
             filename_append.tmp))
 }

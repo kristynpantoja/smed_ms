@@ -157,7 +157,7 @@ for(scenario in c(1, 2)){
     "_", typeT,
     "_l", lT,
     filename_append.tmp))
-  spacefill_sims = readRDS(paste0(
+  grid_sims = readRDS(paste0(
     sims_dir,
     "/spacefilling_designs/outputs/grid", 
     "_", typeT,
@@ -168,35 +168,13 @@ for(scenario in c(1, 2)){
   # make plots
   ################################################################################
   
-  # input set
-  bh.in = boxhills[[input.type]]
-  # q.in = qs[[input.type]]
-  # q1.in = q1s[[input.type]]
-  qcap.in = qcaps[[input.type]]
-  buf.in = buffers[[input.type]]
-  qcap2.in = qcap_persists[[input.type]]
-  buf2.in = buffer_persists[[input.type]]
-  ran.in = randoms[[input.type]]
-  sf.in = spacefills[[input.type]]
-  if(input.type == 1){
-    x_input = x_in1
-    x_input_idx = x_in1_idx
-  } else if(input.type == 2){
-    x_input = x_in2
-    x_input_idx = x_in2_idx
-  } else if(input.type == 3){
-    x_input = x_in3
-    x_input_idx = x_in3_idx
-  }
-  
   # all 6 designs
   idx = 1
-  # designs = list(bh.in[[idx]], q.in[[idx]], q1.in[[idx]], qcap.in[[idx]], buf.in[[idx]])
-  # design.names = c("boxhill", "q", "q=1", "qcap", "augdist")
-  # design.levels = c("augdist", "qcap", "q=1", "q", "boxhill")
-  designs = list(bh.in[[idx]], qcap.in[[idx]], buf.in[[idx]], qcap2.in[[idx]], buf2.in[[idx]])
-  design.names = c("boxhill", "qcap", "augdist", "qcap2", "augdist2")
-  design.levels = c("augdist", "augdist2", "qcap", "qcap2", "boxhill")
+  designs = list(
+    boxhill_sims[[idx]], qcap_sims[[idx]], leaveout_sims[[idx]], 
+    qcap_persist_sims[[idx]], leaveout_persist_sims[[idx]])
+  design.names = c("bh", "qcap", "lo", "qcap2", "lo2")
+  design.levels = c("lo", "lo2", "qcap", "qcap2", "bh")
   
   x.new.mat = matrix(NA, nrow = Nnew, ncol = length(designs))
   for(i in 1:length(designs)){
@@ -226,11 +204,11 @@ for(scenario in c(1, 2)){
   plot(des.plt)
   
   ggsave(
-    filename = paste0("20210615_scen", scenario, "_in", input.type, "_design.pdf"), 
+    filename = paste0("20210622_scen", scenario, "_design.pdf"), 
     plot = des.plt, 
     width = 6, height = 4, units = c("in")
   )
-  print(paste("scenario", scenario, ", input ", input.type, 
+  print(paste("scenario", scenario, 
               "################################################################"))
   
 }

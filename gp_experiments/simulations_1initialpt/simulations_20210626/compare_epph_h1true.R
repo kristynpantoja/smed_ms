@@ -1,12 +1,12 @@
-for(scenario in c(3, 4, 5, 6)){
+for(scenario in c(1, 2)){
     ################################################################################
     # last updated: 05/25/2021
-    # purpose: to test seqmedgp for scenario 3:
-    #   squared exponential vs. another squared exponential,
+    # purpose: to test seqmedgp for scenario 1:
+    #   squared exponential vs. matern,
     #   where the true function is matern
     
-    # scenario = 4 # scenarios: 3, 4, 5, 6
-    # input.type = 2 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
+    # scenario = 1 # scenarios: 1, 2
+    # input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
     seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
     
     ################################################################################
@@ -14,7 +14,7 @@ for(scenario in c(3, 4, 5, 6)){
     ################################################################################
     sims_dir = "gp_experiments/simulations_1initialpt"
     modelsel_sims_dir = paste0(sims_dir, "/simulations_20210621")
-    output_home = paste0(modelsel_sims_dir, "/scenarios_misspecified/outputs")
+    output_home = paste0(modelsel_sims_dir, "/scenarios_h1true/outputs")
     data_home = "gp_experiments/simulated_data"
     functions_home = "functions"
     
@@ -68,30 +68,18 @@ for(scenario in c(3, 4, 5, 6)){
     nugget = sigmasq_measuremt
     prior_probs = rep(1 / 2, 2)
     
+  
     ################################################################################
     # Scenario settings
     ################################################################################
-    if(scenario == 3){
-      type01 = c("squaredexponential", "squaredexponential")
-      typeT = "matern"
-      l01= c(0.005, 0.01)
-      lT = 0.01
-    } else if(scenario == 4){
-      type01 = c("matern", "squaredexponential")
-      typeT = "periodic"
-      l01= c(0.01, 0.01)
-      lT = 0.01
-    } else if(scenario == 5){
+    if(scenario == 1){
+      type01 = c("squaredexponential", "matern")
+    } else if(scenario == 2){
       type01 = c("matern", "periodic")
-      typeT = "squaredexponential"
-      l01= c(0.01, 0.01)
-      lT = 0.01
-    } else if(scenario == 6){
-      type01 = c("squaredexponential", "periodic")
-      typeT = "matern"
-      l01= c(0.01, 0.01)
-      lT = 0.01
     }
+    typeT = type01[2]
+    l01= c(0.01, 0.01)
+    lT = l01[2]
     
     ################################################################################
     # import data
@@ -171,7 +159,7 @@ for(scenario in c(3, 4, 5, 6)){
       filename_append.tmp))
     
     ################################################################################
-    # make sequential EPPH plots
+    # make plots
     ################################################################################
     
     # models
@@ -179,38 +167,31 @@ for(scenario in c(3, 4, 5, 6)){
                   measurement.var = nugget)
     model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
                   measurement.var = nugget)
-    modelT = list(type = typeT, l = lT, signal.var = sigmasq_signal, 
-                  measurement.var = sigmasq_measuremt)
     
-    getPPHseq = function(design, model0, model1, modelT){
+    getPPHseq = function(design, model0, model1){
       PPH0_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
       PPH1_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
-      PPHT_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
       for(i in 1:length(as.vector(na.omit(design$y.new)))){
         y.tmp = c(design$y, as.vector(na.omit(design$y.new))[1:i])
         x.tmp = c(design$x, as.vector(na.omit(design$x.new))[1:i])
         PPHs.tmp = getHypothesesPosteriors(
-          prior.probs = rep(1 / 3, 3), 
+          prior.probs = prior_probs, 
           evidences = c(
             Evidence_gp(y.tmp, x.tmp, model0),
-            Evidence_gp(y.tmp, x.tmp, model1), 
-            Evidence_gp(y.tmp, x.tmp, modelT)
+            Evidence_gp(y.tmp, x.tmp, model1)
           )
         )
         PPH0_seq[i] = PPHs.tmp[1]
         PPH1_seq[i] = PPHs.tmp[2]
-        PPHT_seq[i] = PPHs.tmp[3]
       }
       if(length(PPH0_seq) < Nnew){
         PPH0_seq[(length(PPH0_seq) + 1):Nnew] = NA
         PPH1_seq[(length(PPH1_seq) + 1):Nnew] = NA
-        PPHT_seq[(length(PPHT_seq) + 1):Nnew] = NA
       }
       return(data.frame(
         index = 1:Nnew, 
-        "H0" = PPH0_seq, 
-        "H1" = PPH1_seq, 
-        "HT" = PPHT_seq
+        PPH0 = PPH0_seq, 
+        PPH1 = PPH1_seq
       ))
     }
     
@@ -227,13 +208,13 @@ for(scenario in c(3, 4, 5, 6)){
       r = random_sims[[j]]
       g = grid_sims[[j]]
       # sequence of PPHs for each design
-      PPH_seq.bh = getPPHseq(bh, model0, model1, modelT)
-      PPH_seq.qc = getPPHseq(qc, model0, model1, modelT)
-      PPH_seq.lo = getPPHseq(lo, model0, model1, modelT)
-      PPH_seq.qc2 = getPPHseq(qc2, model0, model1, modelT)
-      PPH_seq.lo2 = getPPHseq(lo2, model0, model1, modelT)
-      PPH_seq.r = getPPHseq(r, model0, model1, modelT)
-      PPH_seq.g = getPPHseq(g, model0, model1, modelT)
+      PPH_seq.bh = getPPHseq(bh, model0, model1)
+      PPH_seq.qc = getPPHseq(qc, model0, model1)
+      PPH_seq.lo = getPPHseq(lo, model0, model1)
+      PPH_seq.qc2 = getPPHseq(qc2, model0, model1)
+      PPH_seq.lo2 = getPPHseq(lo2, model0, model1)
+      PPH_seq.r = getPPHseq(r, model0, model1)
+      PPH_seq.g = getPPHseq(g, model0, model1)
       # master data frame
       PPH_seq.bh$type = "bh"
       PPH_seq.qc$type = "qcap"
@@ -249,20 +230,16 @@ for(scenario in c(3, 4, 5, 6)){
       PPH_seq = rbind(PPH_seq, PPH_seq.tmp)
     }
     
-    PPH0mean_seq = aggregate(PPH_seq$H0, by = list(PPH_seq$index, PPH_seq$type), 
+    PPH0mean_seq = aggregate(PPH_seq$PPH0, by = list(PPH_seq$index, PPH_seq$type), 
                              FUN = function(x) mean(x, na.rm = TRUE))
     names(PPH0mean_seq) = c("index", "type", "value")
     PPH0mean_seq$Hypothesis = "H0"
-    PPH1mean_seq = aggregate(PPH_seq$H1, by = list(PPH_seq$index, PPH_seq$type), 
+    PPH1mean_seq = aggregate(PPH_seq$PPH1, by = list(PPH_seq$index, PPH_seq$type), 
                              FUN = function(x) mean(x, na.rm = TRUE))
     names(PPH1mean_seq) = c("index", "type", "value")
     PPH1mean_seq$Hypothesis = "H1"
-    PPHTmean_seq = aggregate(PPH_seq$HT, by = list(PPH_seq$index, PPH_seq$type), 
-                             FUN = function(x) mean(x, na.rm = TRUE))
-    names(PPHTmean_seq) = c("index", "type", "value")
-    PPHTmean_seq$Hypothesis = "HT"
     
-    PPHmean_seq = rbind(PPH0mean_seq, PPH1mean_seq, PPHTmean_seq)
+    PPHmean_seq = rbind(PPH0mean_seq, PPH1mean_seq)
     epph.plt = ggplot(PPHmean_seq, aes(x = index, y = value, color = type, 
                                        linetype = type, shape = type)) + 
       facet_wrap(~Hypothesis) + 
@@ -277,7 +254,7 @@ for(scenario in c(3, 4, 5, 6)){
       plot = epph.plt, 
       width = 6, height = 4, units = c("in")
     )
-    
     print(paste("scenario", scenario, 
                 "################################################################"))
+    
 }

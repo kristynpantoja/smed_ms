@@ -1,15 +1,15 @@
 ################################################################################
 # last updated: 05/27/2021
-# purpose: to make grid design for all types of data
+# purpose: to test seqmedgp for scenarios 3, 4, 5, or 6
+#   where both hypotheses are misspecified
 
-typeT = "matern"
-lT = 0.01
+scenario = 6
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
 sims_dir = "gp_experiments/simulations_1initialpt"
-output_dir = paste0(sims_dir, "/spacefilling_designs/outputs")
+output_dir = paste0(sims_dir, "/simulations_20210626/scenarios_misspecified/outputs")
 data_dir = paste0(sims_dir, "/simulated_data")
 functions_dir = "functions"
 
@@ -67,7 +67,43 @@ x_seq = seq(from = xmin, to = xmax, length.out = numx)
 sigmasq_measuremt = 1e-10
 sigmasq_signal = 1
 
-# space-filling settings
+# boxhill settings
+nugget = sigmasq_measuremt
+prior_probs = rep(1 / 2, 2)
+
+################################################################################
+# Scenario settings
+################################################################################
+if(scenario == 3){
+  type01 = c("squaredexponential", "squaredexponential")
+  typeT = "matern"
+  l01= c(0.005, 0.01)
+  lT = 0.01
+} else if(scenario == 4){
+  type01 = c("matern", "squaredexponential")
+  typeT = "periodic"
+  l01= c(0.01, 0.01)
+  lT = 0.01
+} else if(scenario == 5){
+  type01 = c("matern", "periodic")
+  typeT = "squaredexponential"
+  l01= c(0.01, 0.01)
+  lT = 0.01
+} else if(scenario == 6){
+  type01 = c("squaredexponential", "periodic")
+  typeT = "matern"
+  l01= c(0.01, 0.01)
+  lT = 0.01
+} else{
+  stop("invalid scenario number")
+}
+
+################################################################################
+# models
+model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
+              measurement.var = nugget)
+model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
+              measurement.var = nugget)
 
 ################################################################################
 # import data
@@ -96,45 +132,28 @@ x_input_idx = ceiling(numx / 2)
 x_input = x_seq[x_input_idx]
 
 ################################################################################
-# space-filling design
-
-step_size = floor(length(x_seq) - 1) / (Nnew + 1)
-x.new.idx = round(c(
-  x_input_idx - 1:ceiling(Nnew / 2) * step_size, 
-  x_input_idx + 1:floor(Nnew / 2) * step_size
-))
-x.new.idx = sort(x.new.idx)
-# x.new.idx
-# plot(x = x.new.idx, y = rep(0, length(x.new.idx)), xlim = c(1, length(x_seq)))
-# points(x = x_input_idx, y = 0, col = 2)
-
-x.new = x_seq[x.new.idx]
-
-# simulations!
-registerDoRNG(rng.seed)
-spacefills = foreach(
-  i = 1:numSims
-) %dorng% {
-  y_seq = y_seq_mat[ , i]
-  y_input = y_seq[x_input_idx]
-  # new points' y
-  y.new = y_seq[x.new.idx]
-  list(x = x_input, x.idx = x_input_idx, y = y_input, 
-       x.new = x.new, x.new.idx = x.new.idx, y.new = y.new, 
-       function.values = y_seq)
-}
-
-filename_append.tmp = filename_append
-filename_append.tmp = paste0(
-  filename_append.tmp, 
-  "_seed", rng.seed,
-  ".rds"
-)
-saveRDS(spacefills, 
-        file = paste0(
-          output_dir,
-          "/grid", 
-          "_", typeT,
-          "_l", lT,
-          filename_append.tmp))
+# generate boxhills
+  
+  # simulations!
+  registerDoRNG(rng.seed)
+  boxhills = foreach(
+    i = 1:numSims
+  ) %dorng% {
+    y_seq = y_seq_mat[ , i]
+    y_input = y_seq[x_input_idx]
+    BHgp_m2(
+      y_input, x_input, x_input_idx, prior_probs, model0, model1, Nnew, 
+      x_seq, y_seq)
+  }
+  
+  filename_append.tmp = paste0(
+    filename_append, 
+    "_seed", rng.seed,
+    ".rds"
+  )
+  saveRDS(boxhills, 
+          file = paste0(
+            output_dir,
+            "/scenario", scenario, "_boxhill", 
+            filename_append.tmp))
 

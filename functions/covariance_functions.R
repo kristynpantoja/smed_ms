@@ -53,7 +53,7 @@ getCov = function(X1, X2, type, l = 1, signal.var = 1){
   Sigma = matrix(NA, nrow=dim(X1)[1], ncol = dim(X2)[1])
   for (i in 1:nrow(Sigma)) {
     for (j in 1:ncol(Sigma)) {
-      Sigma[i,j] = sqrt(signal.var) * 
+      Sigma[i,j] = signal.var * 
         phi(X1[i, , drop = FALSE], X2[j, , drop = FALSE], l)
     }
   }

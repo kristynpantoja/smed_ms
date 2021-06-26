@@ -2,29 +2,29 @@
 # last updated: 05/27/2021
 # purpose: to make random design for all types of data
 
-typeT = "squaredexponential"
+typeT = "matern"
 lT = 0.01
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
 sims_dir = "gp_experiments/simulations_1initialpt"
-output_home = paste0(sims_dir, "/spacefilling_designs/outputs")
-data_home = "gp_experiments/simulated_data"
-functions_home = "functions"
+output_dir = paste0(sims_dir, "/spacefilling_designs/outputs")
+data_dir = paste0(sims_dir, "/simulated_data")
+functions_dir = "functions"
 
 # for seqmed design
-source(paste(functions_home, "/SeqMEDgp.R", sep = ""))
-source(paste(functions_home, "/SeqMEDgp_batch.R", sep = ""))
-source(paste(functions_home, "/charge_function_q.R", sep = ""))
-source(paste(functions_home, "/covariance_functions.R", sep = ""))
-source(paste(functions_home, "/wasserstein_distance.R", sep = ""))
-source(paste(functions_home, "/gp_predictive.R", sep = ""))
+source(paste(functions_dir, "/SeqMEDgp.R", sep = ""))
+source(paste(functions_dir, "/SeqMEDgp_batch.R", sep = ""))
+source(paste(functions_dir, "/charge_function_q.R", sep = ""))
+source(paste(functions_dir, "/covariance_functions.R", sep = ""))
+source(paste(functions_dir, "/wasserstein_distance.R", sep = ""))
+source(paste(functions_dir, "/gp_predictive.R", sep = ""))
 
 # for box-hill design
-source(paste(functions_home, "/boxhill.R", sep = ""))
-source(paste(functions_home, "/boxhill_gp.R", sep = ""))
-source(paste(functions_home, "/kl_divergence.R", sep = ""))
+source(paste(functions_dir, "/boxhill.R", sep = ""))
+source(paste(functions_dir, "/boxhill_gp.R", sep = ""))
+source(paste(functions_dir, "/kl_divergence.R", sep = ""))
 
 library(mvtnorm)
 
@@ -108,7 +108,7 @@ if(!is.null(sigmasq_measuremt)){
   filename_append = "_noise"
 }
 simulated.data = readRDS(paste0(
-  data_home,
+  data_dir,
   "/", typeT,
   "_l", lT,
   filename_append, 
@@ -154,7 +154,7 @@ filename_append.tmp = paste0(
 )
 saveRDS(randoms, 
         file = paste0(
-          output_home,
+          output_dir,
           "/random", 
           "_", typeT,
           "_l", lT,

@@ -6,7 +6,7 @@ Evidence_gp = function(y, x, model){
     K_obs = getCov(x, x, model$type, model$l, model$signal.var)
   } else{
     K_obs = getCov(x, x, model$type, model$l, model$signal.var) + 
-      sqrt(model$measurement.var) * diag(length(y))
+      model$measurement.var * diag(length(y))
   }
   evidence = dmvnorm(
     y, mean = null_mean_vec, sigma = K_obs, log = FALSE)
@@ -66,8 +66,6 @@ BHgp_m2 = function(
   n, # number of new points
   candidates, # domain over which the function is evaluated 
   function.values, # true function values, evaluated over the domain
-  noise = TRUE,
-  measurement.var = NULL,
   seed = NULL
   # stopping.type = "tryCatch"
 ){
@@ -78,13 +76,6 @@ BHgp_m2 = function(
     stop("BH_m2 : preliminary y  is given, but not corresponding x")
   } else if(is.null(y) & !is.null(x)){ # x is not null, y is null (get y)
     y = function.values[x.idx]
-    if(noise){
-      if(is.null(measurement.var)){
-        stop("SeqMEDgp: noise = TRUE, but measurement.var = NULL.")
-      } else{
-        y = y + rnorm(length(x), 0, sqrt(measurement.var))
-      }
-    }
   } else if(is.null(x) & is.null(y)){ # both x and y are null, then us BH method
     stop("BHgp_m2: need input data, at least x!")
   } else{
@@ -139,13 +130,6 @@ BHgp_m2 = function(
     x.new.idx[i] = which.max(bhd_seq)
     x.new[i] = candidates[x.new.idx[i]]
     y.new[i] = function.values[x.new.idx[i]]
-    if(noise){
-      if(is.null(measurement.var)){
-        warning("SeqMEDgp: noise = TRUE, but measurement.var = NULL -- no noise to add.")
-      } else{
-        y.new[i] = y.new[i] + rnorm(1, 0, sqrt(measurement.var))
-      }
-    }
     # update current information
     x.cur = c(x.cur, x.new[i])
     y.cur = c(y.cur, y.new[i])

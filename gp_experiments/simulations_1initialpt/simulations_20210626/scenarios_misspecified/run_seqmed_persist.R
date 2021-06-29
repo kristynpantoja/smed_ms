@@ -168,7 +168,7 @@ k = 1
           file = paste0(
             output_dir,
             "/scenario", scenario, "_seqmed", 
-            "_leaveout_persist", 
+            "_persist", 
             "_seq", seq.type,
             filename_append.tmp))
 # }

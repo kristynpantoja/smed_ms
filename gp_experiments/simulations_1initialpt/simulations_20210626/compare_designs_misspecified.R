@@ -5,7 +5,7 @@ for(scenario in c(3, 4, 5, 6)){
     #   squared exponential vs. another squared exponential,
     #   where the true function is matern
     
-    # scenario = 4 # scenarios: 3, 4, 5, 6
+    # scenario = 3 # scenarios: 3, 4, 5, 6
     # input.type = 1 # 1 = extrapolation, 2 = inc spread, 3 = even coverage
     seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
     
@@ -13,23 +13,22 @@ for(scenario in c(3, 4, 5, 6)){
     # Sources/Libraries
     ################################################################################
     sims_dir = "gp_experiments/simulations_1initialpt"
-    modelsel_sims_dir = paste0(sims_dir, "/simulations_20210621")
-    output_home = paste0(modelsel_sims_dir, "/scenarios_misspecified/outputs")
-    data_home = "gp_experiments/simulated_data"
-    functions_home = "functions"
+    output_dir = paste0(sims_dir, "/simulations_20210626/scenarios_misspecified/outputs")
+    data_dir = paste0(sims_dir, "/simulated_data")
+    functions_dir = "functions"
     
     # for seqmed design
-    source(paste(functions_home, "/SeqMEDgp.R", sep = ""))
-    source(paste(functions_home, "/SeqMEDgp_batch.R", sep = ""))
-    source(paste(functions_home, "/charge_function_q.R", sep = ""))
-    source(paste(functions_home, "/covariance_functions.R", sep = ""))
-    source(paste(functions_home, "/wasserstein_distance.R", sep = ""))
-    source(paste(functions_home, "/gp_predictive.R", sep = ""))
+    source(paste(functions_dir, "/SeqMEDgp.R", sep = ""))
+    source(paste(functions_dir, "/SeqMEDgp_batch.R", sep = ""))
+    source(paste(functions_dir, "/charge_function_q.R", sep = ""))
+    source(paste(functions_dir, "/covariance_functions.R", sep = ""))
+    source(paste(functions_dir, "/wasserstein_distance.R", sep = ""))
+    source(paste(functions_dir, "/gp_predictive.R", sep = ""))
     
     # for box-hill design
-    source(paste(functions_home, "/boxhill.R", sep = ""))
-    source(paste(functions_home, "/boxhill_gp.R", sep = ""))
-    source(paste(functions_home, "/kl_divergence.R", sep = ""))
+    source(paste(functions_dir, "/boxhill.R", sep = ""))
+    source(paste(functions_dir, "/boxhill_gp.R", sep = ""))
+    source(paste(functions_dir, "/kl_divergence.R", sep = ""))
     
     library(mvtnorm)
     rng.seed = 123
@@ -100,7 +99,7 @@ for(scenario in c(3, 4, 5, 6)){
       filename_append = "_noise"
     }
     simulated.data = readRDS(paste0(
-      data_home,
+      data_dir,
       "/", typeT,
       "_l", lT,
       filename_append, 
@@ -129,29 +128,29 @@ for(scenario in c(3, 4, 5, 6)){
       ".rds"
     )
     boxhill_sims = readRDS(paste0(
-      output_home,
+      output_dir,
       "/scenario", scenario, "_boxhill", 
       filename_append.tmp))
     leaveout_sims = readRDS(paste0(
-      output_home,
+      output_dir,
       "/scenario", scenario, "_seqmed", 
       "_leaveout", 
       "_seq", seq.type,
       filename_append.tmp))
     qcap_sims = readRDS(paste0(
-      output_home,
+      output_dir,
       "/scenario", scenario, "_seqmed", 
       "_cap",
       "_seq", seq.type,
       filename_append.tmp))
-    leaveout_persist_sims = readRDS(paste0(
-      output_home,
+    persist_sims = readRDS(paste0(
+      output_dir,
       "/scenario", scenario, "_seqmed", 
-      "_leaveout_persist", 
+      "_persist", 
       "_seq", seq.type,
       filename_append.tmp))
     qcap_persist_sims = readRDS(paste0(
-      output_home,
+      output_dir,
       "/scenario", scenario, "_seqmed", 
       "_cap_persist",
       "_seq", seq.type,
@@ -178,9 +177,9 @@ for(scenario in c(3, 4, 5, 6)){
     idx = 1
     designs = list(
       boxhill_sims[[idx]], qcap_sims[[idx]], leaveout_sims[[idx]], 
-      qcap_persist_sims[[idx]], leaveout_persist_sims[[idx]])
-    design.names = c("bh", "qcap", "lo", "qcap2", "lo2")
-    design.levels = c("lo", "lo2", "qcap", "qcap2", "bh")
+      qcap_persist_sims[[idx]], persist_sims[[idx]])
+    design.names = c("bh", "qcap", "lo", "qcap2", "keepq")
+    design.levels = c("lo", "keepq", "qcap", "qcap2", "bh")
     
     x.new.mat = matrix(NA, nrow = Nnew, ncol = length(designs))
     for(i in 1:length(designs)){
@@ -210,7 +209,7 @@ for(scenario in c(3, 4, 5, 6)){
     plot(des.plt)
     
     ggsave(
-      filename = paste0("20210622_scen", scenario, "_design.pdf"), 
+      filename = paste0("20210626_scen", scenario, "_design.pdf"), 
       plot = des.plt, 
       width = 6, height = 4, units = c("in")
     )

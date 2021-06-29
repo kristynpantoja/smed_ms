@@ -13,23 +13,22 @@ for(scenario in c(1, 2)){
     # Sources/Libraries
     ################################################################################
     sims_dir = "gp_experiments/simulations_1initialpt"
-    modelsel_sims_dir = paste0(sims_dir, "/simulations_20210621")
-    output_home = paste0(modelsel_sims_dir, "/scenarios_h1true/outputs")
-    data_home = "gp_experiments/simulated_data"
-    functions_home = "functions"
+    output_dir = paste0(sims_dir, "/simulations_20210626/scenarios_h1true/outputs")
+    data_dir = paste0(sims_dir, "/simulated_data")
+    functions_dir = "functions"
     
     # for seqmed design
-    source(paste(functions_home, "/SeqMEDgp.R", sep = ""))
-    source(paste(functions_home, "/SeqMEDgp_batch.R", sep = ""))
-    source(paste(functions_home, "/charge_function_q.R", sep = ""))
-    source(paste(functions_home, "/covariance_functions.R", sep = ""))
-    source(paste(functions_home, "/wasserstein_distance.R", sep = ""))
-    source(paste(functions_home, "/gp_predictive.R", sep = ""))
+    source(paste(functions_dir, "/SeqMEDgp.R", sep = ""))
+    source(paste(functions_dir, "/SeqMEDgp_batch.R", sep = ""))
+    source(paste(functions_dir, "/charge_function_q.R", sep = ""))
+    source(paste(functions_dir, "/covariance_functions.R", sep = ""))
+    source(paste(functions_dir, "/wasserstein_distance.R", sep = ""))
+    source(paste(functions_dir, "/gp_predictive.R", sep = ""))
     
     # for box-hill design
-    source(paste(functions_home, "/boxhill.R", sep = ""))
-    source(paste(functions_home, "/boxhill_gp.R", sep = ""))
-    source(paste(functions_home, "/kl_divergence.R", sep = ""))
+    source(paste(functions_dir, "/boxhill.R", sep = ""))
+    source(paste(functions_dir, "/boxhill_gp.R", sep = ""))
+    source(paste(functions_dir, "/kl_divergence.R", sep = ""))
     
     library(mvtnorm)
     rng.seed = 123
@@ -88,7 +87,7 @@ for(scenario in c(1, 2)){
       filename_append = "_noise"
     }
     simulated.data = readRDS(paste0(
-      data_home,
+      data_dir,
       "/", typeT,
       "_l", lT,
       filename_append, 
@@ -117,29 +116,29 @@ for(scenario in c(1, 2)){
       ".rds"
     )
     boxhill_sims = readRDS(paste0(
-      output_home,
+      output_dir,
       "/scenario", scenario, "_boxhill", 
       filename_append.tmp))
     leaveout_sims = readRDS(paste0(
-      output_home,
+      output_dir,
       "/scenario", scenario, "_seqmed", 
       "_leaveout", 
       "_seq", seq.type,
       filename_append.tmp))
     qcap_sims = readRDS(paste0(
-      output_home,
+      output_dir,
       "/scenario", scenario, "_seqmed", 
       "_cap",
       "_seq", seq.type,
       filename_append.tmp))
-    leaveout_persist_sims = readRDS(paste0(
-      output_home,
+    persist_sims = readRDS(paste0(
+      output_dir,
       "/scenario", scenario, "_seqmed", 
-      "_leaveout_persist", 
+      "_persist", 
       "_seq", seq.type,
       filename_append.tmp))
     qcap_persist_sims = readRDS(paste0(
-      output_home,
+      output_dir,
       "/scenario", scenario, "_seqmed", 
       "_cap_persist",
       "_seq", seq.type,
@@ -185,8 +184,10 @@ for(scenario in c(1, 2)){
         PPH1_seq[i] = PPHs.tmp[2]
       }
       if(length(PPH0_seq) < Nnew){
-        PPH0_seq[(length(PPH0_seq) + 1):Nnew] = NA
-        PPH1_seq[(length(PPH1_seq) + 1):Nnew] = NA
+        PPH0_seq[(length(PPH0_seq) + 1):Nnew] = PPH0_seq[length(PPH0_seq)]
+      }
+      if(length(PPH1_seq) < Nnew){
+        PPH1_seq[(length(PPH1_seq) + 1):Nnew] = PPH1_seq[length(PPH1_seq)]
       }
       return(data.frame(
         index = 1:Nnew, 
@@ -204,7 +205,7 @@ for(scenario in c(1, 2)){
       qc = qcap_sims[[j]]
       lo = leaveout_sims[[j]]
       qc2 = qcap_persist_sims[[j]]
-      lo2 = leaveout_persist_sims[[j]]
+      kq2 = persist_sims[[j]]
       r = random_sims[[j]]
       g = grid_sims[[j]]
       # sequence of PPHs for each design
@@ -212,7 +213,7 @@ for(scenario in c(1, 2)){
       PPH_seq.qc = getPPHseq(qc, model0, model1)
       PPH_seq.lo = getPPHseq(lo, model0, model1)
       PPH_seq.qc2 = getPPHseq(qc2, model0, model1)
-      PPH_seq.lo2 = getPPHseq(lo2, model0, model1)
+      PPH_seq.kq2 = getPPHseq(kq2, model0, model1)
       PPH_seq.r = getPPHseq(r, model0, model1)
       PPH_seq.g = getPPHseq(g, model0, model1)
       # master data frame
@@ -220,11 +221,11 @@ for(scenario in c(1, 2)){
       PPH_seq.qc$type = "qcap"
       PPH_seq.lo$type = "lo"
       PPH_seq.qc2$type = "qcap2"
-      PPH_seq.lo2$type = "lo2"
+      PPH_seq.kq2$type = "keepq"
       PPH_seq.r$type = "random"
       PPH_seq.g$type = "grid"
       PPH_seq.tmp = rbind(
-        PPH_seq.bh, PPH_seq.qc, PPH_seq.lo, PPH_seq.qc2, PPH_seq.lo2, 
+        PPH_seq.bh, PPH_seq.qc, PPH_seq.lo, PPH_seq.qc2, PPH_seq.kq2, 
         PPH_seq.r, PPH_seq.g)
       PPH_seq.tmp$sim = j
       PPH_seq = rbind(PPH_seq, PPH_seq.tmp)
@@ -250,7 +251,7 @@ for(scenario in c(1, 2)){
     plot(epph.plt)
     
     ggsave(
-      filename = paste0("20210622_scen", scenario, "_epph.pdf"), 
+      filename = paste0("20210626_scen", scenario, "_epph.pdf"), 
       plot = epph.plt, 
       width = 6, height = 4, units = c("in")
     )

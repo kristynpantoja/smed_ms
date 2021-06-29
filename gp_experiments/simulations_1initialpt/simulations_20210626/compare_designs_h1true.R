@@ -13,23 +13,22 @@ for(scenario in c(1, 2)){
   # Sources/Libraries
   ################################################################################
   sims_dir = "gp_experiments/simulations_1initialpt"
-  modelsel_sims_dir = paste0(sims_dir, "/simulations_20210621")
-  output_home = paste0(modelsel_sims_dir, "/scenarios_h1true/outputs")
-  data_home = "gp_experiments/simulated_data"
-  functions_home = "functions"
+  output_dir = paste0(sims_dir, "/simulations_20210626/scenarios_h1true/outputs")
+  data_dir = paste0(sims_dir, "/simulated_data")
+  functions_dir = "functions"
   
   # for seqmed design
-  source(paste(functions_home, "/SeqMEDgp.R", sep = ""))
-  source(paste(functions_home, "/SeqMEDgp_batch.R", sep = ""))
-  source(paste(functions_home, "/charge_function_q.R", sep = ""))
-  source(paste(functions_home, "/covariance_functions.R", sep = ""))
-  source(paste(functions_home, "/wasserstein_distance.R", sep = ""))
-  source(paste(functions_home, "/gp_predictive.R", sep = ""))
+  source(paste(functions_dir, "/SeqMEDgp.R", sep = ""))
+  source(paste(functions_dir, "/SeqMEDgp_batch.R", sep = ""))
+  source(paste(functions_dir, "/charge_function_q.R", sep = ""))
+  source(paste(functions_dir, "/covariance_functions.R", sep = ""))
+  source(paste(functions_dir, "/wasserstein_distance.R", sep = ""))
+  source(paste(functions_dir, "/gp_predictive.R", sep = ""))
   
   # for box-hill design
-  source(paste(functions_home, "/boxhill.R", sep = ""))
-  source(paste(functions_home, "/boxhill_gp.R", sep = ""))
-  source(paste(functions_home, "/kl_divergence.R", sep = ""))
+  source(paste(functions_dir, "/boxhill.R", sep = ""))
+  source(paste(functions_dir, "/boxhill_gp.R", sep = ""))
+  source(paste(functions_dir, "/kl_divergence.R", sep = ""))
   
   library(mvtnorm)
   rng.seed = 123
@@ -64,14 +63,6 @@ for(scenario in c(1, 2)){
   sigmasq_measuremt = 1e-10
   sigmasq_signal = 1
   
-  # shared settings
-  # if(scenario == 1){
-  #   nuggets = c(1e-15, sigmasq_measuremt)
-  # } else if(scenario == 2){
-  #   nuggets = c(1e-5, sigmasq_measuremt)
-  # } else{
-  #   stop("invalid scenario")
-  # }
   nugget = sigmasq_measuremt
   prior_probs = rep(1 / 2, 2)
   
@@ -94,7 +85,7 @@ for(scenario in c(1, 2)){
     filename_append = "_noise"
   }
   simulated.data = readRDS(paste0(
-    data_home,
+    data_dir,
     "/", typeT,
     "_l", lT,
     filename_append, 
@@ -123,29 +114,29 @@ for(scenario in c(1, 2)){
     ".rds"
   )
   boxhill_sims = readRDS(paste0(
-    output_home,
+    output_dir,
     "/scenario", scenario, "_boxhill", 
     filename_append.tmp))
   leaveout_sims = readRDS(paste0(
-    output_home,
+    output_dir,
     "/scenario", scenario, "_seqmed", 
     "_leaveout", 
     "_seq", seq.type,
     filename_append.tmp))
   qcap_sims = readRDS(paste0(
-    output_home,
+    output_dir,
     "/scenario", scenario, "_seqmed", 
     "_cap",
     "_seq", seq.type,
     filename_append.tmp))
-  leaveout_persist_sims = readRDS(paste0(
-    output_home,
+  persist_sims = readRDS(paste0(
+    output_dir,
     "/scenario", scenario, "_seqmed", 
-    "_leaveout_persist", 
+    "_persist", 
     "_seq", seq.type,
     filename_append.tmp))
   qcap_persist_sims = readRDS(paste0(
-    output_home,
+    output_dir,
     "/scenario", scenario, "_seqmed", 
     "_cap_persist",
     "_seq", seq.type,
@@ -172,9 +163,9 @@ for(scenario in c(1, 2)){
   idx = 1
   designs = list(
     boxhill_sims[[idx]], qcap_sims[[idx]], leaveout_sims[[idx]], 
-    qcap_persist_sims[[idx]], leaveout_persist_sims[[idx]])
-  design.names = c("bh", "qcap", "lo", "qcap2", "lo2")
-  design.levels = c("lo", "lo2", "qcap", "qcap2", "bh")
+    qcap_persist_sims[[idx]], persist_sims[[idx]])
+  design.names = c("bh", "qcap", "lo", "qcap2", "keepq")
+  design.levels = c("lo", "keepq", "qcap", "qcap2", "bh")
   
   x.new.mat = matrix(NA, nrow = Nnew, ncol = length(designs))
   for(i in 1:length(designs)){
@@ -204,7 +195,7 @@ for(scenario in c(1, 2)){
   plot(des.plt)
   
   ggsave(
-    filename = paste0("20210622_scen", scenario, "_design.pdf"), 
+    filename = paste0("20210626_scen", scenario, "_design.pdf"), 
     plot = des.plt, 
     width = 6, height = 4, units = c("in")
   )

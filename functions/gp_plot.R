@@ -1,12 +1,12 @@
 
 
 plotGP = function(
-  x.seq, function.values, x.data, y.data, kernel, length.scale, 
-  xmin = 0, xmax = 1, signal.var = 1, measurement.var = NULL
+  x.seq, function.values, x.data, y.data, kernel, length.scale, period,
+  xmin = 0, xmax = 1, signal.var, measurement.var = NULL
 ){
   gpfit = getGPPredictive(
     x = x.seq, x.input = x.data, y.input = y.data, type = kernel, 
-    l = length.scale, signal.var = signal.var, 
+    l = length.scale, p = period, signal.var = signal.var, 
     measurement.var = measurement.var)
   
     ggstar = data.table(

@@ -21,8 +21,7 @@ phi_matern = function(Xi, Xj, l, nu = 3 / 2){
 
 # a periodic kernel that allows to adjust the period, p. 
 # https://www.cs.toronto.edu/~duvenaud/cookbook/
-phi_periodic = function(Xi, Xj, l){
-  p = 0.26 #0.25 # pi / 24
+phi_periodic = function(Xi, Xj, l, p){
   r = abs(Xi - Xj)
   sinsq_arg = pi * r / p
   exp(-2 * (sin(sinsq_arg))^2 / l^2)
@@ -30,7 +29,8 @@ phi_periodic = function(Xi, Xj, l){
 
 ### covariance matrix ---
 
-getCov = function(X1, X2, type, l = 1, signal.var = 1){
+getCov = function(X1, X2, type, l = 1, p = 0.26, signal.var = 1){
+  if(is.null(p)) p = 0.26
   phi = NULL
   if(type == 1 | type == "squaredexponential" | type == "sqexp" | 
      type == "gaussian" | type == "s" | type == "g") {
@@ -42,7 +42,9 @@ getCov = function(X1, X2, type, l = 1, signal.var = 1){
   } else if(type == 4 | type == "matern" | type == "mat" | type == "m") {
     phi = phi_matern2
   } else if(type == 5 | type == "periodic" | type == "p") {
-    phi = phi_periodic
+    phi = function(X1, X2, l){
+      phi_periodic(X1, X2, l, p = p)
+    }
   } else{
     stop("invalid type specification of covariance function for GP")
   }

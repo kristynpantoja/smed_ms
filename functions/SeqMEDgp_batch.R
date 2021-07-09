@@ -247,15 +247,19 @@ SeqMEDgp_keepq_batch = function(
   
   # posterior distribution of beta
   if(is.null(model0$measurement.var)){
-    Kinv0 = solve(getCov(initD, initD, model0$type, model0$l))
+    Kinv0 = solve(getCov(
+      initD, initD, model0$type, model0$l, model0$p, model0$signal.var))
   } else{
-    Kinv0 = solve(getCov(initD, initD, model0$type, model0$l) + 
+    Kinv0 = solve(getCov(
+      initD, initD, model0$type, model0$l, model0$p, model0$signal.var) + 
                     model0$measurement.var * diag(initN))
   }
   if(is.null(model1$measurement.var)){
-    Kinv1 = solve(getCov(initD, initD, model1$type, model1$l))
+    Kinv1 = solve(getCov(
+      initD, initD, model1$type, model1$l, model1$p, model1$signal.var))
   } else{
-    Kinv1 = solve(getCov(initD, initD, model1$type, model1$l) + 
+    Kinv1 = solve(getCov(
+      initD, initD, model1$type, model1$l, model1$p, model1$signal.var) + 
                     model1$measurement.var * diag(initN))
   }
   

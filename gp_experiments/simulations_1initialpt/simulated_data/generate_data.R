@@ -3,7 +3,8 @@
 # purpose: to test seqmedgp for scenarios 1 or 2
 #   where H1 is true
 
-typeT = "matern"
+typeT = "squaredexponential"
+pT = NULL # 0.26, {0.1, 0.05 for MSP scenario 4}
 lT = 0.01
 
 ################################################################################
@@ -64,7 +65,7 @@ sigmasq_signal = 1
 ################################################################################
 # generate functions 
 registerDoRNG(rng.seed)
-null_cov = getCov(x_seq, x_seq, typeT, lT, sigmasq_signal)
+null_cov = getCov(x_seq, x_seq, typeT, lT, pT, sigmasq_signal)
 null_mean = rep(0, numx)
 
 # the function values
@@ -79,6 +80,100 @@ if(is.null(sigmasq_measuremt)){
   filename_append = "_noise"
 }
 
+# check values with old version
+
+y_seq_mat_old = readRDS(paste0(
+  output_home,
+  "/", typeT,
+  "_l", lT,
+  filename_append, 
+  "_seed", rng.seed,
+  ".rds"))
+
+all.equal(y_seq_mat, y_seq_mat_old$function_values_mat)
+# true for periodic with p = NULL & p = 0.26 (default)
+# true for matern
+# true for squaredexponential
+
+# plot GPs with space-filling design
+
+# initial design
+x_input_idx = ceiling(numx / 2)
+x_input = x_seq[x_input_idx]
+
+# read in the data
+# filename_append.tmp for all methods alike
+filename_append.tmp = paste0(
+  filename_append, 
+  "_seed", rng.seed,
+  ".rds"
+)
+# space-filling sims
+random_sims = readRDS(paste0(
+  "gp_experiments/simulations_1initialpt", 
+  "/spacefilling_designs/outputs/random", 
+  "_", typeT,
+  "_l", lT,
+  filename_append.tmp))
+grid_sims = readRDS(paste0(
+  "gp_experiments/simulations_1initialpt",
+  "/spacefilling_designs/outputs/grid", 
+  "_", typeT,
+  "_l", lT,
+  filename_append.tmp))
+
+# choose the simulation and the design
+idx = 1
+y_seq = y_seq_mat[, idx]
+y_input = y_seq[x_input_idx]
+x_new = random_sims[[idx]]$x.new
+x_new_idx = random_sims[[idx]]$x.new.idx
+# x_new = grid_sims[[idx]]$x.new
+# x_new_idx = grid_sims[[idx]]$x.new.idx
+y_new = y_seq[x_new_idx]
+
+# fit the true GP kernel
+HT_predfn = getGPPredictive(x_seq, x_input, y_input, typeT, lT, 1, 
+                            measurement.var = sigmasq_measuremt)
+err = 2 * sqrt(diag(HT_predfn$pred_var))
+ggdata = data.table(
+  x = x_seq, 
+  `True Function` = y_seq, 
+  `HT Pred Mean` = HT_predfn$pred_mean, 
+  lower = HT_predfn$pred_mean - err, 
+  upper = HT_predfn$pred_mean + err
+)
+ggdata_pts = data.table(
+  x = c(x_input, x_new), y = c(y_input, y_new), 
+  color = c(rep(gg_color_hue(5)[2], length(x_input)), 
+            rep(gg_color_hue(5)[1], length(x_new))), 
+  shape = c(rep(8, length(x_input)), 
+            rep(16, length(x_new)))
+)
+plt = ggplot(ggdata) + 
+  geom_path(aes(x = x, y = `True Function`)) + 
+  geom_ribbon(aes(x = x, ymin = lower, ymax = upper), 
+              color = gg_color_hue(5)[3], linetype = 2, 
+              fill = gg_color_hue(5)[3], alpha = 0.1) +
+  geom_path(aes(x = x, y = `HT Pred Mean`), color = gg_color_hue(5)[3]) +
+  geom_point(data = ggdata_pts, mapping = aes(x = x, y = y), 
+             inherit.aes = FALSE, color = ggdata_pts$color, 
+             shape = ggdata_pts$shape, 
+             size = 3) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  labs(y = "y", x = "x", fill = "Function", color = "Function")
+if(typeT == "periodic"){
+  if(is.null(pT)) pT = 0.26
+  plt = plt + geom_vline(xintercept = pT * (0:floor((xmax - xmin) / pT)), 
+                         color = "blue", alpha = 0.5)
+}
+plot(plt)
+
+
+
+# save the results!
 saveRDS(
   list(
     x = x_seq, 

@@ -3,9 +3,9 @@
 Evidence_gp = function(y, x, model){
   null_mean_vec = rep(0, length(y))
   if(is.null(model$measurement.var)){
-    K_obs = getCov(x, x, model$type, model$l, model$signal.var)
+    K_obs = getCov(x, x, model$type, model$l, model$p, model$signal.var)
   } else{
-    K_obs = getCov(x, x, model$type, model$l, model$signal.var) + 
+    K_obs = getCov(x, x, model$type, model$l, model$p, model$signal.var) + 
       model$measurement.var * diag(length(y))
   }
   evidence = dmvnorm(

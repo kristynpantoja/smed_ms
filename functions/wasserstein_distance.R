@@ -76,8 +76,10 @@ WNlmvs = function(
 WNgp = function(x, Kinv0, Kinv1, initD, y, model0, model1){
   
   # posterior distribution of beta
-  k0 = t(as.matrix(getCov(x, initD, model0$type, model0$l, model0$signal.var)))
-  k1 = t(as.matrix(getCov(x, initD, model1$type, model1$l, model1$signal.var)))
+  k0 = t(as.matrix(getCov(
+    x, initD, model0$type, model0$l, model0$p, model0$signal.var)))
+  k1 = t(as.matrix(getCov(
+    x, initD, model1$type, model1$l, model1$p, model1$signal.var)))
   
   # posterior predictive distribution of y, for candidate x
   postpredy_mu0 = t(k0) %*% Kinv0 %*% y
@@ -95,10 +97,12 @@ WNgp = function(x, Kinv0, Kinv1, initD, y, model0, model1){
 # really slow, because have to re-compute Kinv0, Kinv1
 WNgp.new = function(x, Kinv0, Kinv1, initD, y, model0, model1){
   
-  gp0 = getGPPredictive(x, initD, y, model0$type, model0$l, model0$signal.var, 
-                        model0$error.var)
-  gp1 = getGPPredictive(x, initD, y, model1$type, model1$l, model1$signal.var, 
-                        model1$error.var)
+  gp0 = getGPPredictive(
+    x, initD, y, model0$type, model0$l, model0$p, model0$signal.var, 
+    model0$error.var)
+  gp1 = getGPPredictive(
+    x, initD, y, model1$type, model1$l, model1$p, model1$signal.var, 
+    model1$error.var)
   
   # error checking
   if(gp0$pred_var < 0) gp0$pred_var = 0 # only happens when too-small

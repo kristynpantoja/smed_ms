@@ -1,12 +1,12 @@
 
-scenario = 4 # scenarios: 3,4,5,6
+scenario = 1 # scenarios: 1, 2
 seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
 sims_dir = "gp_experiments/simulations_1initialpt"
-output_dir = paste0(sims_dir, "/simulations_20210626/scenarios_misspecified/outputs")
+output_dir = paste0(sims_dir, "/simulations_20210626/scenarios_h1true/outputs")
 data_dir = paste0(sims_dir, "/simulated_data")
 functions_dir = "functions"
 
@@ -17,7 +17,6 @@ source(paste(functions_dir, "/charge_function_q.R", sep = ""))
 source(paste(functions_dir, "/covariance_functions.R", sep = ""))
 source(paste(functions_dir, "/wasserstein_distance.R", sep = ""))
 source(paste(functions_dir, "/gp_predictive.R", sep = ""))
-source(paste(functions_dir, "/gp_plot.R", sep = ""))
 
 # for box-hill design
 source(paste(functions_dir, "/boxhill.R", sep = ""))
@@ -34,7 +33,6 @@ gg_color_hue = function(n) {
   hues = seq(15, 275, length = n + 1)
   hcl(h = hues, l = 65, c = 100)[1:n]
 }
-library(data.table)
 
 ################################################################################
 # simulation settings, shared for both scenarios
@@ -66,27 +64,14 @@ prior_probs = rep(1 / 2, 2)
 ################################################################################
 # Scenario settings
 ################################################################################
-if(scenario == 3){
-  type01 = c("squaredexponential", "squaredexponential")
-  typeT = "matern"
-  l01= c(0.005, 0.01)
-  lT = 0.01
-} else if(scenario == 4){
-  type01 = c("matern", "squaredexponential")
-  typeT = "periodic"
-  l01= c(0.01 / 10, 0.01 / 10)
-  lT = 0.01
-} else if(scenario == 5){
+if(scenario == 1){
+  type01 = c("squaredexponential", "matern")
+} else if(scenario == 2){
   type01 = c("matern", "periodic")
-  typeT = "squaredexponential"
-  l01= c(0.01, 0.01)
-  lT = 0.01
-} else if(scenario == 6){
-  type01 = c("squaredexponential", "periodic")
-  typeT = "matern"
-  l01= c(0.01, 0.01)
-  lT = 0.01
 }
+typeT = type01[2]
+l01= c(0.01, 0.01)
+lT = l01[2]
 
 ################################################################################
 # import data
@@ -174,27 +159,22 @@ model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal,
               measurement.var = nugget)
 model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
               measurement.var = nugget)
-modelT = list(type = typeT, l = lT, signal.var = sigmasq_signal, 
-              measurement.var = sigmasq_measuremt)
 
-getPPHseq = function(design, model0, model1, modelT){
+getPPHseq = function(design, model0, model1){
   PPH0_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
   PPH1_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
-  PPHT_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
   for(i in 1:length(as.vector(na.omit(design$y.new)))){
     y.tmp = c(design$y, as.vector(na.omit(design$y.new))[1:i])
     x.tmp = c(design$x, as.vector(na.omit(design$x.new))[1:i])
     PPHs.tmp = getHypothesesPosteriors(
-      prior.probs = rep(1 / 3, 3), 
+      prior.probs = prior_probs, 
       evidences = c(
         Evidence_gp(y.tmp, x.tmp, model0),
-        Evidence_gp(y.tmp, x.tmp, model1), 
-        Evidence_gp(y.tmp, x.tmp, modelT)
+        Evidence_gp(y.tmp, x.tmp, model1)
       )
     )
     PPH0_seq[i] = PPHs.tmp[1]
     PPH1_seq[i] = PPHs.tmp[2]
-    PPHT_seq[i] = PPHs.tmp[3]
   }
   if(length(PPH0_seq) < Nnew){
     PPH0_seq[(length(PPH0_seq) + 1):Nnew] = PPH0_seq[length(PPH0_seq)]
@@ -202,14 +182,10 @@ getPPHseq = function(design, model0, model1, modelT){
   if(length(PPH1_seq) < Nnew){
     PPH1_seq[(length(PPH1_seq) + 1):Nnew] = PPH1_seq[length(PPH1_seq)]
   }
-  if(length(PPHT_seq) < Nnew){
-    PPHT_seq[(length(PPHT_seq) + 1):Nnew] = PPHT_seq[length(PPHT_seq)]
-  }
   return(data.frame(
     index = 1:Nnew, 
-    "H0" = PPH0_seq, 
-    "H1" = PPH1_seq, 
-    "HT" = PPHT_seq
+    PPH0 = PPH0_seq, 
+    PPH1 = PPH1_seq
   ))
 }
 
@@ -222,47 +198,44 @@ for(j in 1:numSims){
   qc = qcap_sims[[j]]
   lo = leaveout_sims[[j]]
   qc2 = qcap_persist_sims[[j]]
-  kq = persist_sims[[j]]
+  kq2 = persist_sims[[j]]
   r = random_sims[[j]]
   g = grid_sims[[j]]
   # sequence of PPHs for each design
-  PPH_seq.bh = getPPHseq(bh, model0, model1, modelT)
-  PPH_seq.qc = getPPHseq(qc, model0, model1, modelT)
-  PPH_seq.lo = getPPHseq(lo, model0, model1, modelT)
-  PPH_seq.qc2 = getPPHseq(qc2, model0, model1, modelT)
-  PPH_seq.kq = getPPHseq(kq, model0, model1, modelT)
-  PPH_seq.r = getPPHseq(r, model0, model1, modelT)
-  PPH_seq.g = getPPHseq(g, model0, model1, modelT)
+  PPH_seq.bh = getPPHseq(bh, model0, model1)
+  PPH_seq.qc = getPPHseq(qc, model0, model1)
+  PPH_seq.lo = getPPHseq(lo, model0, model1)
+  PPH_seq.qc2 = getPPHseq(qc2, model0, model1)
+  PPH_seq.lo2 = getPPHseq(kq2, model0, model1)
+  PPH_seq.r = getPPHseq(r, model0, model1)
+  PPH_seq.g = getPPHseq(g, model0, model1)
   # master data frame
   PPH_seq.bh$type = "bh"
   PPH_seq.qc$type = "qcap"
   PPH_seq.lo$type = "lo"
   PPH_seq.qc2$type = "qcap2"
-  PPH_seq.kq$type = "keepq"
+  PPH_seq.lo2$type = "keepq"
   PPH_seq.r$type = "random"
   PPH_seq.g$type = "grid"
   PPH_seq.tmp = rbind(
-    PPH_seq.bh, PPH_seq.qc, PPH_seq.lo, PPH_seq.qc2, PPH_seq.kq, 
+    PPH_seq.bh, PPH_seq.qc, PPH_seq.lo, PPH_seq.qc2, PPH_seq.lo2, 
     PPH_seq.r, PPH_seq.g)
   PPH_seq.tmp$sim = j
   PPH_seq = rbind(PPH_seq, PPH_seq.tmp)
 }
 
-PPH0mean_seq = aggregate(PPH_seq$H0, by = list(PPH_seq$index, PPH_seq$type), 
+PPH0mean_seq = aggregate(PPH_seq$PPH0, by = list(PPH_seq$index, PPH_seq$type), 
                          FUN = function(x) mean(x, na.rm = TRUE))
 names(PPH0mean_seq) = c("index", "type", "value")
 PPH0mean_seq$Hypothesis = "H0"
-PPH1mean_seq = aggregate(PPH_seq$H1, by = list(PPH_seq$index, PPH_seq$type), 
+PPH1mean_seq = aggregate(PPH_seq$PPH1, by = list(PPH_seq$index, PPH_seq$type), 
                          FUN = function(x) mean(x, na.rm = TRUE))
 names(PPH1mean_seq) = c("index", "type", "value")
 PPH1mean_seq$Hypothesis = "H1"
-PPHTmean_seq = aggregate(PPH_seq$HT, by = list(PPH_seq$index, PPH_seq$type), 
-                         FUN = function(x) mean(x, na.rm = TRUE))
-names(PPHTmean_seq) = c("index", "type", "value")
-PPHTmean_seq$Hypothesis = "HT"
+
+PPHmean_seq = rbind(PPH0mean_seq, PPH1mean_seq)
 
 # plot mean curves
-PPHmean_seq = rbind(PPH0mean_seq, PPH1mean_seq, PPHTmean_seq)
 epph.plt = ggplot(PPHmean_seq, aes(x = index, y = value, color = type, 
                                    linetype = type, shape = type)) + 
   facet_wrap(~Hypothesis) + 
@@ -272,9 +245,9 @@ epph.plt = ggplot(PPHmean_seq, aes(x = index, y = value, color = type,
   ylim(0, 1)
 plot(epph.plt)
 
-# plot the numSims individual posterior probability of HT curves
+# plot the numSims individual posterior probability of H1 curves
 PPH_seq_bh = dplyr::filter(PPH_seq, type == "bh")
-ggplot(PPH_seq_bh, aes(x = index, y = HT)) +
+ggplot(PPH_seq_bh, aes(x = index, y = PPH1)) +
   facet_wrap(~sim) +
   geom_path() + 
   geom_point() +
@@ -288,7 +261,6 @@ ggplot(PPH_seq_bh, aes(x = index, y = HT)) +
 
 plt_list = list()
 for(j in 1:numSims){
-  print(boxhill_sims[[j]]$x.new)
   data.gg = data.frame(
     index = as.character(0:Nnew), 
     design = c(x_input, boxhill_sims[[j]]$x.new), 
@@ -308,111 +280,7 @@ for(j in 1:numSims){
           axis.title.y = element_blank(), axis.text.y = element_blank())
   # plot(plt_list[[j]])
 }
-# ggarrange(plotlist = plt_list, nrow = 5, ncol = 5)
-
-################################################################################
-# investigate one simulation only 
-################################################################################
-
-idx = 1
-y_seq = y_seq_mat[, idx]
-y_input = y_seq[x_input_idx]
-x_new = boxhill_sims[[idx]]$x.new
-x_new_idx = boxhill_sims[[idx]]$x.new.idx
-# x_new = qcap_sims[[idx]]$x.new
-# x_new_idx = qcap_sims[[idx]]$x.new.idx
-y_new = y_seq[x_new_idx]
-
-# ggplot(data.frame(x = x_seq, y = y_seq), aes(x = x, y = y)) + 
-#   geom_vline(xintercept = c(0.26 + 0:2 * 0.26), color = gg_color_hue(3)[1]) +
-#   geom_path() + 
-#   geom_point(data = data.frame(x = x_input, y = y_input), 
-#              mapping = aes(x = x, y = y), 
-#              color = gg_color_hue(3)[2], size = 3) + 
-#   geom_point(data = data.frame(x = x_new, y = y_new), 
-#              mapping = aes(x = x, y = y), 
-#              color = gg_color_hue(3)[3], size = 3) + 
-#   theme_classic() # + 
-#   # xlim(min(c(x_input, x_new), na.rm = TRUE), 
-#   #      max(c(x_input, x_new), na.rm = TRUE))
+ggarrange(plotlist = plt_list, nrow = 5, ncol = 5)
 
 
-# plot with error bars
 
-HT_predfn = getGPPredictive(x_seq, x_input, y_input, typeT, lT, 1, 
-                            measurement.var = sigmasq_measuremt)
-err = 2 * sqrt(diag(HT_predfn$pred_var))
-ggdata = data.table(
-  x = x_seq, 
-  `True Function` = y_seq, 
-  `HT Pred Mean` = HT_predfn$pred_mean, 
-  lower = HT_predfn$pred_mean - err, 
-  upper = HT_predfn$pred_mean + err
-)
-# ggdata.melted = melt(ggdata, id.vars = c("x"))
-
-H0_predfn = getGPPredictive(x_seq, x_input, y_input, type01[1], l01[1], 1, 
-                            measurement.var = sigmasq_measuremt)
-err0 = 2 * sqrt(diag(H0_predfn$pred_var))
-ggdata0 = data.table(
-  x = x_seq, 
-  `True Function` = y_seq, 
-  `HT Pred Mean` = H0_predfn$pred_mean, 
-  lower = H0_predfn$pred_mean - err0, 
-  upper = H0_predfn$pred_mean + err0
-)
-# ggdata0.melted = melt(ggdata0, id.vars = c("x"))
-
-H1_predfn = getGPPredictive(x_seq, x_input, y_input, type01[2], l01[2], 1, 
-                            measurement.var = sigmasq_measuremt)
-err1 = 2 * sqrt(diag(H1_predfn$pred_var))
-ggdata1 = data.table(
-  x = x_seq, 
-  `True Function` = y_seq, 
-  `HT Pred Mean` = H1_predfn$pred_mean, 
-  lower = H1_predfn$pred_mean - err1, 
-  upper = H1_predfn$pred_mean + err1
-)
-# ggdata1.melted = melt(ggdata1, id.vars = c("x"))
-
-ggdata_pts = data.table(
-  x = c(x_input, x_new), y = c(y_input, y_new), 
-  color = c(rep(gg_color_hue(5)[2], length(x_input)), 
-            rep(gg_color_hue(5)[1], length(x_new))), 
-  shape = c(rep(8, length(x_input)), 
-            rep(16, length(x_new)))
-)
-ggplot(ggdata) + 
-  geom_path(aes(x = x, y = `True Function`)) + 
-  geom_ribbon(aes(x = x, ymin = lower, ymax = upper), 
-              color = gg_color_hue(5)[3], linetype = 2, 
-              fill = gg_color_hue(5)[3], alpha = 0.1) +
-  geom_path(aes(x = x, y = `HT Pred Mean`), color = gg_color_hue(5)[3]) +
-  geom_ribbon(data = ggdata0, 
-              aes(x = x, ymin = lower, ymax = upper), 
-              color = gg_color_hue(5)[4], linetype = 2, 
-              fill = gg_color_hue(5)[4], alpha = 0.1) +
-  geom_path(data = ggdata0, 
-            aes(x = x, y = `HT Pred Mean`), color = gg_color_hue(5)[4]) +
-  geom_ribbon(data = ggdata1, 
-              aes(x = x, ymin = lower, ymax = upper), 
-              color = gg_color_hue(5)[5], linetype = 2, 
-              fill = gg_color_hue(5)[5], alpha = 0.1) +
-  geom_path(data = ggdata1, 
-            aes(x = x, y = `HT Pred Mean`), color = gg_color_hue(5)[5]) +
-  geom_point(data = ggdata_pts, mapping = aes(x = x, y = y), 
-             inherit.aes = FALSE, color = ggdata_pts$color, 
-             shape = ggdata_pts$shape, 
-             size = 3) +
-  theme_bw() +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank()) +
-  labs(y = "y", x = "x", fill = "Function", color = "Function") +
-   xlim(min(c(x_input, x_new), na.rm = TRUE),
-   max(c(x_input, x_new), na.rm = TRUE))
-
-
-# plot(plotGP(
-#   x_seq, y_seq, x.data = c(x_input, x_new), y.data = c(y_input, y_new), 
-#   kernel = typeT, length.scale = lT, xmin = 0, xmax = 1, signal.var = 1, 
-#   measurement.var = nugget))

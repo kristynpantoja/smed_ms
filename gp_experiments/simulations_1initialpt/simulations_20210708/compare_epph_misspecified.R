@@ -278,7 +278,7 @@ for(scenario in c(3, 4, 5, 6)){
       qc = qcap_sims[[j]]
       lo = leaveout_sims[[j]]
       qc2 = qcap_persist_sims[[j]]
-      kq2 = persist_sims[[j]]
+      kq = persist_sims[[j]]
       r = random_sims[[j]]
       g = grid_sims[[j]]
       # sequence of PPHs for each design
@@ -286,19 +286,19 @@ for(scenario in c(3, 4, 5, 6)){
       PPH_seq.qc = getPPHseq(qc, model0, model1, modelT)
       PPH_seq.lo = getPPHseq(lo, model0, model1, modelT)
       PPH_seq.qc2 = getPPHseq(qc2, model0, model1, modelT)
-      PPH_seq.kq2 = getPPHseq(kq2, model0, model1, modelT)
+      PPH_seq.kq = getPPHseq(kq, model0, model1, modelT)
       PPH_seq.r = getPPHseq(r, model0, model1, modelT)
       PPH_seq.g = getPPHseq(g, model0, model1, modelT)
       # master data frame
-      PPH_seq.bh$type = "bh"
+      PPH_seq.bh$type = "boxhill"
       PPH_seq.qc$type = "qcap"
-      PPH_seq.lo$type = "lo"
-      PPH_seq.qc2$type = "qcap2"
-      PPH_seq.kq2$type = "keepq"
+      PPH_seq.lo$type = "leaveout"
+      PPH_seq.qc2$type = "keepq2"
+      PPH_seq.kq$type = "keepq"
       PPH_seq.r$type = "random"
       PPH_seq.g$type = "grid"
       PPH_seq.tmp = rbind(
-        PPH_seq.bh, PPH_seq.qc, PPH_seq.lo, PPH_seq.qc2, PPH_seq.kq2, 
+        PPH_seq.bh, PPH_seq.qc, PPH_seq.lo, PPH_seq.qc2, PPH_seq.kq, 
         PPH_seq.r, PPH_seq.g)
       PPH_seq.tmp$sim = j
       PPH_seq = rbind(PPH_seq, PPH_seq.tmp)

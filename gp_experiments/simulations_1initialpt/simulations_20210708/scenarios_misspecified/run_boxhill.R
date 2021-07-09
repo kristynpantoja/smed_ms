@@ -3,13 +3,13 @@
 # purpose: to test seqmedgp for scenarios 3, 4, 5, or 6
 #   where both hypotheses are misspecified
 
-scenario = 6
+scenario = 5
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
 sims_dir = "gp_experiments/simulations_1initialpt"
-output_dir = paste0(sims_dir, "/simulations_20210626/scenarios_misspecified/outputs")
+output_dir = paste0(sims_dir, "/simulations_20210708/scenarios_misspecified/outputs")
 data_dir = paste0(sims_dir, "/simulated_data")
 functions_dir = "functions"
 
@@ -79,31 +79,43 @@ if(scenario == 3){
   typeT = "matern"
   l01= c(0.005, 0.01)
   lT = 0.01
+  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
+                measurement.var = nugget)
+  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
+                measurement.var = nugget)
 } else if(scenario == 4){
   type01 = c("matern", "squaredexponential")
   typeT = "periodic"
   l01= c(0.01, 0.01)
   lT = 0.01
+  pT = 0.05 # 0.05 or 0.1
+  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
+                measurement.var = nugget)
+  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
+                measurement.var = nugget)
 } else if(scenario == 5){
   type01 = c("matern", "periodic")
   typeT = "squaredexponential"
   l01= c(0.01, 0.01)
   lT = 0.01
+  p1 = 0.26
+  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
+                measurement.var = nugget)
+  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
+                measurement.var = nugget, p = p1)
 } else if(scenario == 6){
   type01 = c("squaredexponential", "periodic")
   typeT = "matern"
   l01= c(0.01, 0.01)
   lT = 0.01
+  p1 = 0.26
+  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
+                measurement.var = nugget)
+  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
+                measurement.var = nugget, p = p1)
 } else{
   stop("invalid scenario number")
 }
-
-################################################################################
-# models
-model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
-              measurement.var = nugget)
-model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
-              measurement.var = nugget)
 
 ################################################################################
 # import data
@@ -111,13 +123,25 @@ filename_append = ""
 if(!is.null(sigmasq_measuremt)){
   filename_append = "_noise"
 }
-simulated.data = readRDS(paste0(
-  data_dir,
-  "/", typeT,
-  "_l", lT,
-  filename_append, 
-  "_seed", rng.seed,
-  ".rds"))
+if(typeT == "periodic"){
+  simulated_data_file = paste0(
+    data_dir,
+    "/", typeT,
+    "_l", lT,
+    "_p", pT,
+    filename_append, 
+    "_seed", rng.seed,
+    ".rds")
+} else{
+  simulated_data_file = paste0(
+    data_dir,
+    "/", typeT,
+    "_l", lT,
+    filename_append, 
+    "_seed", rng.seed,
+    ".rds")
+}
+simulated.data = readRDS(simulated_data_file)
 numSims = simulated.data$numSims
 x_seq = simulated.data$x
 numx = length(x_seq)
@@ -133,27 +157,27 @@ x_input = x_seq[x_input_idx]
 
 ################################################################################
 # generate boxhills
-  
-  # simulations!
-  registerDoRNG(rng.seed)
-  boxhills = foreach(
-    i = 1:numSims
-  ) %dorng% {
-    y_seq = y_seq_mat[ , i]
-    y_input = y_seq[x_input_idx]
-    BHgp_m2(
-      y_input, x_input, x_input_idx, prior_probs, model0, model1, Nnew, 
-      x_seq, y_seq)
-  }
-  
-  filename_append.tmp = paste0(
-    filename_append, 
-    "_seed", rng.seed,
-    ".rds"
-  )
-  saveRDS(boxhills, 
-          file = paste0(
-            output_dir,
-            "/scenario", scenario, "_boxhill", 
-            filename_append.tmp))
+
+# simulations!
+registerDoRNG(rng.seed)
+boxhills = foreach(
+  i = 1:numSims
+) %dorng% {
+  y_seq = y_seq_mat[ , i]
+  y_input = y_seq[x_input_idx]
+  BHgp_m2(
+    y_input, x_input, x_input_idx, prior_probs, model0, model1, Nnew, 
+    x_seq, y_seq)
+}
+
+filename_append.tmp = paste0(
+  filename_append, 
+  "_seed", rng.seed,
+  ".rds"
+)
+saveRDS(boxhills, 
+        file = paste0(
+          output_dir,
+          "/scenario", scenario, "_boxhill", 
+          filename_append.tmp))
 

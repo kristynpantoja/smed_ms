@@ -3,13 +3,13 @@
 # purpose: to test seqmedgp for scenarios 3, 4, 5, or 6
 #   where both hypotheses are misspecified
 
-scenario = 6
+scenario = 3
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
 sims_dir = "gp_experiments/simulations_1initialpt"
-output_dir = paste0(sims_dir, "/simulations_20210626/scenarios_misspecified/outputs")
+output_dir = paste0(sims_dir, "/simulations_20210708/scenarios_misspecified/outputs")
 data_dir = paste0(sims_dir, "/simulated_data")
 functions_dir = "functions"
 
@@ -108,13 +108,25 @@ filename_append = ""
 if(!is.null(sigmasq_measuremt)){
   filename_append = "_noise"
 }
-simulated.data = readRDS(paste0(
-  data_dir,
-  "/", typeT,
-  "_l", lT,
-  filename_append, 
-  "_seed", rng.seed,
-  ".rds"))
+if(typeT == "periodic"){
+  simulated_data_file = paste0(
+    data_dir,
+    "/", typeT,
+    "_l", lT,
+    "_p", pT,
+    filename_append, 
+    "_seed", rng.seed,
+    ".rds")
+} else{
+  simulated_data_file = paste0(
+    data_dir,
+    "/", typeT,
+    "_l", lT,
+    filename_append, 
+    "_seed", rng.seed,
+    ".rds")
+}
+simulated.data = readRDS(simulated_data_file)
 numSims = simulated.data$numSims
 x_seq = simulated.data$x
 numx = length(x_seq)

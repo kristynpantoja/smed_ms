@@ -2,7 +2,8 @@
 # last updated: 05/27/2021
 # purpose: to make grid design for all types of data
 
-typeT = "matern"
+typeT = "periodic"
+pT = 0.05
 lT = 0.01
 
 ################################################################################
@@ -75,13 +76,26 @@ filename_append = ""
 if(!is.null(sigmasq_measuremt)){
   filename_append = "_noise"
 }
-simulated.data = readRDS(paste0(
-  data_dir,
-  "/", typeT,
-  "_l", lT,
-  filename_append, 
-  "_seed", rng.seed,
-  ".rds"))
+if(typeT == "periodic"){
+  if(is.null(pT)) pT = 0.26
+  simulated_data_file = paste0(
+    data_dir,
+    "/", typeT,
+    "_l", lT,
+    "_p", pT,
+    filename_append, 
+    "_seed", rng.seed,
+    ".rds")
+} else{
+  simulated_data_file = paste0(
+    data_dir,
+    "/", typeT,
+    "_l", lT,
+    filename_append, 
+    "_seed", rng.seed,
+    ".rds")
+}
+simulated.data = readRDS(simulated_data_file)
 numSims = simulated.data$numSims
 x_seq = simulated.data$x
 numx = length(x_seq)
@@ -91,7 +105,6 @@ y_seq_mat = simulated.data$function_values_mat
 
 ################################################################################
 # initial design
-
 x_input_idx = ceiling(numx / 2)
 x_input = x_seq[x_input_idx]
 
@@ -130,11 +143,21 @@ filename_append.tmp = paste0(
   "_seed", rng.seed,
   ".rds"
 )
-saveRDS(spacefills, 
-        file = paste0(
-          output_dir,
-          "/grid", 
-          "_", typeT,
-          "_l", lT,
-          filename_append.tmp))
+if(typeT == "periodic"){
+  simulated_spacefilling_file = paste0(
+    output_dir,
+    "/random", 
+    "_", typeT,
+    "_l", lT,
+    "_p", pT,
+    filename_append.tmp)
+} else{
+  simulated_spacefilling_file = paste0(
+    output_dir,
+    "/grid", 
+    "_", typeT,
+    "_l", lT,
+    filename_append.tmp)
+}
+saveRDS(spacefills, file = simulated_spacefilling_file)
 

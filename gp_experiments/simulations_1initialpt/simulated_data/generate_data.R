@@ -3,8 +3,8 @@
 # purpose: to test seqmedgp for scenarios 1 or 2
 #   where H1 is true
 
-typeT = "squaredexponential"
-pT = NULL # 0.26, {0.1, 0.05 for MSP scenario 4}
+typeT = "periodic"
+pT = 0.05 # 0.26, {0.1, 0.05 for MSP scenario 4}
 lT = 0.01
 
 ################################################################################
@@ -80,21 +80,6 @@ if(is.null(sigmasq_measuremt)){
   filename_append = "_noise"
 }
 
-# check values with old version
-
-y_seq_mat_old = readRDS(paste0(
-  output_home,
-  "/", typeT,
-  "_l", lT,
-  filename_append, 
-  "_seed", rng.seed,
-  ".rds"))
-
-all.equal(y_seq_mat, y_seq_mat_old$function_values_mat)
-# true for periodic with p = NULL & p = 0.26 (default)
-# true for matern
-# true for squaredexponential
-
 # plot GPs with space-filling design
 
 # initial design
@@ -150,6 +135,8 @@ ggdata_pts = data.table(
   shape = c(rep(8, length(x_input)), 
             rep(16, length(x_new)))
 )
+
+# plot it
 plt = ggplot(ggdata) + 
   geom_path(aes(x = x, y = `True Function`)) + 
   geom_ribbon(aes(x = x, ymin = lower, ymax = upper), 
@@ -171,7 +158,25 @@ if(typeT == "periodic"){
 }
 plot(plt)
 
-
+if(typeT == "periodic"){
+  if(is.null(pT)) pT = 0.26
+  simulated_data_file = paste0(
+    output_home,
+    "/", typeT,
+    "_l", lT,
+    "_p", pT,
+    filename_append, 
+    "_seed", rng.seed,
+    ".rds")
+} else{
+  simulated_data_file = paste0(
+    output_home,
+    "/", typeT,
+    "_l", lT,
+    filename_append, 
+    "_seed", rng.seed,
+    ".rds")
+}
 
 # save the results!
 saveRDS(
@@ -182,10 +187,4 @@ saveRDS(
     numSims = numSims, 
     function_values_mat = y_seq_mat
   ), 
-  file = paste0(
-    output_home,
-    "/", typeT,
-    "_l", lT,
-    filename_append, 
-    "_seed", rng.seed,
-    ".rds"))
+  file = simulated_data_file)

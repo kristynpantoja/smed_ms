@@ -77,9 +77,11 @@ WNgp = function(x, Kinv0, Kinv1, initD, y, model0, model1){
   
   # posterior distribution of beta
   k0 = t(as.matrix(getCov(
-    x, initD, model0$type, model0$l, model0$p, model0$signal.var)))
+    X1 = x, X2 = initD, type = model0$type, l = model0$l, p = model0$p, 
+    signal.var = model0$signal.var)))
   k1 = t(as.matrix(getCov(
-    x, initD, model1$type, model1$l, model1$p, model1$signal.var)))
+    X1 = x, X2 = initD, type = model1$type, l = model1$l, p = model1$p, 
+    signal.var = model1$signal.var)))
   
   # posterior predictive distribution of y, for candidate x
   postpredy_mu0 = t(k0) %*% Kinv0 %*% y

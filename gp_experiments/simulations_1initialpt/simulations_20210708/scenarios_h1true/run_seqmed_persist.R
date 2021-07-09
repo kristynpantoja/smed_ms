@@ -3,13 +3,13 @@
 # purpose: to test seqmedgp for scenarios 1 or 2
 #   where H1 is true
 
-scenario = 2
+scenario = 1
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
 sims_dir = "gp_experiments/simulations_1initialpt"
-output_dir = paste0(sims_dir, "/simulations_20210626/scenarios_h1true/outputs")
+output_dir = paste0(sims_dir, "/simulations_20210708/scenarios_h1true/outputs")
 data_dir = paste0(sims_dir, "/simulated_data")
 functions_dir = "functions"
 
@@ -72,20 +72,23 @@ buffer = 0
 ################################################################################
 # Scenario settings
 ################################################################################
+l01= c(0.01, 0.01)
 if(scenario == 1){
   type01 = c("squaredexponential", "matern")
+  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
+                measurement.var = nugget)
+  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
+                measurement.var = nugget)
 } else if(scenario == 2){
+  pT = 0.26
   type01 = c("matern", "periodic")
+  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
+                measurement.var = nugget)
+  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
+                measurement.var = nugget, p = pT)
 }
 typeT = type01[2]
-l01= c(0.01, 0.01)
 lT = l01[2]
-
-################################################################################
-model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
-              measurement.var = nugget)
-model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
-              measurement.var = nugget)
 
 ################################################################################
 # import data
@@ -93,13 +96,25 @@ filename_append = ""
 if(!is.null(sigmasq_measuremt)){
   filename_append = "_noise"
 }
-simulated.data = readRDS(paste0(
-  data_dir,
-  "/", typeT,
-  "_l", lT,
-  filename_append, 
-  "_seed", rng.seed,
-  ".rds"))
+if(typeT == "periodic"){
+  simulated_data_file = paste0(
+    data_dir,
+    "/", typeT,
+    "_l", lT,
+    "_p", pT,
+    filename_append, 
+    "_seed", rng.seed,
+    ".rds")
+} else{
+  simulated_data_file = paste0(
+    data_dir,
+    "/", typeT,
+    "_l", lT,
+    filename_append, 
+    "_seed", rng.seed,
+    ".rds")
+}
+simulated.data = readRDS(simulated_data_file)
 numSims = simulated.data$numSims
 x_seq = simulated.data$x
 numx = length(x_seq)

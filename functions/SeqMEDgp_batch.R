@@ -133,18 +133,24 @@ SeqMEDgp_newq_batch = function(
   
   # old_initD = initD
   
-  # posterior distribution of beta
+  # posterior predictive distribution Kinv's
   if(is.null(model0$measurement.var)){
-    Kinv0 = solve(getCov(initD, initD, model0$type, model0$l))
+    Kinv0 = solve(getCov(
+      X1 = initD, X2 = initD, type = model0$type, l = model0$l, p = model0$p, 
+      signal.var = model0$signal.var))
   } else{
-    Kinv0 = solve(getCov(initD, initD, model0$type, model0$l) + 
-                    model0$measurement.var * diag(initN))
+    Kinv0 = solve(getCov(
+      X1 = initD, X2 = initD, type = model0$type, l = model0$l, p  = model0$p, 
+      signal.var = model0$signal.var) + model0$measurement.var * diag(initN))
   }
   if(is.null(model1$measurement.var)){
-    Kinv1 = solve(getCov(initD, initD, model1$type, model1$l))
+    Kinv1 = solve(getCov(
+      X1 = initD, X2 = initD, type = model1$type, l = model1$l, p = model1$p, 
+      signal.var = model1$signal.var))
   } else{
-    Kinv1 = solve(getCov(initD, initD, model1$type, model1$l) + 
-                    model1$measurement.var * diag(initN))
+    Kinv1 = solve(getCov(
+      X1 = initD, X2 = initD, type = model1$type, l = model1$l, p = model1$p, 
+      signal.var = model1$signal.var) + model1$measurement.var * diag(initN))
   }
   
   D = rep(NA, N2)
@@ -245,22 +251,24 @@ SeqMEDgp_keepq_batch = function(
   
   # old_initD = initD
   
-  # posterior distribution of beta
+  # posterior predictive distribution Kinv's
   if(is.null(model0$measurement.var)){
     Kinv0 = solve(getCov(
-      initD, initD, model0$type, model0$l, model0$p, model0$signal.var))
+      X1 = initD, X2 = initD, type = model0$type, l = model0$l, p = model0$p, 
+      signal.var = model0$signal.var))
   } else{
     Kinv0 = solve(getCov(
-      initD, initD, model0$type, model0$l, model0$p, model0$signal.var) + 
-                    model0$measurement.var * diag(initN))
+      X1 = initD, X2 = initD, type = model0$type, l = model0$l, p  = model0$p, 
+      signal.var = model0$signal.var) + model0$measurement.var * diag(initN))
   }
   if(is.null(model1$measurement.var)){
     Kinv1 = solve(getCov(
-      initD, initD, model1$type, model1$l, model1$p, model1$signal.var))
+      X1 = initD, X2 = initD, type = model1$type, l = model1$l, p = model1$p, 
+      signal.var = model1$signal.var))
   } else{
     Kinv1 = solve(getCov(
-      initD, initD, model1$type, model1$l, model1$p, model1$signal.var) + 
-                    model1$measurement.var * diag(initN))
+      X1 = initD, X2 = initD, type = model1$type, l = model1$l, p = model1$p, 
+      signal.var = model1$signal.var) + model1$measurement.var * diag(initN))
   }
   
   D = rep(NA, N2)

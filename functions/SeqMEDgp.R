@@ -36,19 +36,23 @@ SeqMEDgp = function(
   if(!newq){
     if(is.null(model0$measurement.var)){
       Kinv0 = solve(getCov(
-        D, D, model0$type, model0$l, model0$p, model0$signal.var))
+        X1 = D, X2 = D, type = model0$type, l = model0$l, p = model0$p, 
+        signal.var = model0$signal.var))
     } else{
       Kinv0 = solve(getCov(
-        D, D, model0$type, model0$l, model0$p, model0$signal.var) + 
-                      model0$measurement.var * diag(length(D)))
+        X1 = D, X2 = D, type = model0$type, l = model0$l, p = model0$p, 
+        signal.var = model0$signal.var) + 
+          model0$measurement.var * diag(length(D)))
     }
     if(is.null(model1$measurement.var)){
       Kinv1 = solve(getCov(
-        D, D, model1$type, model1$l, model1$p, model1$signal.var))
+        X1 = D, X2 = D, type = model1$type, l = model1$l, p = model1$p, 
+        signal.var = model1$signal.var))
     } else{
       Kinv1 = solve(getCov(
-        D, D, model1$type, model1$l, model1$p, model1$signal.var) + 
-                      model1$measurement.var * diag(length(D)))
+        X1 = D, X2 = D, type = model1$type, l = model1$l, p = model1$p, 
+        signal.var = model1$signal.var) + 
+          model1$measurement.var * diag(length(D)))
     }
     qs = rep(NA, length(D))
     if(!(objective.type %in% c(0, 1, 3, 4, 5))){

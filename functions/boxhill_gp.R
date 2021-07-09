@@ -3,10 +3,13 @@
 Evidence_gp = function(y, x, model){
   null_mean_vec = rep(0, length(y))
   if(is.null(model$measurement.var)){
-    K_obs = getCov(x, x, model$type, model$l, model$p, model$signal.var)
+    K_obs = getCov(
+      X1 = x, X2 = x, type = model$type, l = model$l, p = model$p, 
+      signal.var = model$signal.var)
   } else{
-    K_obs = getCov(x, x, model$type, model$l, model$p, model$signal.var) + 
-      model$measurement.var * diag(length(y))
+    K_obs = getCov(
+      X1 = x, X2 = x, type = model$type, l = model$l, p = model$p, 
+      signal.var = model$signal.var) + model$measurement.var * diag(length(y))
   }
   evidence = dmvnorm(
     y, mean = null_mean_vec, sigma = K_obs, log = FALSE)
@@ -27,10 +30,14 @@ BHDgp_m2 = function(
   #   length-scale parameter l.j
 ){
   # posterior predictive distributions
-  pred.i = getGPPredictive(candidate, x, y, model.i$type, model.i$l, 
-                           model.i$signal.var, model.i$measurement.var)
-  pred.j = getGPPredictive(candidate, x, y, model.j$type, model.j$l, 
-                           model.j$signal.var, model.j$measurement.var)
+  pred.i = getGPPredictive(
+    x = candidate, x.input = x, y.input = y, type = model.i$type, l = model.i$l, 
+    p = model.i$p, signal.var = model.i$signal.var, 
+    measurement.var = model.i$measurement.var)
+  pred.j = getGPPredictive(
+    x = candidate, x.input = x, y.input = y, type = model.j$type, l = model.j$l,
+    p = model.j$p, signal.var = model.j$signal.var, 
+    measurement.var = model.j$measurement.var)
   # evaluate criterion D
   KLij = KLN(pred.i$pred_mean, pred.i$pred_var, 
              pred.j$pred_mean, pred.j$pred_var, dim = 1)
@@ -42,10 +49,14 @@ BHDgp_m2 = function(
 
 BHDgp_m2_testing = function(y, x, post.probs, candidate, model.i, model.j){
   # posterior predictive distributions
-  pred.i = getGPPredictive(candidate, x, y, model.i$type, model.i$l, 
-                           model.i$signal.var, model.i$measurement.var)
-  pred.j = getGPPredictive(candidate, x, y, model.j$type, model.j$l, 
-                           model.j$signal.var, model.j$measurement.var)
+  pred.i = getGPPredictive(
+    x = candidate, x.input = x, y.input = y, type = model.i$type, l = model.i$l, 
+    p = model.i$p, signal.var = model.i$signal.var,
+    measurement.var = model.i$measurement.var)
+  pred.j = getGPPredictive(
+    x = candidate, x.input = x, y.input = y, type = model.j$type, l = model.j$l, 
+    p = model.j$p, signal.var = model.j$signal.var,
+    measurement.var = model.j$measurement.var)
   # evaluate criterion D
   KLij = KLN(pred.i$pred_mean, pred.i$pred_var, 
              pred.j$pred_mean, pred.j$pred_var, dim = 1)
@@ -102,22 +113,9 @@ BHgp_m2 = function(
   y.cur = y
   x.cur = x
   for(i in 1:n){
-    # evaluate criterion over x_seq
-    # if(stopping.type == 1 | stopping.type == "tryCatch"){
-    #   bhd_seq = tryCatch(
-    #     {
-    #       sapply(candidates, FUN = function(x) BHDgp_m2(
-    #         y.cur, x.cur, post.probs.cur, x, model0, model1))
-    #     }, 
-    #     error = function(e) {
-    #       return(NULL)
-    #     }
-    #   )
-    #   if(is.null(bhd_seq)) break # if BHDgp_m2 breaks, stop looping.
-    # } else {
-      bhd_seq = sapply(candidates, FUN = function(x) BHDgp_m2(
-        y.cur, x.cur, post.probs.cur, x, model0, model1))
-    # }
+    bhd_seq = sapply(candidates, FUN = function(x) BHDgp_m2(
+      y = y.cur, x = x.cur, post.probs = post.probs.cur, candidate = x, 
+      model.i = model0, model.j = model1))
     if(!all(!is.nan(bhd_seq))){
       warning("Warning in BHgp_m2() : There were NaNs in Box & Hill criterion
               evaluation over the candidate set!!")
@@ -143,10 +141,10 @@ BHgp_m2 = function(
     post.probs.mat[i + 1, ] = post.probs.cur
     
     # if(!(stopping.type == 1 & stopping.type == "tryCatch")){
-      # check post.probs.cur -- if either is NaN, stop
-      if(sum(is.nan(post.probs.cur)) > 0) break ## don't do for "tryCatch"
-      # check post.probs.cur -- if either equals 0 or 1
-      if(sum(post.probs.cur %in% c(0, 1)) > 0) break  ## don't do for "tryCatch"
+    # check post.probs.cur -- if either is NaN, stop
+    if(sum(is.nan(post.probs.cur)) > 0) break ## don't do for "tryCatch"
+    # check post.probs.cur -- if either equals 0 or 1
+    if(sum(post.probs.cur %in% c(0, 1)) > 0) break  ## don't do for "tryCatch"
     # }
   }
   return(list(

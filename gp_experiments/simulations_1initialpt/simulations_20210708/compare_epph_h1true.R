@@ -13,7 +13,7 @@ for(scenario in c(1, 2)){
     # Sources/Libraries
     ################################################################################
     sims_dir = "gp_experiments/simulations_1initialpt"
-    output_dir = paste0(sims_dir, "/simulations_20210626/scenarios_h1true/outputs")
+    output_dir = paste0(sims_dir, "/simulations_20210708/scenarios_h1true/outputs")
     data_dir = paste0(sims_dir, "/simulated_data")
     functions_dir = "functions"
     
@@ -71,13 +71,22 @@ for(scenario in c(1, 2)){
     ################################################################################
     # Scenario settings
     ################################################################################
+    l01= c(0.01, 0.01)
     if(scenario == 1){
       type01 = c("squaredexponential", "matern")
+      model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
+                    measurement.var = nugget)
+      model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
+                    measurement.var = nugget)
     } else if(scenario == 2){
+      pT = 0.26
       type01 = c("matern", "periodic")
+      model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
+                    measurement.var = nugget)
+      model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
+                    measurement.var = nugget, p = pT)
     }
     typeT = type01[2]
-    l01= c(0.01, 0.01)
     lT = l01[2]
     
     ################################################################################
@@ -86,13 +95,25 @@ for(scenario in c(1, 2)){
     if(!is.null(sigmasq_measuremt)){
       filename_append = "_noise"
     }
-    simulated.data = readRDS(paste0(
-      data_dir,
-      "/", typeT,
-      "_l", lT,
-      filename_append, 
-      "_seed", rng.seed,
-      ".rds"))
+    if(typeT == "periodic"){
+      simulated_data_file = paste0(
+        data_dir,
+        "/", typeT,
+        "_l", lT,
+        "_p", pT,
+        filename_append, 
+        "_seed", rng.seed,
+        ".rds")
+    } else{
+      simulated_data_file = paste0(
+        data_dir,
+        "/", typeT,
+        "_l", lT,
+        filename_append, 
+        "_seed", rng.seed,
+        ".rds")
+    }
+    simulated.data = readRDS(simulated_data_file)
     numSims = simulated.data$numSims
     x_seq = simulated.data$x
     numx = length(x_seq)
@@ -102,7 +123,6 @@ for(scenario in c(1, 2)){
     
     ################################################################################
     # initial design
-    
     x_input_idx = ceiling(numx / 2)
     x_input = x_seq[x_input_idx]
     
@@ -144,28 +164,41 @@ for(scenario in c(1, 2)){
       "_seq", seq.type,
       filename_append.tmp))
     
-    random_sims = readRDS(paste0(
-      sims_dir, 
-      "/spacefilling_designs/outputs/random", 
-      "_", typeT,
-      "_l", lT,
-      filename_append.tmp))
-    grid_sims = readRDS(paste0(
-      sims_dir,
-      "/spacefilling_designs/outputs/grid", 
-      "_", typeT,
-      "_l", lT,
-      filename_append.tmp))
+    if(typeT == "periodic"){
+      random_sims_file = paste0(
+        sims_dir, 
+        "/spacefilling_designs/outputs/random", 
+        "_", typeT,
+        "_l", lT,
+        "_p", pT,
+        filename_append.tmp)
+      grid_sims_file = paste0(
+        sims_dir,
+        "/spacefilling_designs/outputs/grid", 
+        "_", typeT,
+        "_l", lT,
+        "_p", pT,
+        filename_append.tmp)
+    } else{
+      random_sims_file = paste0(
+        sims_dir, 
+        "/spacefilling_designs/outputs/random", 
+        "_", typeT,
+        "_l", lT,
+        filename_append.tmp)
+      grid_sims_file = paste0(
+        sims_dir,
+        "/spacefilling_designs/outputs/grid", 
+        "_", typeT,
+        "_l", lT,
+        filename_append.tmp)
+    }
+    random_sims = readRDS(random_sims_file)
+    grid_sims = readRDS(grid_sims_file)
     
     ################################################################################
     # make plots
     ################################################################################
-    
-    # models
-    model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
-                  measurement.var = nugget)
-    model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
-                  measurement.var = nugget)
     
     getPPHseq = function(design, model0, model1){
       PPH0_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
@@ -205,7 +238,7 @@ for(scenario in c(1, 2)){
       qc = qcap_sims[[j]]
       lo = leaveout_sims[[j]]
       qc2 = qcap_persist_sims[[j]]
-      kq2 = persist_sims[[j]]
+      kq = persist_sims[[j]]
       r = random_sims[[j]]
       g = grid_sims[[j]]
       # sequence of PPHs for each design
@@ -213,19 +246,19 @@ for(scenario in c(1, 2)){
       PPH_seq.qc = getPPHseq(qc, model0, model1)
       PPH_seq.lo = getPPHseq(lo, model0, model1)
       PPH_seq.qc2 = getPPHseq(qc2, model0, model1)
-      PPH_seq.kq2 = getPPHseq(kq2, model0, model1)
+      PPH_seq.kq = getPPHseq(kq, model0, model1)
       PPH_seq.r = getPPHseq(r, model0, model1)
       PPH_seq.g = getPPHseq(g, model0, model1)
       # master data frame
-      PPH_seq.bh$type = "bh"
+      PPH_seq.bh$type = "boxhill"
       PPH_seq.qc$type = "qcap"
-      PPH_seq.lo$type = "lo"
-      PPH_seq.qc2$type = "qcap2"
-      PPH_seq.kq2$type = "keepq"
+      PPH_seq.lo$type = "leaveout"
+      PPH_seq.qc2$type = "keepq2"
+      PPH_seq.kq$type = "keepq"
       PPH_seq.r$type = "random"
       PPH_seq.g$type = "grid"
       PPH_seq.tmp = rbind(
-        PPH_seq.bh, PPH_seq.qc, PPH_seq.lo, PPH_seq.qc2, PPH_seq.kq2, 
+        PPH_seq.bh, PPH_seq.qc, PPH_seq.lo, PPH_seq.qc2, PPH_seq.kq, 
         PPH_seq.r, PPH_seq.g)
       PPH_seq.tmp$sim = j
       PPH_seq = rbind(PPH_seq, PPH_seq.tmp)
@@ -251,7 +284,7 @@ for(scenario in c(1, 2)){
     plot(epph.plt)
     
     ggsave(
-      filename = paste0("20210626_scen", scenario, "_epph.pdf"), 
+      filename = paste0("20210708_scen", scenario, "_epph.pdf"), 
       plot = epph.plt, 
       width = 6, height = 4, units = c("in")
     )

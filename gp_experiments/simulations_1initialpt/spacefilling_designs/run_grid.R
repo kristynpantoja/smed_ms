@@ -2,8 +2,8 @@
 # last updated: 05/27/2021
 # purpose: to make grid design for all types of data
 
-typeT = "periodic"
-pT = 0.05
+typeT = "squaredexponential"
+# pT = 0.05
 lT = 0.01
 
 ################################################################################
@@ -146,7 +146,7 @@ filename_append.tmp = paste0(
 if(typeT == "periodic"){
   simulated_spacefilling_file = paste0(
     output_dir,
-    "/random", 
+    "/grid", 
     "_", typeT,
     "_l", lT,
     "_p", pT,

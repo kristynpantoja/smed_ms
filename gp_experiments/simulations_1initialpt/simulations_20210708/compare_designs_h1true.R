@@ -13,7 +13,7 @@ for(scenario in c(1, 2)){
   # Sources/Libraries
   ################################################################################
   sims_dir = "gp_experiments/simulations_1initialpt"
-  output_dir = paste0(sims_dir, "/simulations_20210626/scenarios_h1true/outputs")
+  output_dir = paste0(sims_dir, "/simulations_20210708/scenarios_h1true/outputs")
   data_dir = paste0(sims_dir, "/simulated_data")
   functions_dir = "functions"
   
@@ -69,13 +69,22 @@ for(scenario in c(1, 2)){
   ################################################################################
   # Scenario settings
   ################################################################################
+  l01= c(0.01, 0.01)
   if(scenario == 1){
     type01 = c("squaredexponential", "matern")
+    model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
+                  measurement.var = nugget)
+    model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
+                  measurement.var = nugget)
   } else if(scenario == 2){
+    pT = 0.26
     type01 = c("matern", "periodic")
+    model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
+                  measurement.var = nugget)
+    model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
+                  measurement.var = nugget, p = pT)
   }
   typeT = type01[2]
-  l01= c(0.01, 0.01)
   lT = l01[2]
   
   ################################################################################
@@ -84,13 +93,25 @@ for(scenario in c(1, 2)){
   if(!is.null(sigmasq_measuremt)){
     filename_append = "_noise"
   }
-  simulated.data = readRDS(paste0(
-    data_dir,
-    "/", typeT,
-    "_l", lT,
-    filename_append, 
-    "_seed", rng.seed,
-    ".rds"))
+  if(typeT == "periodic"){
+    simulated_data_file = paste0(
+      data_dir,
+      "/", typeT,
+      "_l", lT,
+      "_p", pT,
+      filename_append, 
+      "_seed", rng.seed,
+      ".rds")
+  } else{
+    simulated_data_file = paste0(
+      data_dir,
+      "/", typeT,
+      "_l", lT,
+      filename_append, 
+      "_seed", rng.seed,
+      ".rds")
+  }
+  simulated.data = readRDS(simulated_data_file)
   numSims = simulated.data$numSims
   x_seq = simulated.data$x
   numx = length(x_seq)
@@ -100,7 +121,6 @@ for(scenario in c(1, 2)){
   
   ################################################################################
   # initial design
-  
   x_input_idx = ceiling(numx / 2)
   x_input = x_seq[x_input_idx]
   
@@ -142,18 +162,37 @@ for(scenario in c(1, 2)){
     "_seq", seq.type,
     filename_append.tmp))
   
-  random_sims = readRDS(paste0(
-    sims_dir, 
-    "/spacefilling_designs/outputs/random", 
-    "_", typeT,
-    "_l", lT,
-    filename_append.tmp))
-  grid_sims = readRDS(paste0(
-    sims_dir,
-    "/spacefilling_designs/outputs/grid", 
-    "_", typeT,
-    "_l", lT,
-    filename_append.tmp))
+  if(typeT == "periodic"){
+    random_sims_file = paste0(
+      sims_dir, 
+      "/spacefilling_designs/outputs/random", 
+      "_", typeT,
+      "_l", lT,
+      "_p", pT,
+      filename_append.tmp)
+    grid_sims_file = paste0(
+      sims_dir,
+      "/spacefilling_designs/outputs/grid", 
+      "_", typeT,
+      "_l", lT,
+      "_p", pT,
+      filename_append.tmp)
+  } else{
+    random_sims_file = paste0(
+      sims_dir, 
+      "/spacefilling_designs/outputs/random", 
+      "_", typeT,
+      "_l", lT,
+      filename_append.tmp)
+    grid_sims_file = paste0(
+      sims_dir,
+      "/spacefilling_designs/outputs/grid", 
+      "_", typeT,
+      "_l", lT,
+      filename_append.tmp)
+  }
+  random_sims = readRDS(random_sims_file)
+  grid_sims = readRDS(grid_sims_file)
   
   ################################################################################
   # make plots
@@ -164,8 +203,8 @@ for(scenario in c(1, 2)){
   designs = list(
     boxhill_sims[[idx]], qcap_sims[[idx]], leaveout_sims[[idx]], 
     qcap_persist_sims[[idx]], persist_sims[[idx]])
-  design.names = c("bh", "qcap", "lo", "qcap2", "keepq")
-  design.levels = c("lo", "keepq", "qcap", "qcap2", "bh")
+  design.names = c("boxhill", "qcap", "leaveout", "keepq2", "keepq")
+  design.levels = c("leaveout", "keepq", "keepq2", "qcap", "boxhill")
   
   x.new.mat = matrix(NA, nrow = Nnew, ncol = length(designs))
   for(i in 1:length(designs)){
@@ -192,10 +231,15 @@ for(scenario in c(1, 2)){
               aes(x = value, y = type, label = index), 
               vjust = -0.65 * as.numeric(paste(text.gg$index)), size = 2) +
     xlim(c(xmin, xmax))
+  if(typeT == "periodic"){
+    des.plt = des.plt + geom_vline(
+      xintercept = pT * (0:floor((xmax - xmin) / pT)), color = "blue", 
+      alpha = 0.2)
+  }
   plot(des.plt)
   
   ggsave(
-    filename = paste0("20210626_scen", scenario, "_design.pdf"), 
+    filename = paste0("20210708_scen", scenario, "_design.pdf"), 
     plot = des.plt, 
     width = 6, height = 4, units = c("in")
   )

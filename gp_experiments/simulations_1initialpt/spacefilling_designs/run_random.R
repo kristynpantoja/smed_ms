@@ -2,8 +2,8 @@
 # last updated: 05/27/2021
 # purpose: to make random design for all types of data
 
-typeT = "periodic"
-pT = 0.05
+typeT = "squaredexponential"
+# pT = 0.26
 lT = 0.01
 
 ################################################################################

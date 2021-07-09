@@ -3,7 +3,7 @@
 # purpose: to test seqmedgp for scenarios 1 or 2
 #   where H1 is true
 
-scenario = 1
+scenario = 2
 
 ################################################################################
 # Sources/Libraries

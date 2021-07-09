@@ -5,7 +5,7 @@
 
 typeT = "periodic"
 pT = 0.05 # 0.26, {0.1, 0.05 for MSP scenario 4}
-lT = 0.05
+lT = 0.1
 
 ################################################################################
 # Sources/Libraries
@@ -97,14 +97,14 @@ filename_append.tmp = paste0(
 random_sims = readRDS(paste0(
   "gp_experiments/simulations_1initialpt", 
   "/spacefilling_designs/outputs/random", 
-  "_", typeT,
-  "_l", lT,
+  "_", "matern",
+  "_l", "0.01",
   filename_append.tmp))
 grid_sims = readRDS(paste0(
   "gp_experiments/simulations_1initialpt",
   "/spacefilling_designs/outputs/grid", 
-  "_", typeT,
-  "_l", lT,
+  "_", "matern",
+  "_l", "0.01",
   filename_append.tmp))
 
 # choose the simulation and the design
@@ -158,6 +158,7 @@ if(typeT == "periodic"){
 }
 plot(plt)
 
+# save the results!
 if(typeT == "periodic"){
   if(is.null(pT)) pT = 0.26
   simulated_data_file = paste0(
@@ -177,8 +178,6 @@ if(typeT == "periodic"){
     "_seed", rng.seed,
     ".rds")
 }
-
-# save the results!
 saveRDS(
   list(
     x = x_seq, 

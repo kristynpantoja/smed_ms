@@ -83,7 +83,7 @@ for(scenario in c(3, 4, 5, 6)){
       type01 = c("matern", "squaredexponential")
       typeT = "periodic"
       l01= c(0.01, 0.01)
-      lT = 0.01
+      lT = 0.1
       pT = 0.05 # 0.05 or 0.1
       model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
                     measurement.var = nugget)

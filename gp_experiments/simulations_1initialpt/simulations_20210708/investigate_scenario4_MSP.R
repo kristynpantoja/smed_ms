@@ -6,7 +6,7 @@ seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
 # Sources/Libraries
 ################################################################################
 sims_dir = "gp_experiments/simulations_1initialpt"
-output_dir = paste0(sims_dir, "/simulations_20210626/scenarios_misspecified/outputs")
+output_dir = paste0(sims_dir, "/simulations_20210708/scenarios_misspecified/outputs")
 data_dir = paste0(sims_dir, "/simulated_data")
 functions_dir = "functions"
 
@@ -71,21 +71,42 @@ if(scenario == 3){
   typeT = "matern"
   l01= c(0.005, 0.01)
   lT = 0.01
+  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
+                measurement.var = nugget)
+  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
+                measurement.var = nugget)
 } else if(scenario == 4){
   type01 = c("matern", "squaredexponential")
   typeT = "periodic"
-  l01= c(0.01 / 10, 0.01 / 10)
-  lT = 0.01
+  l01= c(0.01, 0.01)
+  lT = 0.1
+  pT = 0.05 # 0.05 or 0.1
+  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
+                measurement.var = nugget)
+  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
+                measurement.var = nugget)
 } else if(scenario == 5){
   type01 = c("matern", "periodic")
   typeT = "squaredexponential"
   l01= c(0.01, 0.01)
   lT = 0.01
+  p1 = 0.26
+  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
+                measurement.var = nugget)
+  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
+                measurement.var = nugget, p = p1)
 } else if(scenario == 6){
   type01 = c("squaredexponential", "periodic")
   typeT = "matern"
   l01= c(0.01, 0.01)
   lT = 0.01
+  p1 = 0.26
+  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
+                measurement.var = nugget)
+  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
+                measurement.var = nugget, p = p1)
+} else{
+  stop("invalid scenario number")
 }
 
 ################################################################################
@@ -94,13 +115,25 @@ filename_append = ""
 if(!is.null(sigmasq_measuremt)){
   filename_append = "_noise"
 }
-simulated.data = readRDS(paste0(
-  data_dir,
-  "/", typeT,
-  "_l", lT,
-  filename_append, 
-  "_seed", rng.seed,
-  ".rds"))
+if(typeT == "periodic"){
+  simulated_data_file = paste0(
+    data_dir,
+    "/", typeT,
+    "_l", lT,
+    "_p", pT,
+    filename_append, 
+    "_seed", rng.seed,
+    ".rds")
+} else{
+  simulated_data_file = paste0(
+    data_dir,
+    "/", typeT,
+    "_l", lT,
+    filename_append, 
+    "_seed", rng.seed,
+    ".rds")
+}
+simulated.data = readRDS(simulated_data_file)
 numSims = simulated.data$numSims
 x_seq = simulated.data$x
 numx = length(x_seq)
@@ -110,7 +143,44 @@ y_seq_mat = simulated.data$function_values_mat
 
 ################################################################################
 # initial design
+x_input_idx = ceiling(numx / 2)
+x_input = x_seq[x_input_idx]
 
+################################################################################
+# read in the data
+
+filename_append = ""
+if(!is.null(sigmasq_measuremt)){
+  filename_append = "_noise"
+}
+if(typeT == "periodic"){
+  simulated_data_file = paste0(
+    data_dir,
+    "/", typeT,
+    "_l", lT,
+    "_p", pT,
+    filename_append, 
+    "_seed", rng.seed,
+    ".rds")
+} else{
+  simulated_data_file = paste0(
+    data_dir,
+    "/", typeT,
+    "_l", lT,
+    filename_append, 
+    "_seed", rng.seed,
+    ".rds")
+}
+simulated.data = readRDS(simulated_data_file)
+numSims = simulated.data$numSims
+x_seq = simulated.data$x
+numx = length(x_seq)
+null_cov = simulated.data$null_cov
+null_mean = simulated.data$null_mean
+y_seq_mat = simulated.data$function_values_mat
+
+################################################################################
+# initial design
 x_input_idx = ceiling(numx / 2)
 x_input = x_seq[x_input_idx]
 
@@ -152,30 +222,50 @@ qcap_persist_sims = readRDS(paste0(
   "_seq", seq.type,
   filename_append.tmp))
 
-random_sims = readRDS(paste0(
-  sims_dir, 
-  "/spacefilling_designs/outputs/random", 
-  "_", typeT,
-  "_l", lT,
-  filename_append.tmp))
-grid_sims = readRDS(paste0(
-  sims_dir,
-  "/spacefilling_designs/outputs/grid", 
-  "_", typeT,
-  "_l", lT,
-  filename_append.tmp))
+if(typeT == "periodic"){
+  random_sims_file = paste0(
+    sims_dir, 
+    "/spacefilling_designs/outputs/random", 
+    "_", typeT,
+    "_l", lT,
+    "_p", pT,
+    filename_append.tmp)
+  grid_sims_file = paste0(
+    sims_dir,
+    "/spacefilling_designs/outputs/grid", 
+    "_", typeT,
+    "_l", lT,
+    "_p", pT,
+    filename_append.tmp)
+} else{
+  random_sims_file = paste0(
+    sims_dir, 
+    "/spacefilling_designs/outputs/random", 
+    "_", typeT,
+    "_l", lT,
+    filename_append.tmp)
+  grid_sims_file = paste0(
+    sims_dir,
+    "/spacefilling_designs/outputs/grid", 
+    "_", typeT,
+    "_l", lT,
+    filename_append.tmp)
+}
+random_sims = readRDS(random_sims_file)
+grid_sims = readRDS(grid_sims_file)
 
 ################################################################################
 # make posterior probability of H_\ell plots
 ################################################################################
 
 # models
-model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
-              measurement.var = nugget)
-model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
-              measurement.var = nugget)
-modelT = list(type = typeT, l = lT, signal.var = sigmasq_signal, 
-              measurement.var = sigmasq_measuremt)
+if(typeT == "periodic"){
+  modelT = list(type = typeT, l = lT, signal.var = sigmasq_signal, 
+                measurement.var = sigmasq_measuremt, p = pT)
+} else{
+  modelT = list(type = typeT, l = lT, signal.var = sigmasq_signal, 
+                measurement.var = sigmasq_measuremt)
+}
 
 getPPHseq = function(design, model0, model1, modelT){
   PPH0_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
@@ -234,10 +324,10 @@ for(j in 1:numSims){
   PPH_seq.r = getPPHseq(r, model0, model1, modelT)
   PPH_seq.g = getPPHseq(g, model0, model1, modelT)
   # master data frame
-  PPH_seq.bh$type = "bh"
+  PPH_seq.bh$type = "boxhill"
   PPH_seq.qc$type = "qcap"
-  PPH_seq.lo$type = "lo"
-  PPH_seq.qc2$type = "qcap2"
+  PPH_seq.lo$type = "leaveout"
+  PPH_seq.qc2$type = "keepq2"
   PPH_seq.kq$type = "keepq"
   PPH_seq.r$type = "random"
   PPH_seq.g$type = "grid"
@@ -273,7 +363,7 @@ epph.plt = ggplot(PPHmean_seq, aes(x = index, y = value, color = type,
 plot(epph.plt)
 
 # plot the numSims individual posterior probability of HT curves
-PPH_seq_bh = dplyr::filter(PPH_seq, type == "bh")
+PPH_seq_bh = dplyr::filter(PPH_seq, type == "boxhill")
 ggplot(PPH_seq_bh, aes(x = index, y = HT)) +
   facet_wrap(~sim) +
   geom_path() + 
@@ -292,7 +382,7 @@ for(j in 1:numSims){
   data.gg = data.frame(
     index = as.character(0:Nnew), 
     design = c(x_input, boxhill_sims[[j]]$x.new), 
-    type = c("input", rep("bh", Nnew))
+    type = c("input", rep("boxhill", Nnew))
   )
   text.gg = data.frame(N = length(na.omit(boxhill_sims[[j]]$x.new)))
   plt_list[[j]] = ggplot() + 
@@ -323,6 +413,10 @@ x_new_idx = boxhill_sims[[idx]]$x.new.idx
 # x_new_idx = qcap_sims[[idx]]$x.new.idx
 y_new = y_seq[x_new_idx]
 
+fit_new_idx = c(1)
+x_fit = c(x_input, x_new[fit_new_idx])
+y_fit = c(y_input, y_new[fit_new_idx])
+
 # ggplot(data.frame(x = x_seq, y = y_seq), aes(x = x, y = y)) + 
 #   geom_vline(xintercept = c(0.26 + 0:2 * 0.26), color = gg_color_hue(3)[1]) +
 #   geom_path() + 
@@ -339,7 +433,7 @@ y_new = y_seq[x_new_idx]
 
 # plot with error bars
 
-HT_predfn = getGPPredictive(x_seq, x_input, y_input, typeT, lT, 1, 
+HT_predfn = getGPPredictive(x_seq, x_fit, y_fit, typeT, lT, 1, 
                             measurement.var = sigmasq_measuremt)
 err = 2 * sqrt(diag(HT_predfn$pred_var))
 ggdata = data.table(
@@ -351,7 +445,7 @@ ggdata = data.table(
 )
 # ggdata.melted = melt(ggdata, id.vars = c("x"))
 
-H0_predfn = getGPPredictive(x_seq, x_input, y_input, type01[1], l01[1], 1, 
+H0_predfn = getGPPredictive(x_seq, x_fit, y_fit, type01[1], l01[1], 1, 
                             measurement.var = sigmasq_measuremt)
 err0 = 2 * sqrt(diag(H0_predfn$pred_var))
 ggdata0 = data.table(
@@ -363,7 +457,7 @@ ggdata0 = data.table(
 )
 # ggdata0.melted = melt(ggdata0, id.vars = c("x"))
 
-H1_predfn = getGPPredictive(x_seq, x_input, y_input, type01[2], l01[2], 1, 
+H1_predfn = getGPPredictive(x_seq, x_fit, y_fit, type01[2], l01[2], 1, 
                             measurement.var = sigmasq_measuremt)
 err1 = 2 * sqrt(diag(H1_predfn$pred_var))
 ggdata1 = data.table(
@@ -377,10 +471,10 @@ ggdata1 = data.table(
 
 ggdata_pts = data.table(
   x = c(x_input, x_new), y = c(y_input, y_new), 
-  color = c(rep(gg_color_hue(5)[2], length(x_input)), 
-            rep(gg_color_hue(5)[1], length(x_new))), 
-  shape = c(rep(8, length(x_input)), 
-            rep(16, length(x_new)))
+  color = c(rep(gg_color_hue(5)[2], length(x_input) + length(fit_new_idx)), 
+            rep(gg_color_hue(5)[1], length(x_new) - length(fit_new_idx))), 
+  shape = c(rep(8, length(x_input) + length(fit_new_idx)), 
+            rep(16, length(x_new) - length(fit_new_idx)))
 )
 ggplot(ggdata) + 
   geom_path(aes(x = x, y = `True Function`)) + 
@@ -408,8 +502,11 @@ ggplot(ggdata) +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
   labs(y = "y", x = "x", fill = "Function", color = "Function") +
-   xlim(min(c(x_input, x_new), na.rm = TRUE),
-   max(c(x_input, x_new), na.rm = TRUE))
+  xlim(x_input - pT, x_input + pT) + 
+  geom_vline(xintercept = pT * (0:floor((xmax - xmin) / pT)), 
+             color = "blue", alpha = 0.5)
+   # xlim(min(c(x_input, x_new), na.rm = TRUE),
+   # max(c(x_input, x_new), na.rm = TRUE))
 
 
 # plot(plotGP(

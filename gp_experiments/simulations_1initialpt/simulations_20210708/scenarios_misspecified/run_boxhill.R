@@ -87,7 +87,7 @@ if(scenario == 3){
   type01 = c("matern", "squaredexponential")
   typeT = "periodic"
   l01= c(0.01, 0.01)
-  lT = 0.05
+  lT = 0.1
   pT = 0.05 # 0.05 or 0.1
   model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
                 measurement.var = nugget)
@@ -151,7 +151,6 @@ y_seq_mat = simulated.data$function_values_mat
 
 ################################################################################
 # initial design
-
 x_input_idx = ceiling(numx / 2)
 x_input = x_seq[x_input_idx]
 

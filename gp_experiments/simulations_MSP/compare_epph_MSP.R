@@ -9,8 +9,8 @@ seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
 ################################################################################
 # Sources/Libraries
 ################################################################################
-sims_dir = "gp_experiments/simulations_1initialpt"
-output_dir = paste0(sims_dir, "/simulations_20210714/scenarios_misspecified/outputs")
+sims_dir = "gp_experiments/simulations_MSP"
+output_dir = paste0(sims_dir, "/scenario_MSP/outputs")
 data_dir = paste0(sims_dir, "/simulated_data")
 functions_dir = "functions"
 

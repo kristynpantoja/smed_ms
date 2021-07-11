@@ -1,12 +1,16 @@
+################################################################################
+# last updated: 07/11/2021
+# purpose: to investigate under what conditions seqmedgp is better than boxhill
+# for scenario 4
 
-scenario = 1 # scenarios: 1, 2
+scenario = 4
 seq.type = 1 # 1 = fully sequential, 2 = stage-sequential 3x5
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
 sims_dir = "gp_experiments/simulations_1initialpt"
-output_dir = paste0(sims_dir, "/simulations_20210626/scenarios_h1true/outputs")
+output_dir = paste0(sims_dir, "/simulations_20210714/scenarios_misspecified/outputs")
 data_dir = paste0(sims_dir, "/simulated_data")
 functions_dir = "functions"
 
@@ -28,7 +32,6 @@ rng.seed = 123
 
 library(ggplot2)
 library(reshape2)
-library(ggpubr)
 gg_color_hue = function(n) {
   hues = seq(15, 275, length = n + 1)
   hcl(h = hues, l = 65, c = 100)[1:n]
@@ -64,14 +67,48 @@ prior_probs = rep(1 / 2, 2)
 ################################################################################
 # Scenario settings
 ################################################################################
-if(scenario == 1){
-  type01 = c("squaredexponential", "matern")
-} else if(scenario == 2){
+if(scenario == 3){
+  type01 = c("squaredexponential", "squaredexponential")
+  typeT = "matern"
+  l01= c(0.005, 0.01)
+  lT = 0.01
+  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
+                measurement.var = nugget)
+  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
+                measurement.var = nugget)
+} else if(scenario == 4){
+  type01 = c("matern", "squaredexponential")
+  typeT = "periodic"
+  l01= c(0.01, 0.01)
+  lT = 0.1
+  pT = 0.05 # 0.05 or 0.1
+  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
+                measurement.var = nugget)
+  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
+                measurement.var = nugget)
+} else if(scenario == 5){
   type01 = c("matern", "periodic")
+  typeT = "squaredexponential"
+  l01= c(0.01, 0.01)
+  lT = 0.01
+  p1 = 0.26
+  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
+                measurement.var = nugget)
+  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
+                measurement.var = nugget, p = p1)
+} else if(scenario == 6){
+  type01 = c("squaredexponential", "periodic")
+  typeT = "matern"
+  l01= c(0.01, 0.01)
+  lT = 0.01
+  p1 = 0.26
+  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
+                measurement.var = nugget)
+  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
+                measurement.var = nugget, p = p1)
+} else{
+  stop("invalid scenario number")
 }
-typeT = type01[2]
-l01= c(0.01, 0.01)
-lT = l01[2]
 
 ################################################################################
 # import data
@@ -79,13 +116,25 @@ filename_append = ""
 if(!is.null(sigmasq_measuremt)){
   filename_append = "_noise"
 }
-simulated.data = readRDS(paste0(
-  data_dir,
-  "/", typeT,
-  "_l", lT,
-  filename_append, 
-  "_seed", rng.seed,
-  ".rds"))
+if(typeT == "periodic"){
+  simulated_data_file = paste0(
+    data_dir,
+    "/", typeT,
+    "_l", lT,
+    "_p", pT,
+    filename_append, 
+    "_seed", rng.seed,
+    ".rds")
+} else{
+  simulated_data_file = paste0(
+    data_dir,
+    "/", typeT,
+    "_l", lT,
+    filename_append, 
+    "_seed", rng.seed,
+    ".rds")
+}
+simulated.data = readRDS(simulated_data_file)
 numSims = simulated.data$numSims
 x_seq = simulated.data$x
 numx = length(x_seq)
@@ -95,7 +144,6 @@ y_seq_mat = simulated.data$function_values_mat
 
 ################################################################################
 # initial design
-
 x_input_idx = ceiling(numx / 2)
 x_input = x_seq[x_input_idx]
 
@@ -137,44 +185,69 @@ qcap_persist_sims = readRDS(paste0(
   "_seq", seq.type,
   filename_append.tmp))
 
-random_sims = readRDS(paste0(
-  sims_dir, 
-  "/spacefilling_designs/outputs/random", 
-  "_", typeT,
-  "_l", lT,
-  filename_append.tmp))
-grid_sims = readRDS(paste0(
-  sims_dir,
-  "/spacefilling_designs/outputs/grid", 
-  "_", typeT,
-  "_l", lT,
-  filename_append.tmp))
+if(typeT == "periodic"){
+  random_sims_file = paste0(
+    sims_dir, 
+    "/spacefilling_designs/outputs/random", 
+    "_", typeT,
+    "_l", lT,
+    "_p", pT,
+    filename_append.tmp)
+  grid_sims_file = paste0(
+    sims_dir,
+    "/spacefilling_designs/outputs/grid", 
+    "_", typeT,
+    "_l", lT,
+    "_p", pT,
+    filename_append.tmp)
+} else{
+  random_sims_file = paste0(
+    sims_dir, 
+    "/spacefilling_designs/outputs/random", 
+    "_", typeT,
+    "_l", lT,
+    filename_append.tmp)
+  grid_sims_file = paste0(
+    sims_dir,
+    "/spacefilling_designs/outputs/grid", 
+    "_", typeT,
+    "_l", lT,
+    filename_append.tmp)
+}
+random_sims = readRDS(random_sims_file)
+grid_sims = readRDS(grid_sims_file)
 
 ################################################################################
-# make posterior probability of H_\ell plots
+# make sequential EPPH plots
 ################################################################################
 
 # models
-model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
-              measurement.var = nugget)
-model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
-              measurement.var = nugget)
+if(typeT == "periodic"){
+  modelT = list(type = typeT, l = lT, signal.var = sigmasq_signal, 
+                measurement.var = sigmasq_measuremt, p = pT)
+} else{
+  modelT = list(type = typeT, l = lT, signal.var = sigmasq_signal, 
+                measurement.var = sigmasq_measuremt)
+}
 
-getPPHseq = function(design, model0, model1){
+getPPHseq = function(design, model0, model1, modelT){
   PPH0_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
   PPH1_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
+  PPHT_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
   for(i in 1:length(as.vector(na.omit(design$y.new)))){
     y.tmp = c(design$y, as.vector(na.omit(design$y.new))[1:i])
     x.tmp = c(design$x, as.vector(na.omit(design$x.new))[1:i])
     PPHs.tmp = getHypothesesPosteriors(
-      prior.probs = prior_probs, 
+      prior.probs = rep(1 / 3, 3), 
       evidences = c(
         Evidence_gp(y.tmp, x.tmp, model0),
-        Evidence_gp(y.tmp, x.tmp, model1)
+        Evidence_gp(y.tmp, x.tmp, model1), 
+        Evidence_gp(y.tmp, x.tmp, modelT)
       )
     )
     PPH0_seq[i] = PPHs.tmp[1]
     PPH1_seq[i] = PPHs.tmp[2]
+    PPHT_seq[i] = PPHs.tmp[3]
   }
   if(length(PPH0_seq) < Nnew){
     PPH0_seq[(length(PPH0_seq) + 1):Nnew] = PPH0_seq[length(PPH0_seq)]
@@ -182,10 +255,14 @@ getPPHseq = function(design, model0, model1){
   if(length(PPH1_seq) < Nnew){
     PPH1_seq[(length(PPH1_seq) + 1):Nnew] = PPH1_seq[length(PPH1_seq)]
   }
+  if(length(PPHT_seq) < Nnew){
+    PPHT_seq[(length(PPHT_seq) + 1):Nnew] = PPHT_seq[length(PPHT_seq)]
+  }
   return(data.frame(
     index = 1:Nnew, 
-    PPH0 = PPH0_seq, 
-    PPH1 = PPH1_seq
+    "H0" = PPH0_seq, 
+    "H1" = PPH1_seq, 
+    "HT" = PPHT_seq
   ))
 }
 
@@ -198,44 +275,49 @@ for(j in 1:numSims){
   qc = qcap_sims[[j]]
   lo = leaveout_sims[[j]]
   qc2 = qcap_persist_sims[[j]]
-  kq2 = persist_sims[[j]]
+  kq = persist_sims[[j]]
   r = random_sims[[j]]
   g = grid_sims[[j]]
   # sequence of PPHs for each design
-  PPH_seq.bh = getPPHseq(bh, model0, model1)
-  PPH_seq.qc = getPPHseq(qc, model0, model1)
-  PPH_seq.lo = getPPHseq(lo, model0, model1)
-  PPH_seq.qc2 = getPPHseq(qc2, model0, model1)
-  PPH_seq.lo2 = getPPHseq(kq2, model0, model1)
-  PPH_seq.r = getPPHseq(r, model0, model1)
-  PPH_seq.g = getPPHseq(g, model0, model1)
+  PPH_seq.bh = getPPHseq(bh, model0, model1, modelT)
+  PPH_seq.qc = getPPHseq(qc, model0, model1, modelT)
+  PPH_seq.lo = getPPHseq(lo, model0, model1, modelT)
+  PPH_seq.qc2 = getPPHseq(qc2, model0, model1, modelT)
+  PPH_seq.kq = getPPHseq(kq, model0, model1, modelT)
+  PPH_seq.r = getPPHseq(r, model0, model1, modelT)
+  PPH_seq.g = getPPHseq(g, model0, model1, modelT)
   # master data frame
-  PPH_seq.bh$type = "bh"
+  PPH_seq.bh$type = "boxhill"
   PPH_seq.qc$type = "qcap"
-  PPH_seq.lo$type = "lo"
-  PPH_seq.qc2$type = "qcap2"
-  PPH_seq.lo2$type = "keepq"
+  PPH_seq.lo$type = "leaveout"
+  PPH_seq.qc2$type = "keepq2"
+  PPH_seq.kq$type = "keepq"
   PPH_seq.r$type = "random"
   PPH_seq.g$type = "grid"
   PPH_seq.tmp = rbind(
-    PPH_seq.bh, PPH_seq.qc, PPH_seq.lo, PPH_seq.qc2, PPH_seq.lo2, 
+    PPH_seq.bh, PPH_seq.qc, PPH_seq.lo, PPH_seq.qc2, PPH_seq.kq, 
     PPH_seq.r, PPH_seq.g)
   PPH_seq.tmp$sim = j
   PPH_seq = rbind(PPH_seq, PPH_seq.tmp)
 }
 
-PPH0mean_seq = aggregate(PPH_seq$PPH0, by = list(PPH_seq$index, PPH_seq$type), 
+PPH0mean_seq = aggregate(PPH_seq$H0, by = list(PPH_seq$index, PPH_seq$type), 
                          FUN = function(x) mean(x, na.rm = TRUE))
 names(PPH0mean_seq) = c("index", "type", "value")
 PPH0mean_seq$Hypothesis = "H0"
-PPH1mean_seq = aggregate(PPH_seq$PPH1, by = list(PPH_seq$index, PPH_seq$type), 
+PPH1mean_seq = aggregate(PPH_seq$H1, by = list(PPH_seq$index, PPH_seq$type), 
                          FUN = function(x) mean(x, na.rm = TRUE))
 names(PPH1mean_seq) = c("index", "type", "value")
 PPH1mean_seq$Hypothesis = "H1"
+PPHTmean_seq = aggregate(PPH_seq$HT, by = list(PPH_seq$index, PPH_seq$type), 
+                         FUN = function(x) mean(x, na.rm = TRUE))
+names(PPHTmean_seq) = c("index", "type", "value")
+PPHTmean_seq$Hypothesis = "HT"
 
-PPHmean_seq = rbind(PPH0mean_seq, PPH1mean_seq)
-
-# plot mean curves
+# PPHmean_seq = rbind(dplyr::filter(PPH0mean_seq, type == "bh"),
+#                     dplyr::filter(PPH1mean_seq, type == "bh"),
+#                     dplyr::filter(PPHTmean_seq, type == "bh"))
+PPHmean_seq = rbind(PPH0mean_seq, PPH1mean_seq, PPHTmean_seq)
 epph.plt = ggplot(PPHmean_seq, aes(x = index, y = value, color = type, 
                                    linetype = type, shape = type)) + 
   facet_wrap(~Hypothesis) + 
@@ -245,42 +327,11 @@ epph.plt = ggplot(PPHmean_seq, aes(x = index, y = value, color = type,
   ylim(0, 1)
 plot(epph.plt)
 
-# plot the numSims individual posterior probability of H1 curves
-PPH_seq_bh = dplyr::filter(PPH_seq, type == "bh")
-ggplot(PPH_seq_bh, aes(x = index, y = PPH1)) +
-  facet_wrap(~sim) +
-  geom_path() + 
-  geom_point() +
-  theme_bw() +
-  ylim(0, 1) + 
-  theme(panel.grid.minor = element_blank())
+ggsave(
+  filename = paste0("20210714_scen", scenario, "_epph.pdf"), 
+  plot = epph.plt, 
+  width = 6, height = 4, units = c("in")
+)
 
-################################################################################
-# make design plots
-################################################################################
-
-plt_list = list()
-for(j in 1:numSims){
-  data.gg = data.frame(
-    index = as.character(0:Nnew), 
-    design = c(x_input, boxhill_sims[[j]]$x.new), 
-    type = c("input", rep("bh", Nnew))
-  )
-  text.gg = data.frame(N = length(na.omit(boxhill_sims[[j]]$x.new)))
-  plt_list[[j]] = ggplot() + 
-    geom_point(data = data.gg, 
-               mapping = aes(x = design, y = 0, color = type)) +
-    geom_text(data = text.gg,
-              aes(x = x_input, label = N, y = 0.01), size = 5) +
-    xlim(xmin, xmax) + 
-    ylim(0, 0.02) + 
-    theme_classic() +
-    theme(legend.position = "none", 
-          axis.title.x = element_blank(), axis.text.x = element_blank(), 
-          axis.title.y = element_blank(), axis.text.y = element_blank())
-  # plot(plt_list[[j]])
-}
-ggarrange(plotlist = plt_list, nrow = 5, ncol = 5)
-
-
-
+print(paste("scenario", scenario, 
+            "################################################################"))

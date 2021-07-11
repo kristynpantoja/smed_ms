@@ -8,8 +8,8 @@ scenario = 4
 ################################################################################
 # Sources/Libraries
 ################################################################################
-sims_dir = "gp_experiments/simulation4_MSP"
-output_dir = paste0(sims_dir, "/scenario4_MSP/outputs")
+sims_dir = "gp_experiments/simulations_MSP"
+output_dir = paste0(sims_dir, "/scenario_MSP/outputs")
 data_dir = paste0(sims_dir, "/simulated_data")
 functions_dir = "functions"
 
@@ -183,7 +183,7 @@ for(k in 1:2){
       candidates = x_seq, function.values = y_seq, 
       model0 = model0, model1 = model1, 
       numSeq = numSeq, seqN = seqN, prints = FALSE, buffer = buffer, 
-      objective.type = 4)
+      objective.type = 4, newq = FALSE)
   }
   
   filename_append.tmp = paste0(
@@ -195,7 +195,7 @@ for(k in 1:2){
           file = paste0(
             output_dir,
             "/scenario", scenario, "_seqmed", 
-            "_cap", 
+            "_cap_persist", 
             "_seq", seq.type,
             filename_append.tmp))
 }

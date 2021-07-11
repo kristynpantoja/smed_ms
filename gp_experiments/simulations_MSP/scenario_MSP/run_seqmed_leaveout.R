@@ -8,8 +8,8 @@ scenario = 4
 ################################################################################
 # Sources/Libraries
 ################################################################################
-sims_dir = "gp_experiments/simulation4_MSP"
-output_dir = paste0(sims_dir, "/scenario4_MSP/outputs")
+sims_dir = "gp_experiments/simulations_MSP"
+output_dir = paste0(sims_dir, "/scenario_MSP/outputs")
 data_dir = paste0(sims_dir, "/simulated_data")
 functions_dir = "functions"
 
@@ -64,6 +64,7 @@ numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
 sigmasq_measuremt = 1e-10
 sigmasq_signal = 1
+
 # SeqMED settings
 nugget = sigmasq_measuremt
 buffer = 0
@@ -183,7 +184,7 @@ k = 1
       candidates = x_seq, function.values = y_seq, 
       model0 = model0, model1 = model1, 
       numSeq = numSeq, seqN = seqN, prints = FALSE, buffer = buffer, 
-      objective.type = 0, newq = FALSE)
+      objective.type = 5)
   }
   
   filename_append.tmp = paste0(
@@ -195,7 +196,7 @@ k = 1
           file = paste0(
             output_dir,
             "/scenario", scenario, "_seqmed", 
-            "_persist", 
+            "_leaveout", 
             "_seq", seq.type,
             filename_append.tmp))
 # }

@@ -11,7 +11,7 @@ sigmasq_signal = 1
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = paste0("gp_experiments/simulation4_MSP/simulated_data")
+output_home = paste0("gp_experiments/simulations_MSP/simulated_data")
 functions_home = "functions"
 
 # for seqmed design

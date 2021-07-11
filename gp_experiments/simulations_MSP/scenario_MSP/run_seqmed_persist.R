@@ -8,8 +8,8 @@ scenario = 4
 ################################################################################
 # Sources/Libraries
 ################################################################################
-sims_dir = "gp_experiments/simulation4_MSP"
-output_dir = paste0(sims_dir, "/scenario4_MSP/outputs")
+sims_dir = "gp_experiments/simulations_MSP"
+output_dir = paste0(sims_dir, "/scenario_MSP/outputs")
 data_dir = paste0(sims_dir, "/simulated_data")
 functions_dir = "functions"
 
@@ -34,7 +34,7 @@ library(future)
 library(doFuture)
 library(parallel)
 registerDoFuture()
-nworkers = detectCores()
+nworkers = detectCores() - 2
 plan(multisession, workers = nworkers)
 
 library(rngtools)
@@ -56,9 +56,7 @@ gg_color_hue = function(n) {
 # simulations settings
 numSims = 25
 Nin = 1
-numSeq = 15
-seqN = 1
-Nnew = numSeq * seqN
+Nnew = 15
 Nttl = Nin + Nnew
 xmin = 0
 xmax = 1
@@ -66,10 +64,9 @@ numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
 sigmasq_measuremt = 1e-10
 sigmasq_signal = 1
-
-# boxhill settings
+# SeqMED settings
 nugget = sigmasq_measuremt
-prior_probs = rep(1 / 2, 2)
+buffer = 0
 
 ################################################################################
 # Scenario settings
@@ -154,32 +151,51 @@ y_seq_mat = simulated.data$function_values_mat
 
 ################################################################################
 # initial design
+
 x_input_idx = ceiling(numx / 2)
 x_input = x_seq[x_input_idx]
 
 ################################################################################
-# generate boxhills
+# generate seqmeds 
 
-# simulations!
-registerDoRNG(rng.seed)
-boxhills = foreach(
-  i = 1:numSims
-) %dorng% {
-  y_seq = y_seq_mat[ , i]
-  y_input = y_seq[x_input_idx]
-  BHgp_m2(
-    y_input, x_input, x_input_idx, prior_probs, model0, model1, Nnew, 
-    x_seq, y_seq)
-}
-
-filename_append.tmp = paste0(
-  filename_append, 
-  "_seed", rng.seed,
-  ".rds"
-)
-saveRDS(boxhills, 
-        file = paste0(
-          output_dir,
-          "/scenario", scenario, "_boxhill", 
-          filename_append.tmp))
-
+# for(k in 1:2){
+k = 1
+  
+  # k : sequential setting
+  seq.type = k
+  if(seq.type == 1){
+    numSeq = 15
+    seqN = 1
+  } else if(seq.type == 2){
+    numSeq = 3
+    seqN = 5
+  }
+  
+  # simulations!
+  registerDoRNG(rng.seed)
+  seqmeds = foreach(
+    b = 1:numSims
+  ) %dorng% {
+    y_seq = y_seq_mat[ , b]
+    y_input = y_seq[x_input_idx]
+    SeqMEDgp(
+      y0 = y_input, x0 = x_input, x0.idx = x_input_idx, 
+      candidates = x_seq, function.values = y_seq, 
+      model0 = model0, model1 = model1, 
+      numSeq = numSeq, seqN = seqN, prints = FALSE, buffer = buffer, 
+      objective.type = 0, newq = FALSE)
+  }
+  
+  filename_append.tmp = paste0(
+    filename_append, 
+    "_seed", rng.seed,
+    ".rds"
+  )
+  saveRDS(seqmeds, 
+          file = paste0(
+            output_dir,
+            "/scenario", scenario, "_seqmed", 
+            "_persist", 
+            "_seq", seq.type,
+            filename_append.tmp))
+# }

@@ -42,7 +42,7 @@ q_gp = function(
 ){
   W = WNgp(x, Kinv0, Kinv1, initD, y, model0, model1) + buffer
   q_exponent = alpha / (2 * p)
-  return(1.0 / (W)^q_exponent)
+  return(1.0 / W^q_exponent)
 }
 qcap_gp = function(
   x, Kinv0, Kinv1, initD, y, p, alpha = 1, model0, model1, cap = 1e20
@@ -53,12 +53,17 @@ qcap_gp = function(
 }
 
 # # for D1, ..., DT in multivariate gp models
-# q_gpvs = function(
-#   x, Kinv0, Kinv1, indices0, indices1, initD0, initD1, y, signal.var, type, l, p, 
-#   alpha = 1
-# ){
-#   if(length(type) != 2) stop("type should be vector with length == 2")
-#   W = WNgpvs(x, Kinv0, Kinv1, indices0, indices1, initD0, initD1, y, signal.var, type, l)
-#   q_exponent = alpha / (2 * p)
-#   return(1.0 / (W)^q_exponent)
-# }
+q_gpvs = function(
+  x, Kinv0, Kinv1, initD0, initD1, y, p, alpha = 1, buffer = 0, model0, model1
+){
+  W = WNgpvs(x, Kinv0, Kinv1, initD0, initD1, y, model0, model1) + buffer
+  q_exponent = alpha / (2 * p)
+  return(1.0 / W^q_exponent)
+}
+qcapvs_gp = function(
+  x, Kinv0, Kinv1, initD0, initD1, y, p, alpha = 1, model0, model1, cap = 1e20
+){
+  q_val = q_gp(x, Kinv0, Kinv1, initD, y, p, alpha, buffer, model0, model1)
+  q_prime = min(q_val, cap)
+  return(q_prime)
+}

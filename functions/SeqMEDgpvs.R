@@ -1,28 +1,35 @@
-#################################################
-### SeqMED GP, one-at-a-time greedy algorithm ###
-#################################################
+########################################################################
+### SeqMED GP for variable selection, one-at-a-time greedy algorithm ###
+########################################################################
 
-SeqMEDgp = function(
-  y0 = NULL, x0 = NULL, x0.idx = NULL, candidates, function.values, 
+# NOTES:
+# new arguments (compared to SeqMEDgp):
+#   idx0, idx1, numDims, seed = NULL
+# old arguments that need to be re-defined: p = # dimensions
+
+SeqMEDgpvs = function(
+  y0 = NULL, x0 = NULL, x0.idx = NULL, idx0, idx1, numDims = NULL,
+  candidates, function.values, 
   xmin = 0, xmax = 1, k = 4, p = 1, 
   numSeq = 5, seqN = 3, alpha.seq = 1, buffer = 0, objective.type = 1, 
-  model0 = NULL, model1 = NULL, newq = TRUE, prints = FALSE
+  model0 = NULL, model1 = NULL, newq = TRUE, prints = FALSE, seed = NULL
 ){
+  if(!is.null(seed)) set.seed(seed)
   if(numSeq > 1 & length(seqN) == 1) seqN = rep(seqN, numSeq)
   if(numSeq > 1 & is.null(alpha.seq)) alpha.seq = rep(1, numSeq)
   if(numSeq > 1 & length(alpha.seq) == 1) alpha.seq = rep(alpha.seq, numSeq)
-  if(is.null(candidates)) stop("SeqMEDgp: No candidates provided!")
+  if(is.null(candidates)) stop("SeqMEDgpvs: No candidates provided!")
   
   # check preliminary data
   if(is.null(x0) & !is.null(y0)){ # x0 is null, y0 is not null
-    stop("SeqMEDgp: preliminary y0  is given, but not corresponding x0")
+    stop("SeqMEDgpvs: preliminary y0  is given, but not corresponding x0")
   } else if(is.null(y0) & !is.null(x0)){ # x is not null, y0 is null (get y0)
     y0 = function.values[x0.idx]
   } else if(is.null(x0) & is.null(y0)){ # both x0 and y0 are null, then us BH method
-    stop("SeqMEDgp: need input data, at least x0!")
+    stop("SeqMEDgpvs: need input data, at least x0!")
   } else{
     if(length(x0) != length(y0)){
-      stop("SeqMEDgp: length of preliminary x0 and y0 don't match!")
+      stop("SeqMEDgpvs: length of preliminary x0 and y0 don't match!")
     }
   }
   D = x0
@@ -56,7 +63,7 @@ SeqMEDgp = function(
     }
     qs = rep(NA, length(D))
     if(!(objective.type %in% c(0, 1, 3, 4, 5))){
-      stop("SeqMEDgp: to keep q, need objective.type == 1, 3, 4, or 5")
+      stop("SeqMEDgpvs: to keep q, need objective.type == 1, 3, 4, or 5")
     } else{
       if(objective.type == 1){ # buffer
         qs = sapply(D, function(x_i) 
@@ -78,18 +85,20 @@ SeqMEDgp = function(
     batch.idx = t
     
     if(newq){
-      Dt = SeqMEDgp_newq_batch(
-        initD = D, y = y, N2 = seqN[t], numCandidates = numCandidates, k = k, p = p, 
+      Dt = add_MMEDgpvs(
+        initD = D, y = y, N2 = seqN[t], numCandidates = numCandidates, k = k, p = p,
+        indices0 = indices0, indices1 = indices1, 
         xmin = xmin, xmax = xmax, alpha = alpha.seq[t], candidates = candidates, 
         batch.idx = batch.idx, buffer = buffer, objective.type = objective.type, 
         model0 = model0, model1 = model1)
+      
     } else{
-      Dt = SeqMEDgp_keepq_batch(
-        initD = D, y = y, N2 = seqN[t], numCandidates = numCandidates, k = k, p = p, 
-        xmin = xmin, xmax = xmax, alpha = alpha.seq[t], candidates = candidates, 
-        batch.idx = batch.idx, buffer = buffer, objective.type = objective.type,
-        model0 = model0, model1 = model1, qs = qs)
-      qs = c(qs, Dt$q.new)
+      # Dt = SeqMEDgp_keepq_batch(
+      #   initD = D, y = y, N2 = seqN[t], numCandidates = numCandidates, k = k, p = p, 
+      #   xmin = xmin, xmax = xmax, alpha = alpha.seq[t], candidates = candidates, 
+      #   batch.idx = batch.idx, buffer = buffer, objective.type = objective.type,
+      #   model0 = model0, model1 = model1, qs = qs)
+      # qs = c(qs, Dt$q.new)
     }
     
     yt = function.values[Dt$indices]

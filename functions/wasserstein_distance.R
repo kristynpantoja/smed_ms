@@ -116,24 +116,48 @@ WNgp.new = function(x, Kinv0, Kinv1, initD, y, model0, model1){
 
 # multidimensional, for variable selection
 # formerly named Wasserstein_distance_postpred_gpvs
-WNgpvs = function(
-  x, Kinv0, Kinv1, variables0, variables1, initD0, initD1, y, signal.var, type, l){
+# WNgpvs = function(
+#   x, Kinv0, Kinv1, variables0, variables1, initD0, initD1, y, signal.var, type, l){
+#   x = t(as.matrix(x))
+#   
+#   # posterior distribution of beta
+#   k0 = t(as.matrix(getCov(x[ , variables0, drop = FALSE], 
+#                           initD0, type[1], l[1])))
+#   k1 = t(as.matrix(getCov(x[ , variables1, drop = FALSE], 
+#                           initD1, type[2], l[2])))
+#   
+#   # posterior predictive distribution of y, for candidate x
+#   postpredy_mu0 = t(k0) %*% Kinv0 %*% y
+#   postpredy_var0 = signal.var * (1 - t(k0) %*% Kinv0 %*% k0)
+#   if(postpredy_var0 < 0) postpredy_var0 = 0 
+#   
+#   postpredy_mu1 = t(k1) %*% Kinv1 %*% y
+#   postpredy_var1 = signal.var * (1 - t(k1) %*% Kinv1 %*% k1)
+#   if(postpredy_var1 < 0) postpredy_var1 = 0 
+#   W = WN(postpredy_mu0, postpredy_mu1, postpredy_var0, postpredy_var1, dim = 1)
+#   return(as.numeric(W))
+# }
+
+WNgpvs = function(x, Kinv0, Kinv1, initD0, initD1, y, model0, model1){
   x = t(as.matrix(x))
   
   # posterior distribution of beta
-  k0 = t(as.matrix(getCov(x[ , variables0, drop = FALSE], 
-                          initD0, type[1], l[1])))
-  k1 = t(as.matrix(getCov(x[ , variables1, drop = FALSE], 
-                          initD1, type[2], l[2])))
+  k0 = t(as.matrix(getCov(
+    X1 = x[, model0$indices, drop = FALSE], X2 = initD0, type = model0$type, 
+    l = model0$l, p = model0$p, signal.var = model0$signal.var)))
+  k1 = t(as.matrix(getCov(
+    X1 = x[, model1$indices, drop = FALSE], X2 = initD1, type = model1$type, 
+    l = model1$l, p = model1$p, signal.var = model1$signal.var)))
   
   # posterior predictive distribution of y, for candidate x
   postpredy_mu0 = t(k0) %*% Kinv0 %*% y
-  postpredy_var0 = signal.var * (1 - t(k0) %*% Kinv0 %*% k0)
-  if(postpredy_var0 < 0) postpredy_var0 = 0 
+  postpredy_var0 = 1 - t(k0) %*% Kinv0 %*% k0
+  if(postpredy_var0 < 0) postpredy_var0 = 0 # only happens when too-small
   
   postpredy_mu1 = t(k1) %*% Kinv1 %*% y
-  postpredy_var1 = signal.var * (1 - t(k1) %*% Kinv1 %*% k1)
-  if(postpredy_var1 < 0) postpredy_var1 = 0 
-  W = WN(postpredy_mu0, postpredy_mu1, postpredy_var0, postpredy_var1, dim = 1)
+  postpredy_var1 = 1 - t(k1) %*% Kinv1 %*% k1
+  if(postpredy_var1 < 0) postpredy_var1 = 0 # same reason
+  
+  W = WN(postpredy_mu0, postpredy_mu1, postpredy_var0, postpredy_var1)
   return(as.numeric(W))
 }

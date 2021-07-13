@@ -9,7 +9,7 @@ lT_seq = seq(0.1, 0.5, length.out = 41)
 ################################################################################
 # Sources/Libraries
 ################################################################################
-sims_dir = "gp_experiments/simulations_MSP"
+sims_dir = "gp_experiments/simulations_MSP/scenario_MSP_lengthscalegrid"
 output_dir = paste0(sims_dir, "/scenario_MSP/outputs")
 data_dir = paste0(sims_dir, "/simulated_data")
 functions_dir = "functions"

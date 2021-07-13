@@ -6,7 +6,6 @@
 typeT = "periodic"
 pT = 0.05
 lT = 0.5
-sigmasq_signal = 1
 
 ################################################################################
 # Sources/Libraries
@@ -61,6 +60,7 @@ xmax = 1
 numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
 sigmasq_measuremt = 1e-10
+sigmasq_signal = 1
 
 ################################################################################
 # generate functions 
@@ -170,7 +170,6 @@ if(typeT == "periodic"){
     "/", typeT,
     "_l", lT,
     "_p", pT,
-    "_sig", sigmasq_signal,
     filename_append, 
     "_seed", rng.seed,
     ".rds")
@@ -179,7 +178,6 @@ if(typeT == "periodic"){
     output_home,
     "/", typeT,
     "_l", lT,
-    "_sig", sigmasq_signal,
     filename_append, 
     "_seed", rng.seed,
     ".rds")

@@ -8,7 +8,7 @@
 # old arguments that need to be re-defined: p = # dimensions
 
 SeqMEDgpvs = function(
-  y0 = NULL, x0 = NULL, x0.idx = NULL, idx0, idx1, numDims = NULL,
+  y0 = NULL, x0 = NULL, x0.idx = NULL, numDims = NULL,
   candidates, function.values, 
   xmin = 0, xmax = 1, k = 4, p = 1, 
   numSeq = 5, seqN = 3, alpha.seq = 1, buffer = 0, objective.type = 1, 
@@ -28,7 +28,7 @@ SeqMEDgpvs = function(
   } else if(is.null(x0) & is.null(y0)){ # both x0 and y0 are null, then us BH method
     stop("SeqMEDgpvs: need input data, at least x0!")
   } else{
-    if(length(x0) != length(y0)){
+    if(nrow(x0) != length(y0)){
       stop("SeqMEDgpvs: length of preliminary x0 and y0 don't match!")
     }
   }
@@ -67,7 +67,7 @@ SeqMEDgpvs = function(
     } else{
       if(objective.type == 1){ # buffer
         qs = sapply(D, function(x_i) 
-          q_gp(
+          q_gpvs(
             x_i, Kinv0, Kinv1, D, y, p, alpha.seq[1], buffer, model0, model1))
       }
       if(objective.type %in% c(0, 3, 5)){
@@ -85,9 +85,8 @@ SeqMEDgpvs = function(
     batch.idx = t
     
     if(newq){
-      Dt = add_MMEDgpvs(
+      Dt = SeqMEDgpvs_newq_batch(
         initD = D, y = y, N2 = seqN[t], numCandidates = numCandidates, k = k, p = p,
-        indices0 = indices0, indices1 = indices1, 
         xmin = xmin, xmax = xmax, alpha = alpha.seq[t], candidates = candidates, 
         batch.idx = batch.idx, buffer = buffer, objective.type = objective.type, 
         model0 = model0, model1 = model1)

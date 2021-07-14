@@ -47,7 +47,7 @@ q_gp = function(
 qcap_gp = function(
   x, Kinv0, Kinv1, initD, y, p, alpha = 1, model0, model1, cap = 1e20
 ){
-  q_val = q_gp(x, Kinv0, Kinv1, initD, y, p, alpha, buffer, model0, model1)
+  q_val = q_gp(x, Kinv0, Kinv1, initD, y, p, alpha, model0, model1)
   q_prime = min(q_val, cap)
   return(q_prime)
 }
@@ -60,10 +60,11 @@ q_gpvs = function(
   q_exponent = alpha / (2 * p)
   return(1.0 / W^q_exponent)
 }
-qcapvs_gp = function(
+qcap_gpvs = function(
   x, Kinv0, Kinv1, initD0, initD1, y, p, alpha = 1, model0, model1, cap = 1e20
 ){
-  q_val = q_gp(x, Kinv0, Kinv1, initD, y, p, alpha, buffer, model0, model1)
+  q_val = q_gpvs(
+    x, Kinv0, Kinv1, initD0, initD1, y, p, alpha, model0, model1)
   q_prime = min(q_val, cap)
   return(q_prime)
 }

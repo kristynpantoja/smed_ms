@@ -1,22 +1,21 @@
 ################################################################################
-# last updated: 05/27/2021
-# purpose: to make grid design for all types of data
+# last updated: 07/13/2021
+# purpose: to test SeqMEDgpvs()
 
-typeT = "periodic"
-pT = 0.05
-lT = 0.5
+dimT = 1
+seq.type = 1
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
-sims_dir = "gp_experiments/simulations_MSP"
-output_dir = paste0(sims_dir, "/spacefilling_designs/outputs")
+sims_dir = "gp_experiments/simulations_vs"
+output_dir = paste0(sims_dir, "/scenario_MSP/outputs")
 data_dir = paste0(sims_dir, "/simulated_data")
 functions_dir = "functions"
 
 # for seqmed design
-source(paste(functions_dir, "/SeqMEDgp.R", sep = ""))
-source(paste(functions_dir, "/SeqMEDgp_batch.R", sep = ""))
+source(paste(functions_dir, "/SeqMEDgpvs.R", sep = ""))
+source(paste(functions_dir, "/SeqMEDgpvs_batch.R", sep = ""))
 source(paste(functions_dir, "/charge_function_q.R", sep = ""))
 source(paste(functions_dir, "/covariance_functions.R", sep = ""))
 source(paste(functions_dir, "/wasserstein_distance.R", sep = ""))
@@ -28,20 +27,7 @@ source(paste(functions_dir, "/boxhill_gp.R", sep = ""))
 source(paste(functions_dir, "/kl_divergence.R", sep = ""))
 
 library(mvtnorm)
-
-# set up parallelization
-library(foreach)
-library(future)
-library(doFuture)
-library(parallel)
-registerDoFuture()
-nworkers = detectCores()
-plan(multisession, workers = nworkers)
-
-library(rngtools)
-library(doRNG)
-rng.seed = 123 # 123, 345
-registerDoRNG(rng.seed)
+rng.seed = 123
 
 library(ggplot2)
 library(reshape2)
@@ -50,6 +36,12 @@ gg_color_hue = function(n) {
   hcl(h = hues, l = 65, c = 100)[1:n]
 }
 
+# library(expm)
+# library(matrixStats)
+# library(MASS)
+# library(mvtnorm)
+# library(knitr)
+
 ################################################################################
 # simulation settings, shared for both scenarios
 ################################################################################
@@ -57,18 +49,51 @@ gg_color_hue = function(n) {
 # simulations settings
 numSims = 25
 Nin = 1
-numSeq = 15
-seqN = 1
+if(seq.type == 1){
+  numSeq = 9
+  seqN = 1
+} else if(seq.type == 2){
+  numSeq = 3
+  seqN = 3
+}
 Nnew = numSeq * seqN
-Nttl = Nin + Nnew
+Nttl = Nin + Nnew 
 xmin = 0
 xmax = 1
-numx = 10^3 + 1
+
+numx = 21
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
-sigmasq_measuremt = 1e-10
+x_grid = expand.grid(x_seq, x_seq)
+
+p = 2
+k = 4 * p
+
+sigmasq_measuremt = NULL
 sigmasq_signal = 1
 
-# space-filling settings
+# shared settings
+nugget = sigmasq_measuremt
+prior_probs = rep(1 / 2, 2)
+
+
+################################################################################
+# Scenario settings
+################################################################################
+
+l01= c(0.1, 0.1)
+type01 = c("squaredexponential", "squaredexponential")
+indices0 = c(1)
+indices1 = c(1, 2)
+
+lT = 0.01
+typeT = "squaredexponential"
+
+model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
+              indices = indices0,
+              measurement.var = nugget)
+model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
+              indices = indices1, 
+              measurement.var = nugget)
 
 ################################################################################
 # import data
@@ -77,12 +102,12 @@ if(!is.null(sigmasq_measuremt)){
   filename_append = "_noise"
 }
 if(typeT == "periodic"){
-  if(is.null(pT)) pT = 0.26
   simulated_data_file = paste0(
     data_dir,
     "/", typeT,
     "_l", lT,
     "_p", pT,
+    "_dim", dimT,
     filename_append, 
     "_seed", rng.seed,
     ".rds")
@@ -91,13 +116,15 @@ if(typeT == "periodic"){
     data_dir,
     "/", typeT,
     "_l", lT,
+    "_dim", dimT,
     filename_append, 
     "_seed", rng.seed,
     ".rds")
 }
 simulated.data = readRDS(simulated_data_file)
 numSims = simulated.data$numSims
-x_seq = simulated.data$x
+x_seq = simulated.data$x_seq
+x_grid = as.matrix(simulated.data$x_grid)
 numx = length(x_seq)
 null_cov = simulated.data$null_cov
 null_mean = simulated.data$null_mean
@@ -105,59 +132,29 @@ y_seq_mat = simulated.data$function_values_mat
 
 ################################################################################
 # initial design
-x_input_idx = ceiling(numx / 2)
-x_input = x_seq[x_input_idx]
+x_input_idx = sample(1:numx, Nin)
+x_input = x_grid[x_input_idx + numx * (1:Nin), , drop = FALSE]
 
 ################################################################################
-# space-filling design
-
-step_size = floor(length(x_seq) - 1) / (Nnew + 1)
-x.new.idx = round(c(
-  x_input_idx - 1:ceiling(Nnew / 2) * step_size, 
-  x_input_idx + 1:floor(Nnew / 2) * step_size
-))
-x.new.idx = sort(x.new.idx)
-# x.new.idx
-# plot(x = x.new.idx, y = rep(0, length(x.new.idx)), xlim = c(1, length(x_seq)))
-# points(x = x_input_idx, y = 0, col = 2)
-
-x.new = x_seq[x.new.idx]
+# generate designs
 
 # simulations!
 registerDoRNG(rng.seed)
-spacefills = foreach(
+seqmeds = foreach(
   i = 1:numSims
 ) %dorng% {
   y_seq = y_seq_mat[ , i]
   y_input = y_seq[x_input_idx]
-  # new points' y
-  y.new = y_seq[x.new.idx]
-  list(x = x_input, x.idx = x_input_idx, y = y_input, 
-       x.new = x.new, x.new.idx = x.new.idx, y.new = y.new, 
-       function.values = y_seq)
+  
+  SeqMEDgpvs(
+    y0 = y_input, x0 = x_input, x0.idx = x_input_idx, numDims = NULL,
+    x_grid, y_seq, 
+    xmin = xmin, xmax = xmax, k = k, p = p, 
+    numSeq = numSeq, seqN = seqN, objective.type = 4, 
+    model0 = model0, model1 = model1, newq = TRUE, prints = TRUE)
 }
 
-filename_append.tmp = filename_append
-filename_append.tmp = paste0(
-  filename_append.tmp, 
-  "_seed", rng.seed,
-  ".rds"
-)
-if(typeT == "periodic"){
-  simulated_spacefilling_file = paste0(
-    output_dir,
-    "/grid", 
-    "_", typeT,
-    "_l", lT,
-    "_p", pT,
-    filename_append.tmp)
-} else{
-  simulated_spacefilling_file = paste0(
-    output_dir,
-    "/grid", 
-    "_", typeT,
-    "_l", lT,
-    filename_append.tmp)
-}
-saveRDS(spacefills, file = simulated_spacefilling_file)
+
+
+
 

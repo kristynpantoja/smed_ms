@@ -69,19 +69,19 @@ obj_newq_gpvs = function(
   ### objective.type == 4 caps q ###
   if(objective.type == 4 | objective.type %in% c("cap", "capq")){
     # q(x), x in C
-    q_cand = qcap_gp(candidate, Kinv0, Kinv1, initD0, initD1, y, p, alpha, 
+    q_cand = qcap_gpvs(candidate, Kinv0, Kinv1, initD0, initD1, y, p, alpha, 
                      model0, model1) # no capping needed
     # the other terms in the summation
     # q(xi), xi in the observed set, D_t^c
     sum_q_D = sum(sapply(initD, function(x_i)
-      (qcap_gp(x_i, Kinv0, Kinv1, initD0, initD1, y, p, alpha, 
+      (qcap_gpvs(x_i, Kinv0, Kinv1, initD0, initD1, y, p, alpha, 
                model0, model1) / 
          sqrt((x_i - candidate)^2))^k))
     if(!is.null(D)){ # when N2 > 1
       # q(xi), xi in the unobserved design points D^{(t)}
       sum_q_D = sum_q_D + 
         sum(sapply(D, function(x_i)  # no capping needed here, either
-          (qcap_gp(x_i, Kinv0, Kinv1, initD0, initD1, y, p, alpha, 
+          (qcap_gpvs(x_i, Kinv0, Kinv1, initD0, initD1, y, p, alpha, 
                    model0, model1) / 
              sqrt((x_i - candidate)^2))^k))
     }
@@ -109,7 +109,7 @@ obj_newq_gpvs = function(
       # q(xi), xi in the unobserved design points D^{(t)}
       sum_q_D = sum_q_D + 
         sum(sapply(D, function(x_i) # no leave out necessary here, either
-          (q_gp(x_i, Kinv0, Kinv1, initD0, initD1, y, p, alpha, buffer = 0, 
+          (q_gpvs(x_i, Kinv0, Kinv1, initD0, initD1, y, p, alpha, buffer = 0, 
                 model0, model1) / 
              sqrt((x_i - candidate)^2))^k))
     }
@@ -127,7 +127,8 @@ SeqMEDgpvs_newq_batch = function(
   xmin = 0, xmax = 1, alpha = NULL, candidates, 
   batch.idx = 1, buffer = 0, objective.type = 1, model0, model1
 ){
-  if(!(class(initD) %in% "matrix")) stop("SeqMEDgpvs_keepq_batch: initD isn't a matrix!")
+  
+  if(!("matrix" %in% class(initD))) stop("SeqMEDgpvs_keepq_batch: initD isn't a matrix!")
   initN = dim(initD)[1]
   if(length(y) != initN) stop("SeqMEDgpvs_newq_batch: length of y does not match length of initial input data, initD")
   

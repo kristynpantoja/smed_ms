@@ -67,48 +67,15 @@ prior_probs = rep(1 / 2, 2)
 ################################################################################
 # Scenario settings
 ################################################################################
-if(scenario == 3){
-  type01 = c("squaredexponential", "squaredexponential")
-  typeT = "matern"
-  l01= c(0.005, 0.01)
-  lT = 0.01
-  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
-                measurement.var = nugget)
-  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
-                measurement.var = nugget)
-} else if(scenario == 4){
-  type01 = c("matern", "squaredexponential")
-  typeT = "periodic"
-  l01= c(0.01, 0.01)
-  lT = 0.1
-  pT = 0.05 # 0.05 or 0.1
-  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
-                measurement.var = nugget)
-  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
-                measurement.var = nugget)
-} else if(scenario == 5){
-  type01 = c("matern", "periodic")
-  typeT = "squaredexponential"
-  l01= c(0.01, 0.01)
-  lT = 0.01
-  p1 = 0.26
-  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
-                measurement.var = nugget)
-  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
-                measurement.var = nugget, p = p1)
-} else if(scenario == 6){
-  type01 = c("squaredexponential", "periodic")
-  typeT = "matern"
-  l01= c(0.01, 0.01)
-  lT = 0.01
-  p1 = 0.26
-  model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
-                measurement.var = nugget)
-  model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
-                measurement.var = nugget, p = p1)
-} else{
-  stop("invalid scenario number")
-}
+type01 = c("matern", "squaredexponential")
+typeT = "periodic"
+l01= c(0.01, 0.01)
+lT = 0.5
+pT = 0.05 # 0.05 or 0.1
+model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
+              measurement.var = nugget)
+model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
+              measurement.var = nugget)
 
 ################################################################################
 # import data

@@ -7,22 +7,22 @@ phi_sqexp = function(Xi, Xj, l){
 
 # exponential, a.k.a. matern, nu = 1/2
 phi_exp = function(Xi, Xj, l){
-  exp(- abs(Xi - Xj) / l)
+  exp(- sum(abs(Xi - Xj)) / l)
 }
 # matern, nu = 3/2
 phi_matern2 = function(Xi, Xj, l){
-  r = abs(Xi - Xj)
+  r = sum(abs(Xi - Xj))
   (1 + (sqrt(3) * r / l)) * exp(- sqrt(3) * r / l)
 }
 # general matern, using RandomFieldsUtils package
 phi_matern = function(Xi, Xj, l, nu = 3 / 2){
-  RandomFieldsUtils::matern(abs(Xi - Xj), nu, scaling = "matern")
+  RandomFieldsUtils::matern(sum(abs(Xi - Xj)), nu, scaling = "matern")
 }
 
 # a periodic kernel that allows to adjust the period, p. 
 # https://www.cs.toronto.edu/~duvenaud/cookbook/
 phi_periodic = function(Xi, Xj, l, p){
-  r = abs(Xi - Xj)
+  r = sum(abs(Xi - Xj))
   sinsq_arg = pi * r / p
   exp(-2 * (sin(sinsq_arg))^2 / l^2)
 }

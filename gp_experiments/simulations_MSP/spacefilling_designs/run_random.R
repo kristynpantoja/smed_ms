@@ -4,12 +4,12 @@
 
 typeT = "periodic"
 pT = 0.05
-lT = 0.1
+lT = 0.5
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
-sims_dir = "gp_experiments/simulations_1initialpt"
+sims_dir = "gp_experiments/simulations_MSP"
 output_dir = paste0(sims_dir, "/spacefilling_designs/outputs")
 data_dir = paste0(sims_dir, "/simulated_data")
 functions_dir = "functions"

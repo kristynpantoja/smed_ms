@@ -4,9 +4,9 @@
 #   where H1 is true
 
 typeT = "squaredexponential"
-lT = 0.01
+lT = 0.1
 pT = NULL
-dimT = 1 #1, 2
+dimT = 2 #1, 2
 # if 1, assume 1st dimension is true.
 if_plot = TRUE
 
@@ -118,27 +118,14 @@ if(dimT == 1){ # expand to 2 dims
 }
 
 # save the results!
-if(typeT == "periodic"){
-  if(is.null(pT)) pT = 0.26
-  simulated_data_file = paste0(
-    output_dir,
-    "/", typeT,
-    "_l", lT,
-    "_p", pT,
-    "_dim", dimT,
-    filename_append, 
-    "_seed", rng.seed,
-    ".rds")
-} else{
-  simulated_data_file = paste0(
-    output_dir,
-    "/", typeT,
-    "_l", lT,
-    "_dim", dimT, 
-    filename_append, 
-    "_seed", rng.seed,
-    ".rds")
-}
+simulated_data_file = paste0(
+  output_dir,
+  "/", typeT,
+  "_l", lT,
+  "_dim", dimT, 
+  filename_append, 
+  "_seed", rng.seed,
+  ".rds")
 saveRDS(
   list(
     numx = numx,

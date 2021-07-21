@@ -18,14 +18,14 @@ obj_newq_gpvs = function(
                     y, p, alpha, buffer, model0, model1)
     # the other terms in the summation
     # q(xi), xi in the observed set, D_t^c
-    sum_q_D = sum(sapply(initD, function(x_i)
+    sum_q_D = sum(apply(initD, 1, function(x_i)
       (q_gpvs(x_i, Kinv0, Kinv1, initD0, initD1, y, p, 
               alpha, buffer, model0, model1) / 
          sqrt(sum((x_i - candidate)^2)))^k))
     if(!is.null(D)){ # when N2 > 1
       # q(xi), xi in the unobserved design points D^{(t)}
       sum_q_D = sum_q_D + 
-        sum(sapply(D, function(x_i)  # no need for buffer here, either fyi
+        sum(apply(D, 1, function(x_i)  # no need for buffer here, either fyi
           (q_gpvs(x_i, Kinv0, Kinv1, initD0, initD1, y, p, 
                   alpha, buffer, model0, model1) / 
              sqrt(sum((x_i - candidate)^2)))^k))
@@ -40,7 +40,7 @@ obj_newq_gpvs = function(
     if(is.null(D)){ # when N2 = 1, and batch.idx != 1
       result = q_cand^k
     } else{ # when N2 > 1
-      sum_q_D = sum(sapply(D, function(x_i) # disregard initD
+      sum_q_D = sum(apply(D, 1, function(x_i) # disregard initD
         (q_gpvs(x_i, Kinv0, Kinv1, initD0, initD1, y, p, 
                 alpha, buffer = 0, model0, model1) / 
            sqrt(sum((x_i - candidate)^2)))^k))
@@ -54,12 +54,12 @@ obj_newq_gpvs = function(
                     y, p, alpha, buffer = 0, model0, model1)
     # the other terms in the summation
     # q(xi), xi in the observed set, D_t^c
-    sum_q_D = sum(sapply(initD, function(x_i) 
+    sum_q_D = sum(apply(initD, 1, function(x_i) 
       (1 / sqrt(sum((x_i - candidate)^2)))^k)) # q = 1 for xi in this case
     if(!is.null(D)){ # when N2 > 1
       # q(xi), xi in the unobserved design points D^{(t)}
       sum_q_D = sum_q_D + 
-        sum(sapply(D, function(x_i) 
+        sum(apply(D, 1, function(x_i) 
           (q_gpvs(x_i, Kinv0, Kinv1, initD0, initD1, y, p, 
                   alpha, buffer = 0, model0, model1) / 
              sqrt(sum((x_i - candidate)^2)))^k))
@@ -73,17 +73,17 @@ obj_newq_gpvs = function(
                      model0, model1) # no capping needed
     # the other terms in the summation
     # q(xi), xi in the observed set, D_t^c
-    sum_q_D = sum(sapply(initD, function(x_i)
+    sum_q_D = sum(apply(initD, 1, function(x_i)
       (qcap_gpvs(x_i, Kinv0, Kinv1, initD0, initD1, y, p, alpha, 
                model0, model1) / 
-         sqrt((x_i - candidate)^2))^k))
+         sqrt(sum((x_i - candidate)^2)))^k))
     if(!is.null(D)){ # when N2 > 1
       # q(xi), xi in the unobserved design points D^{(t)}
       sum_q_D = sum_q_D + 
-        sum(sapply(D, function(x_i)  # no capping needed here, either
+        sum(apply(D, 1, function(x_i)  # no capping needed here, either
           (qcap_gpvs(x_i, Kinv0, Kinv1, initD0, initD1, y, p, alpha, 
                    model0, model1) / 
-             sqrt((x_i - candidate)^2))^k))
+             sqrt(sum((x_i - candidate)^2)))^k))
     }
     result = q_cand^k * sum_q_D
   }
@@ -108,7 +108,7 @@ obj_newq_gpvs = function(
     if(!is.null(D)){ # when N2 > 1
       # q(xi), xi in the unobserved design points D^{(t)}
       sum_q_D = sum_q_D + 
-        sum(sapply(D, function(x_i) # no leave out necessary here, either
+        sum(apply(D, 1, function(x_i) # no leave out necessary here, either
           (q_gpvs(x_i, Kinv0, Kinv1, initD0, initD1, y, p, alpha, buffer = 0, 
                 model0, model1) / 
              sqrt((x_i - candidate)^2))^k))
@@ -196,7 +196,7 @@ SeqMEDgpvs_newq_batch = function(
       stop("SeqMEDgpvs_newq_batch: all candidates result in objective function = Inf.")
     }
     f_opt = which.min(f_min_candidates)
-    x_f_opt = candidates[f_opt]
+    x_f_opt = candidates[f_opt, , drop = FALSE]
     # Update set of design points (D) and plot new point
     D[1, ] = x_f_opt
     D_ind[1] = f_opt
@@ -225,7 +225,7 @@ SeqMEDgpvs_newq_batch = function(
   return(list(
     "initD" = initD, 
     "addD" = D, 
-    "D" = c(initD, D),
+    "D" = rbind(initD, D),
     "candidates" = candidates, 
     "indices" = D_ind
   ))

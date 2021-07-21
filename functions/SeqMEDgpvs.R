@@ -103,10 +103,10 @@ SeqMEDgpvs = function(
     yt = function.values[Dt$indices]
     
     # update D and y with new data
-    D = c(D, Dt$addD)
+    D = rbind(D, Dt$addD)
     D.idx = c(D.idx, Dt$indices)
     y = c(y, yt)
-    x.new = c(x.new, Dt$addD)
+    x.new = rbind(x.new, Dt$addD)
     x.new.idx = c(x.new.idx, Dt$indices)
     y.new = c(y.new, yt)
     

@@ -4,11 +4,11 @@
 #   where H1 is true
 
 typeT = "squaredexponential"
-lT = 0.1
+lT = 0.01
 pT = NULL
 dimT = 2 #1, 2
 # if 1, assume 1st dimension is true.
-if_plot = TRUE
+if_plot = FALSE
 
 ################################################################################
 # Sources/Libraries
@@ -66,7 +66,7 @@ numx = 21
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
 x_grid = expand.grid(x_seq, x_seq)
 
-sigmasq_measuremt = NULL
+sigmasq_measuremt = 1e-10
 sigmasq_signal = 1
 
 ################################################################################
@@ -87,8 +87,13 @@ if(is.null(sigmasq_measuremt)){
   y_seq_mat = t(rmvnorm(n = numSims, mean = null_mean, sigma = null_cov))
   filename_append = ""
 } else{
-  y_seq_mat = t(rmvnorm(n = numSims, mean = null_mean, sigma = null_cov + 
-                          sigmasq_measuremt * diag(numx))) 
+  if(dimT == 1){
+    y_seq_mat = t(rmvnorm(n = numSims, mean = null_mean, sigma = null_cov + 
+                            sigmasq_measuremt * diag(numx))) 
+  } else if(dimT == 2){
+    y_seq_mat = t(rmvnorm(n = numSims, mean = null_mean, sigma = null_cov + 
+                            sigmasq_measuremt * diag(numx^2))) 
+  }
   filename_append = "_noise"
   
   # plot

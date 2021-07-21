@@ -2,8 +2,11 @@
 # last updated: 07/13/2021
 # purpose: to test SeqMEDgpvs()
 
+lT = 0.01
+typeT = "squaredexponential"
 dimT = 2
 seq.type = 1
+
 
 ################################################################################
 # Sources/Libraries
@@ -82,11 +85,11 @@ xmax = 1
 p = 2
 k = 4 * p
 
-sigmasq_measuremt = NULL
+sigmasq_measuremt = 1e-10
 sigmasq_signal = 1
 
 # shared settings
-nugget = 1e-10
+nugget = sigmasq_measuremt
 prior_probs = rep(1 / 2, 2)
 
 
@@ -94,13 +97,10 @@ prior_probs = rep(1 / 2, 2)
 # Scenario settings
 ################################################################################
 
-l01= c(0.1, 0.1)
-type01 = c("squaredexponential", "squaredexponential")
+l01= c(lT, lT)
+type01 = c(typeT, typeT)
 indices0 = c(1)
 indices1 = c(1, 2)
-
-lT = 0.1
-typeT = "squaredexponential"
 
 model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
               indices = indices0,

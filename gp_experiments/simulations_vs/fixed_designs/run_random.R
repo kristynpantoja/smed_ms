@@ -3,7 +3,7 @@
 # purpose: to make random design for all types of data
 
 typeT = "squaredexponential"
-lT = 0.1
+lT = 0.01
 dimT = 2 #1, 2
 # if 1, assume 1st dimension is true.
 
@@ -65,7 +65,7 @@ Nttl = Nin + Nnew
 xmin = 0
 xmax = 1
 
-sigmasq_measuremt = NULL
+sigmasq_measuremt = 1e-10
 sigmasq_signal = 1
 
 # random settings

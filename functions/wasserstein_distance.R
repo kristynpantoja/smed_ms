@@ -140,7 +140,7 @@ WNgp.new = function(x, Kinv0, Kinv1, initD, y, model0, model1){
 
 WNgpvs = function(x, Kinv0, Kinv1, initD0, initD1, y, model0, model1){
   x = t(as.matrix(x))
-  
+  # print(x)
   # posterior distribution of beta
   k0 = t(as.matrix(getCov(
     X1 = x[, model0$indices, drop = FALSE], X2 = initD0, type = model0$type, 

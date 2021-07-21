@@ -95,14 +95,14 @@ obj_newq_gpvs = function(
                   buffer = 0,  model0, model1) # no need to leave anything out here, jsyk
     # the other terms in the summation
     # q(xi), xi in the observed set, D_t^c
-    terms_q_D = rep(NA, length(initD))
-    for(i in 1:length(initD)){ 
+    terms_q_D = rep(NA, nrow(initD))
+    for(i in 1:nrow(initD)){ 
       terms_q_D[i] = (q_gpvs(
-        initD[i, , drop = FALSE], 
+        initD[i, ], 
         Kinv0[-i, -i, drop = FALSE], Kinv1[-i, -i, drop = FALSE], 
         initD0[-i, , drop = FALSE], initD1[-i, , drop = FALSE], 
         y[-i], p, alpha, buffer = 0, model0, model1) / 
-          sqrt((initD[i, , drop = FALSE] - candidate)^2))^k
+          sqrt(sum((initD[i, , drop = FALSE] - candidate)^2)))^k
     }
     sum_q_D = sum(terms_q_D)
     if(!is.null(D)){ # when N2 > 1
@@ -111,7 +111,7 @@ obj_newq_gpvs = function(
         sum(apply(D, 1, function(x_i) # no leave out necessary here, either
           (q_gpvs(x_i, Kinv0, Kinv1, initD0, initD1, y, p, alpha, buffer = 0, 
                 model0, model1) / 
-             sqrt((x_i - candidate)^2))^k))
+             sqrt(sum((x_i - candidate)^2)))^k))
     }
     result = q_cand^k * sum_q_D
   }
@@ -128,7 +128,7 @@ SeqMEDgpvs_newq_batch = function(
   batch.idx = 1, buffer = 0, objective.type = 1, model0, model1
 ){
   
-  if(!("matrix" %in% class(initD))) stop("SeqMEDgpvs_keepq_batch: initD isn't a matrix!")
+  if(!("matrix" %in% class(initD))) stop("SeqMEDgpvs_newq_batch: initD isn't a matrix!")
   initN = dim(initD)[1]
   if(length(y) != initN) stop("SeqMEDgpvs_newq_batch: length of y does not match length of initial input data, initD")
   
@@ -215,7 +215,7 @@ SeqMEDgpvs_newq_batch = function(
           Kinv0, Kinv1, initD, initD0, initD1, y, p, k, alpha, buffer, 
           objective.type, model0, model1))
       f_opt = which.min(f_min_candidates)
-      xnew = candidates[f_opt, ]
+      xnew = candidates[f_opt, , drop = FALSE]
       # Update set of design points (D) and plot new point
       D[i, ]  = xnew
       D_ind[i] = f_opt
@@ -242,13 +242,13 @@ obj_keepq_gpvs = function(
                   y, p, alpha, buffer = 0, model0, model1)
   # the other terms in the summation
   # q(xi), xi in the observed set, D_t^c
-  sum_q_D = sum((qs / sqrt((initD - candidate)^2))^k)
+  sum_q_D = sum((qs / sqrt(sum((initD - candidate)^2)))^k)
   # sum_q_D = sum(sapply(qs, function(q_i) 
   #   (q_i / sqrt((x_i - candidate)^2))^k)) # q = 1 for xi in this case #########
   if(!is.null(D)){ # when N2 > 1
     # q(xi), xi in the unobserved design points D^{(t)}
     sum_q_D = sum_q_D + 
-      sum(sapply(D, function(x_i) 
+      sum(apply(D, 1, function(x_i) 
         (q_gpvs(x_i, Kinv0, Kinv1, initD0, initD1, y, p, alpha, buffer = 0, 
               model0, model1) / 
            sqrt((x_i - candidate)^2))^k))
@@ -260,10 +260,11 @@ obj_keepq_gpvs = function(
 
 SeqMEDgpvs_keepq_batch = function(
   initD, y, N2 = 11, numCandidates = NULL, k = 4, p = 1, 
-  xmin = 0, xmax = 1, alpha = NULL, candidates = NULL, 
+  xmin = 0, xmax = 1, alpha = NULL, candidates, 
   batch.idx = 1, buffer = 0, objective.type = 1, model0, model1, qs
 ){
-  if(!(class(initD) %in% "matrix")) stop("SeqMEDgpvs_keepq_batch: initD isn't a matrix!")
+  
+  if(!("matrix" %in% class(initD))) stop("SeqMEDgpvs_keepq_batch: initD isn't a matrix!")
   initN = dim(initD)[1]
   if(length(y) != initN) stop("SeqMEDgpvs_keepq_batch: length of y does not match length of initial input data, initD")
   
@@ -321,24 +322,26 @@ SeqMEDgpvs_keepq_batch = function(
     is_x_max_in_initD = TRUE
   }
   
-  if(is_x_max_in_initD){
   # Find f_opt: minimum of f_min --- pulled this out of the below if statement
-    f_min_candidates = apply(
-      candidates, 1, FUN = function(x) obj_keepq_gpvs(
-        x, NULL, Kinv0, Kinv1, initD, initD0, initD1, y, p, k, alpha, buffer, 
-        objective.type, model0, model1, qs), simplify = FALSE) ####################################
-    f_min_candidates = do.call("rbind", f_min_candidates)
-    if(all(f_min_candidates$objectives == Inf)){
-      stop("SeqMEDgp_batch: all candidates result in objective function = Inf.")
-    }
-    f_opt = which.min(f_min_candidates$objectives)
-    x_f_opt = candidates[f_opt]
-    # Update set of design points (D) and plot new point
+  f_min_candidates = apply(
+    candidates, 1, FUN = function(x) obj_keepq_gpvs(
+      x, NULL, Kinv0, Kinv1, initD, initD0, initD1, y, p, k, alpha, buffer, 
+      objective.type, model0, model1, qs), simplify = FALSE) ####################################
+  f_min_candidates = do.call("rbind", f_min_candidates)
+  if(all(f_min_candidates$objectives == Inf)){
+    stop("SeqMEDgp_batch: all candidates result in objective function = Inf.")
+  }
+  f_opt = which.min(f_min_candidates$objectives)
+  x_f_opt = candidates[f_opt, , drop = FALSE]
+  # Update set of design points (D) and plot new point
+  if(is_x_max_in_initD){
     D[1, ] = x_f_opt
     D_ind[1] = f_opt
+    q.new = f_min_candidates$q.candidates[f_opt]
   } else{
     D[1, ] = x_w_opt
     D_ind[1] = w_opt
+    q.new = f_min_candidates$q.candidates[w_opt]
   }
   
   if(N2 > 1){
@@ -353,17 +356,18 @@ SeqMEDgpvs_keepq_batch = function(
           buffer, objective.type, model0, model1, qs), simplify = FALSE) ####################################
       f_min_candidates = do.call("rbind", f_min_candidates)
       f_opt = which.min(f_min_candidates$objectives)
-      xnew = candidates[f_opt]
+      xnew = candidates[f_opt, , drop = FALSE]
       # Update set of design points (D) and plot new point
       D[i, ]  = xnew
       D_ind[i] = f_opt
+      q.new = c(q.new, f_min_candidates$q.candidates[f_opt])
     }
   }
   
   return(list(
     "initD" = initD, 
     "addD" = D, 
-    "D" = c(initD, D),
+    "D" = rbind(initD, D),
     "candidates" = candidates, 
     "indices" = D_ind,
     "q.new" = q.new

@@ -2,7 +2,7 @@
 # last updated: 07/13/2021
 # purpose: to test SeqMEDgpvs()
 
-dimT = 2
+dimT = 1
 seq.type = 1
 
 ################################################################################
@@ -82,11 +82,11 @@ xmax = 1
 p = 2
 k = 4 * p
 
-sigmasq_measuremt = NULL
+sigmasq_measuremt = 1e-10
 sigmasq_signal = 1
 
 # shared settings
-nugget = 1e-10
+nugget = sigmasq_measuremt
 prior_probs = rep(1 / 2, 2)
 
 
@@ -149,7 +149,7 @@ seqmeds = foreach(
   y_input = y_seq[x_input_idx]
   
   SeqMEDgpvs(
-    y0 = y_input, x0 = x_input, x0.idx = x_input_idx, numDims = NULL,
+    y0 = y_input, x0 = x_input, x0.idx = x_input_idx, 
     candidates = x_grid, function.values = y_seq, 
     xmin = xmin, xmax = xmax, k = k, p = p, 
     numSeq = numSeq, seqN = seqN, objective.type = 4, 

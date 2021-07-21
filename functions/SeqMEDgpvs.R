@@ -4,11 +4,11 @@
 
 # NOTES:
 # new arguments (compared to SeqMEDgp):
-#   idx0, idx1, numDims, seed = NULL
+#   seed = NULL
 # old arguments that need to be re-defined: p = # dimensions
 
 SeqMEDgpvs = function(
-  y0 = NULL, x0 = NULL, x0.idx = NULL, numDims = NULL,
+  y0 = NULL, x0 = NULL, x0.idx = NULL,
   candidates, function.values, 
   xmin = 0, xmax = 1, k = 4, p = 1, 
   numSeq = 5, seqN = 3, alpha.seq = 1, buffer = 0, objective.type = 1, 
@@ -41,41 +41,50 @@ SeqMEDgpvs = function(
   
   # q evaluated at input points
   if(!newq){
+    initD0 = D[ , model0$indices, drop = FALSE]
+    initD1 = D[ , model1$indices, drop = FALSE]
     if(is.null(model0$measurement.var)){
       Kinv0 = solve(getCov(
-        X1 = D, X2 = D, type = model0$type, l = model0$l, p = model0$p, 
+        X1 = initD0, X2 = initD0, 
+        type = model0$type, l = model0$l, p = model0$p, 
         signal.var = model0$signal.var))
     } else{
       Kinv0 = solve(getCov(
-        X1 = D, X2 = D, type = model0$type, l = model0$l, p = model0$p, 
+        X1 = initD0, X2 = initD0, 
+        type = model0$type, l = model0$l, p = model0$p, 
         signal.var = model0$signal.var) + 
-          model0$measurement.var * diag(length(D)))
+          model0$measurement.var * diag(nrow(D)))
     }
     if(is.null(model1$measurement.var)){
       Kinv1 = solve(getCov(
-        X1 = D, X2 = D, type = model1$type, l = model1$l, p = model1$p, 
+        X1 = initD1, X2 = initD1, 
+        type = model1$type, l = model1$l, p = model1$p, 
         signal.var = model1$signal.var))
     } else{
       Kinv1 = solve(getCov(
-        X1 = D, X2 = D, type = model1$type, l = model1$l, p = model1$p, 
+        X1 = initD1, X2 = initD1, 
+        type = model1$type, l = model1$l, p = model1$p, 
         signal.var = model1$signal.var) + 
-          model1$measurement.var * diag(length(D)))
+          model1$measurement.var * diag(nrow(D)))
     }
-    qs = rep(NA, length(D))
+    qs = rep(NA, nrow(D))
     if(!(objective.type %in% c(0, 1, 3, 4, 5))){
       stop("SeqMEDgpvs: to keep q, need objective.type == 1, 3, 4, or 5")
     } else{
       if(objective.type == 1){ # buffer
-        qs = sapply(D, function(x_i) 
+        qs = apply(D, 1, function(x_i) 
           q_gpvs(
-            x_i, Kinv0, Kinv1, D, y, p, alpha.seq[1], buffer, model0, model1))
+            x_i, Kinv0, Kinv1, initD0, initD1, y, p, alpha.seq[1], buffer, 
+            model0, model1))
       }
       if(objective.type %in% c(0, 3, 5)){
-        qs = rep(1, length(D))
+        qs = rep(1, nrow(D))
       }
       if(objective.type == 4){ # cap q
-        qs = sapply(D, function(x_i) 
-          qcap_gp(x_i, Kinv0, Kinv1, D, y, p, alpha.seq[1], model0, model1))
+        qs = apply(D, 1, function(x_i) 
+          qcap_gpvs(
+            x_i, Kinv0, Kinv1, initD0, initD1, y, p, alpha.seq[1], 
+            model0, model1))
       }
     }
   }
@@ -98,6 +107,12 @@ SeqMEDgpvs = function(
       #   batch.idx = batch.idx, buffer = buffer, objective.type = objective.type,
       #   model0 = model0, model1 = model1, qs = qs)
       # qs = c(qs, Dt$q.new)
+      Dt = SeqMEDgpvs_keepq_batch(
+        initD = D, y = y, N2 = seqN[t], numCandidates = numCandidates, k = k, p = p,
+        xmin = xmin, xmax = xmax, alpha = alpha.seq[t], candidates = candidates, 
+        batch.idx = batch.idx, buffer = buffer, objective.type = objective.type, 
+        model0 = model0, model1 = model1, qs = qs)
+      qs = c(qs, Dt$q.new)
     }
     
     yt = function.values[Dt$indices]

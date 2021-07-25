@@ -4,12 +4,13 @@
 
 typeT = "periodic"
 pT = 0.05
-lT_seq = seq(0.1, 0.5, length.out = 41)
+lT = 0.5
+sigmasq_signal_seq = c(0.5, 1, 1.5)
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
-sims_dir = "gp_experiments/simulations_MSP/scenario_MSP_lengthscalegrid"
+sims_dir = "gp_experiments/simulations_MSP/scenario_MSP_sigvargrid"
 output_dir = paste0(sims_dir, "/spacefilling_designs/outputs")
 data_dir = paste0(sims_dir, "/simulated_data")
 functions_dir = "functions"
@@ -73,8 +74,8 @@ sigmasq_signal = 1
 ################################################################################
 
 # simulations!
-for(j in 1:length(lT_seq)){
-  lT = lT_seq[j]
+for(j in 1:length(sigmasq_signal_seq)){
+  sigmasq_signal = sigmasq_signal_seq[j]
   
   # import data
   filename_append = ""
@@ -88,6 +89,7 @@ for(j in 1:length(lT_seq)){
       "/", typeT,
       "_l", lT,
       "_p", pT,
+      "_sig", sigmasq_signal,
       filename_append, 
       "_seed", rng.seed,
       ".rds")
@@ -96,6 +98,7 @@ for(j in 1:length(lT_seq)){
       data_dir,
       "/", typeT,
       "_l", lT,
+      "_sig", sigmasq_signal,
       filename_append, 
       "_seed", rng.seed,
       ".rds")
@@ -144,6 +147,7 @@ for(j in 1:length(lT_seq)){
       "_", typeT,
       "_l", lT,
       "_p", pT,
+      "_sig", sigmasq_signal,
       filename_append.tmp)
   } else{
     simulated_spacefilling_file = paste0(
@@ -151,6 +155,7 @@ for(j in 1:length(lT_seq)){
       "/random", 
       "_", typeT,
       "_l", lT,
+      "_sig", sigmasq_signal,
       filename_append.tmp)
   }
   saveRDS(randoms, file = simulated_spacefilling_file)

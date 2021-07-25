@@ -5,12 +5,14 @@
 
 typeT = "periodic"
 pT = 0.05
-lT_seq = seq(0.1, 0.5, length.out = 41)
+lT = 0.5
+sigmasq_signal_seq = c(0.5, 1, 1.5)
+
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = paste0("gp_experiments/simulations_MSP/scenario_MSP_lengthscalegrid/simulated_data")
+output_home = paste0("gp_experiments/simulations_MSP/scenario_MSP_sigvargrid/simulated_data")
 functions_home = "functions"
 
 # for seqmed design
@@ -60,16 +62,16 @@ xmax = 1
 numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
 sigmasq_measuremt = 1e-10
-sigmasq_signal = 1
 
 ################################################################################
 # generate functions 
 registerDoRNG(rng.seed)
 foreach(
-  i = 1:length(lT_seq)
+  i = 1:length(sigmasq_signal_seq)
 ) %dorng% {
   pT = 0.05
-  lT = lT_seq[i]
+  lT = 0.5
+  sigmasq_signal = sigmasq_signal_seq[i]
   null_cov = getCov(x_seq, x_seq, typeT, lT, pT, sigmasq_signal)
   null_mean = rep(0, numx)
   
@@ -93,6 +95,7 @@ foreach(
       "/", typeT,
       "_l", lT,
       "_p", pT,
+      "_sig", sigmasq_signal,
       filename_append, 
       "_seed", rng.seed,
       ".rds")
@@ -101,6 +104,7 @@ foreach(
       output_home,
       "/", typeT,
       "_l", lT,
+      "_sig", sigmasq_signal,
       filename_append, 
       "_seed", rng.seed,
       ".rds")

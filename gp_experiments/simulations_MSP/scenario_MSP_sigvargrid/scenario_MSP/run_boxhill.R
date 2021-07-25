@@ -4,12 +4,12 @@
 #   where both hypotheses are misspecified
 
 scenario = 4
-lT_seq = seq(0.1, 0.5, length.out = 41)
+sigmasq_signal_seq = c(0.5, 1, 1.5)
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
-sims_dir = "gp_experiments/simulations_MSP/scenario_MSP_lengthscalegrid"
+sims_dir = "gp_experiments/simulations_MSP/scenario_MSP_sigvargrid"
 output_dir = paste0(sims_dir, "/scenario_MSP/outputs")
 data_dir = paste0(sims_dir, "/simulated_data")
 functions_dir = "functions"
@@ -66,7 +66,6 @@ xmax = 1
 numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
 sigmasq_measuremt = 1e-10
-sigmasq_signal = 1
 
 # boxhill settings
 nugget = sigmasq_measuremt
@@ -76,7 +75,7 @@ prior_probs = rep(1 / 2, 2)
 # simulations!
 
 
-for(j in 1:length(lT_seq)){
+for(j in 1:length(sigmasq_signal_seq)){
   
   ################################################################################
   # Scenario settings
@@ -84,8 +83,8 @@ for(j in 1:length(lT_seq)){
   typeT = "periodic"
   l01= c(0.01, 0.01)
   pT = 0.05
-  lT = lT_seq[j]
-  sigmasq_signal = 1
+  lT = 0.5
+  sigmasq_signal = sigmasq_signal_seq[j]
   model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
                 measurement.var = nugget)
   model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
@@ -103,6 +102,7 @@ for(j in 1:length(lT_seq)){
       "/", typeT,
       "_l", lT,
       "_p", pT,
+      "_sig", sigmasq_signal,
       filename_append, 
       "_seed", rng.seed,
       ".rds")
@@ -111,6 +111,7 @@ for(j in 1:length(lT_seq)){
       data_dir,
       "/", typeT,
       "_l", lT,
+      "_sig", sigmasq_signal,
       filename_append, 
       "_seed", rng.seed,
       ".rds")
@@ -150,7 +151,8 @@ for(j in 1:length(lT_seq)){
   saveRDS(boxhills, 
           file = paste0(
             output_dir,
-            "/scenario", scenario, "_boxhill", "_l", lT,
+            "/scenario", scenario, "_boxhill", 
+            "_sig", sigmasq_signal,
             filename_append.tmp))
 }
 

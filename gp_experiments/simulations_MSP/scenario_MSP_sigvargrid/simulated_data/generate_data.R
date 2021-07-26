@@ -50,6 +50,7 @@ gg_color_hue = function(n) {
   hues = seq(15, 275, length = n + 1)
   hcl(h = hues, l = 65, c = 100)[1:n]
 }
+library(data.table)
 
 ################################################################################
 # simulation settings, shared for both scenarios
@@ -86,6 +87,51 @@ foreach(
                             sigmasq_measuremt * diag(numx))) 
     filename_append = "_noise"
   }
+  
+  # # choose the simulation to plot
+  # idx = 1
+  # # design pts (random, for illustration)
+  # x_input_idx = sample(1:numx, 2, replace = FALSE)
+  # x_input = x_seq[x_input_idx]
+  # # data
+  # y_seq = y_seq_mat[, idx]
+  # y_input = y_seq[x_input_idx]
+  # 
+  # # fit the true GP kernel
+  # HT_predfn = getGPPredictive(
+  #   x_seq, x_input, y_input, typeT, lT, pT, 2, 
+  #   measurement.var = sigmasq_measuremt)
+  # err = 2 * sqrt(diag(HT_predfn$pred_var))
+  # ggdata = data.table(
+  #   x = x_seq, 
+  #   `True Function` = y_seq, 
+  #   `HT Pred Mean` = HT_predfn$pred_mean, 
+  #   lower = HT_predfn$pred_mean - err, 
+  #   upper = HT_predfn$pred_mean + err
+  # )
+  # 
+  # # plot it
+  # plt = ggplot(ggdata) + 
+  #   geom_path(aes(x = x, y = `True Function`)) + 
+  #   geom_ribbon(aes(x = x, ymin = lower, ymax = upper), 
+  #               color = gg_color_hue(5)[3], linetype = 2, 
+  #               fill = gg_color_hue(5)[3], alpha = 0.1) +
+  #   geom_path(aes(x = x, y = `HT Pred Mean`), color = gg_color_hue(5)[3]) +
+  #   geom_point(data = data.frame(
+  #     x = x_input, y = y_input
+  #   ), mapping = aes(x = x, y = y), 
+  #   inherit.aes = FALSE, color = 2,
+  #   size = 3) +
+  #   theme_bw() +
+  #   theme(panel.grid.major = element_blank(),
+  #         panel.grid.minor = element_blank()) +
+  #   labs(y = "y", x = "x", fill = "Function", color = "Function")
+  # if(typeT == "periodic"){
+  #   if(is.null(pT)) pT = 0.26
+  #   plt = plt + geom_vline(xintercept = pT * (0:floor((xmax - xmin) / pT)), 
+  #                          color = "blue", alpha = 0.5)
+  # }
+  # plot(plt)
   
   # save the results!
   if(typeT == "periodic"){

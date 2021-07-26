@@ -145,7 +145,6 @@ for(j in 1:length(sigmasq_signal_seq)){
   seqmeds = foreach(
     b = 1:numSims
   ) %dorng% {
-    print(b)
     y_seq = y_seq_mat[ , b]
     y_input = y_seq[x_input_idx]
     SeqMEDgp(

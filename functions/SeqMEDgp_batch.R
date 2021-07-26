@@ -126,7 +126,7 @@ SeqMEDgp_newq_batch = function(
   xmin = 0, xmax = 1, alpha = NULL, candidates = NULL, 
   batch.idx = 1, buffer = 0, objective.type = 1, model0, model1
 ){
-  initN = nrow(initD)
+  initN = length(initD)
   if(length(y) != initN) stop("length of y does not match length of initial input data, initD")
   
   # check if any points in initD give Wasserstein distance of 0 (in which case we don't want to use it since 1/0 in q)

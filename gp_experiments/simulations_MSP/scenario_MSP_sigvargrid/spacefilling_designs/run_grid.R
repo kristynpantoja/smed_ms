@@ -5,7 +5,7 @@
 typeT = "periodic"
 pT = 0.05
 lT = 0.5
-sigmasq_signal_seq = c(0.5, 1, 1.5)
+sigmasq_signal_seq = seq(0.5, 1.5, length.out = 101)
 
 ################################################################################
 # Sources/Libraries

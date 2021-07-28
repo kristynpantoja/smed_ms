@@ -4,7 +4,7 @@
 
 dimT = 1
 seq.type = 1
-lT = 0.1
+lT = 0.01
 typeT = "squaredexponential"
 
 ################################################################################
@@ -163,8 +163,10 @@ filename_append.tmp = paste0(
 saveRDS(seqmeds, 
         file = paste0(
           output_dir,
-          "/dim", dimT, "_seqmed", 
+          "/seqmed", 
           "_keepq_cap", 
           "_seq", seq.type,
+          "_l", lT,
+          "_dim", dimT,
           filename_append.tmp))
 

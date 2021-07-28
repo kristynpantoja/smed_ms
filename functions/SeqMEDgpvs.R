@@ -101,12 +101,6 @@ SeqMEDgpvs = function(
         model0 = model0, model1 = model1)
       
     } else{
-      # Dt = SeqMEDgp_keepq_batch(
-      #   initD = D, y = y, N2 = seqN[t], numCandidates = numCandidates, k = k, p = p, 
-      #   xmin = xmin, xmax = xmax, alpha = alpha.seq[t], candidates = candidates, 
-      #   batch.idx = batch.idx, buffer = buffer, objective.type = objective.type,
-      #   model0 = model0, model1 = model1, qs = qs)
-      # qs = c(qs, Dt$q.new)
       Dt = SeqMEDgpvs_keepq_batch(
         initD = D, y = y, N2 = seqN[t], numCandidates = numCandidates, k = k, p = p,
         xmin = xmin, xmax = xmax, alpha = alpha.seq[t], candidates = candidates, 

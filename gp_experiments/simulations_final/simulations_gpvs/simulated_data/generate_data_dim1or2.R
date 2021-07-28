@@ -3,8 +3,8 @@
 # purpose: to test seqmedgp for scenarios 1 or 2
 #   where H1 is true
 
-dimT = 1
-lT = 0.1
+dimT = 2
+lT = 0.05
 typeT = "squaredexponential"
 pT = NULL
 
@@ -14,7 +14,7 @@ if_plot = FALSE
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_dir = paste0("gp_experiments/simulations_vs/simulated_data")
+output_dir = paste0("gp_experiments/simulations_final/simulations_gpvs/simulated_data")
 functions_dir = "functions"
 
 # for seqmed design

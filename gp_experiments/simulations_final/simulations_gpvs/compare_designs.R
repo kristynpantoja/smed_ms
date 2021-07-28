@@ -161,7 +161,7 @@ cap_sims = readRDS(paste0(
 keepq_cap_sims = readRDS(paste0(
   output_dir,
   "/dim", dimT, "_seqmed", 
-  "_cap_keepq", 
+  "_keepq_cap", 
   "_seq", seq.type,
   filename_append.tmp))
 keepq_sims = readRDS(paste0(

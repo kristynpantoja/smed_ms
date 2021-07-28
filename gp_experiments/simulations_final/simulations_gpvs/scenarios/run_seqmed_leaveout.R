@@ -2,15 +2,15 @@
 # last updated: 07/13/2021
 # purpose: to test SeqMEDgpvs()
 
-typeT = "squaredexponential"
-lT = 0.01
-dimT = 2
+dimT = 1
 seq.type = 1
+lT = 0.1
+typeT = "squaredexponential"
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
-sims_dir = "gp_experiments/simulations_vs"
+sims_dir = "gp_experiments/simulations_final/simulations_gpvs"
 output_dir = paste0(sims_dir, "/scenarios/outputs")
 data_dir = paste0(sims_dir, "/simulated_data")
 functions_dir = "functions"
@@ -64,7 +64,7 @@ gg_color_hue = function(n) {
 
 # simulations settings
 # numSims = 25
-Nin = 3
+Nin = 1
 if(seq.type == 1){
   numSeq = 9
   seqN = 1

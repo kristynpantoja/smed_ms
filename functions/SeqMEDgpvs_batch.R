@@ -316,8 +316,8 @@ SeqMEDgpvs_keepq_batch = function(
     x_w_opt = candidates[w_opt, , drop = FALSE]
     # is_x_max_in_initD = any(apply(initD, 1, function(x) 
     #   isTRUE(all.equal(x, x_w_opt))))
-    is_x_max_in_initD = any(sapply(initD, function(x) 
-      as.numeric(x) == as.numeric(x_w_opt)))
+    is_x_max_in_initD = any(apply(initD, 1, function(x) 
+      all(as.numeric(x) == as.numeric(x_w_opt))))
   } else{
     is_x_max_in_initD = TRUE
   }

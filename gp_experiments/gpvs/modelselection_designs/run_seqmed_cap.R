@@ -81,9 +81,9 @@ k = 4 * p
 sigmasq_measuremt = 1e-10
 sigmasq_signal = 1
 
-# shared settings
-prior_probs = rep(1 / 2, 2)
-
+# seqmed settings
+obj_type = 4
+newq = TRUE
 
 ################################################################################
 # Scenario settings
@@ -141,11 +141,12 @@ seqmeds = foreach(
   y_input = y_seq[x_input_idx]
   
   SeqMEDgpvs(
-    y0 = y_input, x0 = x_input, x0.idx = x_input_idx,
+    y.in = y_input, x.in = x_input, x.in.idx = x_input_idx,
     candidates = x_grid, function.values = y_seq, 
     xmin = xmin, xmax = xmax, k = k, p = p, 
-    numSeq = numSeq, seqN = seqN, objective.type = 4, 
-    model0 = model0, model1 = model1, newq = TRUE, prints = FALSE)
+    numSeq = numSeq, seqN = seqN, 
+    model0 = model0, model1 = model1, 
+    objective.type = obj_type, newq = newq)
 }
 
 filename_append.tmp = paste0(

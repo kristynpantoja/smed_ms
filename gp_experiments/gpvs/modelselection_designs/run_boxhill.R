@@ -2,7 +2,7 @@
 # last updated: 07/13/2021
 # purpose: to test SeqMEDgpvs()
 
-dimT = 1
+dimT = 2
 seq.type = 1
 lT = 0.01
 typeT = "squaredexponential"
@@ -82,7 +82,7 @@ k = 4 * p
 sigmasq_measuremt = 1e-10
 sigmasq_signal = 1
 
-# shared settings
+# boxhill settings
 prior_probs = rep(1 / 2, 2)
 
 
@@ -142,9 +142,9 @@ boxhills = foreach(
   y_input = y_seq[x_input_idx]
   
   BHgpvs_m2(
-    y = y_input, x = x_input, x.idx = x_input_idx, prior.probs = prior_probs, 
-    model0 = model0, model1 = model1, n = Nnew, candidates = x_grid, 
-    function.values = y_seq)
+    y.in = y_input, x.in = x_input, x.in.idx = x_input_idx, 
+    prior.probs = prior_probs, model0 = model0, model1 = model1, n = Nnew, 
+    candidates = x_grid, function.values = y_seq)
 }
 
 filename_append.tmp = paste0(

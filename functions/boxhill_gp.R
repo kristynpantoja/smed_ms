@@ -149,9 +149,9 @@ BHgp_m2 = function(
     # }
   }
   return(list(
-    x = x.in, 
-    x.idx = x.in.idx, 
-    y = y.in, 
+    x.in = x.in, 
+    x.in.idx = x.in.idx, 
+    y.in = y.in, 
     x.new = x.new,
     x.new.idx = x.new.idx,
     y.new = y.new,

@@ -25,9 +25,8 @@ SeqMEDgp = function(
       stop("SeqMEDgp: length of preliminary x.in and y.in don't match!")
     }
   }
-  D = x.in
-  D.idx = x.in.idx
-  y = y.in
+  x.cur = x.in
+  y.cur = y.in
   x.new = c()
   x.new.idx = c()
   y.new = c()
@@ -36,39 +35,39 @@ SeqMEDgp = function(
   if(!newq){
     if(is.null(model0$measurement.var)){
       Kinv0 = solve(getCov(
-        X1 = D, X2 = D, type = model0$type, l = model0$l, p = model0$p, 
+        X1 = x.cur, X2 = x.cur, type = model0$type, l = model0$l, p = model0$p, 
         signal.var = model0$signal.var))
     } else{
       Kinv0 = solve(getCov(
-        X1 = D, X2 = D, type = model0$type, l = model0$l, p = model0$p, 
+        X1 = x.cur, X2 = x.cur, type = model0$type, l = model0$l, p = model0$p, 
         signal.var = model0$signal.var) + 
-          model0$measurement.var * diag(length(D)))
+          model0$measurement.var * diag(length(x.cur)))
     }
     if(is.null(model1$measurement.var)){
       Kinv1 = solve(getCov(
-        X1 = D, X2 = D, type = model1$type, l = model1$l, p = model1$p, 
+        X1 = x.cur, X2 = x.cur, type = model1$type, l = model1$l, p = model1$p, 
         signal.var = model1$signal.var))
     } else{
       Kinv1 = solve(getCov(
-        X1 = D, X2 = D, type = model1$type, l = model1$l, p = model1$p, 
+        X1 = x.cur, X2 = x.cur, type = model1$type, l = model1$l, p = model1$p, 
         signal.var = model1$signal.var) + 
-          model1$measurement.var * diag(length(D)))
+          model1$measurement.var * diag(length(x.cur)))
     }
-    qs = rep(NA, length(D))
+    qs = rep(NA, length(x.cur))
     if(!(objective.type %in% c(0, 1, 3, 4, 5))){
       stop("SeqMEDgp: to keep q, need objective.type == 1, 3, 4, or 5")
     } else{
       if(objective.type == 1){ # buffer
-        qs = sapply(D, function(x_i) 
+        qs = sapply(x.cur, function(x_i) 
           q_gp(
-            x_i, Kinv0, Kinv1, D, y, p, alpha.seq[1], buffer, model0, model1))
+            x_i, Kinv0, Kinv1, x.cur, y, p, alpha.seq[1], buffer, model0, model1))
       }
       if(objective.type %in% c(0, 3, 5)){
-        qs = rep(1, length(D))
+        qs = rep(1, length(x.cur))
       }
       if(objective.type == 4){ # cap q
-        qs = sapply(D, function(x_i) 
-          qcap_gp(x_i, Kinv0, Kinv1, D, y, p, alpha.seq[1], model0, model1))
+        qs = sapply(x.cur, function(x_i) 
+          qcap_gp(x_i, Kinv0, Kinv1, x.cur, y, p, alpha.seq[1], model0, model1))
       }
     }
   }
@@ -79,13 +78,15 @@ SeqMEDgp = function(
     
     if(newq){
       Dt = SeqMEDgp_newq_batch(
-        initD = D, y = y, N2 = seqN[t], numCandidates = numCandidates, k = k, p = p, 
+        initD = x.cur, y = y.cur, N2 = seqN[t], numCandidates = numCandidates, 
+        k = k, p = p, 
         xmin = xmin, xmax = xmax, alpha = alpha.seq[t], candidates = candidates, 
         batch.idx = batch.idx, buffer = buffer, objective.type = objective.type, 
         model0 = model0, model1 = model1)
     } else{
       Dt = SeqMEDgp_keepq_batch(
-        initD = D, y = y, N2 = seqN[t], numCandidates = numCandidates, k = k, p = p, 
+        initD = x.cur, y = y.cur, N2 = seqN[t], numCandidates = numCandidates, 
+        k = k, p = p, 
         xmin = xmin, xmax = xmax, alpha = alpha.seq[t], candidates = candidates, 
         batch.idx = batch.idx, buffer = buffer, objective.type = objective.type,
         model0 = model0, model1 = model1, qs = qs)
@@ -94,10 +95,9 @@ SeqMEDgp = function(
     
     yt = function.values[Dt$indices]
     
-    # update D and y with new data
-    D = c(D, Dt$addD)
-    D.idx = c(D.idx, Dt$indices)
-    y = c(y, yt)
+    # update x.cur and y.cur with new data
+    x.cur = c(x.cur, Dt$addD)
+    y.cur = c(y.cur, yt)
     x.new = c(x.new, Dt$addD)
     x.new.idx = c(x.new.idx, Dt$indices)
     y.new = c(y.new, yt)
@@ -107,9 +107,9 @@ SeqMEDgp = function(
     }
   }
   return(list(
-    x = x.in, 
-    x.idx = x.in.idx, 
-    y = y.in, 
+    x.in = x.in, 
+    x.in.idx = x.in.idx, 
+    y.in = y.in, 
     x.new = x.new,
     x.new.idx = x.new.idx,
     y.new = y.new,

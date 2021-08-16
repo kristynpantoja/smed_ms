@@ -155,7 +155,7 @@ seqmeds = foreach(
   y_seq = y_seq_mat[ , b]
   y_input = y_seq[x_input_idx]
   SeqMEDgp(
-    y0 = y_input, x0 = x_input, x0.idx = x_input_idx, 
+    y.in = y_input, x.in = x_input, x.in.idx = x_input_idx, 
     candidates = x_seq, function.values = y_seq, xmin = xmin, xmax = xmax,
     model0 = model0, model1 = model1, 
     numSeq = numSeq, seqN = seqN, buffer = buffer, 

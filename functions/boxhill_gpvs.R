@@ -20,8 +20,8 @@ Evidence_gpvs = function(y, x, model){
 
 # compute Box-Hill discrimination criterion, D, for GP case
 BHDgpvs_m2 = function(
-  y, # vector observed responses, at points x
-  x, # vector of observed points (with data y)
+  y.in, # vector observed responses, at points x
+  x.in, # vector of observed points (with data y)
   post.probs,
   candidate, # new point (potentially next point x.n, where no y.n is observed yet)
   # since these points don't have special covariates like in linear case, 
@@ -33,17 +33,17 @@ BHDgpvs_m2 = function(
 ){
   # posterior predictive distributions
   candidate = t(as.matrix(candidate))
-  x.i = x[, model.i$indices, drop = FALSE]
+  x.in.i = x.in[, model.i$indices, drop = FALSE]
   cand.i = candidate[, model.i$indices, drop = FALSE]
-  x.j = x[, model.j$indices, drop = FALSE]
+  x.in.j = x.in[, model.j$indices, drop = FALSE]
   cand.j = candidate[, model.j$indices, drop = FALSE]
   pred.i = getGPPredictive(
-    x = cand.i, x.input = x.i, y.input = y, type = model.i$type, l = model.i$l, 
-    p = model.i$p, signal.var = model.i$signal.var, 
+    x = cand.i, x.input = x.in.i, y.input = y.in, type = model.i$type, 
+    l = model.i$l, p = model.i$p, signal.var = model.i$signal.var, 
     measurement.var = model.i$measurement.var)
   pred.j = getGPPredictive(
-    x = cand.j, x.input = x.j, y.input = y, type = model.j$type, l = model.j$l,
-    p = model.j$p, signal.var = model.j$signal.var, 
+    x = cand.j, x.input = x.in.j, y.input = y.in, type = model.j$type, 
+    l = model.j$l, p = model.j$p, signal.var = model.j$signal.var, 
     measurement.var = model.j$measurement.var)
   # evaluate criterion D
   KLij = KLN(pred.i$pred_mean, pred.i$pred_var, 
@@ -54,34 +54,11 @@ BHDgpvs_m2 = function(
   return(bhd)
 }
 
-BHDgpvs_m2_testing = function(y, x, post.probs, candidate, model.i, model.j){
-  # posterior predictive distributions
-  x.i = x[, model.i$indices, drop = FALSE]
-  cand.i = candidate[, model.i$indices, drop = FALSE]
-  x.j = x[, model.j$indices, drop = FALSE]
-  cand.j = candidate[, model.j$indices, drop = FALSE]
-  pred.i = getGPPredictive(
-    x = cand.i, x.input = x.i, y.input = y, type = model.i$type, l = model.i$l, 
-    p = model.i$p, signal.var = model.i$signal.var, 
-    measurement.var = model.i$measurement.var)
-  pred.j = getGPPredictive(
-    x = cand.j, x.input = x.j, y.input = y, type = model.j$type, l = model.j$l,
-    p = model.j$p, signal.var = model.j$signal.var, 
-    measurement.var = model.j$measurement.var)
-  # evaluate criterion D
-  KLij = KLN(pred.i$pred_mean, pred.i$pred_var, 
-             pred.j$pred_mean, pred.j$pred_var, dim = 1)
-  KLji = KLN(pred.j$pred_mean, pred.j$pred_var, 
-             pred.i$pred_mean, pred.i$pred_var, dim = 1)
-  bhd = prod(post.probs) * (KLij + KLji)
-  return(list("bhd" = bhd, "KLij" = KLij, "KLji" = KLji))
-}
-
 # obtain the next n design points (fully sequential)
 BHgpvs_m2 = function(
-  y = NULL, # preliminary data response
-  x = NULL, # preliminary data input
-  x.idx = NULL, 
+  y.in = NULL, # preliminary data response
+  x.in = NULL, # preliminary data input
+  x.in.idx = NULL, 
   prior.probs = rep(1 / 2, 2), # prior probabilities for H0 and H1
   model0, 
   model1, 
@@ -94,16 +71,16 @@ BHgpvs_m2 = function(
   if(!is.null(seed)) set.seed(seed)
   
   # check preliminary data
-  if(is.null(x) & !is.null(y)){ # x is null, y is not null
-    stop("BHgpvs_m2 : preliminary y  is given, but not corresponding x")
-  } else if(is.null(y) & !is.null(x)){ # x is not null, y is null (get y)
-    y = function.values[x.idx]
-  } else if(is.null(x) & is.null(y)){ # both x and y are null, then us BH method
-    stop("BHgpvs_m2: need input data, at least x!")
+  if(is.null(x.in) & !is.null(y.in)){ # x.in is null, y.in is not null
+    stop("BHgpvs_m2 : preliminary y.in  is given, but not corresponding x.in")
+  } else if(is.null(y.in) & !is.null(x.in)){ # x.in is not null, y.in is null (get y.in)
+    y.in = function.values[x.in.idx]
+  } else if(is.null(x.in) & is.null(y.in)){ # both x.in and y.in are null, then us BH method
+    stop("BHgpvs_m2: need input data, at least x.in!")
   } else{
-    if(!("matrix" %in% class(x))) stop("BHgpvs_m2: x isn't a matrix!")
-    initN = dim(x)[1]
-    if(length(y) != initN) stop("BHgpvs_m2: length of y does not match length of initial input data, x")
+    if(!("matrix" %in% class(x.in))) stop("BHgpvs_m2: x.in isn't a matrix!")
+    initN = dim(x.in)[1]
+    if(length(y.in) != initN) stop("BHgpvs_m2: length of y.in does not match length of initial input data, x.in")
     
   }
   
@@ -111,8 +88,8 @@ BHgpvs_m2 = function(
   post.probs0 = getHypothesesPosteriors( # posterior prob with current data
     prior.probs = prior.probs, 
     evidences = c(
-      Evidence_gpvs(y, x, model0),
-      Evidence_gpvs(y, x, model1)
+      Evidence_gpvs(y.in, x.in, model0),
+      Evidence_gpvs(y.in, x.in, model1)
     )
   )
   # get new data
@@ -122,11 +99,11 @@ BHgpvs_m2 = function(
   post.probs.mat = matrix(NA, nrow = n + 1, ncol = 2, byrow = TRUE)
   post.probs.mat[1, ] = post.probs0
   post.probs.cur = post.probs0
-  y.cur = y
-  x.cur = x
+  y.cur = y.in
+  x.cur = x.in
   for(i in 1:n){
     bhd_seq = apply(candidates, 1, FUN = function(x) BHDgpvs_m2(
-      y = y.cur, x = x.cur, post.probs = post.probs.cur, candidate = x, 
+      y.in = y.cur, x.in = x.cur, post.probs = post.probs.cur, candidate = x, 
       model.i = model0, model.j = model1))
     if(!all(!is.nan(bhd_seq))){
       warning("Warning in BHgp_m2() : There were NaNs in Box & Hill criterion
@@ -160,9 +137,9 @@ BHgpvs_m2 = function(
     # }
   }
   return(list(
-    x = x, 
-    x.idx = x.idx, 
-    y = y, 
+    x.in = x.in, 
+    x.in.idx = x.in.idx, 
+    y.in = y.in, 
     x.new = x.new,
     x.new.idx = x.new.idx,
     y.new = y.new,

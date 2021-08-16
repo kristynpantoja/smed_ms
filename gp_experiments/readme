@@ -1,9 +1,7 @@
-last updated: 05/24/2021
+last updated: 08/15/2021
 
-scenarios
-     contains scenarios 1-7
-     only seqmeds with different nuggets/signal variances have different models
+gp
+     contains experiments/simulations for SeqMED applied to GP models in one dimension, to discriminate between kernels
 
-scenarios1
-     contains scenarios 1.1-6.1
-     all designs (that take in models) use different nuggets
+gpvs
+     contains experiments/simulations for SeqMED applied to GP models in 1+ dimensions, for variable selection

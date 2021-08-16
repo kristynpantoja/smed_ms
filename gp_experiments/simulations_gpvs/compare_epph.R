@@ -319,11 +319,15 @@ epph.plt = ggplot(PPHmean_seq, aes(x = index, y = value, color = type,
   geom_path() + 
   geom_point() +
   theme_bw() +
-  ylim(0, 1)
+  ylim(0, 1) + 
+  scale_x_continuous(breaks = c(0, 3, 6, 9))
 plot(epph.plt)
 
-
-
+ggsave(
+  filename = paste0("20210815_dim", dimT, "_epph.pdf"), 
+  plot = epph.plt, 
+  width = 6, height = 4, units = c("in")
+)
 
 
 

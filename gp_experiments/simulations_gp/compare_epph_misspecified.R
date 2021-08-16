@@ -234,13 +234,25 @@ for(scenario in c(3, 4, 5, 6)){
                     measurement.var = sigmasq_measuremt)
     }
     
-    getPPHseq = function(design, model0, model1, modelT){
-      PPH0_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
-      PPH1_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
-      PPHT_seq = rep(NA, length(as.vector(na.omit(design$y.new))))
-      for(i in 1:length(as.vector(na.omit(design$y.new)))){
-        y.tmp = c(design$y, as.vector(na.omit(design$y.new))[1:i])
-        x.tmp = c(design$x, as.vector(na.omit(design$x.new))[1:i])
+    getPPHseq = function(
+      design, model0, model1, modelT, n, randomize.order = FALSE){
+      x.new.idx = design$x.new.idx
+      x.new = design$x.new
+      y.new = design$y.new
+      len.tmp = length(as.vector(na.omit(y.new)))
+      if(randomize.order){
+        new.order = sample(1:len.tmp, len.tmp, replace = FALSE)
+        x.new.idx = x.new.idx[new.order]
+        x.new = x.new[new.order]
+        y.new = y.new[new.order]
+      }
+      # calculate posterior probs for each new point
+      PPH0_seq = rep(NA, len.tmp)
+      PPH1_seq = rep(NA, len.tmp)
+      PPHT_seq = rep(NA, len.tmp)
+      for(i in 1:len.tmp){
+        y.tmp = c(design$y, y.new[1:i])
+        x.tmp = c(design$x, x.new[1:i])
         PPHs.tmp = getHypothesesPosteriors(
           prior.probs = rep(1 / 3, 3), 
           evidences = c(
@@ -253,17 +265,30 @@ for(scenario in c(3, 4, 5, 6)){
         PPH1_seq[i] = PPHs.tmp[2]
         PPHT_seq[i] = PPHs.tmp[3]
       }
-      if(length(PPH0_seq) < Nnew){
-        PPH0_seq[(length(PPH0_seq) + 1):Nnew] = PPH0_seq[length(PPH0_seq)]
+      if(length(PPH0_seq) < n){
+        PPH0_seq[(length(PPH0_seq) + 1):n] = PPH0_seq[length(PPH0_seq)]
       }
-      if(length(PPH1_seq) < Nnew){
-        PPH1_seq[(length(PPH1_seq) + 1):Nnew] = PPH1_seq[length(PPH1_seq)]
+      if(length(PPH1_seq) < n){
+        PPH1_seq[(length(PPH1_seq) + 1):n] = PPH1_seq[length(PPH1_seq)]
       }
-      if(length(PPHT_seq) < Nnew){
-        PPHT_seq[(length(PPHT_seq) + 1):Nnew] = PPHT_seq[length(PPHT_seq)]
+      if(length(PPHT_seq) < n){
+        PPHT_seq[(length(PPHT_seq) + 1):n] = PPHT_seq[length(PPHT_seq)]
       }
+      # include posterior probs for initial point(s)
+      len.init = length(design$y)
+      PPHs.init = getHypothesesPosteriors(
+        prior.probs = rep(1 / 3, 3), 
+        evidences = c(
+          Evidence_gp(design$y, design$x, model0),
+          Evidence_gp(design$y, design$x, model1), 
+          Evidence_gp(design$y, design$x, modelT)
+        )
+      )
+      PPH0_seq = c(PPHs.init[1], PPH0_seq)
+      PPH1_seq = c(PPHs.init[2], PPH1_seq)
+      PPHT_seq = c(PPHs.init[3], PPHT_seq)
       return(data.frame(
-        index = 1:Nnew, 
+        index = 0:((len.init - 1) + n), 
         "H0" = PPH0_seq, 
         "H1" = PPH1_seq, 
         "HT" = PPHT_seq
@@ -283,13 +308,14 @@ for(scenario in c(3, 4, 5, 6)){
       r = random_sims[[j]]
       g = grid_sims[[j]]
       # sequence of PPHs for each design
-      PPH_seq.bh = getPPHseq(bh, model0, model1, modelT)
-      PPH_seq.qc = getPPHseq(qc, model0, model1, modelT)
-      PPH_seq.lo = getPPHseq(lo, model0, model1, modelT)
-      PPH_seq.qc2 = getPPHseq(qc2, model0, model1, modelT)
-      PPH_seq.kq = getPPHseq(kq, model0, model1, modelT)
-      PPH_seq.r = getPPHseq(r, model0, model1, modelT)
-      PPH_seq.g = getPPHseq(g, model0, model1, modelT)
+      PPH_seq.bh = getPPHseq(bh, model0, model1, modelT, Nnew)
+      PPH_seq.qc = getPPHseq(qc, model0, model1, modelT, Nnew)
+      PPH_seq.lo = getPPHseq(lo, model0, model1, modelT, Nnew)
+      PPH_seq.qc2 = getPPHseq(qc2, model0, model1, modelT, Nnew)
+      PPH_seq.kq = getPPHseq(kq, model0, model1, modelT, Nnew)
+      PPH_seq.r = getPPHseq(r, model0, model1, modelT, Nnew)
+      PPH_seq.g = getPPHseq(
+        g, model0, model1, modelT, Nnew, randomize.order = TRUE)
       # master data frame
       PPH_seq.bh$type = "boxhill"
       PPH_seq.qc$type = "qcap"
@@ -332,7 +358,7 @@ for(scenario in c(3, 4, 5, 6)){
     plot(epph.plt)
     
     ggsave(
-      filename = paste0("20210708_scen", scenario, "_epph.pdf"), 
+      filename = paste0("20210815_scen", scenario, "_epph.pdf"), 
       plot = epph.plt, 
       width = 6, height = 4, units = c("in")
     )

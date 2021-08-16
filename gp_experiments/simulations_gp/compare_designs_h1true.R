@@ -14,7 +14,7 @@ for(scenario in c(1, 2)){
   ################################################################################
   sims_dir = "gp_experiments/simulations_gp"
   output_dir = paste0(
-    sims_dir, "/modelselection_designs/scenarios_misspecified/outputs")
+    sims_dir, "/modelselection_designs/scenarios_h1true/outputs")
   data_dir = paste0(sims_dir, "/simulated_data/outputs")
   functions_dir = "functions"
   
@@ -240,7 +240,7 @@ for(scenario in c(1, 2)){
   plot(des.plt)
   
   ggsave(
-    filename = paste0("20210708_scen", scenario, "_design.pdf"), 
+    filename = paste0("20210815_scen", scenario, "_design.pdf"), 
     plot = des.plt, 
     width = 6, height = 4, units = c("in")
   )

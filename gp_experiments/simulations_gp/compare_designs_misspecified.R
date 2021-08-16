@@ -258,10 +258,15 @@ for(scenario in c(3, 4, 5, 6)){
                 aes(x = value, y = type, label = index), 
                 vjust = -0.65 * as.numeric(paste(text.gg$index)), size = 2) +
       xlim(c(xmin, xmax))
+    if(typeT == "periodic"){
+      des.plt = des.plt + geom_vline(
+        xintercept = pT * (0:floor((xmax - xmin) / pT)), color = "blue", 
+        alpha = 0.2)
+    }
     plot(des.plt)
     
     ggsave(
-      filename = paste0("20210708_scen", scenario, "_design.pdf"), 
+      filename = paste0("20210815_scen", scenario, "_design.pdf"), 
       plot = des.plt, 
       width = 6, height = 4, units = c("in")
     )

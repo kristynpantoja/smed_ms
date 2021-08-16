@@ -60,14 +60,14 @@ SeqMEDgp = function(
       if(objective.type == 1){ # buffer
         qs = sapply(x.cur, function(x_i) 
           q_gp(
-            x_i, Kinv0, Kinv1, x.cur, y, p, alpha.seq[1], buffer, model0, model1))
+            x_i, Kinv0, Kinv1, x.cur, y.cur, p, alpha.seq[1], buffer, model0, model1))
       }
       if(objective.type %in% c(0, 3, 5)){
         qs = rep(1, length(x.cur))
       }
       if(objective.type == 4){ # cap q
         qs = sapply(x.cur, function(x_i) 
-          qcap_gp(x_i, Kinv0, Kinv1, x.cur, y, p, alpha.seq[1], model0, model1))
+          qcap_gp(x_i, Kinv0, Kinv1, x.cur, y.cur, p, alpha.seq[1], model0, model1))
       }
     }
   }

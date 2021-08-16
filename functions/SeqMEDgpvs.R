@@ -73,7 +73,7 @@ SeqMEDgpvs = function(
       if(objective.type == 1){ # buffer
         qs = apply(x.cur, 1, function(x_i) 
           q_gpvs(
-            x_i, Kinv0, Kinv1, initD0, initD1, y, p, alpha.seq[1], buffer, 
+            x_i, Kinv0, Kinv1, initD0, initD1, y.cur, p, alpha.seq[1], buffer, 
             model0, model1))
       }
       if(objective.type %in% c(0, 3, 5)){
@@ -82,7 +82,7 @@ SeqMEDgpvs = function(
       if(objective.type == 4){ # cap q
         qs = apply(x.cur, 1, function(x_i) 
           qcap_gpvs(
-            x_i, Kinv0, Kinv1, initD0, initD1, y, p, alpha.seq[1], 
+            x_i, Kinv0, Kinv1, initD0, initD1, y.cur, p, alpha.seq[1], 
             model0, model1))
       }
     }

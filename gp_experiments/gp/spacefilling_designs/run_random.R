@@ -6,7 +6,7 @@ for(scenario in c(1, 2, 4, 5)){
   ################################################################################
   # Sources/Libraries
   ################################################################################
-  sims_dir = "gp_experiments/simulations_gp"
+  sims_dir = "gp_experiments/gp"
   output_dir = paste0(sims_dir, "/spacefilling_designs/outputs")
   data_dir = paste0(sims_dir, "/simulated_data/outputs")
   functions_dir = "functions"
@@ -52,7 +52,7 @@ for(scenario in c(1, 2, 4, 5)){
   ################################################################################
   
   # simulations settings
-  numSims = 25
+  numSims = 100
   Nin = 1
   numSeq = 15
   seqN = 1

@@ -10,8 +10,7 @@ if_plot = FALSE
 ################################################################################
 # Sources/Libraries
 ################################################################################
-sims_dir = "gp_experiments/simulations_gpvs"
-data_dir = paste0(sims_dir, "/simulated_data/outputs")
+output_dir = "lm_experiments/lmvs/outputs"
 functions_dir = "functions"
 
 # for seqmed design

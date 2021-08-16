@@ -4,7 +4,7 @@
 #   where H1 is true
 
 dimT = 2
-lT = 0.05
+lT = 0.01
 typeT = "squaredexponential"
 pT = NULL
 
@@ -14,7 +14,7 @@ if_plot = FALSE
 ################################################################################
 # Sources/Libraries
 ################################################################################
-sims_dir = "gp_experiments/simulations_gpvs"
+sims_dir = "gp_experiments/gpvs"
 data_dir = paste0(sims_dir, "/simulated_data/outputs")
 functions_dir = "functions"
 
@@ -60,7 +60,7 @@ gg_color_hue = function(n) {
 ################################################################################
 
 # simulations settings
-numSims = 25
+numSims = 100
 xmin = 0
 xmax = 1
 

@@ -3,12 +3,12 @@
 # purpose: to test seqmedgp for scenarios 3, 4, 5, or 6
 #   where both hypotheses are misspecified
 
-scenario = 6 # 3, 4, 5, 6
+scenario = 3 # 3, 4, 5, 6
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
-sims_dir = "gp_experiments/simulations_gp"
+sims_dir = "gp_experiments/gp"
 output_dir = paste0(
   sims_dir, "/modelselection_designs/scenarios_misspecified/outputs")
 data_dir = paste0(sims_dir, "/simulated_data/outputs")
@@ -55,7 +55,7 @@ gg_color_hue = function(n) {
 ################################################################################
 
 # simulations settings
-numSims = 25
+numSims = 100
 Nin = 1
 numSeq = 15
 seqN = 1
@@ -69,7 +69,6 @@ sigmasq_measuremt = 1e-10
 sigmasq_signal = 1
 
 # boxhill settings
-nugget = sigmasq_measuremt
 prior_probs = rep(1 / 2, 2)
 
 ################################################################################
@@ -81,9 +80,9 @@ if(scenario == 3){
   l01= c(0.005, 0.01)
   lT = 0.01
   model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
-                measurement.var = nugget)
+                measurement.var = sigmasq_measuremt)
   model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
-                measurement.var = nugget)
+                measurement.var = sigmasq_measuremt)
 } else if(scenario == 4){
   type01 = c("matern", "squaredexponential")
   typeT = "periodic"
@@ -91,9 +90,9 @@ if(scenario == 3){
   lT = 0.5
   pT = 0.05 # 0.05 or 0.1
   model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
-                measurement.var = nugget)
+                measurement.var = sigmasq_measuremt)
   model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
-                measurement.var = nugget)
+                measurement.var = sigmasq_measuremt)
 } else if(scenario == 5){
   type01 = c("matern", "periodic")
   typeT = "squaredexponential"
@@ -101,9 +100,9 @@ if(scenario == 3){
   lT = 0.01
   p1 = 0.26
   model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
-                measurement.var = nugget)
+                measurement.var = sigmasq_measuremt)
   model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
-                measurement.var = nugget, p = p1)
+                measurement.var = sigmasq_measuremt, p = p1)
 } else if(scenario == 6){
   type01 = c("squaredexponential", "periodic")
   typeT = "matern"
@@ -111,9 +110,9 @@ if(scenario == 3){
   lT = 0.01
   p1 = 0.26
   model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
-                measurement.var = nugget)
+                measurement.var = sigmasq_measuremt)
   model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
-                measurement.var = nugget, p = p1)
+                measurement.var = sigmasq_measuremt, p = p1)
 } else{
   stop("invalid scenario number")
 }
@@ -166,8 +165,9 @@ boxhills = foreach(
   y_seq = y_seq_mat[ , i]
   y_input = y_seq[x_input_idx]
   BHgp_m2(
-    y_input, x_input, x_input_idx, prior_probs, model0, model1, Nnew, 
-    x_seq, y_seq)
+    y.in = y_input, x.in = x_input, x.in.idx =  x_input_idx, 
+    prior.probs = prior_probs, model0 = model0, model1 = model1, n = Nnew, 
+    candidates = x_seq, function.values = y_seq, seed = NULL)
 }
 
 filename_append.tmp = paste0(

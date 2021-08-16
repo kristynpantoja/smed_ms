@@ -8,7 +8,7 @@ scenario = 2
 ################################################################################
 # Sources/Libraries
 ################################################################################
-sims_dir = "gp_experiments/simulations_gp"
+sims_dir = "gp_experiments/gp"
 output_dir = paste0(
   sims_dir, "/modelselection_designs/scenarios_h1true/outputs")
 data_dir = paste0(sims_dir, "/simulated_data/outputs")
@@ -55,7 +55,7 @@ gg_color_hue = function(n) {
 ################################################################################
 
 # simulations settings
-numSims = 25
+numSims = 100
 Nin = 1
 Nnew = 15
 Nttl = Nin + Nnew
@@ -67,7 +67,6 @@ sigmasq_measuremt = 1e-10
 sigmasq_signal = 1
 
 # boxhill settings
-nugget = sigmasq_measuremt
 prior_probs = rep(1 / 2, 2)
 
 ################################################################################
@@ -77,16 +76,16 @@ l01= c(0.01, 0.01)
 if(scenario == 1){
   type01 = c("squaredexponential", "matern")
   model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
-                measurement.var = nugget)
+                measurement.var = sigmasq_measuremt)
   model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
-                measurement.var = nugget)
+                measurement.var = sigmasq_measuremt)
 } else if(scenario == 2){
   pT = 0.26
   type01 = c("matern", "periodic")
   model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
-                measurement.var = nugget)
+                measurement.var = sigmasq_measuremt)
   model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
-                measurement.var = nugget, p = pT)
+                measurement.var = sigmasq_measuremt, p = pT)
 }
 typeT = type01[2]
 lT = l01[2]
@@ -139,8 +138,9 @@ boxhills = foreach(
   y_seq = y_seq_mat[ , i]
   y_input = y_seq[x_input_idx]
   BHgp_m2(
-    y_input, x_input, x_input_idx, prior_probs, model0, model1, Nnew, 
-    x_seq, y_seq)
+    y.in = y_input, x.in = x_input, x.in.idx =  x_input_idx, 
+    prior.probs = prior_probs, model0 = model0, model1 = model1, n = Nnew, 
+    candidates = x_seq, function.values = y_seq, seed = NULL)
 }
 
 filename_append.tmp = paste0(

@@ -10,7 +10,7 @@ typeT = "squaredexponential"
 ################################################################################
 # Sources/Libraries
 ################################################################################
-sims_dir = "gp_experiments/simulations_gpvs"
+sims_dir = "gp_experiments/gpvs"
 output_dir = paste0(sims_dir, "/scenarios/outputs")
 data_dir = paste0(sims_dir, "/simulated_data/outputs")
 functions_dir = "functions"

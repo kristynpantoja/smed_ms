@@ -12,7 +12,7 @@ for(scenario in c(3, 4, 5, 6)){
     ################################################################################
     # Sources/Libraries
     ################################################################################
-    sims_dir = "gp_experiments/simulations_gp"
+    sims_dir = "gp_experiments/gp"
     output_dir = paste0(
       sims_dir, "/modelselection_designs/scenarios_misspecified/outputs")
     data_dir = paste0(sims_dir, "/simulated_data/outputs")
@@ -46,7 +46,7 @@ for(scenario in c(3, 4, 5, 6)){
     ################################################################################
     
     # simulations settings
-    numSims = 25
+    numSims = 100
     Nin = 1
     if(seq.type == 1){
       numSeq = 15
@@ -65,7 +65,6 @@ for(scenario in c(3, 4, 5, 6)){
     sigmasq_signal = 1
     
     # shared settings
-    nugget = sigmasq_measuremt
     prior_probs = rep(1 / 2, 2)
     
     ################################################################################
@@ -77,9 +76,9 @@ for(scenario in c(3, 4, 5, 6)){
       l01= c(0.005, 0.01)
       lT = 0.01
       model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
-                    measurement.var = nugget)
+                    measurement.var = sigmasq_measuremt)
       model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
-                    measurement.var = nugget)
+                    measurement.var = sigmasq_measuremt)
     } else if(scenario == 4){
       type01 = c("matern", "squaredexponential")
       typeT = "periodic"
@@ -87,9 +86,9 @@ for(scenario in c(3, 4, 5, 6)){
       lT = 0.5
       pT = 0.05 # 0.05 or 0.1
       model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
-                    measurement.var = nugget)
+                    measurement.var = sigmasq_measuremt)
       model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
-                    measurement.var = nugget)
+                    measurement.var = sigmasq_measuremt)
     } else if(scenario == 5){
       type01 = c("matern", "periodic")
       typeT = "squaredexponential"
@@ -97,9 +96,9 @@ for(scenario in c(3, 4, 5, 6)){
       lT = 0.01
       p1 = 0.26
       model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
-                    measurement.var = nugget)
+                    measurement.var = sigmasq_measuremt)
       model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
-                    measurement.var = nugget, p = p1)
+                    measurement.var = sigmasq_measuremt, p = p1)
     } else if(scenario == 6){
       type01 = c("squaredexponential", "periodic")
       typeT = "matern"
@@ -107,9 +106,9 @@ for(scenario in c(3, 4, 5, 6)){
       lT = 0.01
       p1 = 0.26
       model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
-                    measurement.var = nugget)
+                    measurement.var = sigmasq_measuremt)
       model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
-                    measurement.var = nugget, p = p1)
+                    measurement.var = sigmasq_measuremt, p = p1)
     } else{
       stop("invalid scenario number")
     }

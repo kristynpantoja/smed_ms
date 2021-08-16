@@ -7,7 +7,7 @@ for(scenario in c(1, 2, 4, 5)){
   ################################################################################
   # Sources/Libraries
   ################################################################################
-  output_home = paste0("gp_experiments/simulations_gp/simulated_data/outputs")
+  output_home = paste0("gp_experiments/gp/simulated_data/outputs")
   functions_home = "functions"
   
   # for seqmed design
@@ -51,7 +51,7 @@ for(scenario in c(1, 2, 4, 5)){
   ################################################################################
   
   # simulations settings
-  numSims = 25
+  numSims = 100
   xmin = 0
   xmax = 1
   numx = 10^3 + 1

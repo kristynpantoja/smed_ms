@@ -12,7 +12,7 @@ for(scenario in c(1, 2)){
   ################################################################################
   # Sources/Libraries
   ################################################################################
-  sims_dir = "gp_experiments/simulations_gp"
+  sims_dir = "gp_experiments/gp"
   output_dir = paste0(
     sims_dir, "/modelselection_designs/scenarios_h1true/outputs")
   data_dir = paste0(sims_dir, "/simulated_data/outputs")
@@ -46,7 +46,7 @@ for(scenario in c(1, 2)){
   ################################################################################
   
   # simulations settings
-  numSims = 25
+  numSims = 100
   Nin = 1
   if(seq.type == 1){
     numSeq = 15
@@ -65,7 +65,6 @@ for(scenario in c(1, 2)){
   sigmasq_signal = 1
   
   # shared settings
-  nugget = sigmasq_measuremt
   prior_probs = rep(1 / 2, 2)
   
   
@@ -76,16 +75,16 @@ for(scenario in c(1, 2)){
   if(scenario == 1){
     type01 = c("squaredexponential", "matern")
     model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
-                  measurement.var = nugget)
+                  measurement.var = sigmasq_measuremt)
     model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
-                  measurement.var = nugget)
+                  measurement.var = sigmasq_measuremt)
   } else if(scenario == 2){
     pT = 0.26
     type01 = c("matern", "periodic")
     model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
-                  measurement.var = nugget)
+                  measurement.var = sigmasq_measuremt)
     model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
-                  measurement.var = nugget, p = pT)
+                  measurement.var = sigmasq_measuremt, p = pT)
   }
   typeT = type01[2]
   lT = l01[2]

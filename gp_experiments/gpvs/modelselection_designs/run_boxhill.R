@@ -10,7 +10,7 @@ typeT = "squaredexponential"
 ################################################################################
 # Sources/Libraries
 ################################################################################
-sims_dir = "gp_experiments/simulations_gpvs"
+sims_dir = "gp_experiments/gpvs"
 output_dir = paste0(sims_dir, "/modelselection_designs/outputs")
 data_dir = paste0(sims_dir, "/simulated_data/outputs")
 functions_dir = "functions"
@@ -64,7 +64,7 @@ gg_color_hue = function(n) {
 ################################################################################
 
 # simulations settings
-# numSims = 25
+numSims = 100
 Nin = 1
 if(seq.type == 1){
   numSeq = 9
@@ -77,19 +77,12 @@ Nnew = numSeq * seqN
 Nttl = Nin + Nnew 
 xmin = 0
 xmax = 1
-
-# numx = 21
-# x_seq = seq(from = xmin, to = xmax, length.out = numx)
-# x_grid = expand.grid(x_seq, x_seq)
-
 p = 2
 k = 4 * p
-
 sigmasq_measuremt = 1e-10
 sigmasq_signal = 1
 
 # shared settings
-nugget = sigmasq_measuremt
 prior_probs = rep(1 / 2, 2)
 
 
@@ -104,10 +97,10 @@ indices1 = c(1, 2)
 
 model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
               indices = indices0,
-              measurement.var = nugget)
+              measurement.var = sigmasq_measuremt)
 model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
               indices = indices1, 
-              measurement.var = nugget)
+              measurement.var = sigmasq_measuremt)
 
 ################################################################################
 # import data

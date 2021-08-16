@@ -211,8 +211,9 @@ BH_m2 = function(
       x.new.idx = which.max(bhd_seq)
       x.new[i] = candidates[x.new.idx]
       # get y
-      y.new[i] = simulateY_fromfunction(x.new[i], true.function, error.var, 1, 
-                                        NULL)
+      y.new[i] = simulateY_fromfunction(
+        x = x.new[i], f = true.function, error.var = error.var, num.sims = 1, 
+        seed = NULL)
       # update current information
       x.cur = c(x.cur, x.new[i])
       y.cur = c(y.cur, y.new[i])

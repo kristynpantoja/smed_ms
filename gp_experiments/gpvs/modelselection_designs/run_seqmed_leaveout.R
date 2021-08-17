@@ -141,7 +141,7 @@ seqmeds = foreach(
   y_input = y_seq[x_input_idx]
   
   SeqMEDgpvs(
-    y0 = y_input, x0 = x_input, x0.idx = x_input_idx, 
+    y.in = y_input, x.in = x_input, x.in.idx = x_input_idx,
     candidates = x_grid, function.values = y_seq, 
     xmin = xmin, xmax = xmax, k = k, p = p, 
     numSeq = numSeq, seqN = seqN, 

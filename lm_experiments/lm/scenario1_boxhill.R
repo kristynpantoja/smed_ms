@@ -77,9 +77,9 @@ desX1 = function(x){
   return(cbind(rep(1, n), x, x^2))
 }
 model0 = list(
-  designMat = desX0, beta.mean = mu0, beta.var = V0, error.var = sigmasq)
+  designMat = desX0, beta.mean = mu0, beta.var = V0)
 model1 = list(
-  designMat = desX1, beta.mean = mu1, beta.var = V1, error.var = sigmasq)
+  designMat = desX1, beta.mean = mu1, beta.var = V1)
 
 # boxhill settings
 prior_probs = rep(1 / 2, 2)
@@ -97,7 +97,7 @@ typeT = 3
 bh_list = foreach(i = 1:numSims) %dorng% {
   print(paste0("starting simulation ", i, " out of ", numSims))
     BH_m2(NULL, NULL, prior_probs, model0, model1, N, 
-                   candidates, fT)
+                   candidates, fT, sigmasq)
 }
 saveRDS(bh_list, 
         paste(output_home, "/boxhill/scenario1_boxhill_simulations", 

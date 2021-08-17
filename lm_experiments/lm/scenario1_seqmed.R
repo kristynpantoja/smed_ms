@@ -77,9 +77,9 @@ desX1 = function(x){
   return(cbind(rep(1, n), x, x^2))
 }
 model0 = list(
-  designMat = desX0, beta.mean = mu0, beta.var = V0, error.var = sigmasq)
+  designMat = desX0, beta.mean = mu0, beta.var = V0)
 model1 = list(
-  designMat = desX1, beta.mean = mu1, beta.var = V1, error.var = sigmasq)
+  designMat = desX1, beta.mean = mu1, beta.var = V1)
 
 # seqmed settings
 

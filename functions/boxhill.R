@@ -107,25 +107,25 @@ Evidence_lm = function(
 # for m = 2 models, i and j:
 # for single candidate
 BHD_m2 = function(
-  y = NULL, # vector observed responses, at points x
-  x = NULL, # vector of observed points (with data y)
+  y.in = NULL, # vector observed responses, at points x
+  x.in = NULL, # vector of observed points (with data y)
   probs,
   candidate, # new point (potentially next point x.n, where no y.n is observed yet)
   model.i, # DesignMat, beta.mean, beta.var -- for model i
   model.j, # DesignMat, beta.mean, beta.var -- for model j
   error.var # known error variance
 ){
-  if(is.null(x) & is.null(y)){ # use marginals
+  if(is.null(x.in) & is.null(y.in)){ # use marginals
     distr.i = getLMMarginal(model.i$designMat(candidate), model.i$beta.mean, 
                             model.i$beta.var, error.var)
     distr.j = getLMMarginal(model.j$designMat(candidate), model.j$beta.mean, 
                             model.j$beta.var, error.var)
   } else{ # use posterior predictives
     distr.i = getLMPredictive(
-      model.i$designMat(candidate), y, model.i$designMat(x), model.i$beta.mean, 
+      model.i$designMat(candidate), y.in, model.i$designMat(x.in), model.i$beta.mean, 
       model.i$beta.var, error.var)
     distr.j = getLMPredictive(
-      model.j$designMat(candidate), y, model.j$designMat(x), model.j$beta.mean, 
+      model.j$designMat(candidate), y.in, model.j$designMat(x.in), model.j$beta.mean, 
       model.j$beta.var, error.var)
   }
   # evaluate criterion D
@@ -138,8 +138,8 @@ BHD_m2 = function(
 }
 
 BH_m2 = function(
-  y = NULL, # preliminary data response
-  x = NULL, # preliminary data input
+  y.in = NULL, # preliminary data response
+  x.in = NULL, # preliminary data input
   prior.probs = rep(1 / 2, 2), # prior probabilities for H0 and H1
   model0, # DesignMat, beta.mean, beta.var -- for model0
   model1, # DesignMat, beta.mean, beta.var -- for model1
@@ -152,11 +152,11 @@ BH_m2 = function(
   if(!is.null(seed)) set.seed(seed)
   
   # if no preliminary data, get the first point
-  if(is.null(x) & !is.null(y)){ # x is null, y is not null
-    stop("BH_m2 : preliminary y  is given, but not corresponding x")
-  } else if(is.null(y) & !is.null(x)){ # x is not null, y is null (generate y)
-    y = simulateY_fromfunction(x, true.function, error.var, 1, NULL)
-  } else if(is.null(x) & is.null(y)){ # both x and y are null, then us BH method
+  if(is.null(x.in) & !is.null(y.in)){ # x.in is null, y.in is not null
+    stop("BH_m2 : preliminary y.in is given, but not corresponding x.in")
+  } else if(is.null(y.in) & !is.null(x.in)){ # x.in is not null, y.in is null (generate y.in)
+    y.in = simulateY_fromfunction(x.in, true.function, error.var, 1, NULL)
+  } else if(is.null(x.in) & is.null(y.in)){ # both x.in and y.in are null, then us BH method
     # evaluate criterion over x_seq
     bhd_seq = sapply(
       candidates, 
@@ -166,15 +166,15 @@ BH_m2 = function(
       warning("Warning in BHDgp_m2() : There were NaNs in Box & Hill criterion 
               evaluation over the candidate set!!")
     }
-    # get x
-    x.idx = which.max(bhd_seq)
-    x = candidates[x.idx]
-    # get y
-    y = simulateY_fromfunction(x, true.function, error.var, 1, NULL)
+    # get x.in
+    x.in.idx = which.max(bhd_seq)
+    x.in = candidates[x.in.idx]
+    # get y.in
+    y.in = simulateY_fromfunction(x.in, true.function, error.var, 1, NULL)
     n = n - 1
   } else{
-    if(length(x) != length(y)){
-      stop("BH_m2 : length of preliminary x and y don't match!")
+    if(length(x.in) != length(y.in)){
+      stop("BH_m2 : length of preliminary x.in and y.in don't match!")
     }
   }
   
@@ -182,8 +182,8 @@ BH_m2 = function(
   post.probs0 = getHypothesesPosteriors( # posterior probability with current data
     prior.probs = prior.probs, 
     evidences = c(
-      Evidence_lm(y, x, model0, error.var), 
-      Evidence_lm(y, x, model1, error.var)
+      Evidence_lm(y.in, x.in, model0, error.var), 
+      Evidence_lm(y.in, x.in, model1, error.var)
     )
   )
   # get new data
@@ -192,8 +192,8 @@ BH_m2 = function(
   post.probs.mat = matrix(rep(post.probs0, n + 1), nrow = n + 1, ncol = 2, 
                           byrow = TRUE)
   post.probs.cur = post.probs0
-  y.cur = y
-  x.cur = x
+  y.cur = y.in
+  x.cur = x.in
   if(n > 0){
     for(i in 1:n){
       # evaluate criterion over x_seq
@@ -229,8 +229,8 @@ BH_m2 = function(
   }
   
   return(list(
-    x = x, 
-    y = y,
+    x.in = x.in, 
+    y.in = y.in,
     x.new = x.new,
     y.new = y.new,
     post.probs = post.probs.mat

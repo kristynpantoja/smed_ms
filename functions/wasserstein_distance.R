@@ -12,9 +12,9 @@ WN = function(mu1, mu2, var1, var2, dim = 1){
       W = sqrt(crossprod(mu1 - mu2) + 
                  sum(diag(var1 + var2 - 
                             2 * sqrtm(sqrt_var2 %*% var1 %*% sqrt_var2)
-                          )
-                     )
-               )
+                 )
+                 )
+      )
     } else{
       stop("error in WassN : invalid dim")
     }
@@ -33,6 +33,23 @@ WN = function(mu1, mu2, var1, var2, dim = 1){
 # 1 dimension, or with transformations of x
 # formerly named Wasserstein_distance_postpred
 WNlm = function(
+  x, postmean0, postmean1, postvar0, postvar1, model0, model1, error.var, 
+  dim = 1
+){
+  x0 = t(model0$designMat(x))
+  x1 = t(model1$designMat(x))
+  
+  # posterior predictive distribution of y, for candidate x
+  postpredy_mu0 = t(x0) %*% postmean0
+  postpredy_var0 = t(x0) %*% postvar0 %*% x0 + error.var
+  
+  postpredy_mu1 = t(x1) %*% postmean1
+  postpredy_var1 = t(x1) %*% postvar1 %*% x1 + error.var
+  
+  W = WN(postpredy_mu0, postpredy_mu1, postpredy_var0, postpredy_var1)
+  return(as.numeric(W))
+}
+WNlm_old = function(
   x, postmean0, postmean1, postvar0, postvar1, error.var, type, dim = 1){
   x0 = t(constructDesignX(x, 1, type[1]))
   x1 = t(constructDesignX(x, 1, type[2]))

@@ -1,13 +1,13 @@
 ################################################################################
 # last updated: 12/09/20
-# purpose: to create a list of boxhill simulations for scenario 2:
+# purpose: to create a list of seqmed simulations for scenario 2:
 #   linear vs. quadratic,
 #   where the true function is quadratic
 
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = "lm_experiments/lm/outputs"
+output_home = "lm_experiments/lm/experimenting_around"
 functions_home = "functions"
 
 # for seqmed design
@@ -23,7 +23,7 @@ source(paste(functions_home, "/simulate_y.R", sep = ""))
 source(paste(functions_home, "/MMED.R", sep = ""))
 source(paste(functions_home, "/variance_marginal_y.R", sep = ""))
 
-# for box-hill deisign
+# for box-hill design
 source(paste(functions_home, "/boxhill.R", sep = ""))
 
 library(expm)
@@ -40,7 +40,8 @@ nworkers = detectCores()
 plan(multisession, workers = nworkers)
 
 library(doRNG)
-registerDoRNG(1995)
+rng.seed = 123
+registerDoRNG(rng.seed)
 
 ################################################################################
 # simulation settings, shared for both scenarios (linear vs. quadratic)
@@ -57,10 +58,10 @@ xmin = -1
 xmax = 1
 numCandidates = 10^3 + 1
 candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
-
-# SeqMED settings
-type01 = c(2, 3)
 sigmasq = 0.1
+
+# shared settings
+type01 = c(2, 3)
 mu0 = c(0, 0)
 mu1 = c(0, 0, 0)
 sigmasq01 = 0.25
@@ -68,9 +69,6 @@ V0 = diag(rep(sigmasq01,length(mu0)))
 V1 = diag(rep(sigmasq01,length(mu1)))
 f0 = function(x) mu0[1] + mu0[2] * x
 f1 = function(x) mu1[1] + mu1[2] * x + mu1[3] * x^2
-
-# boxhill settings
-MMEDinputdata = FALSE
 desX0 = function(x){
   n = length(x)
   return(cbind(rep(1, n), x))
@@ -80,9 +78,11 @@ desX1 = function(x){
   return(cbind(rep(1, n), x, x^2))
 }
 model0 = list(
-  designMat = desX0, beta.mean = mu0, beta.var = V0, error.var = sigmasq)
+  designMat = desX0, beta.mean = mu0, beta.var = V0)
 model1 = list(
-  designMat = desX1, beta.mean = mu1, beta.var = V1, error.var = sigmasq)
+  designMat = desX1, beta.mean = mu1, beta.var = V1)
+
+# boxhill settings
 prior_probs = rep(1 / 2, 2)
 
 ################################################################################
@@ -91,30 +91,58 @@ prior_probs = rep(1 / 2, 2)
 betaT = c(-0.2, -0.4, 0.4)
 fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2
 
-# seqmed settings
-typeT = 3
+################################################################################
+# generate designs
 
 # generate boxhill
-if(MMEDinputdata){
-  N.new = (numSeq - 1) * seqN
-  seqmed.res = SeqMED(
-    D1 = NULL, y1 = NULL, true_beta = betaT, true_type = typeT, 
-    beta.mean0 = mu0, beta.mean1 = mu1, beta.var0 = V0, beta.var1 = V1, 
-    f0 = f0, f1 = f1, type = type01, xmin = xmin, xmax = xmax, 
-    candidates = candidates, numSeq = 1, seqN = seqN
-  )
-  x_input = seqmed.res$D
-  y_input = seqmed.res$y
-  bh.res = BH_m2(y_input, x_input, prior_probs, model0, model1, N.new, 
-                 candidates, fT)
-} else{
-  bh.res = BH_m2(NULL, NULL, prior_probs, model0, model1, N, 
-                 candidates, fT)
-}
+# if(MMEDinputdata){
+#   N.new = (numSeq - 1) * seqN
+#   seqmed.res = SeqMED(
+#     D1 = NULL, y1 = NULL, true_beta = betaT, true_type = typeT, 
+#     beta.mean0 = mu0, beta.mean1 = mu1, beta.var0 = V0, beta.var1 = V1, 
+#     f0 = f0, f1 = f1, type = type01, xmin = xmin, xmax = xmax, 
+#     candidates = candidates, numSeq = 1, seqN = seqN
+#   )
+#   x_input = seqmed.res$D
+#   y_input = seqmed.res$y
+#   bh.res = BH_m2(y_input, x_input, prior_probs, model0, model1, N.new, 
+#                  candidates, fT)
+# } else{
+#   bh.res = BH_m2(NULL, NULL, prior_probs, model0, model1, N, 
+#                  candidates, fT)
+# }
 
-# generate seqmed
+### generate boxhill
+# registerDoRNG(rng.seed)
+# bh.res = BH_m2(NULL, NULL, prior_probs, model0, model1, N,
+#                candidates, fT, sigmasq)
+# saveRDS(bh.res, file = paste0(output_home, "/bh_test.rds"))
+bh.res = readRDS(paste0(output_home, "/bh_test.rds"))
+
+### generate seqmed -- old version
+# typeT = 3
+# registerDoRNG(rng.seed)
+# sm.res = SeqMEDold(
+#   D1 = NULL, y1 = NULL, true_beta = betaT, true_type = typeT, 
+#   beta.mean0 = mu0, beta.mean1 = mu1, beta.var0 = V0, beta.var1 = V1, 
+#   error.var = sigmasq, f0 = f0, f1 = f1, type = type01, xmin = xmin, xmax = xmax, 
+#   candidates = candidates, numSeq = numSeq, seqN = seqN)
+# saveRDS(sm.res, file = paste0(output_home, "/sm_test.rds"))
+sm.old.res = readRDS(paste0(output_home, "/sm_test.rds"))
+
+### generate seqmed -- new version
+registerDoRNG(rng.seed)
 sm.res = SeqMED(
-  D1 = NULL, y1 = NULL, true_beta = betaT, true_type = typeT, 
-  beta.mean0 = mu0, beta.mean1 = mu1, beta.var0 = V0, beta.var1 = V1, 
-  error.var = sigmasq, f0 = f0, f1 = f1, type = type01, xmin = xmin, xmax = xmax, 
+  y.in = NULL, x.in = NULL, true.function = fT,
+  model0 = model0, model1 = model1, 
+  error.var = sigmasq, xmin = xmin, xmax = xmax,
   candidates = candidates, numSeq = numSeq, seqN = seqN)
+all.equal(sm.old.res$D, c(sm.res$x.in, sm.res$x.new))
+hist(c(sm.res$x.in, sm.res$x.new))
+hist(sm.old.res$D)
+
+
+
+
+
+

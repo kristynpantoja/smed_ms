@@ -139,3 +139,14 @@ The following object is masked from ‘package:Matrix’:
 +   BH_m2(NULL, NULL, prior_probs, model0, model1, Nttl, 
 +         candidates, fT, sigmasq)
 + }
+[1] "starting simulation 1 out of 100"
+[1] "starting simulation 2 out of 100"
+[1] "starting simulation 3 out of 100"
+[1] "starting simulation 4 out of 100"
+[1] "starting simulation 5 out of 100"
+[1] "starting simulation 6 out of 100"
+[1] "starting simulation 7 out of 100"
+[1] "starting simulation 8 out of 100"
+[1] "starting simulation 9 out of 100"
+[1] "starting simulation 10 out of 100"
+[1] "starting simulation 11 out of 100"

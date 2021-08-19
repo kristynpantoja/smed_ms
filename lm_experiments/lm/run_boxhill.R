@@ -68,8 +68,8 @@ type01 = c(2, 3)
 mu0 = c(0, 0)
 mu1 = c(0, 0, 0)
 sigmasq01 = 0.25
-f0 = function(x) mu0[1] + mu0[2] * x
-f1 = function(x) mu1[1] + mu1[2] * x + mu1[3] * x^2
+V0 = diag(rep(sigmasq01,length(mu0)))
+V1 = diag(rep(sigmasq01,length(mu1)))
 desX0 = function(x){
   n = length(x)
   return(cbind(rep(1, n), x))
@@ -78,8 +78,10 @@ desX1 = function(x){
   n = length(x)
   return(cbind(rep(1, n), x, x^2))
 }
-model0 = list(designMat = desX0, beta.mean = mu0, beta.var = V0)
-model1 = list(designMat = desX1, beta.mean = mu1, beta.var = V1)
+model0 = list(
+  designMat = desX0, beta.mean = mu0, beta.var = V0)
+model1 = list(
+  designMat = desX1, beta.mean = mu1, beta.var = V1)
 
 # boxhill settings
 prior_probs = rep(1 / 2, 2)

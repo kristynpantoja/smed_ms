@@ -82,10 +82,8 @@ desX1 = function(x){
   n = length(x)
   return(cbind(rep(1, n), x, x^2))
 }
-model0 = list(
-  designMat = desX0, beta.mean = mu0, beta.var = V0)
-model1 = list(
-  designMat = desX1, beta.mean = mu1, beta.var = V1)
+model0 = list(designMat = desX0, beta.mean = mu0, beta.var = V0)
+model1 = list(designMat = desX1, beta.mean = mu1, beta.var = V1)
 
 # boxhill settings
 prior_probs = rep(1 / 2, 2)

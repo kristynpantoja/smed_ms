@@ -68,8 +68,6 @@ mu1 = c(0, 0, 0)
 sigmasq01 = 0.25
 V0 = diag(rep(sigmasq01,length(mu0)))
 V1 = diag(rep(sigmasq01,length(mu1)))
-f0 = function(x) mu0[1] + mu0[2] * x
-f1 = function(x) mu1[1] + mu1[2] * x + mu1[3] * x^2
 desX0 = function(x){
   n = length(x)
   return(cbind(rep(1, n), x))

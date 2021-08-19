@@ -32,12 +32,6 @@ source(paste(functions_dir, "/variance_marginal_y.R", sep = ""))
 source(paste(functions_dir, "/boxhill.R", sep = ""))
 source(paste(functions_dir, "/kl_divergence.R", sep = ""))
 
-library(expm)
-library(matrixStats)
-library(MASS)
-library(mvtnorm)
-library(knitr)
-
 # set up parallelization
 library(foreach)
 library(future)
@@ -57,7 +51,7 @@ registerDoRNG(rng.seed)
 ################################################################################
 
 # simulations settings
-numSims = 25
+numSims = 100
 Nin = 5
 numSeq = 27
 seqN = 1
@@ -106,68 +100,32 @@ if(dimT == 2){
   fT = function(x) x[, indicesT, drop = FALSE] %*% betaT
 }
 
-# generate seqmeds -- new
+################################################################################
+# run simulations
+################################################################################
+
+# generate seqmeds
 registerDoRNG(rng.seed)
-initD = matrix(runif(n = dimX * Nin, min = xmin, max = xmax), nrow = Nin, ncol = dimX)
-inity = as.vector(simulateYvs(initD[ , indicesT], Nin, betaT, sigmasq, 1, seed = seed))
-sm.res = SeqMEDvs(
-  y.in = inity, x.in = initD, model0 = model0, model1 = model1, 
-  error.var = sigmasq, candidates = candidates, true.function = fT, 
-  true.indices = indicesT, dimX = dimX, k = k, xmin = xmin, xmax = xmax, p = p, 
-  numSeq = numSeq, seqN = seqN, alpha_seq = 1, prints = FALSE, seed = NULL
-  # mean_beta_full = mu_full, beta_true = betaT, indices_true = indicesT, 
-  # indices0 = indices0, indices1 = indices1, mean_beta0 = mu0, mean_beta1 = mu1,
-  # var_e = sigmasq, var_beta = sigmasq01, var_beta0 = V0, var_beta1 = V1, 
-  # xmin = xmin, xmax = xmax, numCandidates = numCandidates, k = k, p = p,
-  # initD = initD, inity = inity, numSeq = numSeq, N_seq = seqN, 
-  # alpha_seq = NULL, buffer_seq = 0, candidates = candidates, wasserstein0 = 1, 
-  # genCandidates = 1, seed = 1
-)
-
-
-
-# generate seqmeds -- old
-# registerDoRNG(rng.seed)
-# f0 = function(x) mu0 %*% x[indices0]
-# f1 = function(x) mu1 %*% x[indices1]
-# # initial design
-# initD = matrix(runif(n = dimX * Nin, min = xmin, max = xmax), nrow = Nin, ncol = dimX)
-# inity = as.vector(simulateYvs(initD[ , indicesT], Nin, betaT, sigmasq, 1, seed = seed))
-# sm.res = generate_SMMEDvs(
-#   mean_beta_full = mu_full, beta_true = betaT, indices_true = indicesT, 
-#   indices0 = indices0, indices1 = indices1, mean_beta0 = mu0, mean_beta1 = mu1,
-#   var_e = sigmasq, var_beta = sigmasq01, var_beta0 = V0, var_beta1 = V1, 
-#   xmin = xmin, xmax = xmax, numCandidates = numCandidates, k = k, p = p,
-#   initD = initD, inity = inity, numSeq = numSeq, N_seq = seqN, 
-#   alpha_seq = NULL, buffer_seq = 0, candidates = candidates, wasserstein0 = 1, 
-#   genCandidates = 1, seed = 1)
-# saveRDS(sm.res, paste(output_dir, "/seqmed.rds", sep = ""))
-sm.res.old = readRDS(paste(output_dir, "/seqmed.rds", sep = ""))
-all.equal(rbind(sm.res$x.in, sm.res$x.new), sm.res.old$D)
-
-
-# mean_beta_full = mu_full
-# beta_true = betaT
-# indices_true = indicesT
-# # indices0 = indices0, indices1 = indices1, 
-# mean_beta0 = mu0
-# mean_beta1 = mu1
-# var_e = sigmasq
-# var_beta = sigmasq01
-# var_beta0 = V0
-# var_beta1 = V1
-# # xmin = xmin, xmax = xmax, numCandidates = numCandidates, k = k, p = p,
-# # initD = initD, inity = inity, numSeq = numSeq, 
-# N_seq = seqN
-# alpha_seq = NULL
-# buffer_seq = 0
-# candidates = candidates
-# wasserstein0 = 1
-# genCandidates = 1
-# seed = 1
-
-hist(sm.res$x.new[, 3])
-
-
+seqmed_list = foreach(i = 1:numSims) %dorng% {
+  print(paste0("starting simulation ", i, " out of ", numSims))
+  initD = matrix(runif(
+    n = dimX * Nin, min = xmin, max = xmax), nrow = Nin, ncol = dimX)
+  inity = as.vector(simulateYvs(
+    initD[ , indicesT], Nin, betaT, sigmasq, 1, seed = seed))
+  SeqMEDvs(
+    y.in = inity, x.in = initD, model0 = model0, model1 = model1, 
+    error.var = sigmasq, candidates = candidates, true.function = fT, 
+    true.indices = indicesT, dimX = dimX, k = k, xmin = xmin, xmax = xmax, 
+    p = p, numSeq = numSeq, seqN = seqN, alpha_seq = 1, prints = FALSE)
+}
+saveRDS(seqmed_list, paste0(
+  output_dir, "/dim", dimT, 
+  "_seqmed", 
+  "_Nttl", Nttl,
+  "_Nin", Nin,
+  "_numSeq", numSeq,
+  "_seqN", seqN,
+  "_seed", rng.seed,
+  ".rds"))
 
 

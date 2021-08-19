@@ -39,14 +39,18 @@ library(mvtnorm)
 library(knitr)
 
 # set up parallelization
+library(foreach)
+library(future)
 library(doFuture)
 library(parallel)
 registerDoFuture()
 nworkers = detectCores()
 plan(multisession, workers = nworkers)
 
+library(rngtools)
 library(doRNG)
-registerDoRNG(1995)
+rng.seed = 123 # 123, 345
+registerDoRNG(rng.seed)
 
 ################################################################################
 # simulation settings, shared for both scenarios (linear vs. quadratic)
@@ -56,7 +60,7 @@ registerDoRNG(1995)
 numSims = 100
 numSeq = 100
 seqN = 1
-N = numSeq * seqN
+Nttl = numSeq * seqN
 xmin = -1
 xmax = 1
 numCandidates = 10^3 + 1
@@ -102,30 +106,15 @@ if(scenario == 1){
 ################################################################################
 
 # generate boxhills
+registerDoRNG(rng.seed)
 bh_list = foreach(i = 1:numSims) %dorng% {
   print(paste0("starting simulation ", i, " out of ", numSims))
-  if(MMEDinputdata){
-    N.new = (numSeq - 1) * seqN
-    seqmed.res = SeqMED(
-      D1 = NULL, y1 = NULL, true_beta = betaT, true_type = typeT, 
-      beta.mean0 = mu0, beta.mean1 = mu1, beta.var0 = V0, beta.var1 = V1, 
-      error.var = sigmasq, f0 = f0, f1 = f1, type = type01, xmin = xmin, xmax = xmax, 
-      candidates = candidates, numSeq = 1, seqN = seqN
-    )
-    x_input = seqmed.res$D
-    y_input = seqmed.res$y
-    bh.res = BH_m2(y_input, x_input, prior_probs, model0, model1, N.new, 
-                   candidates, fT, sigmasq)
-  } else{
-    bh.res = BH_m2(NULL, NULL, prior_probs, model0, model1, N, 
-                   candidates, fT, sigmasq)
-  }
-  bh.res
+  BH_m2(NULL, NULL, prior_probs, model0, model1, Nttl, 
+        candidates, fT, sigmasq)
 }
-saveRDS(bh_list, 
-        paste(output_home, "/scenario", scenario, 
-              "_boxhill_simulations", 
-              "_N", N, 
-              "_MMEDinput", as.numeric(MMEDinputdata), 
-              "_numSims", numSims, 
-              ".rds", sep = ""))
+saveRDS(bh_list, paste0(
+  output_home, "/scenario", scenario, 
+  "_boxhill_simulations", 
+  "_N", Nttl, 
+  "_seed", rng.seed,
+  ".rds"))

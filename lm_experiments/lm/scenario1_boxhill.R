@@ -40,7 +40,8 @@ nworkers = detectCores()
 plan(multisession, workers = nworkers)
 
 library(doRNG)
-registerDoRNG(1995)
+rng.seed = 123
+registerDoRNG(rng.seed)
 
 ################################################################################
 # simulation settings, shared for both scenarios (linear vs. quadratic)
@@ -91,6 +92,7 @@ fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2
 # run simulations
 ################################################################################
 # generate boxhills
+registerDoRNG(rng.seed)
 bh_list = foreach(i = 1:numSims) %dorng% {
   print(paste0("starting simulation ", i, " out of ", numSims))
     BH_m2(NULL, NULL, prior_probs, model0, model1, N, 

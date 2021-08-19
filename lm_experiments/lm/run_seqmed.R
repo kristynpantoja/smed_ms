@@ -39,14 +39,18 @@ library(mvtnorm)
 library(knitr)
 
 # set up parallelization
+library(foreach)
+library(future)
 library(doFuture)
 library(parallel)
 registerDoFuture()
 nworkers = detectCores()
 plan(multisession, workers = nworkers)
 
+library(rngtools)
 library(doRNG)
-registerDoRNG(1995)
+rng.seed = 123 # 123, 345
+registerDoRNG(rng.seed)
 
 ################################################################################
 # simulation settings, shared for both scenarios (linear vs. quadratic)
@@ -56,7 +60,7 @@ registerDoRNG(1995)
 numSims = 100
 numSeq = 100
 seqN = 1
-N = numSeq * seqN
+Nttl = numSeq * seqN
 xmin = -1
 xmax = 1
 numCandidates = 10^3 + 1
@@ -102,6 +106,7 @@ if(scenario == 1){
 ################################################################################
 
 # generate seqmeds
+registerDoRNG(rng.seed)
 seqmed_list = foreach(i = 1:numSims) %dopar% {
   print(paste0("starting simulation ", i, " out of ", numSims))
   # SeqMED(
@@ -115,11 +120,11 @@ seqmed_list = foreach(i = 1:numSims) %dopar% {
     error.var = sigmasq, xmin = xmin, xmax = xmax,
     candidates = candidates, numSeq = numSeq, seqN = seqN)
 }
-saveRDS(seqmed_list, paste(output_home, "/scenario", scenario, 
-                           "_seqmed_simulations", 
-                           "_numSeq", numSeq,
-                           "_seqN", seqN,
-                           "_numSims", numSims,
-                           ".rds", sep = ""))
+saveRDS(seqmed_list, paste0(
+  output_home, "/scenario", scenario, 
+  "_seqmed_simulations", 
+  "_N", Nttl, 
+  "_seed", rng.seed,
+  ".rds"))
 
 

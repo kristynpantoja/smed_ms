@@ -2,9 +2,9 @@
 #   (prior predictive)
 objective_mmed = function(
   candidate, D, k, model0, model1, error.var, 
-  var_margy0, var_margy1, p, alpha, log_space = FALSE
+  var_margy0, var_margy1, p, alpha #, log_space = FALSE
 ){
-  if(log_space == FALSE) {
+  # if(log_space == FALSE) {
     potential.energy = function(x){
       (q_mmed(x, model0, model1, error.var, var_margy0, var_margy1, p, alpha) / 
          sqrt((x - candidate)^2))^k
@@ -15,25 +15,25 @@ objective_mmed = function(
       error.var, var_margy0, var_margy1, p, alpha)^k * 
       sum(sapply(D, FUN = potential.energy))
     return(result)
-  } else{
-    # if has logSumExp library
-    log.potential.energy = function(x){
-      k * 
-        log(q(x, model0, model1, error.var, var_margy0, var_margy1, p, alpha)) - 
-        (k / 2) * log((x - candidate)^2)
-    }
-    candidate.logpe = k * 
-      log(q(candidate, model0, model1, error.var, var_margy0, var_margy1, p, alpha))
-    D.logpe = sapply(D, FUN = log.potential.energy)
-    result = exp(logSumExp(candidate.logpe + D.logpe))
-    return(result)
-  }
+  # } else{
+  #   # if has logSumExp library
+  #   log.potential.energy = function(x){
+  #     k * 
+  #       log(q(x, model0, model1, error.var, var_margy0, var_margy1, p, alpha)) - 
+  #       (k / 2) * log((x - candidate)^2)
+  #   }
+  #   candidate.logpe = k * 
+  #     log(q(candidate, model0, model1, error.var, var_margy0, var_margy1, p, alpha))
+  #   D.logpe = sapply(D, FUN = log.potential.energy)
+  #   result = exp(logSumExp(candidate.logpe + D.logpe))
+  #   return(result)
+  # }
 }
 
 MMED = function(
   model0, model1, error.var, N = 11, numCandidates = 10^5, k = 4, 
-  xmin = 0, xmax = 1, p = 2, alpha = NULL, genCandidates = 1, initialpt = 1, 
-  var_margy0 = NULL, var_margy1 = NULL, log_space = FALSE
+  xmin = 0, xmax = 1, p = 1, alpha = NULL, genCandidates = 1, initialpt = 1, 
+  var_margy0 = NULL, var_margy1 = NULL #, log_space = FALSE
 ){
   # # some error checking, first:
   # if(is.null(type) & 
@@ -96,8 +96,7 @@ MMED = function(
         candidates, 
         function(x) objective_mmed(
           x, D[1:(i - 1)], k, model0, model1, 
-          error.var, f0, f1, type, var_margy0, var_margy1, p, alpha, 
-          log_space))
+          error.var, var_margy0, var_margy1, p, alpha))
       f_opt = which.min(f_min_candidates)
       D[i] = candidates[f_opt]
     }

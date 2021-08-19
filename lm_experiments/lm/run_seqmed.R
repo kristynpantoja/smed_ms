@@ -1,6 +1,6 @@
 ################################################################################
 # last updated: 08/18/21
-# purpose: to create a list of boxhill simulations
+# purpose: to create a list of seqmed simulations
 # scenario 1:
 #   linear vs. quadratic,
 #   where the true function is quadratic
@@ -31,12 +31,6 @@ source(paste(functions_home, "/variance_marginal_y.R", sep = ""))
 
 # for box-hill deisign
 source(paste(functions_home, "/boxhill.R", sep = ""))
-
-library(expm)
-library(matrixStats)
-library(MASS)
-library(mvtnorm)
-library(knitr)
 
 # set up parallelization
 library(foreach)
@@ -109,11 +103,6 @@ if(scenario == 1){
 registerDoRNG(rng.seed)
 seqmed_list = foreach(i = 1:numSims) %dopar% {
   print(paste0("starting simulation ", i, " out of ", numSims))
-  # SeqMED(
-  #   D1 = NULL, y1 = NULL, true_beta = betaT, true_type = typeT, 
-  #   beta.mean0 = mu0, beta.mean1 = mu1, beta.var0 = V0, beta.var1 = V1, 
-  #   error.var = sigmasq, f0 = f0, f1 = f1, type = type01, xmin = xmin, xmax = xmax, 
-  #   candidates = candidates, numSeq = numSeq, seqN = seqN)
   SeqMED(
     y.in = NULL, x.in = NULL, true.function = fT,
     model0 = model0, model1 = model1, 

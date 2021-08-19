@@ -1,6 +1,12 @@
 ################################################################################
-# last updated: 08/17/2021
-# purpose: to test seqmedvs for dimensions 2,3
+# last updated: 08/18/21
+# purpose: to create a list of seqmed simulations
+# dimT = 2:
+#   dimensions (1, 2) vs dimensions (1, 2, 3)
+#   where the true dimensions are (1, 2)
+# dimT = 3:
+#   dimensions (1, 2) vs dimensions (1, 2, 3)
+#   where the true dimensions are (1, 2, 3)
 
 dimT = 2 # 2, 3
 
@@ -57,8 +63,8 @@ gg_color_hue = function(n) {
 
 # simulations settings
 numSims = 25
-numSeq = 9
 Nin = 5
+numSeq = 27
 seqN = 1
 Nnew = numSeq * seqN
 Nttl = Nin + Nnew 
@@ -165,7 +171,7 @@ all.equal(rbind(sm.res$x.in, sm.res$x.new), sm.res.old$D)
 # genCandidates = 1
 # seed = 1
 
-hist(sm.res$x.new[, 1])
+hist(sm.res$x.new[, 3])
 
 
 

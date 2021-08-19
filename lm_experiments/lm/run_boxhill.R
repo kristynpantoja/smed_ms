@@ -8,7 +8,7 @@
 #   linear vs. quadratic,
 #   where the true function is cubic
 
-scenario = 1 # 1, 2
+scenario = 2 # 1, 2
 
 ################################################################################
 # Sources/Libraries

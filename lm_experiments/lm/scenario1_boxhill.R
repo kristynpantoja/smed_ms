@@ -7,24 +7,24 @@
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = "lm_experiments/lm/outputs"
-functions_home = "functions"
+output_dir = "lm_experiments/lm/outputs"
+functions_dir = "functions"
 
 # for seqmed design
-source(paste(functions_home, "/SeqMED.R", sep = ""))
-source(paste(functions_home, "/SeqMED_batch.R", sep = ""))
-source(paste(functions_home, "/charge_function_q.R", sep = ""))
-source(paste(functions_home, "/construct_design_matrix.R", sep = ""))
-source(paste(functions_home, "/wasserstein_distance.R", sep = ""))
-source(paste(functions_home, "/posterior_parameters.R", sep = ""))
-source(paste(functions_home, "/simulate_y.R", sep = ""))
+source(paste(functions_dir, "/SeqMED.R", sep = ""))
+source(paste(functions_dir, "/SeqMED_batch.R", sep = ""))
+source(paste(functions_dir, "/charge_function_q.R", sep = ""))
+source(paste(functions_dir, "/construct_design_matrix.R", sep = ""))
+source(paste(functions_dir, "/wasserstein_distance.R", sep = ""))
+source(paste(functions_dir, "/posterior_parameters.R", sep = ""))
+source(paste(functions_dir, "/simulate_y.R", sep = ""))
 
 # for generating initial data
-source(paste(functions_home, "/MMED.R", sep = ""))
-source(paste(functions_home, "/variance_marginal_y.R", sep = ""))
+source(paste(functions_dir, "/MMED.R", sep = ""))
+source(paste(functions_dir, "/variance_marginal_y.R", sep = ""))
 
 # for box-hill deisign
-source(paste(functions_home, "/boxhill.R", sep = ""))
+source(paste(functions_dir, "/boxhill.R", sep = ""))
 
 library(expm)
 library(matrixStats)
@@ -48,8 +48,6 @@ registerDoRNG(1995)
 
 # simulations settings
 numSims = 100
-
-# simulation settings
 numSeq = 100
 seqN = 1
 N = numSeq * seqN
@@ -57,15 +55,13 @@ xmin = -1
 xmax = 1
 numCandidates = 10^3 + 1
 candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
-
-# SeqMED settings
-type01 = c(2, 3)
 sigmasq = 0.1
+
+# shared settings
+type01 = c(2, 3)
 mu0 = c(0, 0)
 mu1 = c(0, 0, 0)
 sigmasq01 = 0.25
-V0 = diag(rep(sigmasq01,length(mu0)))
-V1 = diag(rep(sigmasq01,length(mu1)))
 f0 = function(x) mu0[1] + mu0[2] * x
 f1 = function(x) mu1[1] + mu1[2] * x + mu1[3] * x^2
 desX0 = function(x){
@@ -90,9 +86,9 @@ prior_probs = rep(1 / 2, 2)
 betaT = c(-0.2, -0.4, 0.4)
 fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2
 
-# seqmed settings
-typeT = 3
-
+################################################################################
+# run simulations
+################################################################################
 # generate boxhills
 bh_list = foreach(i = 1:numSims) %dorng% {
   print(paste0("starting simulation ", i, " out of ", numSims))
@@ -100,7 +96,7 @@ bh_list = foreach(i = 1:numSims) %dorng% {
                    candidates, fT, sigmasq)
 }
 saveRDS(bh_list, 
-        paste(output_home, "/boxhill/scenario1_boxhill_simulations", 
+        paste(output_dir, "/boxhill/scenario1_boxhill_simulations", 
               "_N", N, 
               "_MMEDinput", as.numeric(MMEDinputdata),
               "_numSims", numSims, 

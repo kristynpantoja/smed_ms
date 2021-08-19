@@ -18,10 +18,10 @@ simulateY = function(D, N, true_beta, var_e, numSims, type = NULL, seed = NULL){
   return(Y)
 }
 
-# simulateYvs = function(D, N, true_beta, var_e, numSims, seed = NULL){
-#   simulateY(D, N, true_beta, var_e, numSims, type = NULL, seed = NULL)
-# }
-# 
+simulateYvs = function(D, N, true_beta, var_e, numSims, seed = NULL){
+  simulateY(D, N, true_beta, var_e, numSims, type = NULL, seed = NULL)
+}
+
 # simulateYN = function(X, true_beta, var_e, numSims, seed = NULL){
 #   if(!is.null(seed)) set.seed(seed)
 #   if(dim(X)[2] != length(true_beta)) stop("simulateYN : X and true_beta aren't compatible!")
@@ -34,4 +34,9 @@ simulateY = function(D, N, true_beta, var_e, numSims, type = NULL, seed = NULL){
 simulateY_fromfunction = function(x, f, error.var, num.sims, seed = NULL){
   if(!is.null(seed)) set.seed(seed)
   Y = f(x) + rnorm(length(x), 0, sqrt(error.var))
+}
+
+simulateY_frommultivarfunction = function(x, f, error.var, num.sims, seed = NULL){
+  if(!is.null(seed)) set.seed(seed)
+  Y = f(x) + rnorm(nrow(x), 0, sqrt(error.var))
 }

@@ -48,8 +48,6 @@ registerDoRNG(1995)
 
 # simulations settings
 numSims = 100
-
-# simulation settings
 numSeq = 100
 seqN = 1
 N = numSeq * seqN
@@ -57,20 +55,15 @@ xmin = -1
 xmax = 1
 numCandidates = 10^3 + 1
 candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
-
-# SeqMED settings
-type01 = c(2, 3)
 sigmasq = 0.1
+
+# shared settings
+type01 = c(2, 3)
 mu0 = c(0, 0)
 mu1 = c(0, 0, 0)
 sigmasq01 = 0.25
-V0 = diag(rep(sigmasq01,length(mu0)))
-V1 = diag(rep(sigmasq01,length(mu1)))
 f0 = function(x) mu0[1] + mu0[2] * x
 f1 = function(x) mu1[1] + mu1[2] * x + mu1[3] * x^2
-
-# boxhill settings
-MMEDinputdata = FALSE
 desX0 = function(x){
   n = length(x)
   return(cbind(rep(1, n), x))
@@ -81,6 +74,8 @@ desX1 = function(x){
 }
 model0 = list(designMat = desX0, beta.mean = mu0, beta.var = V0)
 model1 = list(designMat = desX1, beta.mean = mu1, beta.var = V1)
+
+# boxhill settings
 prior_probs = rep(1 / 2, 2)
 
 ################################################################################
@@ -89,8 +84,9 @@ prior_probs = rep(1 / 2, 2)
 betaT = c(0, -0.75, 0, 1)
 fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2 + betaT[4] * x^3
 
-# seqmed settings
-typeT = 4
+################################################################################
+# run simulations
+################################################################################
 
 # generate boxhills
 bh_list = foreach(i = 1:numSims) %dorng% {

@@ -37,10 +37,6 @@ SeqMED_newq_batch = function(
   postmean0 = postbeta0$mean
   postvar1 = postbeta1$var
   postmean1 = postbeta1$mean
-  # postvar0 = postvar(initD, initN, error.var, model0$beta.var, type[1])
-  # postmean0 = postmean(y, initD, initN, model0$beta.mean, model0$beta.var, error.var, type[1])
-  # postvar1 = postvar(initD, initN, error.var, model1$beta.var, type[2])
-  # postmean1 = postmean(y, initD, initN, model1$beta.mean, model1$beta.var, error.var, type[2])
   
   w_initD = sapply(initD, FUN = function(x) WNlm(
     x, postmean0, postmean1, postvar0, postvar1, model0, model1, error.var))
@@ -60,27 +56,7 @@ SeqMED_newq_batch = function(
     postmean0 = postbeta0$mean
     postvar1 = postbeta1$var
     postmean1 = postbeta1$mean
-    # postvar0 = postvar(initD, initN, error.var, model0$beta.var, type[1])
-    # postmean0 = postmean(y, initD, initN, model0$beta.mean, model0$beta.var, error.var, type[1])
-    # postvar1 = postvar(initD, initN, error.var, model1$beta.var, type[2])
-    # postmean1 = postmean(y, initD, initN, model1$beta.mean, model1$beta.var, error.var, type[2])
   }
-  initN = length(initD)
-  ttlN = initN + N2
-  
-  # Create hypothesized models
-  # if(is.null(f0)){
-  #   if(type[1] == 1) f0 = function(x) model0$beta.mean * x
-  #   else if(type[1] == 2) f0 = function(x) model0$beta.mean[1] + model0$beta.mean[2] * x
-  #   else if(type[1] == 3) f0 = function(x) model0$beta.mean[1] + model0$beta.mean[2] * x + model0$beta.mean[3] * x^2
-  #   else stop("type[1] is invalid and f0 is not provided")
-  # }
-  # if(is.null(f1)){
-  #   if(type[2] == 1) f1 = function(x) model1$beta.mean * x
-  #   else if(type[2] == 2) f1 = function(x) model1$beta.mean[1] + model1$beta.mean[2] * x
-  #   else if(type[2] == 3) f1 = function(x) model1$beta.mean[1] + model1$beta.mean[2] * x + model1$beta.mean[3] * x^2
-  #   else stop("type[2] is invalid and f1 is not provided")
-  # }
   
   # -- Generate Candidate Points -- #
   if(is.null(candidates)){
@@ -179,27 +155,17 @@ SeqMED_keepq_batch = function(
     y = y[-which(w_initD == 0)]
     w_initD = w_initD[-which(w_initD == 0)]
     # recalculate posterior distributions of beta
-    postvar0 = postvar(initD, initN, error.var, model0$beta.var, type[1])
-    postmean0 = postmean(y, initD, initN, model0$beta.mean, model0$beta.var, error.var, type[1])
-    postvar1 = postvar(initD, initN, error.var, model1$beta.var, type[2])
-    postmean1 = postmean(y, initD, initN, model1$beta.mean, model1$beta.var, error.var, type[2])
+    postbeta0 = getBetaPosterior(
+      y = y, X = model0$designMat(initD), model0$beta.mean, model0$beta.var, 
+      error.var)
+    postbeta1 = getBetaPosterior(
+      y = y, X = model1$designMat(initD), model1$beta.mean, model1$beta.var, 
+      error.var)
+    postvar0 = postbeta0$var
+    postmean0 = postbeta0$mean
+    postvar1 = postbeta1$var
+    postmean1 = postbeta1$mean
   }
-  initN = length(initD)
-  ttlN = initN + N2
-  
-  # Create hypothesized models
-  # if(is.null(f0)){
-  #   if(type[1] == 1) f0 = function(x) model0$beta.mean * x
-  #   else if(type[1] == 2) f0 = function(x) model0$beta.mean[1] + model0$beta.mean[2] * x
-  #   else if(type[1] == 3) f0 = function(x) model0$beta.mean[1] + model0$beta.mean[2] * x + model0$beta.mean[3] * x^2
-  #   else stop("type[1] is invalid and f0 is not provided")
-  # }
-  # if(is.null(f1)){
-  #   if(type[2] == 1) f1 = function(x) model1$beta.mean * x
-  #   else if(type[2] == 2) f1 = function(x) model1$beta.mean[1] + model1$beta.mean[2] * x
-  #   else if(type[2] == 3) f1 = function(x) model1$beta.mean[1] + model1$beta.mean[2] * x + model1$beta.mean[3] * x^2
-  #   else stop("type[2] is invalid and f1 is not provided")
-  # }
   
   # -- Generate Candidate Points -- #
   if(is.null(candidates)){
@@ -500,245 +466,245 @@ SeqMED_keepq_batch = function(
 
 
 
-
-# objective function
-objective_newq_seqmed_old = function(
-  candidate, D, postmean0, postmean1, postvar0, postvar1, error.var, type, 
-  p = 1, k = 4, alpha = 1){
-  result = q_seqmed_old(
-    candidate, postmean0, postmean1, postvar0, postvar1, error.var, type, p, 
-    alpha)^k * 
-    sum(sapply(
-      D, 
-      function(x_i) (q_seqmed_old(x_i, postmean0, postmean1, postvar0, postvar1, 
-                              error.var, type, p, alpha) / 
-                       sqrt((x_i - candidate)^2))^k))
-  return(result)
-}
-
-# batch of seqN new points
-SeqMED_newq_batch_old = function(
-  initD, y, beta.mean0, beta.mean1, beta.var0, beta.var1, error.var, 
-  f0 = NULL, f1 = NULL, type = NULL, N2 = 11, numCandidates = 10^5, k = 4, 
-  xmin = -1, xmax = 1, p = 1, alpha = 1, genCandidates = 1, candidates = NULL, 
-  batch.idx = 1
-){
-  initN = length(initD)
-  if(length(y) != initN) stop("length of y does not match length of initial input data, initD")
-  
-  # check if any points in initD give Wasserstein distance of 0 (in which case we don't want to use it since 1/0 in q)
-  old_initD = initD
-  
-  # posterior distributions of beta
-  postvar0 = postvar(initD, initN, error.var, beta.var0, type[1])
-  postmean0 = postmean(y, initD, initN, beta.mean0, beta.var0, error.var, type[1])
-  postvar1 = postvar(initD, initN, error.var, beta.var1, type[2])
-  postmean1 = postmean(y, initD, initN, beta.mean1, beta.var1, error.var, type[2])
-  
-  w_initD = sapply(initD, FUN = function(x) WNlm_old(
-    x, postmean0, postmean1, postvar0, postvar1, error.var, type))
-  # take out the values with wasserstein distance equal to 0
-  if(length(which(w_initD == 0)) != 0){
-    initD = initD[-which(w_initD == 0)]
-    y = y[-which(w_initD == 0)]
-    w_initD = w_initD[-which(w_initD == 0)]
-    # recalculate posterior distributions of beta
-    postvar0 = postvar(initD, initN, error.var, beta.var0, type[1])
-    postmean0 = postmean(y, initD, initN, beta.mean0, beta.var0, error.var, type[1])
-    postvar1 = postvar(initD, initN, error.var, beta.var1, type[2])
-    postmean1 = postmean(y, initD, initN, beta.mean1, beta.var1, error.var, type[2])
-  }
-  initN = length(initD)
-  ttlN = initN + N2
-  
-  # Create hypothesized models
-  if(is.null(f0)){
-    if(type[1] == 1) f0 = function(x) beta.mean0 * x
-    else if(type[1] == 2) f0 = function(x) beta.mean0[1] + beta.mean0[2] * x
-    else if(type[1] == 3) f0 = function(x) beta.mean0[1] + beta.mean0[2] * x + beta.mean0[3] * x^2
-    else stop("type[1] is invalid and f0 is not provided")
-  }
-  if(is.null(f1)){
-    if(type[2] == 1) f1 = function(x) beta.mean1 * x
-    else if(type[2] == 2) f1 = function(x) beta.mean1[1] + beta.mean1[2] * x
-    else if(type[2] == 3) f1 = function(x) beta.mean1[1] + beta.mean1[2] * x + beta.mean1[3] * x^2
-    else stop("type[2] is invalid and f1 is not provided")
-  }
-  
-  # -- Generate Candidate Points -- #
-  if(is.null(candidates)){
-    if(genCandidates == 1) candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
-    if(genCandidates == 2) candidates = sort(runif(numCandidates, min = xmin, max = xmax))
-  }
-  
-  D = rep(NA, N2)
-  if(batch.idx == 1){
-    # -- Initialize 1st additional design point-- #
-    w_candidates = sapply(candidates, function(x) WNlm(
-      x, postmean0, postmean1, postvar0, postvar1, error.var, type))
-    w_opt = which.max(w_candidates)
-    xopt = candidates[w_opt]
-    is_x_max_in_initD = any(sapply(initD, function(x) x == xopt))
-  } else{
-    is_x_max_in_initD = TRUE
-  }
-  if(is_x_max_in_initD){
-    # Find f_opt: minimum of f_min
-    f_min_candidates = sapply(
-      candidates, 
-      function(x) objective_newq_seqmed_old(
-        x, initD, 
-        postmean0, postmean1, postvar0, postvar1, error.var, type, p, k, alpha))
-    f_opt = which.min(f_min_candidates)
-    xnew = candidates[f_opt]
-    # Update set of design points (D) and plot new point
-    D[1] = xnew
-  } else{
-    D[1] = xopt
-  }
-  
-  if(N2 > 1){
-    for(i in 2:N2){
-      # Find f_opt: minimum of f_min
-      f_min_candidates = sapply(
-        candidates, 
-        function(x) objective_newq_seqmed_old(
-          x, c(initD, D[1:(i - 1)]), 
-          postmean0, postmean1, postvar0, postvar1, error.var, type, p, k, alpha
-        ))
-      f_opt = which.min(f_min_candidates)
-      xnew = candidates[f_opt]
-      # Update set of design points (D) and plot new point
-      D[i] = xnew
-    }
-  }
-  
-  return(list(
-    "initD" = old_initD, 
-    "addD" = D, 
-    "updatedD" = c(old_initD, D)
-  ))
-}
-
-# objective function
-objective_keepq_seqmed_old = function(
-  candidate, D, postmean0, postmean1, postvar0, postvar1, error.var, type, 
-  p = 1, k = 4, alpha = 1, qs){
-  if(length(D) != length(qs)) stop("obj_keepq_gp: length(D) != length(qs)")
-  q_cand = q_seqmed_old(
-    candidate, postmean0, postmean1, postvar0, postvar1, error.var, type, p, 
-    alpha)
-  sum_q_D = sum((qs / sqrt((D - candidate)^2))^k)
-  result = q_cand^k * sum_q_D
-  return(data.frame(objectives = result, q.candidates = q_cand))
-}
-
-# batch of seqN new points
-SeqMED_keepq_batch_old = function(
-  initD, y, beta.mean0, beta.mean1, beta.var0, beta.var1, error.var, 
-  f0 = NULL, f1 = NULL, type = NULL, N2 = 11, numCandidates = 10^5, k = 4, 
-  xmin = -1, xmax = 1, p = 1, alpha = 1, genCandidates = 1, candidates = NULL, 
-  batch.idx = 1, qs = NULL
-){
-  initN = length(initD)
-  if(length(y) != initN) stop("length of y does not match length of initial input data, initD")
-  
-  # check if any points in initD give Wasserstein distance of 0 (in which case we don't want to use it since 1/0 in q)
-  old_initD = initD
-  
-  # posterior distributions of beta
-  postvar0 = postvar(initD, initN, error.var, beta.var0, type[1])
-  postmean0 = postmean(y, initD, initN, beta.mean0, beta.var0, error.var, type[1])
-  postvar1 = postvar(initD, initN, error.var, beta.var1, type[2])
-  postmean1 = postmean(y, initD, initN, beta.mean1, beta.var1, error.var, type[2])
-  
-  w_initD = sapply(initD, FUN = function(x) WNlm_old(
-    x, postmean0, postmean1, postvar0, postvar1, error.var, type))
-  # take out the values with wasserstein distance equal to 0
-  if(length(which(w_initD == 0)) != 0){
-    initD = initD[-which(w_initD == 0)]
-    y = y[-which(w_initD == 0)]
-    w_initD = w_initD[-which(w_initD == 0)]
-    # recalculate posterior distributions of beta
-    postvar0 = postvar(initD, initN, error.var, beta.var0, type[1])
-    postmean0 = postmean(y, initD, initN, beta.mean0, beta.var0, error.var, type[1])
-    postvar1 = postvar(initD, initN, error.var, beta.var1, type[2])
-    postmean1 = postmean(y, initD, initN, beta.mean1, beta.var1, error.var, type[2])
-  }
-  initN = length(initD)
-  ttlN = initN + N2
-  
-  # Create hypothesized models
-  if(is.null(f0)){
-    if(type[1] == 1) f0 = function(x) beta.mean0 * x
-    else if(type[1] == 2) f0 = function(x) beta.mean0[1] + beta.mean0[2] * x
-    else if(type[1] == 3) f0 = function(x) beta.mean0[1] + beta.mean0[2] * x + beta.mean0[3] * x^2
-    else stop("type[1] is invalid and f0 is not provided")
-  }
-  if(is.null(f1)){
-    if(type[2] == 1) f1 = function(x) beta.mean1 * x
-    else if(type[2] == 2) f1 = function(x) beta.mean1[1] + beta.mean1[2] * x
-    else if(type[2] == 3) f1 = function(x) beta.mean1[1] + beta.mean1[2] * x + beta.mean1[3] * x^2
-    else stop("type[2] is invalid and f1 is not provided")
-  }
-  
-  # -- Generate Candidate Points -- #
-  if(is.null(candidates)){
-    if(genCandidates == 1) candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
-    if(genCandidates == 2) candidates = sort(runif(numCandidates, min = xmin, max = xmax))
-  }
-  
-  D = rep(NA, N2)
-  if(batch.idx == 1){
-    # -- Initialize 1st additional design point-- #
-    w_candidates = sapply(candidates, function(x) WNlm_old(
-      x, postmean0, postmean1, postvar0, postvar1, error.var, type))
-    w_opt = which.max(w_candidates)
-    x_w_opt = candidates[w_opt]
-    is_x_max_in_initD = any(sapply(initD, function(x) x == x_w_opt))
-  } else{
-    is_x_max_in_initD = TRUE
-  }
-  # Find f_opt: minimum of f_min
-  f_min_candidates = lapply(
-    candidates, 
-    function(x) objective_keepq_seqmed_old(
-      x, initD, 
-      postmean0, postmean1, postvar0, postvar1, error.var, type, p, k, alpha, qs))
-  f_min_candidates = do.call("rbind", f_min_candidates)
-  f_opt = which.min(f_min_candidates$objectives)
-  x_f_opt = candidates[f_opt]
-  # Update set of design points (D) and plot new point
-  if(is_x_max_in_initD){
-    D[1] = x_f_opt
-    q.new = f_min_candidates$q.candidates[f_opt]
-  } else{
-    D[1] = x_w_opt
-    q.new = f_min_candidates$q.candidates[w_opt]
-  }
-  
-  if(N2 > 1){
-    for(i in 2:N2){
-      # Find f_opt: minimum of f_min
-      f_min_candidates = lapply(
-        candidates, 
-        function(x) objective_keepq_seqmed_old(
-          x, c(initD, D[1:(i - 1)]), 
-          postmean0, postmean1, postvar0, postvar1, error.var, type, p, k, alpha, c(qs, q.new)
-        ))
-      f_min_candidates = do.call("rbind", f_min_candidates)
-      f_opt = which.min(f_min_candidates)
-      xnew = candidates[f_opt]
-      # Update set of design points, D
-      D[i] = xnew
-      q.new = c(q.new, f_min_candidates$q.candidates[f_opt])
-    }
-  }
-  
-  return(list(
-    "initD" = old_initD, 
-    "addD" = D, 
-    "updatedD" = c(old_initD, D),
-    "q.new" = q.new
-  ))
-}
+# 
+# # objective function
+# objective_newq_seqmed_old = function(
+#   candidate, D, postmean0, postmean1, postvar0, postvar1, error.var, type, 
+#   p = 1, k = 4, alpha = 1){
+#   result = q_seqmed_old(
+#     candidate, postmean0, postmean1, postvar0, postvar1, error.var, type, p, 
+#     alpha)^k * 
+#     sum(sapply(
+#       D, 
+#       function(x_i) (q_seqmed_old(x_i, postmean0, postmean1, postvar0, postvar1, 
+#                               error.var, type, p, alpha) / 
+#                        sqrt((x_i - candidate)^2))^k))
+#   return(result)
+# }
+# 
+# # batch of seqN new points
+# SeqMED_newq_batch_old = function(
+#   initD, y, beta.mean0, beta.mean1, beta.var0, beta.var1, error.var, 
+#   f0 = NULL, f1 = NULL, type = NULL, N2 = 11, numCandidates = 10^5, k = 4, 
+#   xmin = -1, xmax = 1, p = 1, alpha = 1, genCandidates = 1, candidates = NULL, 
+#   batch.idx = 1
+# ){
+#   initN = length(initD)
+#   if(length(y) != initN) stop("length of y does not match length of initial input data, initD")
+#   
+#   # check if any points in initD give Wasserstein distance of 0 (in which case we don't want to use it since 1/0 in q)
+#   old_initD = initD
+#   
+#   # posterior distributions of beta
+#   postvar0 = postvar(initD, initN, error.var, beta.var0, type[1])
+#   postmean0 = postmean(y, initD, initN, beta.mean0, beta.var0, error.var, type[1])
+#   postvar1 = postvar(initD, initN, error.var, beta.var1, type[2])
+#   postmean1 = postmean(y, initD, initN, beta.mean1, beta.var1, error.var, type[2])
+#   
+#   w_initD = sapply(initD, FUN = function(x) WNlm_old(
+#     x, postmean0, postmean1, postvar0, postvar1, error.var, type))
+#   # take out the values with wasserstein distance equal to 0
+#   if(length(which(w_initD == 0)) != 0){
+#     initD = initD[-which(w_initD == 0)]
+#     y = y[-which(w_initD == 0)]
+#     w_initD = w_initD[-which(w_initD == 0)]
+#     # recalculate posterior distributions of beta
+#     postvar0 = postvar(initD, initN, error.var, beta.var0, type[1])
+#     postmean0 = postmean(y, initD, initN, beta.mean0, beta.var0, error.var, type[1])
+#     postvar1 = postvar(initD, initN, error.var, beta.var1, type[2])
+#     postmean1 = postmean(y, initD, initN, beta.mean1, beta.var1, error.var, type[2])
+#   }
+#   initN = length(initD)
+#   ttlN = initN + N2
+#   
+#   # Create hypothesized models
+#   if(is.null(f0)){
+#     if(type[1] == 1) f0 = function(x) beta.mean0 * x
+#     else if(type[1] == 2) f0 = function(x) beta.mean0[1] + beta.mean0[2] * x
+#     else if(type[1] == 3) f0 = function(x) beta.mean0[1] + beta.mean0[2] * x + beta.mean0[3] * x^2
+#     else stop("type[1] is invalid and f0 is not provided")
+#   }
+#   if(is.null(f1)){
+#     if(type[2] == 1) f1 = function(x) beta.mean1 * x
+#     else if(type[2] == 2) f1 = function(x) beta.mean1[1] + beta.mean1[2] * x
+#     else if(type[2] == 3) f1 = function(x) beta.mean1[1] + beta.mean1[2] * x + beta.mean1[3] * x^2
+#     else stop("type[2] is invalid and f1 is not provided")
+#   }
+#   
+#   # -- Generate Candidate Points -- #
+#   if(is.null(candidates)){
+#     if(genCandidates == 1) candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
+#     if(genCandidates == 2) candidates = sort(runif(numCandidates, min = xmin, max = xmax))
+#   }
+#   
+#   D = rep(NA, N2)
+#   if(batch.idx == 1){
+#     # -- Initialize 1st additional design point-- #
+#     w_candidates = sapply(candidates, function(x) WNlm(
+#       x, postmean0, postmean1, postvar0, postvar1, error.var, type))
+#     w_opt = which.max(w_candidates)
+#     xopt = candidates[w_opt]
+#     is_x_max_in_initD = any(sapply(initD, function(x) x == xopt))
+#   } else{
+#     is_x_max_in_initD = TRUE
+#   }
+#   if(is_x_max_in_initD){
+#     # Find f_opt: minimum of f_min
+#     f_min_candidates = sapply(
+#       candidates, 
+#       function(x) objective_newq_seqmed_old(
+#         x, initD, 
+#         postmean0, postmean1, postvar0, postvar1, error.var, type, p, k, alpha))
+#     f_opt = which.min(f_min_candidates)
+#     xnew = candidates[f_opt]
+#     # Update set of design points (D) and plot new point
+#     D[1] = xnew
+#   } else{
+#     D[1] = xopt
+#   }
+#   
+#   if(N2 > 1){
+#     for(i in 2:N2){
+#       # Find f_opt: minimum of f_min
+#       f_min_candidates = sapply(
+#         candidates, 
+#         function(x) objective_newq_seqmed_old(
+#           x, c(initD, D[1:(i - 1)]), 
+#           postmean0, postmean1, postvar0, postvar1, error.var, type, p, k, alpha
+#         ))
+#       f_opt = which.min(f_min_candidates)
+#       xnew = candidates[f_opt]
+#       # Update set of design points (D) and plot new point
+#       D[i] = xnew
+#     }
+#   }
+#   
+#   return(list(
+#     "initD" = old_initD, 
+#     "addD" = D, 
+#     "updatedD" = c(old_initD, D)
+#   ))
+# }
+# 
+# # objective function
+# objective_keepq_seqmed_old = function(
+#   candidate, D, postmean0, postmean1, postvar0, postvar1, error.var, type, 
+#   p = 1, k = 4, alpha = 1, qs){
+#   if(length(D) != length(qs)) stop("obj_keepq_gp: length(D) != length(qs)")
+#   q_cand = q_seqmed_old(
+#     candidate, postmean0, postmean1, postvar0, postvar1, error.var, type, p, 
+#     alpha)
+#   sum_q_D = sum((qs / sqrt((D - candidate)^2))^k)
+#   result = q_cand^k * sum_q_D
+#   return(data.frame(objectives = result, q.candidates = q_cand))
+# }
+# 
+# # batch of seqN new points
+# SeqMED_keepq_batch_old = function(
+#   initD, y, beta.mean0, beta.mean1, beta.var0, beta.var1, error.var, 
+#   f0 = NULL, f1 = NULL, type = NULL, N2 = 11, numCandidates = 10^5, k = 4, 
+#   xmin = -1, xmax = 1, p = 1, alpha = 1, genCandidates = 1, candidates = NULL, 
+#   batch.idx = 1, qs = NULL
+# ){
+#   initN = length(initD)
+#   if(length(y) != initN) stop("length of y does not match length of initial input data, initD")
+#   
+#   # check if any points in initD give Wasserstein distance of 0 (in which case we don't want to use it since 1/0 in q)
+#   old_initD = initD
+#   
+#   # posterior distributions of beta
+#   postvar0 = postvar(initD, initN, error.var, beta.var0, type[1])
+#   postmean0 = postmean(y, initD, initN, beta.mean0, beta.var0, error.var, type[1])
+#   postvar1 = postvar(initD, initN, error.var, beta.var1, type[2])
+#   postmean1 = postmean(y, initD, initN, beta.mean1, beta.var1, error.var, type[2])
+#   
+#   w_initD = sapply(initD, FUN = function(x) WNlm_old(
+#     x, postmean0, postmean1, postvar0, postvar1, error.var, type))
+#   # take out the values with wasserstein distance equal to 0
+#   if(length(which(w_initD == 0)) != 0){
+#     initD = initD[-which(w_initD == 0)]
+#     y = y[-which(w_initD == 0)]
+#     w_initD = w_initD[-which(w_initD == 0)]
+#     # recalculate posterior distributions of beta
+#     postvar0 = postvar(initD, initN, error.var, beta.var0, type[1])
+#     postmean0 = postmean(y, initD, initN, beta.mean0, beta.var0, error.var, type[1])
+#     postvar1 = postvar(initD, initN, error.var, beta.var1, type[2])
+#     postmean1 = postmean(y, initD, initN, beta.mean1, beta.var1, error.var, type[2])
+#   }
+#   initN = length(initD)
+#   ttlN = initN + N2
+#   
+#   # Create hypothesized models
+#   if(is.null(f0)){
+#     if(type[1] == 1) f0 = function(x) beta.mean0 * x
+#     else if(type[1] == 2) f0 = function(x) beta.mean0[1] + beta.mean0[2] * x
+#     else if(type[1] == 3) f0 = function(x) beta.mean0[1] + beta.mean0[2] * x + beta.mean0[3] * x^2
+#     else stop("type[1] is invalid and f0 is not provided")
+#   }
+#   if(is.null(f1)){
+#     if(type[2] == 1) f1 = function(x) beta.mean1 * x
+#     else if(type[2] == 2) f1 = function(x) beta.mean1[1] + beta.mean1[2] * x
+#     else if(type[2] == 3) f1 = function(x) beta.mean1[1] + beta.mean1[2] * x + beta.mean1[3] * x^2
+#     else stop("type[2] is invalid and f1 is not provided")
+#   }
+#   
+#   # -- Generate Candidate Points -- #
+#   if(is.null(candidates)){
+#     if(genCandidates == 1) candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
+#     if(genCandidates == 2) candidates = sort(runif(numCandidates, min = xmin, max = xmax))
+#   }
+#   
+#   D = rep(NA, N2)
+#   if(batch.idx == 1){
+#     # -- Initialize 1st additional design point-- #
+#     w_candidates = sapply(candidates, function(x) WNlm_old(
+#       x, postmean0, postmean1, postvar0, postvar1, error.var, type))
+#     w_opt = which.max(w_candidates)
+#     x_w_opt = candidates[w_opt]
+#     is_x_max_in_initD = any(sapply(initD, function(x) x == x_w_opt))
+#   } else{
+#     is_x_max_in_initD = TRUE
+#   }
+#   # Find f_opt: minimum of f_min
+#   f_min_candidates = lapply(
+#     candidates, 
+#     function(x) objective_keepq_seqmed_old(
+#       x, initD, 
+#       postmean0, postmean1, postvar0, postvar1, error.var, type, p, k, alpha, qs))
+#   f_min_candidates = do.call("rbind", f_min_candidates)
+#   f_opt = which.min(f_min_candidates$objectives)
+#   x_f_opt = candidates[f_opt]
+#   # Update set of design points (D) and plot new point
+#   if(is_x_max_in_initD){
+#     D[1] = x_f_opt
+#     q.new = f_min_candidates$q.candidates[f_opt]
+#   } else{
+#     D[1] = x_w_opt
+#     q.new = f_min_candidates$q.candidates[w_opt]
+#   }
+#   
+#   if(N2 > 1){
+#     for(i in 2:N2){
+#       # Find f_opt: minimum of f_min
+#       f_min_candidates = lapply(
+#         candidates, 
+#         function(x) objective_keepq_seqmed_old(
+#           x, c(initD, D[1:(i - 1)]), 
+#           postmean0, postmean1, postvar0, postvar1, error.var, type, p, k, alpha, c(qs, q.new)
+#         ))
+#       f_min_candidates = do.call("rbind", f_min_candidates)
+#       f_opt = which.min(f_min_candidates)
+#       xnew = candidates[f_opt]
+#       # Update set of design points, D
+#       D[i] = xnew
+#       q.new = c(q.new, f_min_candidates$q.candidates[f_opt])
+#     }
+#   }
+#   
+#   return(list(
+#     "initD" = old_initD, 
+#     "addD" = D, 
+#     "updatedD" = c(old_initD, D),
+#     "q.new" = q.new
+#   ))
+# }

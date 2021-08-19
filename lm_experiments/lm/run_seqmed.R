@@ -1,8 +1,14 @@
 ################################################################################
-# last updated: 12/09/20
-# purpose: to create a list of seqmed simulations for scenario 2:
+# last updated: 08/18/21
+# purpose: to create a list of boxhill simulations
+# scenario 1:
+#   linear vs. quadratic,
+#   where the true function is quadratic
+# scenario 2:
 #   linear vs. quadratic,
 #   where the true function is cubic
+
+scenario = 1 # 1, 2
 
 ################################################################################
 # Sources/Libraries
@@ -81,10 +87,15 @@ model1 = list(designMat = desX1, beta.mean = mu1, beta.var = V1)
 prior_probs = rep(1 / 2, 2)
 
 ################################################################################
-# Scenario 2: True function is cubic
+# Scenarios
 ################################################################################
-betaT = c(0, -0.75, 0, 1)
-fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2 + betaT[4] * x^3
+if(scenario == 1){
+  betaT = c(-0.2, -0.4, 0.4)
+  fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2
+} else if(scenario == 2){
+  betaT = c(0, -0.75, 0, 1)
+  fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2 + betaT[4] * x^3
+}
 
 ################################################################################
 # run simulations
@@ -104,7 +115,8 @@ seqmed_list = foreach(i = 1:numSims) %dopar% {
     error.var = sigmasq, xmin = xmin, xmax = xmax,
     candidates = candidates, numSeq = numSeq, seqN = seqN)
 }
-saveRDS(seqmed_list, paste(output_home, "/seqmed/scenario2_seqmed_simulations",
+saveRDS(seqmed_list, paste(output_home, "/scenario", scenario, 
+                           "_seqmed_simulations", 
                            "_numSeq", numSeq,
                            "_seqN", seqN,
                            "_numSims", numSims,

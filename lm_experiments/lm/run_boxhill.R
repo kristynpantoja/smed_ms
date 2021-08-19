@@ -1,8 +1,14 @@
 ################################################################################
-# last updated: 12/09/20
-# purpose: to create a list of seqmed simulations for scenario 2:
+# last updated: 08/18/21
+# purpose: to create a list of boxhill simulations
+# scenario 1:
+#   linear vs. quadratic,
+#   where the true function is quadratic
+# scenario 2:
 #   linear vs. quadratic,
 #   where the true function is cubic
+
+scenario = 1 # 1, 2
 
 ################################################################################
 # Sources/Libraries
@@ -62,8 +68,6 @@ type01 = c(2, 3)
 mu0 = c(0, 0)
 mu1 = c(0, 0, 0)
 sigmasq01 = 0.25
-V0 = diag(rep(sigmasq01,length(mu0)))
-V1 = diag(rep(sigmasq01,length(mu1)))
 f0 = function(x) mu0[1] + mu0[2] * x
 f1 = function(x) mu1[1] + mu1[2] * x + mu1[3] * x^2
 desX0 = function(x){
@@ -81,33 +85,45 @@ model1 = list(designMat = desX1, beta.mean = mu1, beta.var = V1)
 prior_probs = rep(1 / 2, 2)
 
 ################################################################################
-# Scenario 2: True function is cubic
+# Scenarios
 ################################################################################
-betaT = c(0, -0.75, 0, 1)
-fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2 + betaT[4] * x^3
+if(scenario == 1){
+  betaT = c(-0.2, -0.4, 0.4)
+  fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2
+} else if(scenario == 2){
+  betaT = c(0, -0.75, 0, 1)
+  fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2 + betaT[4] * x^3
+}
 
 ################################################################################
 # run simulations
 ################################################################################
 
-# generate seqmeds
-seqmed_list = foreach(i = 1:numSims) %dopar% {
+# generate boxhills
+bh_list = foreach(i = 1:numSims) %dorng% {
   print(paste0("starting simulation ", i, " out of ", numSims))
-  # SeqMED(
-  #   D1 = NULL, y1 = NULL, true_beta = betaT, true_type = typeT, 
-  #   beta.mean0 = mu0, beta.mean1 = mu1, beta.var0 = V0, beta.var1 = V1, 
-  #   error.var = sigmasq, f0 = f0, f1 = f1, type = type01, xmin = xmin, xmax = xmax, 
-  #   candidates = candidates, numSeq = numSeq, seqN = seqN)
-  SeqMED(
-    y.in = NULL, x.in = NULL, true.function = fT,
-    model0 = model0, model1 = model1, 
-    error.var = sigmasq, xmin = xmin, xmax = xmax,
-    candidates = candidates, numSeq = numSeq, seqN = seqN)
+  if(MMEDinputdata){
+    N.new = (numSeq - 1) * seqN
+    seqmed.res = SeqMED(
+      D1 = NULL, y1 = NULL, true_beta = betaT, true_type = typeT, 
+      beta.mean0 = mu0, beta.mean1 = mu1, beta.var0 = V0, beta.var1 = V1, 
+      error.var = sigmasq, f0 = f0, f1 = f1, type = type01, xmin = xmin, xmax = xmax, 
+      candidates = candidates, numSeq = 1, seqN = seqN
+    )
+    x_input = seqmed.res$D
+    y_input = seqmed.res$y
+    bh.res = BH_m2(y_input, x_input, prior_probs, model0, model1, N.new, 
+                   candidates, fT, sigmasq)
+  } else{
+    bh.res = BH_m2(NULL, NULL, prior_probs, model0, model1, N, 
+                   candidates, fT, sigmasq)
+  }
+  bh.res
 }
-saveRDS(seqmed_list, paste(output_home, "/seqmed/scenario2_seqmed_simulations",
-                           "_numSeq", numSeq,
-                           "_seqN", seqN,
-                           "_numSims", numSims,
-                           ".rds", sep = ""))
-
-
+saveRDS(bh_list, 
+        paste(output_home, "/scenario", scenario, 
+              "_boxhill_simulations", 
+              "_N", N, 
+              "_MMEDinput", as.numeric(MMEDinputdata), 
+              "_numSims", numSims, 
+              ".rds", sep = ""))

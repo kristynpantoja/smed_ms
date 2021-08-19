@@ -10,7 +10,7 @@ typeT = "squaredexponential"
 ################################################################################
 # Sources/Libraries
 ################################################################################
-sims_dir = "gp_experiments/gpvs"
+sims_dir = "lm/lmvs"
 output_dir = paste0(sims_dir, "/modelselection_designs/outputs")
 data_dir = paste0(sims_dir, "/simulated_data/outputs")
 functions_dir = "functions"
@@ -76,13 +76,13 @@ Nnew = numSeq * seqN
 Nttl = Nin + Nnew 
 xmin = 0
 xmax = 1
+p = 2
+k = 4 * p
 sigmasq_measuremt = 1e-10
 sigmasq_signal = 1
 
 # seqmed settings
-p = 2
-k = 4 * p
-obj_type = 5
+obj_type = 4
 newq = TRUE
 
 ################################################################################
@@ -158,7 +158,7 @@ saveRDS(seqmeds,
         file = paste0(
           output_dir,
           "/seqmed", 
-          "_leaveout", 
+          "_cap", 
           "_seq", seq.type,
           "_l", lT,
           "_dim", dimT,

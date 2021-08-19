@@ -68,10 +68,29 @@ WNlm_old = function(
 # multidimensional, for variable selection
 # formerly named Wasserstein_vs
 WNlmvs = function(
+  x, model0, model1, postmean0, postmean1, postvar0, postvar1, error.var, 
+  dim = 1
+){
+  x = t(as.matrix(x))
+  
+  x0 = x[ , model0$indices, drop = FALSE]
+  x1 = x[ , model1$indices, drop = FALSE]
+  
+  # posterior predictive distribution of y, for candidate x
+  postpredy_mu0 = x0 %*% postmean0
+  postpredy_var0 = x0 %*% postvar0 %*% t(x0) + error.var
+  
+  postpredy_mu1 = x1 %*% postmean1
+  postpredy_var1 = x1 %*% postvar1 %*% t(x1) + error.var
+  
+  W = WN(postpredy_mu0, postpredy_mu1, postpredy_var0, postpredy_var1)
+  return(as.numeric(W))
+}
+WNlmvs_old = function(
   x, variables0, variables1, postmean0, postmean1, postvar0, postvar1, signal.var, 
   dim = 1){
-  x0 = t(constructDesignX(x, 1, NULL))[ , variables0]
-  x1 = t(constructDesignX(x, 1, NULL))[ , variables1]
+  x0 = t(x)[ , variables0]
+  x1 = t(x)[ , variables1]
   
   # posterior predictive distribution of y, for candidate x
   postpredy_mu0 = t(x0) %*% postmean0

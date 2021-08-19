@@ -76,12 +76,12 @@ Nnew = numSeq * seqN
 Nttl = Nin + Nnew 
 xmin = 0
 xmax = 1
-p = 2
-k = 4 * p
 sigmasq_measuremt = 1e-10
 sigmasq_signal = 1
 
 # seqmed settings
+p = 2
+k = 4 * p
 obj_type = 0
 newq = FALSE
 

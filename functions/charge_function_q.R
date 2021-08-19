@@ -49,10 +49,18 @@ q_seqmed_old = function(
 
 # for D1, ..., DT in normal multiple linear regression models
 q_vs = function(
-  x, indices0, indices1, postmean0, postmean1, postvar0, postvar1, error.var, p, 
+  x, model0, model1, postmean0, postmean1, postvar0, postvar1, error.var, p, 
   alpha = 1
 ){
-  W = WNlmvs(x, indices0, indices1, postmean0, postmean1, postvar0, postvar1, error.var)
+  W = WNlmvs(x, model0, model1, postmean0, postmean1, postvar0, postvar1, error.var)
+  q_exponent = alpha / (2 * p)
+  return(1.0 / (W)^q_exponent)
+} 
+q_vs_old = function(
+  x, indices0, indices1, postmean0, postmean1, postvar0, postvar1, error.var, p, 
+  alpha = 1, buffer = 0
+){
+  W = WNlmvs(x, indices0, indices1, postmean0, postmean1, postvar0, postvar1, error.var) + buffer
   q_exponent = alpha / (2 * p)
   return(1.0 / (W)^q_exponent)
 }

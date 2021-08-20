@@ -96,7 +96,7 @@ if(dimT == 2){
   fT = function(x) x[, indicesT, drop = FALSE] %*% betaT
 } else if(dimT == 3){
   betaT = mu_full[indices1]
-  indicesT = indices0
+  indicesT = indices1
   fT = function(x) x[, indicesT, drop = FALSE] %*% betaT
 }
 

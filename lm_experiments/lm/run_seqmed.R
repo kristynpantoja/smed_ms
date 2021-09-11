@@ -13,24 +13,24 @@ scenario = 2 # 1, 2
 ################################################################################
 # Sources/Libraries
 ################################################################################
-output_home = "lm_experiments/lm/outputs"
-functions_home = "functions"
+output_dir = "lm_experiments/lm/outputs"
+functions_dir = "functions"
 
 # for seqmed design
-source(paste(functions_home, "/SeqMED.R", sep = ""))
-source(paste(functions_home, "/SeqMED_batch.R", sep = ""))
-source(paste(functions_home, "/charge_function_q.R", sep = ""))
-source(paste(functions_home, "/construct_design_matrix.R", sep = ""))
-source(paste(functions_home, "/wasserstein_distance.R", sep = ""))
-source(paste(functions_home, "/posterior_parameters.R", sep = ""))
-source(paste(functions_home, "/simulate_y.R", sep = ""))
+source(paste(functions_dir, "/SeqMED.R", sep = ""))
+source(paste(functions_dir, "/SeqMED_batch.R", sep = ""))
+source(paste(functions_dir, "/charge_function_q.R", sep = ""))
+source(paste(functions_dir, "/construct_design_matrix.R", sep = ""))
+source(paste(functions_dir, "/wasserstein_distance.R", sep = ""))
+source(paste(functions_dir, "/posterior_parameters.R", sep = ""))
+source(paste(functions_dir, "/simulate_y.R", sep = ""))
 
 # for generating initial data
-source(paste(functions_home, "/MMED.R", sep = ""))
-source(paste(functions_home, "/variance_marginal_y.R", sep = ""))
+source(paste(functions_dir, "/MMED.R", sep = ""))
+source(paste(functions_dir, "/variance_marginal_y.R", sep = ""))
 
 # for box-hill deisign
-source(paste(functions_home, "/boxhill.R", sep = ""))
+source(paste(functions_dir, "/boxhill.R", sep = ""))
 
 # set up parallelization
 library(foreach)
@@ -108,8 +108,8 @@ seqmed_list = foreach(i = 1:numSims) %dopar% {
     candidates = candidates, numSeq = numSeq, seqN = seqN)
 }
 saveRDS(seqmed_list, paste0(
-  output_home, "/scenario", scenario, 
-  "_seqmed_simulations", 
+  output_dir, "/scenario", scenario, 
+  "_seqmed", 
   "_N", Nttl, 
   "_seed", rng.seed,
   ".rds"))

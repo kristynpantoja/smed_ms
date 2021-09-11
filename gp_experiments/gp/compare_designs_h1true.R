@@ -65,6 +65,29 @@ for(scenario in c(1, 2)){
   sigmasq_signal = 1
   
   ################################################################################
+  # Scenario settings
+  ################################################################################
+  l01= c(0.01, 0.01)
+  if(scenario == 1){
+    type01 = c("squaredexponential", "matern")
+    model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
+                  measurement.var = sigmasq_measuremt)
+    model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
+                  measurement.var = sigmasq_measuremt)
+    scenario_name = "SMM"
+  } else if(scenario == 2){
+    pT = 0.26
+    type01 = c("matern", "periodic")
+    model0 = list(type = type01[1], l = l01[1], signal.var = sigmasq_signal, 
+                  measurement.var = sigmasq_measuremt)
+    model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
+                  measurement.var = sigmasq_measuremt, p = pT)
+    scenario_name = "MPP"
+  }
+  typeT = type01[2]
+  lT = l01[2]
+  
+  ################################################################################
   # import data
   filename_append = ""
   if(!is.null(sigmasq_measuremt)){
@@ -177,11 +200,15 @@ for(scenario in c(1, 2)){
   
   # all 6 designs
   idx = 1
+  # designs = list(
+  #   boxhill_sims[[idx]], qcap_sims[[idx]], leaveout_sims[[idx]], 
+  #   qcap_persist_sims[[idx]], persist_sims[[idx]])
+  # design.names = c("boxhill", "qcap", "leaveout", "keepq2", "keepq")
+  # design.levels = c("leaveout", "keepq", "keepq2", "qcap", "boxhill")
   designs = list(
-    boxhill_sims[[idx]], qcap_sims[[idx]], leaveout_sims[[idx]], 
-    qcap_persist_sims[[idx]], persist_sims[[idx]])
-  design.names = c("boxhill", "qcap", "leaveout", "keepq2", "keepq")
-  design.levels = c("leaveout", "keepq", "keepq2", "qcap", "boxhill")
+    boxhill_sims[[idx]], leaveout_sims[[idx]])
+  design.names = c("boxhill", "seqmed")
+  design.levels = c("seqmed", "boxhill")
   
   x.new.mat = matrix(NA, nrow = Nnew, ncol = length(designs))
   for(i in 1:length(designs)){
@@ -200,26 +227,36 @@ for(scenario in c(1, 2)){
   text.gg = dplyr::filter(data.gg, index %in% as.character(1:Nnew))
   des.plt = ggplot() + 
     geom_point(data = data.gg0, 
-               mapping = aes(x = input, y = type)) +
+               mapping = aes(x = input, y = type), alpha = 0.25) +
     geom_point(data = data.gg, 
                mapping = aes(x = value, y = type, color = type), 
-               inherit.aes = FALSE) + 
-    geom_text(data = text.gg, 
-              aes(x = value, y = type, label = index), 
-              vjust = -0.65 * as.numeric(paste(text.gg$index)), size = 2) +
-    xlim(c(xmin, xmax))
+               inherit.aes = FALSE, alpha = 0.25) + 
+    # geom_text(data = text.gg, 
+    #           aes(x = value, y = type, label = index), 
+    #           vjust = -0.65 * as.numeric(paste(text.gg$index)), size = 2) +
+    xlim(c(xmin, xmax)) + 
+    theme_bw()
   if(typeT == "periodic"){
     des.plt = des.plt + geom_vline(
-      xintercept = pT * (0:floor((xmax - xmin) / pT)), color = "blue", 
-      alpha = 0.2)
+      xintercept = pT * (0:floor((xmax - xmin) / pT)), #color = "gray", 
+      alpha = 0.25)
   }
   plot(des.plt)
   
+  # slide plot
+  # ggsave(
+  #   filename = paste0("20210815_scen", scenario, "_design.pdf"), 
+  #   plot = des.plt, 
+  #   width = 6, height = 4, units = c("in")
+  # )
+  
+  # manuscript plot
   ggsave(
-    filename = paste0("20210815_scen", scenario, "_design.pdf"), 
+    filename = paste0(scenario_name, "_design.pdf"), 
     plot = des.plt, 
-    width = 6, height = 4, units = c("in")
+    width = 4.5, height = 2, units = c("in")
   )
+  
   print(paste("scenario", scenario, 
               "################################################################"))
   

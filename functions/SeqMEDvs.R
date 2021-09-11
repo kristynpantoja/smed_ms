@@ -78,8 +78,8 @@ SeqMEDvs = function(
     
     # yt = as.vector(simulateYvs(Dt$addD[ , indices_true, drop = FALSE], N_seq[t], beta_true, sigmasq, 1, seed = seed))
     yt = simulateY_frommultivarfunction(
-      x = Dt$addD[, true.indices, drop = FALSE], f = true.function, 
-      error.var = error.var, num.sims = 1, seed = NULL)
+      x = Dt$addD[, true.indices, drop = FALSE], true.function = true.function, 
+      error.var = error.var)
     
     # update x.cur and y.cur with new data
     x.cur = rbind(x.cur, Dt$addD)

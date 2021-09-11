@@ -37,7 +37,8 @@ SeqMED = function(
   if(is.null(y.in)){
     # y.in = as.vector(simulateY(
     #   x.in, seqN[1], true_beta, error.var, 1, true_type))
-    y.in = simulateY_fromfunction(x.in, true.function, error.var, 1, NULL)
+    y.in = simulateY_fromfunction(
+      x = x.in, true.function = true.function, error.var = error.var)
   }
   x.cur = x.in
   y.cur = y.in
@@ -106,8 +107,7 @@ SeqMED = function(
     
     # yt = as.vector(simulateY(Dt$addD, seqN[t], true_beta, error.var, 1, true_type))
     yt = simulateY_fromfunction(
-      x = Dt$addD, f = true.function, error.var = error.var, num.sims = 1, 
-      seed = NULL)
+      x = Dt$addD, true.function = true.function, error.var = error.var)
     
     # update x.cur and y.cur with new data
     x.cur = c(x.cur, Dt$addD)

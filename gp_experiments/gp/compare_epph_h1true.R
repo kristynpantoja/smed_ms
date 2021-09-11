@@ -1,6 +1,6 @@
 for(scenario in c(1, 2)){
   ################################################################################
-  # last updated: 05/25/2021
+  # last updated: 09/02/2021
   # purpose: to test seqmedgp for scenario 1:
   #   squared exponential vs. matern,
   #   where the true function is matern
@@ -67,7 +67,6 @@ for(scenario in c(1, 2)){
   # shared settings
   prior_probs = rep(1 / 2, 2)
   
-  
   ################################################################################
   # Scenario settings
   ################################################################################
@@ -78,6 +77,7 @@ for(scenario in c(1, 2)){
                   measurement.var = sigmasq_measuremt)
     model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
                   measurement.var = sigmasq_measuremt)
+    scenario_name = "SMM"
   } else if(scenario == 2){
     pT = 0.26
     type01 = c("matern", "periodic")
@@ -85,6 +85,7 @@ for(scenario in c(1, 2)){
                   measurement.var = sigmasq_measuremt)
     model1 = list(type = type01[2], l = l01[2], signal.var = sigmasq_signal, 
                   measurement.var = sigmasq_measuremt, p = pT)
+    scenario_name = "MPP"
   }
   typeT = type01[2]
   lT = l01[2]
@@ -215,8 +216,8 @@ for(scenario in c(1, 2)){
     PPH0_seq = rep(NA, len.tmp)
     PPH1_seq = rep(NA, len.tmp)
     for(i in 1:len.tmp){
-      y.tmp = c(design$y, y.new[1:i])
-      x.tmp = c(design$x, x.new[1:i])
+      y.tmp = c(design$y.in, y.new[1:i])
+      x.tmp = c(design$x.in, x.new[1:i])
       PPHs.tmp = getHypothesesPosteriors(
         prior.probs = prior_probs, 
         evidences = c(
@@ -234,12 +235,12 @@ for(scenario in c(1, 2)){
       PPH1_seq[(length(PPH1_seq) + 1):n] = PPH1_seq[length(PPH1_seq)]
     }
     # include posterior probs for initial point(s)
-    len.init = length(design$y)
+    len.init = length(design$y.in)
     PPHs.init = getHypothesesPosteriors(
       prior.probs = prior_probs, 
       evidences = c(
-        Evidence_gp(design$y, design$x, model0),
-        Evidence_gp(design$y, design$x, model1)
+        Evidence_gp(design$y.in, design$x.in, model0),
+        Evidence_gp(design$y.in, design$x.in, model1)
       )
     )
     PPH0_seq = c(PPHs.init[1], PPH0_seq)
@@ -274,13 +275,13 @@ for(scenario in c(1, 2)){
     # master data frame
     PPH_seq.bh$type = "boxhill"
     PPH_seq.qc$type = "qcap"
-    PPH_seq.lo$type = "leaveout"
+    PPH_seq.lo$type = "seqmed" # "leaveout"
     PPH_seq.qc2$type = "keepq2"
     PPH_seq.kq$type = "keepq"
     PPH_seq.r$type = "random"
     PPH_seq.g$type = "grid"
     PPH_seq.tmp = rbind(
-      PPH_seq.bh, PPH_seq.qc, PPH_seq.lo, PPH_seq.qc2, PPH_seq.kq, 
+      PPH_seq.bh, PPH_seq.lo, #PPH_seq.qc, PPH_seq.lo, PPH_seq.qc2, PPH_seq.kq, 
       PPH_seq.r, PPH_seq.g)
     PPH_seq.tmp$sim = j
     PPH_seq = rbind(PPH_seq, PPH_seq.tmp)
@@ -305,11 +306,20 @@ for(scenario in c(1, 2)){
     ylim(0, 1)
   plot(epph.plt)
   
+  # slide plot
+  # ggsave(
+  #   filename = paste0("20210902_scen", scenario, "_epph.pdf"), 
+  #   plot = epph.plt, 
+  #   width = 6, height = 4, units = c("in")
+  # )
+  
+  # manuscript plot
   ggsave(
-    filename = paste0("20210815_scen", scenario, "_epph.pdf"), 
+    filename = paste0(scenario_name, "_epph.pdf"), 
     plot = epph.plt, 
-    width = 6, height = 4, units = c("in")
+    width = 4.5, height = 2, units = c("in")
   )
+  
   print(paste("scenario", scenario, 
               "################################################################"))
   

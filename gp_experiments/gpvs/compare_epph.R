@@ -2,9 +2,9 @@
 # last updated: 07/13/2021
 # purpose: to test SeqMEDgpvs()
 
-dimT = 2
+dimT = 1
 seq.type = 1
-lT = 0.1
+lT = 0.01
 typeT = "squaredexponential"
 
 ################################################################################
@@ -165,28 +165,28 @@ boxhill_sims = readRDS(paste0(
 
 random_sims = readRDS(paste0(
   sims_dir, 
-  "/fixed_designs/outputs/random", 
+  "/other_designs/outputs/random", 
   "_", typeT,
   "_l", lT,
   "_dim", dimT,
   filename_append.tmp))
 grid_sims = readRDS(paste0(
   sims_dir,
-  "/fixed_designs/outputs/grid", 
+  "/other_designs/outputs/grid", 
   "_", typeT,
   "_l", lT,
   "_dim", dimT,
   filename_append.tmp))
 diagonal_sims = readRDS(paste0(
   sims_dir,
-  "/fixed_designs/outputs/diagonal", 
+  "/other_designs/outputs/diagonal", 
   "_", typeT,
   "_l", lT,
   "_dim", dimT,
   filename_append.tmp))
 x2_sims = readRDS(paste0(
   sims_dir,
-  "/fixed_designs/outputs/x2constant", 
+  "/other_designs/outputs/x2constant", 
   "_", typeT,
   "_l", lT,
   "_dim", dimT,

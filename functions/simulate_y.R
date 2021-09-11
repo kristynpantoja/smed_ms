@@ -31,12 +31,16 @@ simulateYvs = function(D, N, true_beta, var_e, numSims, seed = NULL){
 #   Y = rmvnorm(numSims, X %*% true_beta, var_e * diag(N))
 # }
 
-simulateY_fromfunction = function(x, f, error.var, num.sims, seed = NULL){
+simulateY_fromfunction = function(
+  x, true.function, error.var, seed = NULL
+){
   if(!is.null(seed)) set.seed(seed)
-  Y = f(x) + rnorm(length(x), 0, sqrt(error.var))
+  Y = true.function(x) + rnorm(length(x), 0, sqrt(error.var))
 }
 
-simulateY_frommultivarfunction = function(x, f, error.var, num.sims, seed = NULL){
+simulateY_frommultivarfunction = function(
+  x, true.function, error.var, seed = NULL
+){
   if(!is.null(seed)) set.seed(seed)
-  Y = f(x) + rnorm(nrow(x), 0, sqrt(error.var))
+  Y = true.function(x) + rnorm(nrow(x), 0, sqrt(error.var))
 }

@@ -155,7 +155,8 @@ BH_m2 = function(
   if(is.null(x.in) & !is.null(y.in)){ # x.in is null, y.in is not null
     stop("BH_m2 : preliminary y.in is given, but not corresponding x.in")
   } else if(is.null(y.in) & !is.null(x.in)){ # x.in is not null, y.in is null (generate y.in)
-    y.in = simulateY_fromfunction(x.in, true.function, error.var, 1, NULL)
+    y.in = simulateY_fromfunction(
+      x = x.in, true.function = true.function, error.var = error.var)
   } else if(is.null(x.in) & is.null(y.in)){ # both x.in and y.in are null, then us BH method
     # evaluate criterion over x_seq
     bhd_seq = sapply(
@@ -170,7 +171,8 @@ BH_m2 = function(
     x.in.idx = which.max(bhd_seq)
     x.in = candidates[x.in.idx]
     # get y.in
-    y.in = simulateY_fromfunction(x.in, true.function, error.var, 1, NULL)
+    y.in = simulateY_fromfunction(
+      x = x.in, true.function = true.function, error.var = error.var)
     n = n - 1
   } else{
     if(length(x.in) != length(y.in)){
@@ -182,8 +184,8 @@ BH_m2 = function(
   post.probs0 = getHypothesesPosteriors( # posterior probability with current data
     prior.probs = prior.probs, 
     evidences = c(
-      Evidence_lm(y.in, x.in, model0, error.var), 
-      Evidence_lm(y.in, x.in, model1, error.var)
+      Evidence_lm(y = y.in, x = x.in, model = model0, error.var = error.var), 
+      Evidence_lm(y = y.in, x = x.in, model = model1, error.var = error.var)
     )
   )
   # get new data
@@ -212,8 +214,7 @@ BH_m2 = function(
       x.new[i] = candidates[x.new.idx]
       # get y
       y.new[i] = simulateY_fromfunction(
-        x = x.new[i], f = true.function, error.var = error.var, num.sims = 1, 
-        seed = NULL)
+        x = x.new[i], true.function = true.function, error.var = error.var)
       # update current information
       x.cur = c(x.cur, x.new[i])
       y.cur = c(y.cur, y.new[i])

@@ -8,7 +8,7 @@
 #   linear vs. quadratic,
 #   where the true function is cubic
 
-scenario = 1 # 1, 2
+scenario = 2 # 1, 2
 
 ################################################################################
 # Sources/Libraries
@@ -95,13 +95,13 @@ if(scenario == 1){
 # import box & hill and seqmed simulations
 ################################################################################
 
-seqmeds = readRDS(paste0(
+seqmed_sims = readRDS(paste0(
   output_dir, "/scenario", scenario, 
   "_seqmed", 
   "_N", Nttl, 
   "_seed", rng.seed,
   ".rds"))
-boxhills = readRDS(paste0(
+boxhill_sims = readRDS(paste0(
   output_dir, "/scenario", scenario, 
   "_boxhill", 
   "_N", Nttl, 
@@ -112,12 +112,29 @@ boxhills = readRDS(paste0(
 # non-sequential designs
 ################################################################################
 
-space_filling =  seq(from = xmin, to = xmax, length.out = Nttl)
+space_filling = seq(from = xmin, to = xmax, length.out = Nttl)
 dopt_linear = c(rep(1, floor(Nttl / 2)), rep(-1, Nttl - floor(Nttl / 2)))
 dopt_quadratic = c(rep(1, floor(Nttl / 3)), 
                    rep(0, ceiling(Nttl / 3)), 
                    rep(-1, Nttl - floor(Nttl / 3) - ceiling(Nttl / 3)))
 
+grid_sims = list()
+doptlin_sims = list()
+doptquad_sims = list()
+for(i in 1:numSims){
+  grid_sims[[i]] = list(
+    x = space_filling,
+    y = sapply(space_filling, FUN = function(x) simulateY_fromfunction(
+    x = x, true.function = fT, error.var = sigmasq)))
+  doptlin_sims[[i]] = list(
+    x = dopt_linear,
+    y = sapply(dopt_linear, FUN = function(x) simulateY_fromfunction(
+      x = x, true.function = fT, error.var = sigmasq)))
+  doptquad_sims[[i]] = list(
+    x = dopt_quadratic,
+    y = sapply(dopt_quadratic, FUN = function(x) simulateY_fromfunction(
+      x = x, true.function = fT, error.var = sigmasq)))
+}
 
 
 ################################################################################
@@ -136,7 +153,7 @@ dopt_quadratic = c(rep(1, floor(Nttl / 3)),
 sim.idx = 1
 
 # plot a seqmed
-sm = seqmeds[[sim.idx]]
+sm = seqmed_sims[[sim.idx]]
 ggdata = data.frame(x = c(sm$x.in, sm$x.new), y = c(sm$y.in, sm$y.new))
 plt0 = ggplot(ggdata) + 
   geom_histogram(binwidth = 0.12, closed = "right", 
@@ -151,7 +168,7 @@ plt1 = ggplot(ggdata) +
 ggarrange(plt0, plt1)
 
 # plot a boxhill
-bh = boxhills[[sim.idx]]
+bh = boxhill_sims[[sim.idx]]
 ggdata2 = data.frame(x = c(bh$x.in, bh$x.new), y = c(bh$y.in, bh$y.new))
 plt2 = ggplot(ggdata2) + 
   geom_histogram(binwidth = 0.12, closed = "right", 
@@ -177,285 +194,348 @@ plt3 = ggplot(ggdata2) +
 source(paste(functions_dir, "/postprob_hypotheses.R", sep = ""))
 library(data.table)
 
-#######################################################################################################
+# if(scenario == 1){
+#   models = list("H0" = list(mu0, V0, 2),
+#                 "H1" = list(mu1, V1, 3))
+#   typeT = 3
+# } else if(scenario == 2){
+#   models = list("H0" = list(mu0, V0, 2),
+#                 "H1" = list(mu1, V1, 3),
+#                 "H2" = list(betaT, diag(rep(sigmasq01, 4)), 4))
+#   typeT = 4
+# }
+# 
+# # non-sequential methods
+# epphs_space = calcEPPH(
+#   space_filling, Nttl, betaT, typeT, models, sigmasq, numSims = 100, seed = 123)
+# epphs_dopt1 = calcEPPH(
+#   dopt_linear, Nttl, betaT, typeT, models, sigmasq, numSims = 100, seed = 123)
+# epphs_dopt2 = calcEPPH(
+#   dopt_quadratic, Nttl, betaT, typeT, models, sigmasq, numSims = 100, seed = 123)
+# 
+# numModels = length(models)
+# 
+# # seqmed
+# pphs_seqmed= array(NA, dim = c(numModels, numSeq, numSims))
+# for(k in 1:numSims){
+#   smmed_data_k = seqmed_sims[[k]]
+#   for(i in 1:numSeq){
+#     if(i == 1){
+#       pphs_seqmed[ , i, k] = calcEPPHdata(
+#         smmed_data_k$y.in, 
+#         smmed_data_k$x.in, 
+#         N = seqN, models, sigmasq)
+#     } else{
+#       pphs_seqmed[ , i, k] = calcEPPHdata(
+#         c(smmed_data_k$y.in, smmed_data_k$y.new[1:(seqN * (i - 1))]), 
+#         c(smmed_data_k$x.in, smmed_data_k$x.new[1:(seqN * (i - 1))]), 
+#         N = seqN + seqN * (i - 1), models, sigmasq)
+#     }
+#   }
+# }
+# epphs_seqmed = apply(pphs_seqmed, c(1,2), mean)
+# 
+# # box-hill
+# pphs_bh = array(NA, dim = c(numModels, numSeq, numSims))
+# for(k in 1:numSims){
+#   bh_data_k = boxhill_sims[[k]]
+#   for(i in 1:numSeq){
+#     if(i == 1){
+#       pphs_bh[ , i, k] = calcEPPHdata(
+#         bh_data_k$y.in, 
+#         bh_data_k$x.in, 
+#         N = seqN, models, sigmasq)
+#     } else{
+#       pphs_bh[ , i, k] = calcEPPHdata(
+#         c(bh_data_k$y.in, bh_data_k$y.new[1:(seqN * (i - 1))]), 
+#         c(bh_data_k$x.in, bh_data_k$x.new[1:(seqN * (i - 1))]), 
+#         N = seqN + seqN * (i - 1), models, sigmasq)
+#     }
+#   }
+# }
+# epphs_bh = apply(pphs_bh, c(1,2), mean)
+# 
+# # plot 1
+# ggdata0 = data.table(
+#   x = 1:numSeq, 
+#   Dlinear = rep(epphs_dopt1[1], numSeq), 
+#   Dquadratic = rep(epphs_dopt2[1], numSeq), 
+#   SpaceFilling = rep(epphs_space[1], numSeq), 
+#   SeqMED = epphs_seqmed[ 1, ], 
+#   BoxHill = epphs_bh[ 1, ], 
+#   Hypothesis = rep("H0", numSeq)
+# )
+# ggdata1 = data.table(
+#   x = 1:numSeq, 
+#   Dlinear = rep(epphs_dopt1[2], numSeq), 
+#   Dquadratic = rep(epphs_dopt2[2], numSeq), 
+#   SpaceFilling = rep(epphs_space[2], numSeq), 
+#   SeqMED = epphs_seqmed[ 2, ], 
+#   BoxHill = epphs_bh[ 2, ], 
+#   Hypothesis = rep("H1", numSeq)
+# )
+# if(scenario == 1){
+#   ggdata = rbind(ggdata0, ggdata1)
+# } else{
+#   ggdataT = data.table(
+#     x = 1:numSeq, 
+#     Dlinear = rep(epphs_dopt1[3], numSeq), 
+#     Dquadratic = rep(epphs_dopt2[3], numSeq), 
+#     SpaceFilling = rep(epphs_space[3], numSeq), 
+#     SeqMED = epphs_seqmed[ 3, ], 
+#     BoxHill = epphs_bh[ 3, ], 
+#     Hypothesis = rep("HT", numSeq)
+#   )
+#   ggdata = rbind(ggdata0, ggdata1, ggdataT)
+# }
+# ggdata.melted = melt(ggdata, id = c("x", "Hypothesis"), value.name = "epph", 
+#                      variable.name = "Design")
+# epph.plt = ggplot(ggdata.melted, aes(x = x, y = epph, color = Design, linetype = Design)) +
+#   facet_wrap(vars(Hypothesis)) + 
+#   geom_path(size = 1) + 
+#   scale_linetype_manual(values=c(rep("dashed", 3), rep("solid", 2))) + 
+#   geom_point(data = ggdata.melted[ggdata.melted$x == numSeq, ], 
+#              aes(x = x, y = epph), size = 2) + 
+#   theme_bw() +#base_size = 20) + 
+#   theme(panel.grid.minor = element_blank()) + 
+#   labs(y = "", x = "Stages") + 
+#   ylim(0, 1)
+# epph.plt
+# 
+# # seqmed
+# pphs_seqmed= array(NA, dim = c(numModels, numSeq, numSims))
+# for(k in 1:numSims){
+#   smmed_data_k = seqmeds[[k]]
+#   for(i in 1:numSeq){
+#     if(i == 1){
+#       
+#       pphs_seqmed[ , i, k] = calcEPPHdata(
+#         smmed_data_k$y.in, 
+#         smmed_data_k$x.in, 
+#         N = seqN, models, sigmasq)
+#     } else{
+#       pphs_seqmed[ , i, k] = calcEPPHdata(
+#         c(smmed_data_k$y.in, smmed_data_k$y.new[1:(seqN * (i - 1))]), 
+#         c(smmed_data_k$x.in, smmed_data_k$x.new[1:(seqN * (i - 1))]), 
+#         N = seqN + seqN * (i - 1), models, sigmasq)
+#     }
+#   }
+# }
+# epphs_seqmed = apply(pphs_seqmed, c(1,2), mean)
+# 
+# # box-hill
+# pphs_bh = array(NA, dim = c(numModels, numSeq, numSims))
+# for(k in 1:numSims){
+#   bh_data_k = boxhills[[k]]
+#   for(i in 1:numSeq){
+#     if(i == 1){
+#       pphs_bh[ , i, k] = calcEPPHdata(
+#         bh_data_k$y.in, 
+#         bh_data_k$x.in, 
+#         N = seqN, models, sigmasq)
+#     } else{
+#       pphs_bh[ , i, k] = calcEPPHdata(
+#         c(bh_data_k$y.in, bh_data_k$y.new[1:(seqN * (i - 1))]), 
+#         c(bh_data_k$x.in, bh_data_k$x.new[1:(seqN * (i - 1))]), 
+#         N = seqN + seqN * (i - 1), models, sigmasq)
+#     }
+#   }
+# }
+# epphs_bh = apply(pphs_bh, c(1,2), mean)
+# 
+# # plot 1
+# ggdata0 = data.table(
+#   x = 1:numSeq, 
+#   Dlinear = rep(epphs_dopt1[1], numSeq), 
+#   Dquadratic = rep(epphs_dopt2[1], numSeq), 
+#   SpaceFilling = rep(epphs_space[1], numSeq), 
+#   SeqMED = epphs_seqmed[ 1, ], 
+#   BoxHill = epphs_bh[ 1, ], 
+#   Hypothesis = rep("H0", numSeq)
+# )
+# ggdata1 = data.table(
+#   x = 1:numSeq, 
+#   Dlinear = rep(epphs_dopt1[2], numSeq), 
+#   Dquadratic = rep(epphs_dopt2[2], numSeq), 
+#   SpaceFilling = rep(epphs_space[2], numSeq), 
+#   SeqMED = epphs_seqmed[ 2, ], 
+#   BoxHill = epphs_bh[ 2, ], 
+#   Hypothesis = rep("H1", numSeq)
+# )
+# if(scenario == 1){
+#   ggdata = rbind(ggdata0, ggdata1)
+# } else{
+#   ggdataT = data.table(
+#     x = 1:numSeq, 
+#     Dlinear = rep(epphs_dopt1[3], numSeq), 
+#     Dquadratic = rep(epphs_dopt2[3], numSeq), 
+#     SpaceFilling = rep(epphs_space[3], numSeq), 
+#     SeqMED = epphs_seqmed[ 3, ], 
+#     BoxHill = epphs_bh[ 3, ], 
+#     Hypothesis = rep("HT", numSeq)
+#   )
+#   ggdata = rbind(ggdata0, ggdata1, ggdataT)
+# }
+# ggdata.melted = melt(ggdata, id = c("x", "Hypothesis"), value.name = "epph", 
+#                      variable.name = "Design")
+# epph.plt = ggplot(ggdata.melted, aes(x = x, y = epph, color = Design, linetype = Design)) +
+#   facet_wrap(vars(Hypothesis)) + 
+#   geom_path(size = 1) + 
+#   scale_linetype_manual(values=c(rep("dashed", 3), rep("solid", 2))) + 
+#   geom_point(data = ggdata.melted[ggdata.melted$x == numSeq, ], 
+#              aes(x = x, y = epph), size = 2) + 
+#   theme_bw() +#base_size = 20) + 
+#   theme(panel.grid.minor = element_blank()) + 
+#   labs(y = "", x = "Stages") + 
+#   ylim(0, 1)
+# epph.plt
+
 if(scenario == 1){
-  models = list("H0" = list(mu0, V0, 2),
-                "H1" = list(mu1, V1, 3))
-  typeT = 3
+  models = list(model0, model1)
 } else if(scenario == 2){
-  models = list("H0" = list(mu0, V0, 2),
-                "H1" = list(mu1, V1, 3),
-                "H2" = list(betaT, diag(rep(sigmasq01, 4)), 4))
-  typeT = 4
-}
-
-# non-sequential methods
-epphs_space = calcEPPH(
-  space_filling, Nttl, betaT, typeT, models, sigmasq, numSims = 100, seed = 123)
-epphs_dopt1 = calcEPPH(
-  dopt_linear, Nttl, betaT, typeT, models, sigmasq, numSims = 100, seed = 123)
-epphs_dopt2 = calcEPPH(
-  dopt_quadratic, Nttl, betaT, typeT, models, sigmasq, numSims = 100, seed = 123)
-
-numModels = length(models)
-
-# seqmed
-pphs_seqmed= array(NA, dim = c(numModels, numSeq, numSims))
-for(k in 1:numSims){
-  smmed_data_k = seqmeds[[k]]
-  for(i in 1:numSeq){
-    if(i == 1){
-      pphs_seqmed[ , i, k] = calcEPPHdata(
-        smmed_data_k$y.in, 
-        smmed_data_k$x.in, 
-        N = seqN, models, sigmasq)
-    } else{
-      pphs_seqmed[ , i, k] = calcEPPHdata(
-        c(smmed_data_k$y.in, smmed_data_k$y.new[1:(seqN * (i - 1))]), 
-        c(smmed_data_k$x.in, smmed_data_k$x.new[1:(seqN * (i - 1))]), 
-        N = seqN + seqN * (i - 1), models, sigmasq)
-    }
+  desXT = function(x){
+    n = length(x)
+    return(cbind(rep(1, n), x, x^2, x^3))
   }
+  modelT = list(
+    designMat = desXT, 
+    beta.mean = rep(0, 4), 
+    beta.var = diag(rep(sigmasq01, 4)), 4)
+  models = list(model0, model1, modelT)
 }
-epphs_seqmed = apply(pphs_seqmed, c(1,2), mean)
-
-# box-hill
-pphs_bh = array(NA, dim = c(numModels, numSeq, numSims))
-for(k in 1:numSims){
-  bh_data_k = boxhills[[k]]
-  for(i in 1:numSeq){
-    if(i == 1){
-      pphs_bh[ , i, k] = calcEPPHdata(
-        bh_data_k$y.in, 
-        bh_data_k$x.in, 
-        N = seqN, models, sigmasq)
-    } else{
-      pphs_bh[ , i, k] = calcEPPHdata(
-        c(bh_data_k$y.in, bh_data_k$y.new[1:(seqN * (i - 1))]), 
-        c(bh_data_k$x.in, bh_data_k$x.new[1:(seqN * (i - 1))]), 
-        N = seqN + seqN * (i - 1), models, sigmasq)
-    }
-  }
-}
-epphs_bh = apply(pphs_bh, c(1,2), mean)
-
-# plot 1
-ggdata0 = data.table(
-  x = 1:numSeq, 
-  Dlinear = rep(epphs_dopt1[1], numSeq), 
-  Dquadratic = rep(epphs_dopt2[1], numSeq), 
-  SpaceFilling = rep(epphs_space[1], numSeq), 
-  SeqMED = epphs_seqmed[ 1, ], 
-  BoxHill = epphs_bh[ 1, ], 
-  Hypothesis = rep("H0", numSeq)
-)
-ggdata1 = data.table(
-  x = 1:numSeq, 
-  Dlinear = rep(epphs_dopt1[2], numSeq), 
-  Dquadratic = rep(epphs_dopt2[2], numSeq), 
-  SpaceFilling = rep(epphs_space[2], numSeq), 
-  SeqMED = epphs_seqmed[ 2, ], 
-  BoxHill = epphs_bh[ 2, ], 
-  Hypothesis = rep("H1", numSeq)
-)
-if(scenario == 1){
-  ggdata = rbind(ggdata0, ggdata1)
-} else{
-  ggdataT = data.table(
-    x = 1:numSeq, 
-    Dlinear = rep(epphs_dopt1[3], numSeq), 
-    Dquadratic = rep(epphs_dopt2[3], numSeq), 
-    SpaceFilling = rep(epphs_space[3], numSeq), 
-    SeqMED = epphs_seqmed[ 3, ], 
-    BoxHill = epphs_bh[ 3, ], 
-    Hypothesis = rep("HT", numSeq)
-  )
-  ggdata = rbind(ggdata0, ggdata1, ggdataT)
-}
-ggdata.melted = melt(ggdata, id = c("x", "Hypothesis"), value.name = "epph", 
-                     variable.name = "Design")
-epph.plt = ggplot(ggdata.melted, aes(x = x, y = epph, color = Design, linetype = Design)) +
-  facet_wrap(vars(Hypothesis)) + 
-  geom_path(size = 1) + 
-  scale_linetype_manual(values=c(rep("dashed", 3), rep("solid", 2))) + 
-  geom_point(data = ggdata.melted[ggdata.melted$x == numSeq, ], 
-             aes(x = x, y = epph), size = 2) + 
-  theme_bw() +#base_size = 20) + 
-  theme(panel.grid.minor = element_blank()) + 
-  labs(y = "", x = "Stages") + 
-  ylim(0, 1)
-epph.plt
-#######################################################################################################
-
-models2 = list(model0, model1)
 
 getPPH = function(
-  design, models, n, true.function, error.var, randomize.order = FALSE, 
-  seed = NULL
+  design, models, true.function, error.var, initial.data = TRUE, seed = NULL
 ){
-  ysims = sapply(design$x, FUN = simulateY_fromfunction(
-    x = x, true.function = true.function, error.var = error.var))
-  
-  model.postprobs = matrix(NA, length(models), numSims)
-  rownames(model.postprobs) = paste("model", 1:length(models), sep = "")
-  colnames(model.postprobs) = paste("sim", 1:length(models), sep = "")
-  for(j in 1:numSims){
-    y.tmp = ysims[ , j]
-    
-    # calculate posterior probabilities for each model
-    model.evidences.tmp = rep(NA, length(models))
-    # get model evidences
-    for(m in 1:length(models)){
-      model.tmp = models[[m]]
-      model.evidences.tmp[m] = Evidence_lm(
-        y = y.tmp, x = design$x, model = model.tmp, error.var = error.var)
-    }
-    # get each hypotheses' posterior probability
-    model.postprobs[, j] = getHypothesesPosteriors(
-      prior.probs = rep(1 / length(models), length(models)), 
-      evidences = model.evidences.tmp)
+  if(!is.null(seed)) set.seed(seed)
+  if(initial.data){
+    x = c(design$x.in, design$x.new)
+    y = sapply(x, FUN = function(x) simulateY_fromfunction(
+      x = x, true.function = true.function, error.var = error.var))
+  } else{
+    x = design$x
+    y = design$y
   }
-  return(model.postprobs)
+  
+  # get model evidences
+  model.evidences = rep(NA, length(models))
+  for(m in 1:length(models)){
+    model.tmp = models[[m]]
+    model.evidences[m] = Evidence_lm(
+      y = y, x = x, model = model.tmp, error.var = error.var)
+  }
+  # get each hypotheses' posterior probability
+  PPHs = getHypothesesPosteriors(
+    prior.probs = rep(1 / length(models), length(models)), 
+    evidences = model.evidences)
+  PPHs = as.data.frame(t(matrix(PPHs)))
+  row.names(PPHs) = NULL
+  names(PPHs) = paste("H", 0:(length(models) - 1), sep = "")
+  return(PPHs)
 }
 
 getPPHseq = function(
   design, models, n, true.function, error.var, randomize.order = FALSE, 
   seed = NULL
 ){
-  x.new.idx = design$x.new.idx
-  x.new = design$x.new
-  y.new = design$y.new
-  if(n != length(y.new)) warning("getPPHseq: n argument does not match length of new data")
-  len.tmp = length(as.vector(na.omit(y.new)))
-  if(randomize.order){
-    new.order = sample(1:len.tmp, len.tmp, replace = FALSE)
-    x.new.idx = x.new.idx[new.order]
-    x.new = x.new[new.order]
-    y.new = y.new[new.order]
-  }
-  ############### stopped here.... #####################################################
-  for(j in 1:numSims){
-    for(i in 1:n){
-      
-    }
-  }
-  
-  
-  
-  ysims = sapply(design$x, FUN = simulateY_fromfunction(
+  if(!is.null(seed)) set.seed(seed)
+  x = c(design$x.in, design$x.new)
+  y = sapply(x, FUN = function(x) simulateY_fromfunction(
     x = x, true.function = true.function, error.var = error.var))
   
-  model.postprobs = matrix(NA, length(models), numSims)
-  rownames(model.postprobs) = paste("model", 1:length(models), sep = "")
-  colnames(model.postprobs) = paste("sim", 1:length(models), sep = "")
-  for(j in 1:numSims){
-    y.tmp = ysims[ , j]
+  PPH_mat = matrix(NA, nrow = n, ncol = length(models))
+  for(i in 1:n){
+    x.tmp = x[1:i]
+    y.tmp = y[1:i]
     
-    # calculate posterior probabilities for each model
-    model.evidences.tmp = rep(NA, length(models))
     # get model evidences
+    model.evidences.tmp = rep(NA, length(models))
     for(m in 1:length(models)){
       model.tmp = models[[m]]
       model.evidences.tmp[m] = Evidence_lm(
-        y = y.tmp, x = design$x, model = model.tmp, error.var = error.var)
+        y = y.tmp, x = x.tmp, model = model.tmp, error.var = error.var)
     }
-    # get each hypotheses' posterior probability
-    model.postprobs[, j] = getHypothesesPosteriors(
+    PPH_mat[i, ] = getHypothesesPosteriors(
       prior.probs = rep(1 / length(models), length(models)), 
       evidences = model.evidences.tmp)
   }
-  return(model.postprobs)
+  colnames(PPH_mat) = paste("H", 0:(length(models) - 1), sep = "")
+  PPH_mat = data.frame(PPH_mat)
+  PPH_mat$index = 1:n
+  return(PPH_mat)
 }
 
+#
 
-# seqmed
-pphs_seqmed= array(NA, dim = c(numModels, numSeq, numSims))
-for(k in 1:numSims){
-  smmed_data_k = seqmeds[[k]]
-  for(i in 1:numSeq){
-    if(i == 1){
-      
-      pphs_seqmed[ , i, k] = calcEPPHdata(
-        smmed_data_k$y.in, 
-        smmed_data_k$x.in, 
-        N = seqN, models, sigmasq)
-    } else{
-      pphs_seqmed[ , i, k] = calcEPPHdata(
-        c(smmed_data_k$y.in, smmed_data_k$y.new[1:(seqN * (i - 1))]), 
-        c(smmed_data_k$x.in, smmed_data_k$x.new[1:(seqN * (i - 1))]), 
-        N = seqN + seqN * (i - 1), models, sigmasq)
-    }
-  }
+# non-sequential designs
+PPH_df = data.frame()
+for(j in 1:numSims){
+  # sequence of PPHs for each design
+  PPH_grid = getPPH(
+    grid_sims[[j]], models, true.function, sigmasq, FALSE)
+  PPH_doptl = getPPH(
+    doptlin_sims[[j]], models, true.function, sigmasq, FALSE)
+  PPH_doptq = getPPH(
+    doptquad_sims[[j]], models, true.function, sigmasq, FALSE)
+  # master data frame
+  PPH_grid$type = "grid"
+  PPH_doptl$type = "doptl"
+  PPH_doptq$type = "doptq"
+  PPH.tmp = rbind(PPH_grid, PPH_doptl, PPH_doptq)
+  PPH.tmp$sim = j
+  PPH_df = rbind(PPH_df, PPH.tmp)
 }
-epphs_seqmed = apply(pphs_seqmed, c(1,2), mean)
+PPHmean = aggregate(
+  PPH_df[, names(PPH_df)[1:length(models)]], 
+  by = list(PPH_df[, "type"]), FUN = function(x) mean(x, na.rm = TRUE))
+names(PPHmean)[1] = "type"
+PPHmean$index = 100
+# but we want a line, so allow interpolation by setting PPHmean$index = 0 too
+PPHmean2 = PPHmean
+PPHmean2$index = 0
+PPHmean = rbind(PPHmean, PPHmean2)
 
-# box-hill
-pphs_bh = array(NA, dim = c(numModels, numSeq, numSims))
-for(k in 1:numSims){
-  bh_data_k = boxhills[[k]]
-  for(i in 1:numSeq){
-    if(i == 1){
-      pphs_bh[ , i, k] = calcEPPHdata(
-        bh_data_k$y.in, 
-        bh_data_k$x.in, 
-        N = seqN, models, sigmasq)
-    } else{
-      pphs_bh[ , i, k] = calcEPPHdata(
-        c(bh_data_k$y.in, bh_data_k$y.new[1:(seqN * (i - 1))]), 
-        c(bh_data_k$x.in, bh_data_k$x.new[1:(seqN * (i - 1))]), 
-        N = seqN + seqN * (i - 1), models, sigmasq)
-    }
-  }
+# sequential designs
+PPH_seq = data.frame()
+for(j in 1:numSims){
+  # sequence of PPHs for each design
+  PPH_seq.bh = getPPHseq(boxhill_sims[[j]], models, Nttl, fT, sigmasq)
+  PPH_seq.sm = getPPHseq(seqmed_sims[[j]], models, Nttl, fT, sigmasq) 
+  # master data frame
+  PPH_seq.bh$type = "boxhill"
+  PPH_seq.sm$type = "seqmed"
+  PPH_seq.tmp = rbind(PPH_seq.bh, PPH_seq.sm)
+  PPH_seq.tmp$sim = j
+  PPH_seq = rbind(PPH_seq, PPH_seq.tmp)
 }
-epphs_bh = apply(pphs_bh, c(1,2), mean)
 
-# plot 1
-ggdata0 = data.table(
-  x = 1:numSeq, 
-  Dlinear = rep(epphs_dopt1[1], numSeq), 
-  Dquadratic = rep(epphs_dopt2[1], numSeq), 
-  SpaceFilling = rep(epphs_space[1], numSeq), 
-  SeqMED = epphs_seqmed[ 1, ], 
-  BoxHill = epphs_bh[ 1, ], 
-  Hypothesis = rep("H0", numSeq)
-)
-ggdata1 = data.table(
-  x = 1:numSeq, 
-  Dlinear = rep(epphs_dopt1[2], numSeq), 
-  Dquadratic = rep(epphs_dopt2[2], numSeq), 
-  SpaceFilling = rep(epphs_space[2], numSeq), 
-  SeqMED = epphs_seqmed[ 2, ], 
-  BoxHill = epphs_bh[ 2, ], 
-  Hypothesis = rep("H1", numSeq)
-)
-if(scenario == 1){
-  ggdata = rbind(ggdata0, ggdata1)
-} else{
-  ggdataT = data.table(
-    x = 1:numSeq, 
-    Dlinear = rep(epphs_dopt1[3], numSeq), 
-    Dquadratic = rep(epphs_dopt2[3], numSeq), 
-    SpaceFilling = rep(epphs_space[3], numSeq), 
-    SeqMED = epphs_seqmed[ 3, ], 
-    BoxHill = epphs_bh[ 3, ], 
-    Hypothesis = rep("HT", numSeq)
-  )
-  ggdata = rbind(ggdata0, ggdata1, ggdataT)
-}
-ggdata.melted = melt(ggdata, id = c("x", "Hypothesis"), value.name = "epph", 
-                     variable.name = "Design")
-epph.plt = ggplot(ggdata.melted, aes(x = x, y = epph, color = Design, linetype = Design)) +
-  facet_wrap(vars(Hypothesis)) + 
-  geom_path(size = 1) + 
-  scale_linetype_manual(values=c(rep("dashed", 3), rep("solid", 2))) + 
-  geom_point(data = ggdata.melted[ggdata.melted$x == numSeq, ], 
-             aes(x = x, y = epph), size = 2) + 
-  theme_bw() +#base_size = 20) + 
-  theme(panel.grid.minor = element_blank()) + 
-  labs(y = "", x = "Stages") + 
+PPHmean_seq = aggregate(
+  PPH_seq[, names(PPH_seq)[1:length(models)]], 
+  by = list(PPH_seq[, "type"], PPH_seq[, "index"]), 
+  FUN = function(x) mean(x, na.rm = TRUE))
+names(PPHmean_seq)[c(1, 2)] = c("type", "index")
+
+PPHmean_gg = rbind(PPHmean, PPHmean_seq)
+PPHmean_gg = melt(PPHmean_gg, id.vars = c("type", "index"), 
+                  measure.vars = paste0("H", 0:(length(models) - 1), sep = ""), 
+                  variable.name = "hypothesis")
+design_names = rev(c("seqmed", "boxhill", "doptl", "doptq", "grid"))
+PPHmean_gg$type = factor(PPHmean_gg$type, levels = design_names)
+PPHmean_gg = setorder(PPHmean_gg, cols = "type")
+PPHmean_gg2 = PPHmean_gg[PPHmean_gg$index == Nttl, ]
+PPHmean_gg2$type = factor(PPHmean_gg2$type, levels = design_names)
+PPHmean_gg2 = setorder(PPHmean_gg2, cols = "type")
+epph.plt = ggplot(PPHmean_gg, aes(x = index, y = value, color = type,
+                                   linetype = type, shape = type)) +
+  facet_wrap(~hypothesis) +
+  geom_path() +
+    scale_linetype_manual(values=c(rep("dashed", 3), rep("solid", 2))) +
+  geom_point(data = PPHmean_gg2, 
+             mapping = aes(x = index, y = value, color = type),
+             inherit.aes = FALSE) +
+  theme_bw() +
   ylim(0, 1)
-epph.plt
-
+plot(epph.plt)
 
 
 ################################################################################

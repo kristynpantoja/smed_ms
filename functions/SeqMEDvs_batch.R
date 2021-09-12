@@ -26,10 +26,10 @@ SeqMEDvs_batch = function(
   
   # posterior distributions of beta
   postbeta0 = getBetaPosterior(
-    y = inity, X = initD[ , indices0], model0$beta.mean, model0$beta.var, 
+    y = inity, X = initD[ , indices0, drop = FALSE], model0$beta.mean, model0$beta.var, 
     error.var)
   postbeta1 = getBetaPosterior(
-    y = inity, X = initD[ , indices1], model1$beta.mean, model1$beta.var, 
+    y = inity, X = initD[ , indices1, drop = FALSE], model1$beta.mean, model1$beta.var, 
     error.var)
   postvar0 = postbeta0$var
   postmean0 = postbeta0$mean

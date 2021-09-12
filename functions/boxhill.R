@@ -19,9 +19,9 @@ getBetaPosterior = function(
   # beta.var.inv = solve(beta.var)
   beta.var.inv = NA
   if(diagPrior == TRUE){
-    if(is.null(dim(X)) | (dim(X)[2] == 1)){
+    if(!("matrix" %in% class(X)) | (ncol(X) == 1)){ # univariate case, for lm
       beta.var.inv = (1 / beta.var)
-    } else{
+    } else{ # multivariate case, for lmvs
       beta.var.inv = diag(1 / diag(beta.var))
     }
   } else{

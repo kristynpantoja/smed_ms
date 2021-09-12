@@ -63,20 +63,6 @@ SeqMEDvs = function(
       xmin = xmin, xmax = xmax, k = k, p = p, alpha = alpha_seq[t], 
       batch.idx = batch.idx)
     
-    # Dt = SeqMEDvs_batch(
-    #   initD = D, inity = y, mean_beta_full = mean_beta_full, 
-    #   beta_true = beta_true, indices_true = indices_true, 
-    #   indices0 = indices0, indices1 = indices1, 
-    #   mean_beta0 = mean_beta0, mean_beta1 = mean_beta1, 
-    #   var_e = var_e, var_beta = var_beta, 
-    #   var_beta0 = var_beta0, var_beta1 = var_beta1,
-    #   N2 = N_seq[t], xmin = xmin, xmax = xmax, 
-    #   numCandidates = numCandidates, k = k, p = p, 
-    #   alpha = alpha_seq[t], buffer = buffer_seq[t], candidates,
-    #   wasserstein0 = wasserstein0, genCandidates = genCandidates, 
-    #   dimX = dimX)
-    
-    # yt = as.vector(simulateYvs(Dt$addD[ , indices_true, drop = FALSE], N_seq[t], beta_true, sigmasq, 1, seed = seed))
     yt = simulateY_frommultivarfunction(
       x = Dt$addD[, true.indices, drop = FALSE], true.function = true.function, 
       error.var = error.var)

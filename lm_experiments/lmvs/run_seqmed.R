@@ -110,8 +110,9 @@ seqmed_list = foreach(i = 1:numSims) %dorng% {
   print(paste0("starting simulation ", i, " out of ", numSims))
   initD = matrix(runif(
     n = dimX * Nin, min = xmin, max = xmax), nrow = Nin, ncol = dimX)
-  inity = as.vector(simulateYvs(
-    initD[ , indicesT], Nin, betaT, sigmasq, 1, seed = seed))
+  inity = simulateY_frommultivarfunction(
+    x = initD[, indicesT, drop = FALSE], true.function = fT, 
+    error.var = sigmasq)
   SeqMEDvs(
     y.in = inity, x.in = initD, model0 = model0, model1 = model1, 
     error.var = sigmasq, candidates = candidates, true.function = fT, 

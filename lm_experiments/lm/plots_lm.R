@@ -191,7 +191,7 @@ plt3 = ggplot(ggdata2) +
 ################################################################################
 # plot the posterior probabilities of the hypotheses
 ################################################################################
-source(paste(functions_dir, "/postprob_hypotheses.R", sep = ""))
+# source(paste(functions_dir, "/postprob_hypotheses.R", sep = ""))
 library(data.table)
 
 # if(scenario == 1){
@@ -405,13 +405,12 @@ if(scenario == 1){
 }
 
 getPPH = function(
-  design, models, true.function, error.var, initial.data = TRUE, seed = NULL
+  design, models, true.function, error.var, initial.data = FALSE, seed = NULL
 ){
   if(!is.null(seed)) set.seed(seed)
   if(initial.data){
     x = c(design$x.in, design$x.new)
-    y = sapply(x, FUN = function(x) simulateY_fromfunction(
-      x = x, true.function = true.function, error.var = error.var))
+    y = c(design$y.in, design$y.new)
   } else{
     x = design$x
     y = design$y
@@ -435,14 +434,29 @@ getPPH = function(
 }
 
 getPPHseq = function(
-  design, models, n, true.function, error.var, randomize.order = FALSE, 
-  seed = NULL
+  design, models, n, true.function, error.var, initial.data = TRUE, 
+  randomize.order = FALSE, seed = NULL
 ){
   if(!is.null(seed)) set.seed(seed)
-  x = c(design$x.in, design$x.new)
-  y = sapply(x, FUN = function(x) simulateY_fromfunction(
-    x = x, true.function = true.function, error.var = error.var))
+  if(initial.data){
+    x.new = design$x.new
+    if(randomize.order){
+      new.order = sample(1:n, n, replace = FALSE)
+      x.new = x.new[new.order]
+    }
+    x = c(design$x.in, x.new)
+    y = c(design$y.in, design$y.new)
+  } else{
+    x = design$x
+    y = design$y
+    if(randomize.order){
+      new.order = sample(1:n, n, replace = FALSE)
+      x = x[new.order]
+      y = y[new.order]
+    }
+  }
   
+  # calculate posterior probabilities of hypothesized models
   PPH_mat = matrix(NA, nrow = n, ncol = length(models))
   for(i in 1:n){
     x.tmp = x[1:i]
@@ -472,11 +486,11 @@ PPH_df = data.frame()
 for(j in 1:numSims){
   # sequence of PPHs for each design
   PPH_grid = getPPH(
-    grid_sims[[j]], models, true.function, sigmasq, FALSE)
+    grid_sims[[j]], models, true.function, sigmasq)
   PPH_doptl = getPPH(
-    doptlin_sims[[j]], models, true.function, sigmasq, FALSE)
+    doptlin_sims[[j]], models, true.function, sigmasq)
   PPH_doptq = getPPH(
-    doptquad_sims[[j]], models, true.function, sigmasq, FALSE)
+    doptquad_sims[[j]], models, true.function, sigmasq)
   # master data frame
   PPH_grid$type = "grid"
   PPH_doptl$type = "doptl"
@@ -489,7 +503,7 @@ PPHmean = aggregate(
   PPH_df[, names(PPH_df)[1:length(models)]], 
   by = list(PPH_df[, "type"]), FUN = function(x) mean(x, na.rm = TRUE))
 names(PPHmean)[1] = "type"
-PPHmean$index = 100
+PPHmean$index = Nttl
 # but we want a line, so allow interpolation by setting PPHmean$index = 0 too
 PPHmean2 = PPHmean
 PPHmean2$index = 0

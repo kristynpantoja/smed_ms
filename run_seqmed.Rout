@@ -71,7 +71,7 @@ Type 'q()' to quit R.
 > 
 > # simulations settings
 > numSims = 100
-> Nin = 5 #1, 5
+> Nin = 1 #1, 5
 > numSeq = 27
 > seqN = 1
 > Nnew = numSeq * seqN
@@ -251,5 +251,5 @@ Type 'q()' to quit R.
 > 
 > 
 > proc.time()
-   user  system elapsed 
- 45.232   1.171 389.644 
+    user   system  elapsed 
+ 161.149    2.602 1395.124 

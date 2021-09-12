@@ -61,16 +61,16 @@ dimX = 3
 numCandidates = 5000
 x_seq = seq(from = xmin, to = xmax, length.out = floor((numCandidates)^(1 / 3)))
 candidates = as.matrix(expand.grid(x_seq, x_seq, x_seq))
-sigmasq = 0.3
+sigmasq = 0.1 # 0.3
 
 # hypothesis settings
 type01 = c(2, 3)
-mu_full = c(0.5, 0.5, 0.5) #
-indices0 = c(1, 2) #
+mu_full = c(0.5, 0.5, 0.5)
+indices0 = c(1, 2)
 indices1 = 1:length(mu_full)
 mu0 = rep(0, length(indices0))
 mu1 = rep(0, length(indices1))
-sigmasq01 = 0.5
+sigmasq01 = 0.25 # 0.5
 V0 = diag(rep(sigmasq01,length(mu0)))
 V1 = diag(rep(sigmasq01,length(mu1)))
 model0 = list(
@@ -117,9 +117,7 @@ seqmed_sims = readRDS(paste0(
 ################################################################################
 
 # random design
-set.seed(12345)
-# x_random = matrix(runif(n = dimX * Nnew, min = xmin, max = xmax), 
-#                   nrow = Nnew, ncol = dimX)
+# see sims
 
 # doptimal design
 dopt_pts = as.matrix(expand.grid(c(-1, 1), c(-1, 1), c(-1, 1)))
@@ -141,8 +139,6 @@ fact_sims = list()
 for(i in 1:numSims){
   x.in.tmp = matrix(runif(
     n = dimX * Nin, min = xmin, max = xmax), nrow = Nin, ncol = dimX)
-  # y.in.tmp = as.vector(simulateYvs(
-  #   x.in.tmp[ , indicesT], Nin, betaT, sigmasq, 1, seed = seed))
   y.in.tmp = simulateY_frommultivarfunction(
     x = x.in.tmp[, indicesT, drop = FALSE], true.function = fT, 
     error.var = sigmasq)
@@ -152,8 +148,6 @@ for(i in 1:numSims){
   random_sims[[i]] = list(
     x.in = x.in.tmp, y.in = y.in.tmp,
     x.new = x_random.tmp,
-    # y.new = as.vector(simulateYvs(
-    #   x_random.tmp[ , indicesT], Nnew, betaT, sigmasq, 1, seed = seed))
     y.new = as.vector(simulateY_frommultivarfunction(
       x = x_random.tmp[, indicesT, drop = FALSE], true.function = fT, 
       error.var = sigmasq))
@@ -161,8 +155,6 @@ for(i in 1:numSims){
   dopt_sims[[i]] = list(
     x.in = x.in.tmp, y.in = y.in.tmp,
     x.new = x_doptimal,
-    # y.new = as.vector(simulateYvs(
-    #   x_doptimal[ , indicesT], Nnew, betaT, sigmasq, 1, seed = seed))
     y.new = as.vector(simulateY_frommultivarfunction(
       x = x_doptimal[, indicesT, drop = FALSE], true.function = fT, 
       error.var = sigmasq))
@@ -170,8 +162,6 @@ for(i in 1:numSims){
   fact_sims[[i]] = list(
     x.in = x.in.tmp, y.in = y.in.tmp,
     x.new = x_factorial,
-    # y.new = as.vector(simulateYvs(
-    #   x_factorial[ , indicesT], Nnew, betaT, sigmasq, 1, seed = seed))
     y.new = as.vector(simulateY_frommultivarfunction(
       x = x_factorial[, indicesT, drop = FALSE], true.function = fT, 
       error.var = sigmasq))
@@ -210,14 +200,6 @@ if(name_of_design_to_plot == "seqmed"){
   design.tmp = fa
 }
 
-# # fix this later
-# x_random = rbind(sm$x.in, x_random)
-# y_random = c(ra$y.in, y_random)
-# x_doptimal = rbind(sm$x.in, x_doptimal)
-# y_doptimal = c(sm$y.in, y_doptimal)
-# x_factorial = rbind(sm$x.in, x_factorial)
-# y_factorial = c(sm$y.in, y_factorial)
-
 maxcounts = rep(NA, length(mu_full))
 for(i in 1:length(mu_full)){
   marginal = i
@@ -245,66 +227,7 @@ ggplot(marginals.tall, aes(x = value)) +
 ################################################################################
 # plot the posterior probabilities of the hypotheses
 ################################################################################
-# source(paste(functions_dir, "/postprob_hypotheses.R", sep = ""))
 library(data.table)
-
-# models = list("H0" = list(mu0, V0, NULL, indices0),
-#               "H1" = list(mu1, V1, NULL, indices1))
-# #EPPHs for other designs
-# EPPHs_rand = calcEPPH(c(rando), Nttl, betaT, NULL, models, sigmasq, numSims, indicesT, seed = 123)
-# EPPHs_dopt = calcEPPH(x_doptimal, Nttl, betaT, NULL, models, sigmasq, numSims, indicesT, seed = 123)
-# EPPHs_fact = calcEPPH(x_factorial, Nttl, betaT, NULL, models, sigmasq, numSims, indicesT, seed = 123)
-# #EPPHs for smmed
-# EPPHs_smmed = calcEPPHseqdata(
-#   c(sm$y.in, sm$y.new), rbind(sm$x.in, sm$x.new), models, sigmasq, Nin, numSeq, 
-#   seqN)
-# #EPPHs for smmed sims
-# idxlast = numSeq + 1
-# EPPH0_smmedsims = matrix(NA, idxlast, numSims)
-# EPPH1_smmedsims = matrix(NA, idxlast, numSims)
-# for(i in 1:numSims){
-#   simH0.numSimstemp = seqmeds[[i]]
-#   EPPH_temp = calcEPPHseqdata(
-#     c(simH0.numSimstemp$y.in, simH0.numSimstemp$y.new), 
-#     rbind(simH0.numSimstemp$x.in, simH0.numSimstemp$x.new), 
-#     models, sigmasq, Nin, numSeq, seqN)
-#   EPPH0_smmedsims[ , i] = EPPH_temp[1 , ]
-#   EPPH1_smmedsims[ , i] = EPPH_temp[2 , ]
-# }
-# EPPH0_smmedsims_mean = apply(EPPH0_smmedsims, 1, mean)
-# EPPH1_smmedsims_mean = apply(EPPH1_smmedsims, 1, mean)
-# EPPH0_smmedsims_med = apply(EPPH0_smmedsims, 1, median)
-# EPPH1_smmedsims_med = apply(EPPH1_smmedsims, 1, median)
-# 
-# ggdata0 = data.table(
-#   x = 1:idxlast, 
-#   Random = rep(EPPHs_rand[1], idxlast), 
-#   DOptimal = rep(EPPHs_dopt[1], idxlast), 
-#   Factorial3 = rep(EPPHs_fact[1], idxlast), 
-#   SeqMED = EPPH0_smmedsims_mean, 
-#   Hypothesis = rep("H0", idxlast)
-# )
-# ggdata1 = data.table(
-#   x = 1:idxlast, 
-#   Random = rep(EPPHs_rand[2], idxlast), 
-#   DOptimal = rep(EPPHs_dopt[2], idxlast), 
-#   Factorial3 = rep(EPPHs_fact[2], idxlast), 
-#   SeqMED = EPPH1_smmedsims_mean, 
-#   Hypothesis = rep("H1", idxlast)
-# )
-# ggdata = rbind(ggdata0, ggdata1)
-# ggdata.melted = melt(ggdata, id = c("x", "Hypothesis"), value.name = "epph", 
-#                      variable.name = "Design")
-# plt = ggplot(ggdata.melted, aes(x = x, y = epph, color = Design, linetype = Design)) +
-#   facet_wrap(vars(Hypothesis)) + 
-#   geom_path() + 
-#   scale_linetype_manual(values=c(rep("dashed", 3), "solid")) + 
-#   geom_point(data = ggdata.melted[ggdata.melted$x == 10, ], 
-#              aes(x = x, y = epph)) + 
-#   theme_bw() + 
-#   theme(panel.grid.minor = element_blank()) + 
-#   labs(y = "", x = "Stages")
-# plt
 
 models = list(model0, model1)
 

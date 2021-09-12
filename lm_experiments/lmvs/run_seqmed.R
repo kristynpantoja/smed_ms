@@ -52,7 +52,7 @@ registerDoRNG(rng.seed)
 
 # simulations settings
 numSims = 100
-Nin = 5
+Nin = 5#5
 numSeq = 27
 seqN = 1
 Nnew = numSeq * seqN
@@ -63,7 +63,7 @@ dimX = 3
 numCandidates = 5000
 x_seq = seq(from = xmin, to = xmax, length.out = floor((numCandidates)^(1 / 3)))
 candidates = as.matrix(expand.grid(x_seq, x_seq, x_seq))
-sigmasq = 0.3
+sigmasq = 0.1 # 0.3
 
 # hypothesis settings
 type01 = c(2, 3)
@@ -72,7 +72,7 @@ indices0 = c(1, 2) #
 indices1 = 1:length(mu_full)
 mu0 = rep(0, length(indices0))
 mu1 = rep(0, length(indices1))
-sigmasq01 = 0.5
+sigmasq01 = 0.25 # 0.5
 V0 = diag(rep(sigmasq01,length(mu0)))
 V1 = diag(rep(sigmasq01,length(mu1)))
 model0 = list(

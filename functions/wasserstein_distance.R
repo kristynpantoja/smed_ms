@@ -68,8 +68,7 @@ WNlm_old = function(
 # multidimensional, for variable selection
 # formerly named Wasserstein_vs
 WNlmvs = function(
-  x, model0, model1, postmean0, postmean1, postvar0, postvar1, error.var, 
-  dim = 1
+  x, model0, model1, postmean0, postmean1, postvar0, postvar1, error.var
 ){
   x = t(as.matrix(x))
   

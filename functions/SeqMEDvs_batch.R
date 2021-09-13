@@ -18,25 +18,26 @@ SeqMEDvs_batch = function(
   true.function, true.indices, dimX, xmin = -1, xmax = 1, k = 4, p = 1, 
   alpha = 1, batch.idx
 ){
-  initN = dim(initD)[1]
+  initN = nrow(initD)
   if(length(inity) != initN) stop("length of inity does not match length of initial input data, initD")
-  
-  # check if any points in initD give Wasserstein distance of 0 (in which case we don't want to use it since 1/0 in q)
-  old_initD = initD
   
   # posterior distributions of beta
   postbeta0 = getBetaPosterior(
-    y = inity, X = initD[ , indices0, drop = FALSE], model0$beta.mean, model0$beta.var, 
-    error.var)
+    y = inity, X = initD[ , indices0, drop = FALSE], 
+    beta.mean = model0$beta.mean, beta.var = model0$beta.var, 
+    error.var = error.var)
   postbeta1 = getBetaPosterior(
-    y = inity, X = initD[ , indices1, drop = FALSE], model1$beta.mean, model1$beta.var, 
-    error.var)
+    y = inity, X = initD[ , indices1, drop = FALSE], 
+    beta.mean = model1$beta.mean, beta.var = model1$beta.var, 
+    error.var = error.var)
   postvar0 = postbeta0$var
   postmean0 = postbeta0$mean
   postvar1 = postbeta1$var
   postmean1 = postbeta1$mean
   
-  # do something about bad initial data points that will make the TPE explode
+  # check if any points in initD give Wasserstein distance of 0
+  #   if there are any such points, remove them so that TPE does not explode
+  #   (since 1/0 in q)
   w_initD = apply(initD, 1, FUN = function(x) WNlmvs(
       x, model0, model1, postmean0, postmean1, postvar0, postvar1, error.var))
   if(length(which(w_initD == 0)) != 0){
@@ -56,42 +57,42 @@ SeqMEDvs_batch = function(
     postmean1 = postbeta1$mean
   }
   
+  # collect first new point in the stage
   D = matrix(rep(NA, N2 * dimX), N2, dimX)
   if(batch.idx == 1){
-    # -- Initialize 1st additional design point-- #
-    w_cand = apply(candidates, 1, FUN = function(x) WNlmvs(
+    w_candidates = apply(candidates, 1, FUN = function(x) WNlmvs(
       x, model0, model1, postmean0, postmean1, postvar0, postvar1, error.var))
-    xinitind = which.max(w_cand)
-    xmaxW = candidates[xinitind, , drop = FALSE]
+    which_opt_w = which.max(w_candidates)
+    x_opt_w = candidates[which_opt_w, , drop = FALSE]
     is_x_max_in_initD = any(apply(
-      initD, 1, function(x, want) isTRUE(all.equal(x, want)), xmaxW))
+      initD, 1, function(x) 
+        isTRUE(all.equal(unname(x), unname(as.numeric(x_opt_w))))))
   } else{
     is_x_max_in_initD = TRUE
   }
-  # Find f_opt: minimum of f_min
-  f_min_candidates = apply(candidates, 1, function(x) f_min_vs(
-    x, initD, model0, model1, postmean0, postmean1, postvar0, postvar1, 
-    error.var, p, k, alpha)) 
-  f_opt = which.min(f_min_candidates)
   # Update set of design points (D) and plot new point
   if(is_x_max_in_initD){
-    xnew = candidates[f_opt, , drop = FALSE]
-    # Update set of design points (D) and plot new point
-    D[1, ] = xnew
+    # Find minimizer of f_min
+    f_min_candidates = apply(candidates, 1, function(x) f_min_vs(
+      x, initD, model0, model1, postmean0, postmean1, postvar0, postvar1, 
+      error.var, p, k, alpha)) 
+    which_opt_f = which.min(f_min_candidates)
+    x_opt_f = candidates[which_opt_f, , drop = FALSE]
+    D[1, ] = x_opt_f
   } else{
-    D[1, ] = xmaxW
+    D[1, ] = x_opt_w
   }
   
   if(N2 > 1){
     for(i in 2:N2){
-      # Find f_opt: minimum of f_min 
+      # Find minimizer of f_min
       f_min_candidates = apply(candidates, 1, function(x) f_min_vs(
         x, rbind(initD, D[1:(i - 1), , drop = FALSE]), model0, model1, 
         postmean0, postmean1, postvar0, postvar1, error.var, p, k, alpha))
-      f_opt = which.min(f_min_candidates)
-      xnew = candidates[f_opt, , drop = FALSE]
+      which_opt_f = which.min(f_min_candidates)
+      x_opt_f = candidates[which_opt_f, , drop = FALSE]
       # Update set of design points (D) and plot new point
-      D[i, ] = xnew
+      D[i, ] = x_opt_f
     }
   }
   

@@ -19,9 +19,10 @@ getBetaPosterior = function(
   # beta.var.inv = solve(beta.var)
   beta.var.inv = NA
   if(diagPrior == TRUE){
-    if(!("matrix" %in% class(X)) | (ncol(X) == 1)){ # univariate case, for lm
+    if(!("matrix" %in% class(X)) | (ncol(X) == 1)){ # univariate
       beta.var.inv = (1 / beta.var)
-    } else{ # multivariate case, for lmvs
+    } else{ # multivariate case, 
+      #         e.g. lm with more than 1 parameter, or lmvs with dim > 1
       beta.var.inv = diag(1 / diag(beta.var))
     }
   } else{
@@ -29,8 +30,7 @@ getBetaPosterior = function(
   }
   postvar = error.var * solve(crossprod(X) + error.var * beta.var.inv)
   postmean = (1 / error.var) * 
-    postvar %*% (t(X) %*% y + error.var * 
-                   solve(beta.var, beta.mean))
+    postvar %*% (t(X) %*% y + error.var * solve(beta.var, beta.mean))
   return(list(
     mean = postmean, 
     var = postvar))

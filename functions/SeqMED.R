@@ -53,10 +53,6 @@ SeqMED = function(
     y = y.cur, X = model1$designMat(x.cur), model1$beta.mean, model1$beta.var, 
     error.var)
   
-  # postvar0.cur = postvar(x.cur, length(x.cur), error.var, beta.var0, type[1])
-  # postmean0.cur = postmean(y.cur, x.cur, length(x.cur), beta.mean0, beta.var0, error.var, type[1])
-  # postvar1.cur = postvar(x.cur, length(x.cur), error.var, beta.var1, type[2])
-  # postmean1.cur = postmean(y.cur, x.cur, length(x.cur), beta.mean1, beta.var1, error.var, type[2])
   postvar0.cur = postbeta0$var
   postmean0.cur = postbeta0$mean
   postvar1.cur = postbeta1$var

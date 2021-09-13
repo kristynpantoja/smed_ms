@@ -50,7 +50,7 @@ gg_color_hue = function(n) {
 
 # simulations settings
 numSims = 100
-Nin = 5
+Nin = 1 # 1, 5
 numSeq = 27
 seqN = 1
 Nnew = numSeq * seqN
@@ -70,7 +70,7 @@ indices0 = c(1, 2)
 indices1 = 1:length(mu_full)
 mu0 = rep(0, length(indices0))
 mu1 = rep(0, length(indices1))
-sigmasq01 = 0.25 # 0.5
+sigmasq01 = 0.25 # 0.25 - cannot distinguish dopt and 3fact when Nin = 5
 V0 = diag(rep(sigmasq01,length(mu0)))
 V1 = diag(rep(sigmasq01,length(mu1)))
 model0 = list(
@@ -239,6 +239,8 @@ Evidence_lmvs = function(
   model, 
   error.var
 ){
+  # make sure y is a vector
+  if("matrix" %in% class(y)) y = as.vector(y)
   # get mean and variance of marginal density of y, which is n-dim multivariate normal pdf
   marg = getLMMarginal(
     x[, model$indices, drop = FALSE], model$beta.mean, model$beta.var, 

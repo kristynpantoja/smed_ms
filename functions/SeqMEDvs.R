@@ -21,47 +21,35 @@ SeqMEDvs = function(
   
   x.cur = x.in
   y.cur = y.in
-  x.new = c()
+  x.new = matrix(NA, nrow = 0, ncol = dimX)
   y.new = c()
   
-  # get posterior distributions of beta
-  postbeta0 = getBetaPosterior(
-    y = y.cur, X = x.cur[, model0$indices, drop = FALSE], model0$beta.mean, 
-    model0$beta.var, error.var)
-  postbeta1 = getBetaPosterior(
-    y = y.cur, X = x.cur[, model1$indices, drop = FALSE], model1$beta.mean, 
-    model1$beta.var, error.var)
-  postvar0.cur = postbeta0$var
-  postmean0.cur = postbeta0$mean
-  postvar1.cur = postbeta1$var
-  postmean1.cur = postbeta1$mean
-  
-  # save updated posterior at each step
-  postvar0 = matrix(diag(postvar0.cur), length(model0$beta.mean), numSeq)
-  postmean0 = matrix(postmean0.cur, length(model0$beta.mean), numSeq)
-  postvar1 = matrix(diag(postvar1.cur), length(model1$beta.mean), numSeq)
-  postmean1 = matrix(postmean1.cur, length(model1$beta.mean), numSeq)
-  
   if(numSeq == 1){
+    # get posterior distributions of beta
+    postbeta0 = getBetaPosterior(
+      y = y.cur, X = x.cur[, model0$indices, drop = FALSE], model0$beta.mean, 
+      model0$beta.var, error.var)
+    postbeta1 = getBetaPosterior(
+      y = y.cur, X = x.cur[, model1$indices, drop = FALSE], model1$beta.mean, 
+      model1$beta.var, error.var)
+    
     return(list(
       x.in = x.in, 
       y.in = y.in, 
       x.new = x.new,
       y.new = y.new,
-      postvar0 = postvar0, postmean0 = postmean0, 
-      postvar1 = postvar1, postmean1 = postmean1))
+      postvar0 = diag(postbeta0$var), postmean0 = postbeta0$mean, 
+      postvar1 = diag(postbeta1$var), postmean1 = postbeta1$mean))
   }
   
   for(t in 1:numSeq){
-    batch.idx = t
-    
     Dt = SeqMEDvs_batch(
       initD = x.cur, inity = y.cur, model0 = model0, model1 = model1, 
       error.var = error.var, N2 = seqN[t], 
       candidates = candidates, true.function = true.function, 
       true.indices = true.indices, dimX = dimX, 
       xmin = xmin, xmax = xmax, k = k, p = p, alpha = alpha_seq[t], 
-      batch.idx = batch.idx)
+      batch.idx = t)
     
     yt = simulateY_frommultivarfunction(
       x = Dt$addD[, true.indices, drop = FALSE], true.function = true.function, 
@@ -73,29 +61,28 @@ SeqMEDvs = function(
     x.new = rbind(x.new, Dt$addD)
     y.new = c(y.new, yt)
     
-    # also save posterior means and variances
-    postbeta0 = getBetaPosterior(
-      y = y.cur, X = x.cur[, model0$indices, drop = FALSE], model0$beta.mean, 
-      model0$beta.var, error.var)
-    postbeta1 = getBetaPosterior(
-      y = y.cur, X = x.cur[, model1$indices, drop = FALSE], model1$beta.mean, 
-      model1$beta.var, error.var)
-    postvar0 = diag(postbeta0$var)
-    postmean0 = postbeta0$mean
-    postvar1 = diag(postbeta1$var)
-    postmean1 = postbeta1$mean
-    
     if(prints){
       print(paste("finished ", t, " out of ", numSeq, " steps", sep = ""))
     }
   }
+  
+  # get updated posterior distributions of beta
+  #   here, x.cur is rbind(x.in, x.new) & y.cur = c(x.in, y.new)
+  #   i.e. the cumulative design
+  postbeta0 = getBetaPosterior(
+    y = y.cur, X = x.cur[, model0$indices, drop = FALSE], model0$beta.mean, 
+    model0$beta.var, error.var)
+  postbeta1 = getBetaPosterior(
+    y = y.cur, X = x.cur[, model1$indices, drop = FALSE], model1$beta.mean, 
+    model1$beta.var, error.var)
+  
   return(list(
     x.in = x.in, 
     y.in = y.in, 
     x.new = x.new,
     y.new = y.new,
-    postvar0 = postvar0, postmean0 = postmean0, 
-    postvar1 = postvar1, postmean1 = postmean1))
+    postvar0 = diag(postbeta0$var), postmean0 = postbeta0$mean, 
+    postvar1 = diag(postbeta1$var), postmean1 = postbeta1$mean))
 }
 
 

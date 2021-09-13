@@ -23,9 +23,6 @@ SeqMED_newq_batch = function(
   initN = length(initD)
   if(length(y) != initN) stop("length of y does not match length of initial input data, initD")
   
-  # check if any points in initD give Wasserstein distance of 0 (in which case we don't want to use it since 1/0 in q)
-  old_initD = initD
-  
   # posterior distributions of beta
   postbeta0 = getBetaPosterior(
     y = y, X = model0$designMat(initD), model0$beta.mean, model0$beta.var, 
@@ -38,9 +35,11 @@ SeqMED_newq_batch = function(
   postvar1 = postbeta1$var
   postmean1 = postbeta1$mean
   
+  # check if any points in initD give Wasserstein distance of 0
+  #   if there are any such points, remove them so that TPE does not explode
+  #   (since 1/0 in q)
   w_initD = sapply(initD, FUN = function(x) WNlm(
     x, postmean0, postmean1, postvar0, postvar1, model0, model1, error.var))
-  # take out the values with wasserstein distance equal to 0
   if(length(which(w_initD == 0)) != 0){
     initD = initD[-which(w_initD == 0)]
     y = y[-which(w_initD == 0)]
@@ -58,42 +57,45 @@ SeqMED_newq_batch = function(
     postmean1 = postbeta1$mean
   }
   
-  # -- Generate Candidate Points -- #
+  # generate candidate points, if necessary
   if(is.null(candidates)){
-    if(genCandidates == 1) candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
-    if(genCandidates == 2) candidates = sort(runif(numCandidates, min = xmin, max = xmax))
+    if(genCandidates == 1){
+      candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
+    } else if(genCandidates == 2){
+      candidates = sort(runif(numCandidates, min = xmin, max = xmax))
+    }
   }
   
+  # collect first new point in the stage
   D = rep(NA, N2)
   if(batch.idx == 1){
-    # -- Initialize 1st additional design point-- #
     w_candidates = sapply(candidates, function(x) WNlm(
       x, postmean0, postmean1, postvar0, postvar1, model0, model1, error.var))
-    w_opt = which.max(w_candidates)
-    xopt = candidates[w_opt]
-    is_x_max_in_initD = any(sapply(initD, function(x) x == xopt))
+    which_opt_w = which.max(w_candidates)
+    x_opt_w = candidates[which_opt_w]
+    is_x_max_in_initD = any(sapply(initD, function(x) x == x_opt_w))
   } else{
     is_x_max_in_initD = TRUE
   }
+  # Update set of design points (D) and plot new point
   if(is_x_max_in_initD){
-    # Find f_opt: minimum of f_min
+    # Find minimizer of f_min
     f_min_candidates = sapply(
       candidates, 
       function(x) objective_newq_seqmed(
         x, initD, 
         postmean0, postmean1, postvar0, postvar1, model0, model1, error.var, 
         p, k, alpha))
-    f_opt = which.min(f_min_candidates)
-    xnew = candidates[f_opt]
-    # Update set of design points (D) and plot new point
-    D[1] = xnew
+    which_opt_f = which.min(f_min_candidates)
+    x_opt_f = candidates[which_opt_f]
+    D[1] = x_opt_f
   } else{
-    D[1] = xopt
+    D[1] = x_opt_w
   }
   
   if(N2 > 1){
     for(i in 2:N2){
-      # Find f_opt: minimum of f_min
+      # Find minimizer of f_min
       f_min_candidates = sapply(
         candidates, 
         function(x) objective_newq_seqmed(
@@ -101,19 +103,17 @@ SeqMED_newq_batch = function(
           postmean0, postmean1, postvar0, postvar1, model0, model1, error.var, 
           p, k, alpha
         ))
-      f_opt = which.min(f_min_candidates)
-      xnew = candidates[f_opt]
+      which_opt_f = which.min(f_min_candidates)
+      x_opt_f = candidates[which_opt_f]
       # Update set of design points (D) and plot new point
-      D[i] = xnew
+      D[i] = x_opt_f
     }
   }
   
-  return(list(
-    "initD" = old_initD, 
-    "addD" = D, 
-    "updatedD" = c(old_initD, D)
-  ))
+  return(list("initD" = initD, "addD" = D, "updatedD" = c(initD, D)))
 }
+
+###
 
 # objective function
 objective_keepq_seqmed = function(
@@ -138,18 +138,17 @@ SeqMED_keepq_batch = function(
   initN = length(initD)
   if(length(y) != initN) stop("length of y does not match length of initial input data, initD")
   
-  # check if any points in initD give Wasserstein distance of 0 (in which case we don't want to use it since 1/0 in q)
-  old_initD = initD
-  
   # posterior distributions of beta
   postvar0 = postvar(initD, initN, error.var, model0$beta.var, type[1])
   postmean0 = postmean(y, initD, initN, model0$beta.mean, model0$beta.var, error.var, type[1])
   postvar1 = postvar(initD, initN, error.var, model1$beta.var, type[2])
   postmean1 = postmean(y, initD, initN, model1$beta.mean, model1$beta.var, error.var, type[2])
   
+  # check if any points in initD give Wasserstein distance of 0
+  #   if there are any such points, remove them so that TPE does not explode
+  #   (since 1/0 in q)
   w_initD = sapply(initD, FUN = function(x) WNlm(
     x, postmean0, postmean1, postvar0, postvar1, error.var, type))
-  # take out the values with wasserstein distance equal to 0
   if(length(which(w_initD == 0)) != 0){
     initD = initD[-which(w_initD == 0)]
     y = y[-which(w_initD == 0)]
@@ -167,44 +166,43 @@ SeqMED_keepq_batch = function(
     postmean1 = postbeta1$mean
   }
   
-  # -- Generate Candidate Points -- #
+  # generate candidate points, if necessary
   if(is.null(candidates)){
     if(genCandidates == 1) candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
     if(genCandidates == 2) candidates = sort(runif(numCandidates, min = xmin, max = xmax))
   }
   
+  # collect first new point in the stage
   D = rep(NA, N2)
   if(batch.idx == 1){
-    # -- Initialize 1st additional design point-- #
     w_candidates = sapply(candidates, function(x) WNlm(
       x, postmean0, postmean1, postvar0, postvar1, error.var, type))
-    w_opt = which.max(w_candidates)
-    x_w_opt = candidates[w_opt]
-    is_x_max_in_initD = any(sapply(initD, function(x) x == x_w_opt))
+    which_opt_w = which.max(w_candidates)
+    x_opt_w = candidates[which_opt_w]
+    is_x_max_in_initD = any(sapply(initD, function(x) x == x_opt_w))
   } else{
     is_x_max_in_initD = TRUE
   }
-  # Find f_opt: minimum of f_min
+  # find minimizer of f_min
   f_min_candidates = lapply(
-    candidates, 
-    function(x) objective_keepq_seqmed_old(
-      x, initD, 
-      postmean0, postmean1, postvar0, postvar1, error.var, type, p, k, alpha, qs))
+    candidates, function(x) objective_keepq_seqmed_old(
+      x, initD, postmean0, postmean1, postvar0, postvar1, error.var, type, p, 
+      k, alpha, qs))
   f_min_candidates = do.call("rbind", f_min_candidates)
-  f_opt = which.min(f_min_candidates$objectives)
-  x_f_opt = candidates[f_opt]
+  which_opt_f = which.min(f_min_candidates$objectives)
+  x_opt_f = candidates[which_opt_f]
   # Update set of design points (D) and plot new point
   if(is_x_max_in_initD){
-    D[1] = x_f_opt
-    q.new = f_min_candidates$q.candidates[f_opt]
+    D[1] = x_opt_f
+    q.new = f_min_candidates$q.candidates[which_opt_f]
   } else{
-    D[1] = x_w_opt
-    q.new = f_min_candidates$q.candidates[w_opt]
+    D[1] = x_opt_w
+    q.new = f_min_candidates$q.candidates[which_opt_w]
   }
   
   if(N2 > 1){
     for(i in 2:N2){
-      # Find f_opt: minimum of f_min
+      # find minimizer of f_min
       f_min_candidates = lapply(
         candidates, 
         function(x) objective_keepq_seqmed_old(
@@ -212,20 +210,16 @@ SeqMED_keepq_batch = function(
           postmean0, postmean1, postvar0, postvar1, error.var, type, p, k, alpha, c(qs, q.new)
         ))
       f_min_candidates = do.call("rbind", f_min_candidates)
-      f_opt = which.min(f_min_candidates)
-      xnew = candidates[f_opt]
+      which_opt_f = which.min(f_min_candidates)
+      x_opt_f = candidates[which_opt_f]
       # Update set of design points, D
-      D[i] = xnew
-      q.new = c(q.new, f_min_candidates$q.candidates[f_opt])
+      D[i] = x_opt_f
+      q.new = c(q.new, f_min_candidates$q.candidates[which_opt_f])
     }
   }
   
   return(list(
-    "initD" = old_initD, 
-    "addD" = D, 
-    "updatedD" = c(old_initD, D),
-    "q.new" = q.new
-  ))
+    "initD" = initD, "addD" = D, "updatedD" = c(initD, D), "q.new" = q.new))
 }
 
 

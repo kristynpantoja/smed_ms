@@ -52,7 +52,7 @@ registerDoRNG(rng.seed)
 
 # simulations settings
 numSims = 100
-Nin = 1 #1, 5
+Nin = 5 #1, 5
 numSeq = 27
 seqN = 1
 Nnew = numSeq * seqN

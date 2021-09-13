@@ -18,7 +18,7 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 Type 'q()' to quit R.
 
 > ################################################################################
-> # last updated: 08/18/21
+> # last updated: 09/12/21
 > # purpose: to create a list of seqmed simulations
 > # dimT = 2:
 > #   dimensions (1, 2) vs dimensions (1, 2, 3)
@@ -71,7 +71,7 @@ Type 'q()' to quit R.
 > 
 > # simulations settings
 > numSims = 100
-> Nin = 1 #1, 5
+> Nin = 5 #1, 5
 > numSeq = 27
 > seqN = 1
 > Nnew = numSeq * seqN
@@ -252,4 +252,4 @@ Type 'q()' to quit R.
 > 
 > proc.time()
     user   system  elapsed 
- 161.149    2.602 1395.124 
+ 148.925    2.855 1316.817 

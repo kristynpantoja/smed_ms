@@ -1,5 +1,5 @@
 ################################################################################
-# last updated: 08/18/21
+# last updated: 09/12/21
 # purpose: to create a list of seqmed simulations
 # dimT = 2:
 #   dimensions (1, 2) vs dimensions (1, 2, 3)
@@ -200,15 +200,16 @@ if(name_of_design_to_plot == "seqmed"){
   design.tmp = fa
 }
 
-maxcounts = rep(NA, length(mu_full))
-for(i in 1:length(mu_full)){
-  marginal = i
-  h = hist(design.tmp$x.new[ , marginal], breaks = numBreaks, plot = FALSE)
-  maxcounts[i] = max(h$counts)
-}
+# maxcounts = rep(NA, length(mu_full))
+# for(i in 1:length(mu_full)){
+#   marginal = i
+#   h = hist(design.tmp$x.new[ , marginal], breaks = numBreaks, plot = FALSE)
+#   maxcounts[i] = max(h$counts)
+# }
 
-marginals = matrix(NA, nrow = length((Nin + 1):Nttl), ncol = 3)
-for(i in 1:(dim(marginals)[2])) {
+# plot marginals
+marginals = matrix(NA, nrow = Nnew, ncol = dimX)
+for(i in 1:ncol(marginals)) {
   marginals[, i] = design.tmp$x.new[ , i]
 }
 colnames(marginals) = paste("Variable", 1:3, sep = " ")
@@ -216,13 +217,34 @@ marginals = as.data.table(marginals)
 marginals.tall = melt(marginals, measure.vars = 1:3)
 ggplot(marginals.tall, aes(x = value)) + 
   facet_wrap(vars(variable)) +
-  geom_histogram(binwidth = 0.12, closed = "right", aes(y = after_stat(density))) + 
+  geom_histogram(binwidth = 0.12, closed = "right") + #, 
+                 # aes(y = after_stat(density))) + 
   theme_bw() + 
   theme(panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank()) + 
   labs(x = "x")
 
+# plot marginals 9 points at a time
+Nnew.tmp = 9
+marginals.tmp = matrix(
+  NA, nrow = Nnew.tmp, ncol = dimX)
+for(i in 1:ncol(marginals.tmp)) {
+  marginals.tmp[, i] = design.tmp$x.new[1:Nnew.tmp , i]
+}
+colnames(marginals.tmp) = paste("Variable", 1:3, sep = " ")
+marginals.tmp = as.data.table(marginals.tmp)
+marginals.tall.tmp = melt(marginals.tmp, measure.vars = 1:3)
+ggplot(marginals.tall.tmp, aes(x = value)) + 
+  facet_wrap(vars(variable)) +
+  geom_histogram(binwidth = 0.12, closed = "right") +
+  theme_bw() + 
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank()) + 
+  labs(x = "x")
 
+# 3d scatterplot?
+library(scatterplot3d)
+scatterplot3d(marginals)
 
 ################################################################################
 # plot the posterior probabilities of the hypotheses

@@ -63,7 +63,7 @@ dimX = 4
 numCandidates = 5000
 x_seq = seq(from = xmin, to = xmax, length.out = floor((numCandidates)^(1 / 4)))
 candidates = as.matrix(expand.grid(x_seq, x_seq, x_seq, x_seq))
-sigmasq = 0.1 # 0.3
+sigmasq = 0.3 # 0.3
 
 # hypothesis settings
 mu_full = rep(0.5, 3)
@@ -126,6 +126,7 @@ saveRDS(seqmed_list, paste0(
   "_numSeq", numSeq,
   "_seqN", seqN,
   "_seed", rng.seed,
+  "_noise", strsplit(as.character(sigmasq), split = "\\.")[[1]][2],
   ".rds"))
 
 

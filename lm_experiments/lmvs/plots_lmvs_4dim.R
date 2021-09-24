@@ -50,7 +50,7 @@ gg_color_hue = function(n) {
 
 # simulations settings
 numSims = 100
-Nin = 5 #1, 5
+Nin = 1 #1, 5
 numSeq = 27
 seqN = 1
 Nnew = numSeq * seqN
@@ -121,18 +121,25 @@ seqmed_sims = readRDS(paste0(
 # see sims
 
 # doptimal design
+# dopt_pts = as.matrix(expand.grid(c(-1, 1), c(-1, 1), c(-1, 1), c(-1, 1)))
+# dopt_pts = dopt_pts[sample(1:nrow(dopt_pts), replace = FALSE), ]
+# x_doptimal = matrix(NA, nrow = Nnew, ncol = dimX)
 dopt_pts = as.matrix(expand.grid(c(-1, 1), c(-1, 1), c(-1, 1)))
-dopt_pts = dopt_pts[sample(1:dim(dopt_pts)[1], replace = FALSE), ]
-x_doptimal = matrix(NA, nrow = Nnew, ncol = dimX)
+dopt_pts = dopt_pts[sample(1:nrow(dopt_pts), replace = FALSE), ]
+x_doptimal = matrix(NA, nrow = Nnew, ncol = 3)
 for(i in 0:(Nnew - 1)){
-  x_doptimal[ i + 1, ] = as.matrix(dopt_pts[ 1 + (i %% dim(dopt_pts)[1]), ])
+  x_doptimal[ i + 1, ] = t(as.matrix(dopt_pts[ 1 + (i %% nrow(dopt_pts)), ]))
 }
+# cbind uniformly chosen points as 4th col
 
 # 3 level factorial design
-factorial_pts = as.matrix(expand.grid(c(-1, 0, 1), c(-1, 0, 1), c(-1, 0, 1)))
-factorial_pts = factorial_pts[
-  sample(1:dim(factorial_pts)[1], replace = FALSE), ]
+# factorial_pts = as.matrix(expand.grid(
+#   c(-1, 0, 1), c(-1, 0, 1), c(-1, 0, 1), c(-1, 0, 1)))
+factorial_pts = as.matrix(expand.grid(
+  c(-1, 0, 1), c(-1, 0, 1), c(-1, 0, 1)))
+factorial_pts = factorial_pts[sample(1:nrow(factorial_pts), replace = FALSE), ]
 x_factorial = factorial_pts
+# cbind uniformly chosen points as 4th col
 
 random_sims = list()
 dopt_sims = list()
@@ -151,17 +158,23 @@ for(i in 1:numSims){
     y.new = as.vector(simulateY_frommultivarfunction(
       x = x_random.tmp, true.function = fT, error.var = sigmasq))
     )
+  # x_doptimal.tmp = cbind(
+  #   x_doptimal, runif(n = nrow(x_doptimal), min = xmin, max = xmax))
+  x_doptimal.tmp = cbind(x_doptimal, 0)
   dopt_sims[[i]] = list(
     x.in = x.in.tmp, y.in = y.in.tmp,
-    x.new = x_doptimal,
+    x.new = x_doptimal.tmp,
     y.new = as.vector(simulateY_frommultivarfunction(
-      x = x_doptimal, true.function = fT, error.var = sigmasq))
+      x = x_doptimal.tmp, true.function = fT, error.var = sigmasq))
     )
+  # x_factorial.tmp = cbind(
+  #   x_factorial, runif(n = nrow(x_factorial), min = xmin, max = xmax))
+  x_factorial.tmp = cbind(x_factorial, 0)
   fact_sims[[i]] = list(
     x.in = x.in.tmp, y.in = y.in.tmp,
-    x.new = x_factorial,
+    x.new = x_factorial.tmp,
     y.new = as.vector(simulateY_frommultivarfunction(
-      x = x_factorial, true.function = fT, error.var = sigmasq))
+      x = x_factorial.tmp, true.function = fT, error.var = sigmasq))
     )
 }
 
@@ -209,9 +222,9 @@ marginals = matrix(NA, nrow = Nnew, ncol = dimX)
 for(i in 1:ncol(marginals)) {
   marginals[, i] = design.tmp$x.new[ , i]
 }
-colnames(marginals) = paste("Variable", 1:3, sep = " ")
+colnames(marginals) = paste("Variable", 1:dimX, sep = " ")
 marginals = as.data.table(marginals)
-marginals.tall = melt(marginals, measure.vars = 1:3)
+marginals.tall = melt(marginals, measure.vars = 1:dimX)
 ggplot(marginals.tall, aes(x = value)) + 
   facet_wrap(vars(variable)) +
   geom_histogram(binwidth = 0.12, closed = "right") + #, 
@@ -228,9 +241,9 @@ marginals.tmp = matrix(
 for(i in 1:ncol(marginals.tmp)) {
   marginals.tmp[, i] = design.tmp$x.new[1:Nnew.tmp , i]
 }
-colnames(marginals.tmp) = paste("Variable", 1:3, sep = " ")
+colnames(marginals.tmp) = paste("Variable", 1:dimX, sep = " ")
 marginals.tmp = as.data.table(marginals.tmp)
-marginals.tall.tmp = melt(marginals.tmp, measure.vars = 1:3)
+marginals.tall.tmp = melt(marginals.tmp, measure.vars = 1:dimX)
 ggplot(marginals.tall.tmp, aes(x = value)) + 
   facet_wrap(vars(variable)) +
   geom_histogram(binwidth = 0.12, closed = "right") +
@@ -240,15 +253,19 @@ ggplot(marginals.tall.tmp, aes(x = value)) +
   labs(x = "x")
 
 # 3d scatterplot?
-library(scatterplot3d)
-scatterplot3d(marginals)
+# library(scatterplot3d)
+# scatterplot3d(marginals)
 
 ################################################################################
 # plot the posterior probabilities of the hypotheses
 ################################################################################
 library(data.table)
 
-models = list(model0, model1)
+modelT = list(
+  indices = indicesT, 
+  beta.mean = rep(0.5, length(indicesT)), 
+  beta.var = sigmasq01 * diag(length(indicesT)))
+models = list(model0, model1, modelT)
 
 # boxhill_vs methods that don't exist yet #
 # get evidence

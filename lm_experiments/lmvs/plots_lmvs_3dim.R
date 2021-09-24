@@ -122,16 +122,15 @@ seqmed_sims = readRDS(paste0(
 
 # doptimal design
 dopt_pts = as.matrix(expand.grid(c(-1, 1), c(-1, 1), c(-1, 1)))
-dopt_pts = dopt_pts[sample(1:dim(dopt_pts)[1], replace = FALSE), ]
+dopt_pts = dopt_pts[sample(1:nrow(dopt_pts), replace = FALSE), ]
 x_doptimal = matrix(NA, nrow = Nnew, ncol = dimX)
 for(i in 0:(Nnew - 1)){
-  x_doptimal[ i + 1, ] = as.matrix(dopt_pts[ 1 + (i %% dim(dopt_pts)[1]), ])
+  x_doptimal[ i + 1, ] = t(as.matrix(dopt_pts[ 1 + (i %% nrow(dopt_pts)), ]))
 }
 
 # 3 level factorial design
 factorial_pts = as.matrix(expand.grid(c(-1, 0, 1), c(-1, 0, 1), c(-1, 0, 1)))
-factorial_pts = factorial_pts[
-  sample(1:dim(factorial_pts)[1], replace = FALSE), ]
+factorial_pts = factorial_pts[sample(1:nrow(factorial_pts), replace = FALSE), ]
 x_factorial = factorial_pts
 
 random_sims = list()

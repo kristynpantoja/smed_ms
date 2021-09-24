@@ -8,7 +8,7 @@
 #   dimensions (1, 2) vs dimensions (1, 2, 3)
 #   where the true dimensions are (1, 2, 3, 4)
 
-dimT = 4 # 3, 4
+dimT = 3 # 3, 4
 
 ################################################################################
 # Sources/Libraries

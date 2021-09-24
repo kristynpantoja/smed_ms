@@ -3,7 +3,7 @@
 # purpose: to make grid design for all types of data
 
 
-dimT = 2
+dimT = 1
 lT = 0.01
 typeT = "squaredexponential"
 
@@ -115,7 +115,7 @@ spacefills = foreach(
   y_input = y_seq[x_input_idx]
   # new points' y
   y.new = y_seq[x.new.idx]
-  list(x = x_input, x.idx = x_input_idx, y = y_input, 
+  list(x.in = x_input, x.idx = x_input_idx, y.in = y_input, 
        x.new = x.new, x.new.idx = x.new.idx, y.new = y.new, 
        function.values = y_seq)
 }

@@ -15,8 +15,7 @@ f_min_vs = function(
 # batch of seqN new points
 SeqMEDvs_batch = function(
   initD, inity, model0, model1, error.var, N2 = 11, candidates, 
-  true.function, true.indices, dimX, xmin = -1, xmax = 1, k = 4, p = 1, 
-  alpha = 1, batch.idx
+  dimX, xmin = -1, xmax = 1, k = 4, p = 1, alpha = 1, batch.idx
 ){
   initN = nrow(initD)
   if(length(inity) != initN) stop("length of inity does not match length of initial input data, initD")

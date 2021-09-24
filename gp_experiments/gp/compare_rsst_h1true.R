@@ -273,6 +273,8 @@ for(scenario in c(1, 2)){
     labs(y = "E[RSS]", x = "Design") 
   plot(RSS.plt)
   
+  print(RSSmean)
+  
   # slide plot
   # ggsave(
   #   filename = paste0("20210902_scen", scenario, "_rsst.pdf"), 

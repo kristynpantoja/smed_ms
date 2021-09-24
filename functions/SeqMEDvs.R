@@ -46,13 +46,12 @@ SeqMEDvs = function(
     Dt = SeqMEDvs_batch(
       initD = x.cur, inity = y.cur, model0 = model0, model1 = model1, 
       error.var = error.var, N2 = seqN[t], 
-      candidates = candidates, true.function = true.function, 
-      true.indices = true.indices, dimX = dimX, 
-      xmin = xmin, xmax = xmax, k = k, p = p, alpha = alpha_seq[t], 
+      candidates = candidates, dimX = dimX, xmin = xmin, xmax = xmax, 
+      k = k, p = p, alpha = alpha_seq[t], 
       batch.idx = t)
     
     yt = simulateY_frommultivarfunction(
-      x = Dt$addD[, true.indices, drop = FALSE], true.function = true.function, 
+      x = Dt$addD, true.function = true.function, 
       error.var = error.var)
     
     # update x.cur and y.cur with new data

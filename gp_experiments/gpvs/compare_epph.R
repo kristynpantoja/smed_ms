@@ -2,7 +2,7 @@
 # last updated: 07/13/2021
 # purpose: to test SeqMEDgpvs()
 
-dimT = 1
+dimT = 2
 seq.type = 1
 lT = 0.01
 typeT = "squaredexponential"
@@ -212,8 +212,8 @@ getPPHseq = function(design, model0, model1, n, randomize.order = FALSE){
   PPH0_seq = rep(NA, len.tmp)
   PPH1_seq = rep(NA, len.tmp)
   for(i in 1:len.tmp){
-    y.tmp = c(design$y, y.new[1:i])
-    x.tmp = rbind(design$x, x.new[1:i, , drop = FALSE])
+    y.tmp = c(design$y.in, y.new[1:i])
+    x.tmp = rbind(design$x.in, x.new[1:i, , drop = FALSE])
     PPHs.tmp = getHypothesesPosteriors(
       prior.probs = prior_probs, 
       evidences = c(
@@ -231,12 +231,12 @@ getPPHseq = function(design, model0, model1, n, randomize.order = FALSE){
     PPH1_seq[(length(PPH1_seq) + 1):n] = PPH1_seq[length(PPH1_seq)]
   }
   # include posterior probs for initial point(s)
-  len.init = length(design$y)
+  len.init = length(design$y.in)
   PPHs.init = getHypothesesPosteriors(
     prior.probs = prior_probs, 
     evidences = c(
-      Evidence_gpvs(design$y, design$x, model0),
-      Evidence_gpvs(design$y, design$x, model1)
+      Evidence_gpvs(design$y.in, design$x.in, model0),
+      Evidence_gpvs(design$y.in, design$x.in, model1)
     )
   )
   PPH0_seq = c(PPHs.init[1], PPH0_seq)
@@ -283,14 +283,16 @@ for(j in 1:numSims){
   PPH_seq.qc$type = "cap q"
   PPH_seq.kq$type = "keepq"
   PPH_seq.kqc$type = "keepq2"
-  PPH_seq.lo$type = "leaveout"
+  PPH_seq.lo$type = "seqmed" #"leaveout"
   PPH_seq.bh$type = "boxhill"
   PPH_seq.diag$type = "diag"
   PPH_seq.x2$type = "x2=1"
   PPH_seq.r$type = "random"
   PPH_seq.g$type = "grid"
   PPH_seq.tmp = rbind(
-    PPH_seq.qc, PPH_seq.kq, PPH_seq.kqc, PPH_seq.lo, PPH_seq.bh, PPH_seq.diag, 
+    # PPH_seq.qc, PPH_seq.kq, PPH_seq.kqc, PPH_seq.lo, PPH_seq.bh, PPH_seq.diag,
+    # PPH_seq.x2, PPH_seq.r, PPH_seq.g)
+    PPH_seq.lo, PPH_seq.bh, PPH_seq.diag,
     PPH_seq.x2, PPH_seq.r, PPH_seq.g)
   PPH_seq.tmp$sim = j
   PPH_seq = rbind(PPH_seq, PPH_seq.tmp)
@@ -316,12 +318,17 @@ epph.plt = ggplot(PPHmean_seq, aes(x = index, y = value, color = type,
   scale_x_continuous(breaks = c(0, 3, 6, 9))
 plot(epph.plt)
 
+# ggsave(
+#   filename = paste0("20210815_dim", dimT, "_epph.pdf"), 
+#   plot = epph.plt, 
+#   width = 6, height = 4, units = c("in")
+# )
+
+# manuscript plot
 ggsave(
-  filename = paste0("20210815_dim", dimT, "_epph.pdf"), 
+  filename = paste0("dim", dimT, "_epph.pdf"), 
   plot = epph.plt, 
-  width = 6, height = 4, units = c("in")
+  width = 4.5, height = 2, units = c("in")
 )
-
-
 
 

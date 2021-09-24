@@ -66,8 +66,7 @@ candidates = as.matrix(expand.grid(x_seq, x_seq, x_seq))
 sigmasq = 0.1 # 0.3
 
 # hypothesis settings
-type01 = c(2, 3)
-mu_full = c(0.5, 0.5, 0.5) #
+mu_full = rep(0.5, 3)
 indices0 = c(1, 2) #
 indices1 = 1:length(mu_full)
 mu0 = rep(0, length(indices0))
@@ -120,7 +119,8 @@ seqmed_list = foreach(i = 1:numSims) %dorng% {
     p = p, numSeq = numSeq, seqN = seqN, alpha_seq = 1, prints = FALSE)
 }
 saveRDS(seqmed_list, paste0(
-  output_dir, "/dim", dimT, 
+  output_dir, "/3dim_", 
+  "_dim", dimT, 
   "_seqmed", 
   "_Nttl", Nttl,
   "_Nin", Nin,

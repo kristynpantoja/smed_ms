@@ -140,8 +140,7 @@ for(i in 1:numSims){
   x.in.tmp = matrix(runif(
     n = dimX * Nin, min = xmin, max = xmax), nrow = Nin, ncol = dimX)
   y.in.tmp = simulateY_frommultivarfunction(
-    x = x.in.tmp[, indicesT, drop = FALSE], true.function = fT, 
-    error.var = sigmasq)
+    x = x.in.tmp, true.function = fT, error.var = sigmasq)
   
   x_random.tmp = matrix(runif(n = dimX * Nnew, min = xmin, max = xmax), 
                     nrow = Nnew, ncol = dimX)
@@ -149,22 +148,19 @@ for(i in 1:numSims){
     x.in = x.in.tmp, y.in = y.in.tmp,
     x.new = x_random.tmp,
     y.new = as.vector(simulateY_frommultivarfunction(
-      x = x_random.tmp[, indicesT, drop = FALSE], true.function = fT, 
-      error.var = sigmasq))
+      x = x_random.tmp, true.function = fT, error.var = sigmasq))
     )
   dopt_sims[[i]] = list(
     x.in = x.in.tmp, y.in = y.in.tmp,
     x.new = x_doptimal,
     y.new = as.vector(simulateY_frommultivarfunction(
-      x = x_doptimal[, indicesT, drop = FALSE], true.function = fT, 
-      error.var = sigmasq))
+      x = x_doptimal, true.function = fT, error.var = sigmasq))
     )
   fact_sims[[i]] = list(
     x.in = x.in.tmp, y.in = y.in.tmp,
     x.new = x_factorial,
     y.new = as.vector(simulateY_frommultivarfunction(
-      x = x_factorial[, indicesT, drop = FALSE], true.function = fT, 
-      error.var = sigmasq))
+      x = x_factorial, true.function = fT, error.var = sigmasq))
     )
 }
 
@@ -446,6 +442,13 @@ epph.plt = ggplot(PPHmean_gg, aes(x = index, y = value, color = type,
   ylim(0, 1)
 plot(epph.plt)
 
+# manuscript plot
+ggsave(
+  filename = paste0("dim", dimT, "_epph.pdf"), 
+  plot = epph.plt, 
+  width = 4.5, height = 2, units = c("in")
+)
+
 ################################################################################
 # plot the MSE of beta-hat (posterior mean) of the hypotheses
 ################################################################################
@@ -464,11 +467,14 @@ mseBn_smmed = getMSEBeta(
   rbind(sm$x.in, sm$x.new), 
   Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
 mseBn_rand = getMSEBeta(
-  x_random, Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
+  rbind(ra$x.in, ra$x.new), 
+  Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
 mseBn_dopt = getMSEBeta(
-  x_doptimal, Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
+  rbind(dl$x.in, dl$x.new), 
+  Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
 mseBn_fact = getMSEBeta(
-  x_factorial, Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
+  rbind(fa$x.in, fa$x.new), 
+  Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
 
 # plot
 b1 = c(mseBn_smmed[1], mseBn_rand[1], mseBn_dopt[1], mseBn_fact[1])
@@ -477,17 +483,18 @@ ggdesigns = c("SeqMED", "Random", "Doptimal", "Factorial3")
 ggdata = data.frame(Designs = factor(rep(ggdesigns, 2), 
                                      levels = ggdesigns[c(2, 1, 4, 3)]), 
                     MSE = c(b1, b2), beta = rep(c("B1", "B2"), each = length(b1)))
-ggplot(ggdata, aes(x = Designs, y = MSE)) + 
+mse.plt = ggplot(ggdata, aes(x = Designs, y = MSE)) + 
   geom_bar(stat = "identity") +
   facet_wrap(vars(beta)) +
   theme_bw() + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         axis.text.x = element_text(angle = 45, vjust = 0.5)) +
   labs(y = NULL)
+mse.plt
 
-
-
-################################################################################
-# plot the MSE of y-hat (posterior mean) of the hypotheses
-################################################################################
-source(paste(functions_dir, "/predictive_yhat_mse.R", sep = ""))
+# manuscript plot
+ggsave(
+  filename = paste0("dim", dimT, "_mseb.pdf"), 
+  plot = mse.plt, 
+  width = 4.5, height = 2, units = c("in")
+)

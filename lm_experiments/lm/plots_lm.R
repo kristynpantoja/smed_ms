@@ -161,11 +161,18 @@ plt0 = ggplot(ggdata) +
   theme_bw() + #base_size = 20) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 plt1 = ggplot(ggdata) + 
-  geom_point(aes(x, y)) +
+  geom_point(aes(x, y), col = gg_color_hue(2)[1]) +
   stat_function(fun = fT) + 
   theme_bw() + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 ggarrange(plt0, plt1)
+
+# manuscript plot
+ggsave(
+  filename = paste0("scen", scenario, "_seqmedexample.pdf"), 
+  plot = last_plot(), 
+  width = 4.5, height = 2, units = c("in")
+)
 
 # plot a boxhill
 bh = boxhill_sims[[sim.idx]]

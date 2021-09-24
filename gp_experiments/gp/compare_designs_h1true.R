@@ -239,7 +239,7 @@ for(scenario in c(1, 2)){
   if(typeT == "periodic"){
     des.plt = des.plt + geom_vline(
       xintercept = pT * (0:floor((xmax - xmin) / pT)), #color = "gray", 
-      alpha = 0.25)
+      alpha = 0.125, linetype = 2)
   }
   plot(des.plt)
   

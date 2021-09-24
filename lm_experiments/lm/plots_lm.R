@@ -1,5 +1,5 @@
 ################################################################################
-# last updated: 09/02/21
+# last updated: 09/23/21
 # purpose: to create a list of seqmed simulations
 # scenario 1:
 #   linear vs. quadratic,
@@ -167,12 +167,12 @@ plt1 = ggplot(ggdata) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 ggarrange(plt0, plt1)
 
-# manuscript plot
-ggsave(
-  filename = paste0("scen", scenario, "_seqmedexample.pdf"), 
-  plot = last_plot(), 
-  width = 4.5, height = 2, units = c("in")
-)
+# # manuscript plot
+# ggsave(
+#   filename = paste0("scen", scenario, "_seqmedexample.pdf"), 
+#   plot = last_plot(), 
+#   width = 4.5, height = 2, units = c("in")
+# )
 
 # plot a boxhill
 bh = boxhill_sims[[sim.idx]]
@@ -196,9 +196,68 @@ plt3 = ggplot(ggdata2) +
 #   nrow = 2, ncol = 2)
 
 ################################################################################
-# plot the posterior probabilities of the hypotheses
+# plot the wasserstein distance when scenario == 1
+# plot the posterior mean curve and the true curve when scenario == 2
 ################################################################################
 library(data.table)
+
+if(scenario == 1){
+  numseq = 1e2
+  x_seq = seq(from = xmin, to = xmax, length.out = numseq)
+  w_seq = sapply(x_seq, function(x) WNlm(
+    x, sm$postmean0, sm$postmean1,
+    diag(sm$postvar0), diag(sm$postvar1), model0, model1, sigmasq))
+  f1est = function(x) sm$postmean1[1, ] +
+    sm$postmean1[2, ] * x + sm$postmean1[3, ] * x^2
+  f2est = function(x) sm$postmean0[1, ] +
+    sm$postmean0[2, ] * x
+  f1est_seq = sapply(x_seq, f1est)
+  f2est_seq = sapply(x_seq, f2est)
+  fT_seq = sapply(x_seq, fT)
+  
+  ggdata = data.table::data.table(
+    x = x_seq,
+    `Est. Quadr.` = f1est_seq,
+    `Est. Line` = f2est_seq,
+    `True Quadr.` = fT_seq,
+    `Wasserstein` = w_seq
+  )
+  ggdata = data.table::melt(
+    ggdata, id = c("x"), value.name = "y", variable.name = "Function")
+  
+  ggdata_ribbon = data.table::data.table(
+    x = x_seq,
+    ymin = apply(cbind(f1est_seq, f2est_seq), 1, min),
+    ymax = apply(cbind(f1est_seq, f2est_seq), 1, max)
+  )
+  pltw = ggplot(
+    ggdata, aes(x = x, y = y, color = Function, linetype = Function)) +
+    scale_linetype_manual(values = c(2, 2, 1, 1)) +
+    ylim(-1.1, 1.1) +
+    scale_color_manual(
+      values = c(gg_color_hue(4)[c(3, 4)], "black", gg_color_hue(4)[2])) +
+    geom_path() +
+    geom_ribbon(
+      data = ggdata_ribbon, mapping = aes(x = x, ymin = ymin, ymax = ymax), 
+      alpha = 0.2, inherit.aes = FALSE) +
+    theme_bw() +
+    theme(panel.grid.minor = element_blank())
+  pltw
+  ggarrange(plt0, plt1, pltw, nrow = 1, ncol = 3, widths = c(1, 1, 1.75))
+  
+  # # manuscript plot
+  # ggsave(
+  #   filename = paste0("scen", scenario, "_seqmedexamplewasserstein.pdf"),
+  #   plot = last_plot(),
+  #   width = 6.5, height = 1.75, units = c("in")
+  # )
+} else if(scenario == 2){
+  # plot ...
+}
+
+################################################################################
+# plot the posterior probabilities of the hypotheses
+################################################################################
 
 if(scenario == 1){
   models = list(model0, model1)
@@ -302,17 +361,17 @@ for(j in 1:numSims){
   PPH_doptq = getPPH(
     doptquad_sims[[j]], models, true.function, sigmasq)
   # master data frame
-  PPH_grid$type = "grid"
-  PPH_doptl$type = "doptl"
-  PPH_doptq$type = "doptq"
+  PPH_grid$Design = "Grid"
+  PPH_doptl$Design = "DOptLin."
+  PPH_doptq$Design = "DOptQuadr."
   PPH.tmp = rbind(PPH_grid, PPH_doptl, PPH_doptq)
   PPH.tmp$sim = j
   PPH_df = rbind(PPH_df, PPH.tmp)
 }
 PPHmean = aggregate(
   PPH_df[, names(PPH_df)[1:length(models)]], 
-  by = list(PPH_df[, "type"]), FUN = function(x) mean(x, na.rm = TRUE))
-names(PPHmean)[1] = "type"
+  by = list(PPH_df[, "Design"]), FUN = function(x) mean(x, na.rm = TRUE))
+names(PPHmean)[1] = "Design"
 PPHmean$index = Nttl
 # but we want a line, so allow interpolation by setting PPHmean$index = 0 too
 PPHmean2 = PPHmean
@@ -326,8 +385,8 @@ for(j in 1:numSims){
   PPH_seq.bh = getPPHseq(boxhill_sims[[j]], models, Nttl, fT, sigmasq)
   PPH_seq.sm = getPPHseq(seqmed_sims[[j]], models, Nttl, fT, sigmasq) 
   # master data frame
-  PPH_seq.bh$type = "boxhill"
-  PPH_seq.sm$type = "seqmed"
+  PPH_seq.bh$Design = "BoxHill"
+  PPH_seq.sm$Design = "SeqMED"
   PPH_seq.tmp = rbind(PPH_seq.bh, PPH_seq.sm)
   PPH_seq.tmp$sim = j
   PPH_seq = rbind(PPH_seq, PPH_seq.tmp)
@@ -335,46 +394,46 @@ for(j in 1:numSims){
 
 PPHmean_seq = aggregate(
   PPH_seq[, names(PPH_seq)[1:length(models)]], 
-  by = list(PPH_seq[, "type"], PPH_seq[, "index"]), 
+  by = list(PPH_seq[, "Design"], PPH_seq[, "index"]), 
   FUN = function(x) mean(x, na.rm = TRUE))
-names(PPHmean_seq)[c(1, 2)] = c("type", "index")
+names(PPHmean_seq)[c(1, 2)] = c("Design", "index")
 
 PPHmean_gg = rbind(PPHmean, PPHmean_seq)
-PPHmean_gg = melt(PPHmean_gg, id.vars = c("type", "index"), 
+PPHmean_gg = melt(PPHmean_gg, id.vars = c("Design", "index"), 
                   measure.vars = paste0("H", 0:(length(models) - 1), sep = ""), 
                   variable.name = "hypothesis")
-design_names = rev(c("seqmed", "boxhill", "doptl", "doptq", "grid"))
-PPHmean_gg$type = factor(PPHmean_gg$type, levels = design_names)
-PPHmean_gg = setorder(PPHmean_gg, cols = "type")
+design_names = rev(c("SeqMED", "BoxHill", "DOptLin.", "DOptQuadr.", "Grid"))
+PPHmean_gg$Design = factor(PPHmean_gg$Design, levels = design_names)
+PPHmean_gg = setorder(PPHmean_gg, cols = "Design")
 PPHmean_gg2 = PPHmean_gg[PPHmean_gg$index == Nttl, ]
-PPHmean_gg2$type = factor(PPHmean_gg2$type, levels = design_names)
-PPHmean_gg2 = setorder(PPHmean_gg2, cols = "type")
-epph.plt = ggplot(PPHmean_gg, aes(x = index, y = value, color = type,
-                                   linetype = type, shape = type)) +
+PPHmean_gg2$Design = factor(PPHmean_gg2$Design, levels = design_names)
+PPHmean_gg2 = setorder(PPHmean_gg2, cols = "Design")
+epph.plt = ggplot(PPHmean_gg, aes(x = index, y = value, color = Design,
+                                   linetype = Design, shape = Design)) +
   facet_wrap(~hypothesis) +
   geom_path() +
     scale_linetype_manual(values=c(rep("dashed", 3), rep("solid", 2))) +
   geom_point(data = PPHmean_gg2, 
-             mapping = aes(x = index, y = value, color = type),
+             mapping = aes(x = index, y = value, color = Design),
              inherit.aes = FALSE) +
   theme_bw() +
   ylim(0, 1)
 plot(epph.plt)
 
-
-################################################################################
-# plot the posterior mean curve and the true curve when scenario == 2
-################################################################################
-
-if(scenario == 2){
-  
+if(scenario == 1){
+  epph_scen1 = epph.plt
+} else if(scenario == 2){
+  epph_scen2 = epph.plt
 }
-
-
-
-
-
-
+if(!is.null(epph_scen1) & !is.null(epph_scen2)){
+  ggarrange(epph_scen1, epph_scen2, nrow = 2, ncol = 1)
+  # # manuscript plot
+  # ggsave(
+  #   filename = paste0("lm_epphs.pdf"),
+  #   plot = last_plot(),
+  #   width = 6.5, height = 4, units = c("in")
+  # )
+}
 
 ################################################################################
 # plot the MSE of beta-hat (posterior mean) of the hypotheses
@@ -384,9 +443,11 @@ source(paste(functions_dir, "/posterior_mean_mse.R", sep = ""))
 if(scenario == 1){
   muT = mu1
   VT = V1
+  typeT = 3
 } else{
   muT = rep(0, 4)
   VT = diag(rep(sigmasq01, length(muT)))
+  typeT = 4
 }
 MSEbetahat_doptlin = getMSEBeta(
   dopt_linear, Nttl, betaT, muT, VT, sigmasq, typeT)$MSE_postmean
@@ -395,11 +456,9 @@ MSEbetahat_doptquad = getMSEBeta(
 MSEbetahat_space = getMSEBeta(
   space_filling, Nttl, betaT, muT, VT, sigmasq, typeT)$MSE_postmean
 MSEbetahat_seqmed = getMSEBeta(
-  c(seqmeds[[sim.idx]]$x.in, seqmeds[[sim.idx]]$x.new), 
-  Nttl, betaT, muT, VT, sigmasq, typeT)$MSE_postmean
+  c(sm$x.in, sm$x.new), Nttl, betaT, muT, VT, sigmasq, typeT)$MSE_postmean
 MSEbetahat_bh = getMSEBeta(
-  c(boxhills[[sim.idx]]$x.in, boxhills[[sim.idx]]$x.new), 
-  Nttl, betaT, muT, VT, sigmasq, typeT)$MSE_postmean
+  c(bh$x.in, bh$x.new), Nttl, betaT, muT, VT, sigmasq, typeT)$MSE_postmean
 
 b0 = c(MSEbetahat_doptlin[1], MSEbetahat_doptquad[1], MSEbetahat_space[1], 
        MSEbetahat_seqmed[1], MSEbetahat_bh[1])
@@ -434,10 +493,10 @@ yhatmse_doptquad = getMSEYhat_seq(
 yhatmse_doptlin = getMSEYhat_seq(
   x_seq2, dopt_linear, Nttl, betaT, typeT, muT, VT, sigmasq, typeT)
 yhatmse_seqmed = getMSEYhat_seq(
-  x_seq2, c(seqmeds[[sim.idx]]$x.in, seqmeds[[sim.idx]]$x.new), 
+  x_seq2, c(sm$x.in, sm$x.new), 
   Nttl, betaT, typeT, muT, VT, sigmasq, typeT)
 yhatmse_bh = getMSEYhat_seq(
-  x_seq2, c(boxhills[[sim.idx]]$x.in, boxhills[[sim.idx]]$x.new), 
+  x_seq2, c(bh$x.in, bh$x.new), 
   Nttl, betaT, typeT, muT, VT, sigmasq, typeT)
 
 if(scenario == 1){

@@ -1,14 +1,14 @@
 ################################################################################
-# last updated: 09/12/21
+# last updated: 09/23/21
 # purpose: to create a list of seqmed simulations
-# dimT = 2:
-#   dimensions (1, 2) vs dimensions (1, 2, 3)
-#   where the true dimensions are (1, 2)
 # dimT = 3:
 #   dimensions (1, 2) vs dimensions (1, 2, 3)
-#   where the true dimensions are (1, 2, 3)
+#   where the true dimensions are (1, 2, 4)
+# dimT = 4:
+#   dimensions (1, 2) vs dimensions (1, 2, 3)
+#   where the true dimensions are (1, 2, 3, 4)
 
-dimT = 2 # 2, 3
+dimT = 3 # 3, 4
 
 ################################################################################
 # Sources/Libraries
@@ -50,24 +50,24 @@ gg_color_hue = function(n) {
 
 # simulations settings
 numSims = 100
-Nin = 1 # 1, 5
+Nin = 5 #1, 5
 numSeq = 27
 seqN = 1
 Nnew = numSeq * seqN
 Nttl = Nin + Nnew 
 xmin = -1
 xmax = 1
-dimX = 3
+dimX = 4
 numCandidates = 5000
-x_seq = seq(from = xmin, to = xmax, length.out = floor((numCandidates)^(1 / 3)))
-candidates = as.matrix(expand.grid(x_seq, x_seq, x_seq))
+x_seq = seq(from = xmin, to = xmax, length.out = floor((numCandidates)^(1 / 4)))
+candidates = as.matrix(expand.grid(x_seq, x_seq, x_seq, x_seq))
 sigmasq = 0.1 # 0.3
 
 # hypothesis settings
 type01 = c(2, 3)
-mu_full = c(0.5, 0.5, 0.5)
+mu_full = rep(0.5, 3)
 indices0 = c(1, 2)
-indices1 = 1:length(mu_full)
+indices1 = c(1, 2, 3)
 mu0 = rep(0, length(indices0))
 mu1 = rep(0, length(indices1))
 sigmasq01 = 0.25 # 0.25 - cannot distinguish dopt and 3fact when Nin = 5
@@ -79,7 +79,7 @@ model1 = list(
   indices = indices1, beta.mean = mu1, beta.var = V1)
 
 # seqmed settings
-p = 3
+p = dimX
 k = 4 * p
 
 # boxhill settings
@@ -88,13 +88,13 @@ prior_probs = rep(1 / 2, 2)
 ################################################################################
 # Scenarios
 ################################################################################
-if(dimT == 2){
-  betaT = mu_full[indices0]
-  indicesT = indices0
+if(dimT == 3){
+  betaT = rep(0.5, 3)
+  indicesT = c(1, 2, 4)
   fT = function(x) x[, indicesT, drop = FALSE] %*% betaT
-} else if(dimT == 3){
-  betaT = mu_full[indices1]
-  indicesT = indices1
+} else if(dimT == 4){
+  betaT = rep(0.5, 4)
+  indicesT = c(1, 2, 3, 4)
   fT = function(x) x[, indicesT, drop = FALSE] %*% betaT
 }
 
@@ -103,7 +103,7 @@ if(dimT == 2){
 ################################################################################
 
 seqmed_sims = readRDS(paste0(
-  output_dir, "/3dim", 
+  output_dir, "/4dim", 
   "_dim", dimT, 
   "_seqmed", 
   "_Nttl", Nttl,

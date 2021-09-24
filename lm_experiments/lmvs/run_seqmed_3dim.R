@@ -80,7 +80,7 @@ model1 = list(
   indices = indices1, beta.mean = mu1, beta.var = V1)
 
 # seqmed settings
-p = 3
+p = dimX
 k = 4 * p
 
 # boxhill settings
@@ -119,7 +119,7 @@ seqmed_list = foreach(i = 1:numSims) %dorng% {
     p = p, numSeq = numSeq, seqN = seqN, alpha_seq = 1, prints = FALSE)
 }
 saveRDS(seqmed_list, paste0(
-  output_dir, "/3dim_", 
+  output_dir, "/3dim", 
   "_dim", dimT, 
   "_seqmed", 
   "_Nttl", Nttl,

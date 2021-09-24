@@ -61,10 +61,9 @@ dimX = 4
 numCandidates = 5000
 x_seq = seq(from = xmin, to = xmax, length.out = floor((numCandidates)^(1 / 4)))
 candidates = as.matrix(expand.grid(x_seq, x_seq, x_seq, x_seq))
-sigmasq = 0.1 # 0.3
+sigmasq = 0.3 # 0.3
 
 # hypothesis settings
-type01 = c(2, 3)
 mu_full = rep(0.5, 3)
 indices0 = c(1, 2)
 indices1 = c(1, 2, 3)
@@ -111,6 +110,7 @@ seqmed_sims = readRDS(paste0(
   "_numSeq", numSeq,
   "_seqN", seqN,
   "_seed", rng.seed,
+  "_noise", strsplit(as.character(sigmasq), split = "\\.")[[1]][2],
   ".rds"))
 
 ################################################################################
@@ -158,18 +158,18 @@ for(i in 1:numSims){
     y.new = as.vector(simulateY_frommultivarfunction(
       x = x_random.tmp, true.function = fT, error.var = sigmasq))
     )
-  # x_doptimal.tmp = cbind(
-  #   x_doptimal, runif(n = nrow(x_doptimal), min = xmin, max = xmax))
-  x_doptimal.tmp = cbind(x_doptimal, 0)
+  x_doptimal.tmp = cbind(
+    x_doptimal, runif(n = nrow(x_doptimal), min = xmin, max = xmax))
+  # x_doptimal.tmp = cbind(x_doptimal, 0)
   dopt_sims[[i]] = list(
     x.in = x.in.tmp, y.in = y.in.tmp,
     x.new = x_doptimal.tmp,
     y.new = as.vector(simulateY_frommultivarfunction(
       x = x_doptimal.tmp, true.function = fT, error.var = sigmasq))
     )
-  # x_factorial.tmp = cbind(
-  #   x_factorial, runif(n = nrow(x_factorial), min = xmin, max = xmax))
-  x_factorial.tmp = cbind(x_factorial, 0)
+  x_factorial.tmp = cbind(
+    x_factorial, runif(n = nrow(x_factorial), min = xmin, max = xmax))
+  # x_factorial.tmp = cbind(x_factorial, 0)
   fact_sims[[i]] = list(
     x.in = x.in.tmp, y.in = y.in.tmp,
     x.new = x_factorial.tmp,

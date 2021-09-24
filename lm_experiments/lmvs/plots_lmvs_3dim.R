@@ -61,10 +61,9 @@ dimX = 3
 numCandidates = 5000
 x_seq = seq(from = xmin, to = xmax, length.out = floor((numCandidates)^(1 / 3)))
 candidates = as.matrix(expand.grid(x_seq, x_seq, x_seq))
-sigmasq = 0.1 # 0.3
+sigmasq = 0.3 # 0.3
 
 # hypothesis settings
-type01 = c(2, 3)
 mu_full = c(0.5, 0.5, 0.5)
 indices0 = c(1, 2)
 indices1 = 1:length(mu_full)
@@ -79,7 +78,7 @@ model1 = list(
   indices = indices1, beta.mean = mu1, beta.var = V1)
 
 # seqmed settings
-p = 3
+p = dimX
 k = 4 * p
 
 # boxhill settings
@@ -111,6 +110,7 @@ seqmed_sims = readRDS(paste0(
   "_numSeq", numSeq,
   "_seqN", seqN,
   "_seed", rng.seed,
+  "_noise", strsplit(as.character(sigmasq), split = "\\.")[[1]][2],
   ".rds"))
 
 ################################################################################
@@ -220,27 +220,27 @@ ggplot(marginals.tall, aes(x = value)) +
         panel.grid.minor = element_blank()) + 
   labs(x = "x")
 
-# plot marginals 9 points at a time
-Nnew.tmp = 9
-marginals.tmp = matrix(
-  NA, nrow = Nnew.tmp, ncol = dimX)
-for(i in 1:ncol(marginals.tmp)) {
-  marginals.tmp[, i] = design.tmp$x.new[1:Nnew.tmp , i]
-}
-colnames(marginals.tmp) = paste("Variable", 1:3, sep = " ")
-marginals.tmp = as.data.table(marginals.tmp)
-marginals.tall.tmp = melt(marginals.tmp, measure.vars = 1:3)
-ggplot(marginals.tall.tmp, aes(x = value)) + 
-  facet_wrap(vars(variable)) +
-  geom_histogram(binwidth = 0.12, closed = "right") +
-  theme_bw() + 
-  theme(panel.grid.major = element_blank(), 
-        panel.grid.minor = element_blank()) + 
-  labs(x = "x")
+# # plot marginals 9 points at a time
+# Nnew.tmp = 9
+# marginals.tmp = matrix(
+#   NA, nrow = Nnew.tmp, ncol = dimX)
+# for(i in 1:ncol(marginals.tmp)) {
+#   marginals.tmp[, i] = design.tmp$x.new[1:Nnew.tmp , i]
+# }
+# colnames(marginals.tmp) = paste("Variable", 1:3, sep = " ")
+# marginals.tmp = as.data.table(marginals.tmp)
+# marginals.tall.tmp = melt(marginals.tmp, measure.vars = 1:3)
+# ggplot(marginals.tall.tmp, aes(x = value)) + 
+#   facet_wrap(vars(variable)) +
+#   geom_histogram(binwidth = 0.12, closed = "right") +
+#   theme_bw() + 
+#   theme(panel.grid.major = element_blank(), 
+#         panel.grid.minor = element_blank()) + 
+#   labs(x = "x")
 
-# 3d scatterplot?
-library(scatterplot3d)
-scatterplot3d(marginals)
+# # 3d scatterplot?
+# library(scatterplot3d)
+# scatterplot3d(marginals)
 
 ################################################################################
 # plot the posterior probabilities of the hypotheses

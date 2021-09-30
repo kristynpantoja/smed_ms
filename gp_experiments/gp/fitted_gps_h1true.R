@@ -217,7 +217,7 @@ for(scenario in c(1, 2)){
   ggsave(
     filename = paste0(scenario_name, "_gp.pdf"), 
     plot = plt, 
-    width = 4.5, height = 2, units = c("in")
+    width = 6.5, height = 2, units = c("in")
   )
   
   print(paste("scenario", scenario, 

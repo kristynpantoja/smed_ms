@@ -198,7 +198,7 @@ for(scenario in c(1, 2)){
   # make plots
   ################################################################################
   
-  # all 6 designs
+  # all of the designs
   idx = 1
   # designs = list(
   #   boxhill_sims[[idx]], qcap_sims[[idx]], leaveout_sims[[idx]], 
@@ -206,36 +206,39 @@ for(scenario in c(1, 2)){
   # design.names = c("boxhill", "qcap", "leaveout", "keepq2", "keepq")
   # design.levels = c("leaveout", "keepq", "keepq2", "qcap", "boxhill")
   designs = list(
-    boxhill_sims[[idx]], leaveout_sims[[idx]])
-  design.names = c("boxhill", "seqmed")
-  design.levels = c("seqmed", "boxhill")
+    "BoxHill" = boxhill_sims[[idx]], 
+    "Grid" = grid_sims[[idx]], 
+    "Random" = random_sims[[idx]],
+    "SeqMED" = leaveout_sims[[idx]])
+  design.names = names(designs)
   
   x.new.mat = matrix(NA, nrow = Nnew, ncol = length(designs))
   for(i in 1:length(designs)){
     x.new.mat[, i] = designs[[i]]$x.new
   }
+  colnames(x.new.mat) = names(designs)
+  data.gg = as.data.frame(x.new.mat)
+  data.gg$index = as.character(1:Nnew)
+  data.gg = reshape2::melt(data.gg, id.vars = "index", variable.name = "Design")
+  data.gg$Design = factor(data.gg$Design, levels = design.names)
   
-  data.gg = data.frame(
-    index = as.character(rep(1:Nnew, length(designs))), 
-    type = factor(rep(design.names, each = Nnew), levels = design.levels), 
-    value = as.vector(x.new.mat)
-  )
   data.gg0 = data.frame(
-    type = factor(rep(design.names, each = Nin), levels = design.levels), 
+    Design = rep(design.names, each = Nin), 
     input = rep(x_input, length(designs))
   )
   text.gg = dplyr::filter(data.gg, index %in% as.character(1:Nnew))
   des.plt = ggplot() + 
     geom_point(data = data.gg0, 
-               mapping = aes(x = input, y = type), alpha = 0.25) +
+               mapping = aes(x = input, y = Design), alpha = 0.25) +
     geom_point(data = data.gg, 
-               mapping = aes(x = value, y = type, color = type), 
+               mapping = aes(x = value, y = Design, color = Design), 
                inherit.aes = FALSE, alpha = 0.25) + 
     # geom_text(data = text.gg, 
-    #           aes(x = value, y = type, label = index), 
+    #           aes(x = value, y = Design, label = index), 
     #           vjust = -0.65 * as.numeric(paste(text.gg$index)), size = 2) +
     xlim(c(xmin, xmax)) + 
-    theme_bw()
+    theme_bw() + 
+    labs(x = "x")
   if(typeT == "periodic"){
     des.plt = des.plt + geom_vline(
       xintercept = pT * (0:floor((xmax - xmin) / pT)), #color = "gray", 
@@ -254,7 +257,7 @@ for(scenario in c(1, 2)){
   ggsave(
     filename = paste0(scenario_name, "_design.pdf"), 
     plot = des.plt, 
-    width = 4.5, height = 2, units = c("in")
+    width = 6.5, height = 1.75, units = c("in")
   )
   
   print(paste("scenario", scenario, 

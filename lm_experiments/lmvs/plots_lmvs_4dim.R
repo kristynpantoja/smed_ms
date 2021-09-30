@@ -1,5 +1,6 @@
+rm(list=ls())
 ################################################################################
-# last updated: 09/23/21
+# last updated: 09/26/21
 # purpose: to create a list of seqmed simulations
 # dimT = 3:
 #   dimensions (1, 2) vs dimensions (1, 2, 3)
@@ -9,6 +10,7 @@
 #   where the true dimensions are (1, 2, 3, 4)
 
 dimT = 3 # 3, 4
+sigmasq = 0.3 # 0.1, 0.3
 
 ################################################################################
 # Sources/Libraries
@@ -31,6 +33,9 @@ source(paste(functions_dir, "/variance_marginal_y.R", sep = ""))
 # for box-hill design
 source(paste(functions_dir, "/boxhill.R", sep = ""))
 source(paste(functions_dir, "/kl_divergence.R", sep = ""))
+
+# for D-optimal design
+library(AlgDesign)
 
 # set up parallelization
 rng.seed = 123 # 123, 345
@@ -61,7 +66,6 @@ dimX = 4
 numCandidates = 5000
 x_seq = seq(from = xmin, to = xmax, length.out = floor((numCandidates)^(1 / 4)))
 candidates = as.matrix(expand.grid(x_seq, x_seq, x_seq, x_seq))
-sigmasq = 0.3 # 0.3
 
 # hypothesis settings
 mu_full = rep(0.5, 3)
@@ -117,34 +121,55 @@ seqmed_sims = readRDS(paste0(
 # non-sequential designs
 ################################################################################
 
+# use AlgDesign to obtain Doptimal designs #
+
+# consider linear model y = b1 x1 + b2 x2 + b3 x3 -- only in 1st 3 dimensions
+candidates_named = candidates[, 1:3]
+colnames(candidates_named) = paste("x", 1:ncol(candidates_named), sep = "")
+res_Fed_Doptlin = optFederov(
+  ~-1+x1+x2+x3, data = candidates_named, approximate = TRUE, criterion = "D")
+res_Fed_Doptlin$design
+
+# define designs #
+
 # random design
 # see sims
 
-# doptimal design
-# dopt_pts = as.matrix(expand.grid(c(-1, 1), c(-1, 1), c(-1, 1), c(-1, 1)))
-# dopt_pts = dopt_pts[sample(1:nrow(dopt_pts), replace = FALSE), ]
-# x_doptimal = matrix(NA, nrow = Nnew, ncol = dimX)
-dopt_pts = as.matrix(expand.grid(c(-1, 1), c(-1, 1), c(-1, 1)))
-dopt_pts = dopt_pts[sample(1:nrow(dopt_pts), replace = FALSE), ]
-x_doptimal = matrix(NA, nrow = Nnew, ncol = 3)
-for(i in 0:(Nnew - 1)){
-  x_doptimal[ i + 1, ] = t(as.matrix(dopt_pts[ 1 + (i %% nrow(dopt_pts)), ]))
+# doptimal - linear
+num_supportpts_Doptlin = nrow(res_Fed_Doptlin$design)
+supportpt_assgnmt_Doptlin = cut(
+  sample(1:Nnew, size = Nnew, replace = FALSE), # shuffle
+  breaks = num_supportpts_Doptlin, labels = FALSE)
+x_doptimal = matrix(NA, nrow = Nnew, ncol = dimX)
+for(i in 1:Nnew){
+  x_doptimal[i, ] = c(
+    as.numeric(res_Fed_Doptlin$design[
+      supportpt_assgnmt_Doptlin[i], c("x1", "x2", "x3")]), 
+    0)
 }
-# cbind uniformly chosen points as 4th col
+
+# 2 level factorial design
+fact2_pts = as.matrix(expand.grid(c(-1, 1), c(-1, 1), c(-1, 1)))
+fact2_pts = fact2_pts[sample(1:nrow(fact2_pts), replace = FALSE), ] # shuffle
+x_2fact = matrix(NA, nrow = Nnew, ncol = dimX)
+for(i in 0:(Nnew - 1)){
+  x_2fact[ i + 1, ] = c(as.numeric(fact2_pts[ 1 + (i %% nrow(fact2_pts)), ]), 0)
+}
 
 # 3 level factorial design
 # factorial_pts = as.matrix(expand.grid(
 #   c(-1, 0, 1), c(-1, 0, 1), c(-1, 0, 1), c(-1, 0, 1)))
-factorial_pts = as.matrix(expand.grid(
-  c(-1, 0, 1), c(-1, 0, 1), c(-1, 0, 1)))
-factorial_pts = factorial_pts[sample(1:nrow(factorial_pts), replace = FALSE), ]
-x_factorial = factorial_pts
-# cbind uniformly chosen points as 4th col
+fact3_pts = as.matrix(expand.grid(c(-1, 0, 1), c(-1, 0, 1), c(-1, 0, 1)))
+fact3_pts = fact3_pts[sample(1:nrow(fact3_pts), replace = FALSE), ] # shuffle
+x_3fact = fact3_pts
+x_3fact = cbind(x_3fact, 0)
 
 random_sims = list()
 dopt_sims = list()
-fact_sims = list()
+fact2_sims = list()
+fact3_sims = list()
 for(i in 1:numSims){
+  # input data
   x.in.tmp = matrix(runif(
     n = dimX * Nin, min = xmin, max = xmax), nrow = Nin, ncol = dimX)
   y.in.tmp = simulateY_frommultivarfunction(
@@ -152,30 +177,38 @@ for(i in 1:numSims){
   
   x_random.tmp = matrix(runif(n = dimX * Nnew, min = xmin, max = xmax), 
                     nrow = Nnew, ncol = dimX)
+  
+  # random design sims
   random_sims[[i]] = list(
     x.in = x.in.tmp, y.in = y.in.tmp,
     x.new = x_random.tmp,
     y.new = as.vector(simulateY_frommultivarfunction(
       x = x_random.tmp, true.function = fT, error.var = sigmasq))
     )
-  x_doptimal.tmp = cbind(
-    x_doptimal, runif(n = nrow(x_doptimal), min = xmin, max = xmax))
-  # x_doptimal.tmp = cbind(x_doptimal, 0)
+  
+  # Dopt-linear sims
   dopt_sims[[i]] = list(
     x.in = x.in.tmp, y.in = y.in.tmp,
-    x.new = x_doptimal.tmp,
+    x.new = x_doptimal,
     y.new = as.vector(simulateY_frommultivarfunction(
-      x = x_doptimal.tmp, true.function = fT, error.var = sigmasq))
-    )
-  x_factorial.tmp = cbind(
-    x_factorial, runif(n = nrow(x_factorial), min = xmin, max = xmax))
-  # x_factorial.tmp = cbind(x_factorial, 0)
-  fact_sims[[i]] = list(
+      x = x_doptimal, true.function = fT, error.var = sigmasq))
+  )
+  
+  # 2-level factorial sims
+  fact2_sims[[i]] = list(
     x.in = x.in.tmp, y.in = y.in.tmp,
-    x.new = x_factorial.tmp,
+    x.new = x_2fact,
     y.new = as.vector(simulateY_frommultivarfunction(
-      x = x_factorial.tmp, true.function = fT, error.var = sigmasq))
-    )
+      x = x_2fact, true.function = fT, error.var = sigmasq))
+  )
+  
+  # 3-level factorial sims
+  fact3_sims[[i]] = list(
+    x.in = x.in.tmp, y.in = y.in.tmp,
+    x.new = x_3fact,
+    y.new = as.vector(simulateY_frommultivarfunction(
+      x = x_3fact, true.function = fT, error.var = sigmasq))
+  )
 }
 
 ################################################################################
@@ -198,7 +231,8 @@ numBreaks = 8
 sm = seqmed_sims[[sim.idx]]
 ra = random_sims[[sim.idx]]
 dl = dopt_sims[[sim.idx]]
-fa = fact_sims[[sim.idx]]
+f2 = fact2_sims[[sim.idx]]
+f3 = fact3_sims[[sim.idx]]
 
 if(name_of_design_to_plot == "seqmed"){
   design.tmp = sm
@@ -206,8 +240,10 @@ if(name_of_design_to_plot == "seqmed"){
   design.tmp = ra
 } else if(name_of_design_to_plot == "doptimal"){
   design.tmp = dl
-} else if(name_of_design_to_plot == "factorial"){
-  design.tmp = fa
+} else if(name_of_design_to_plot == "2factorial"){
+  design.tmp = f2
+} else if(name_of_design_to_plot == "3factorial"){
+  design.tmp = f3
 }
 
 # maxcounts = rep(NA, length(mu_full))
@@ -234,27 +270,23 @@ ggplot(marginals.tall, aes(x = value)) +
         panel.grid.minor = element_blank()) + 
   labs(x = "x")
 
-# plot marginals 9 points at a time
-Nnew.tmp = 9
-marginals.tmp = matrix(
-  NA, nrow = Nnew.tmp, ncol = dimX)
-for(i in 1:ncol(marginals.tmp)) {
-  marginals.tmp[, i] = design.tmp$x.new[1:Nnew.tmp , i]
-}
-colnames(marginals.tmp) = paste("Variable", 1:dimX, sep = " ")
-marginals.tmp = as.data.table(marginals.tmp)
-marginals.tall.tmp = melt(marginals.tmp, measure.vars = 1:dimX)
-ggplot(marginals.tall.tmp, aes(x = value)) + 
-  facet_wrap(vars(variable)) +
-  geom_histogram(binwidth = 0.12, closed = "right") +
-  theme_bw() + 
-  theme(panel.grid.major = element_blank(), 
-        panel.grid.minor = element_blank()) + 
-  labs(x = "x")
-
-# 3d scatterplot?
-# library(scatterplot3d)
-# scatterplot3d(marginals)
+# # plot marginals 9 points at a time
+# Nnew.tmp = 9
+# marginals.tmp = matrix(
+#   NA, nrow = Nnew.tmp, ncol = dimX)
+# for(i in 1:ncol(marginals.tmp)) {
+#   marginals.tmp[, i] = design.tmp$x.new[1:Nnew.tmp , i]
+# }
+# colnames(marginals.tmp) = paste("Variable", 1:dimX, sep = " ")
+# marginals.tmp = as.data.table(marginals.tmp)
+# marginals.tall.tmp = melt(marginals.tmp, measure.vars = 1:dimX)
+# ggplot(marginals.tall.tmp, aes(x = value)) + 
+#   facet_wrap(vars(variable)) +
+#   geom_histogram(binwidth = 0.12, closed = "right") +
+#   theme_bw() + 
+#   theme(panel.grid.major = element_blank(), 
+#         panel.grid.minor = element_blank()) + 
+#   labs(x = "x")
 
 ################################################################################
 # plot the posterior probabilities of the hypotheses
@@ -399,20 +431,23 @@ for(j in 1:numSims){
     random_sims[[j]], models, true.function, sigmasq, TRUE)
   PPH_dopt = getPPH(
     dopt_sims[[j]], models, true.function, sigmasq, TRUE)
-  PPH_fact = getPPH(
-    fact_sims[[j]], models, true.function, sigmasq, TRUE)
+  PPH_fact2 = getPPH(
+    fact2_sims[[j]], models, true.function, sigmasq, TRUE)
+  PPH_fact3 = getPPH(
+    fact3_sims[[j]], models, true.function, sigmasq, TRUE)
   # master data frame
-  PPH_random$type = "random"
-  PPH_dopt$type = "dopt"
-  PPH_fact$type = "3fact"
-  PPH.tmp = rbind(PPH_random, PPH_dopt, PPH_fact)
+  PPH_random$Design = "Random"
+  PPH_dopt$Design = "DOptimal"
+  PPH_fact2$Design = "2Factorial"
+  PPH_fact3$Design = "3Factorial"
+  PPH.tmp = rbind(PPH_random, PPH_dopt, PPH_fact2, PPH_fact3)
   PPH.tmp$sim = j
   PPH_df = rbind(PPH_df, PPH.tmp)
 }
 PPHmean = aggregate(
   PPH_df[, names(PPH_df)[1:length(models)]], 
-  by = list(PPH_df[, "type"]), FUN = function(x) mean(x, na.rm = TRUE))
-names(PPHmean)[1] = "type"
+  by = list(PPH_df[, "Design"]), FUN = function(x) mean(x, na.rm = TRUE))
+names(PPHmean)[1] = "Design"
 PPHmean$index = Nnew #Nttl
 # but we want a line, so allow interpolation by setting PPHmean$index = 0 too
 PPHmean2 = PPHmean
@@ -426,7 +461,7 @@ for(j in 1:numSims){
   PPH_seq.sm = getPPHseq(
     seqmed_sims[[j]], models, Nnew, fT, sigmasq, TRUE, FALSE) 
   # master data frame
-  PPH_seq.sm$type = "seqmed"
+  PPH_seq.sm$Design = "SeqMED"
   PPH_seq.tmp = rbind(PPH_seq.sm)
   PPH_seq.tmp$sim = j
   PPH_seq = rbind(PPH_seq, PPH_seq.tmp)
@@ -434,85 +469,90 @@ for(j in 1:numSims){
 
 PPHmean_seq = aggregate(
   PPH_seq[, names(PPH_seq)[1:length(models)]], 
-  by = list(PPH_seq[, "type"], PPH_seq[, "index"]), 
+  by = list(PPH_seq[, "Design"], PPH_seq[, "index"]), 
   FUN = function(x) mean(x, na.rm = TRUE))
-names(PPHmean_seq)[c(1, 2)] = c("type", "index")
+names(PPHmean_seq)[c(1, 2)] = c("Design", "index")
 
 PPHmean_gg = rbind(PPHmean, PPHmean_seq)
-PPHmean_gg = melt(PPHmean_gg, id.vars = c("type", "index"), 
+PPHmean_gg = melt(PPHmean_gg, id.vars = c("Design", "index"), 
                   measure.vars = paste0("H", 0:(length(models) - 1), sep = ""), 
                   variable.name = "hypothesis")
-design_names = rev(c("seqmed", "3fact", "dopt", "random"))
-PPHmean_gg$type = factor(PPHmean_gg$type, levels = design_names)
-PPHmean_gg = setorder(PPHmean_gg, cols = "type")
+design_names = rev(c("SeqMED", "DOptimal", "3Factorial", "2Factorial", "Random"))
+PPHmean_gg$Design = factor(PPHmean_gg$Design, levels = design_names)
+PPHmean_gg = setorder(PPHmean_gg, cols = "Design")
 PPHmean_gg2 = PPHmean_gg[PPHmean_gg$index == Nnew, ]
-PPHmean_gg2$type = factor(PPHmean_gg2$type, levels = design_names)
-PPHmean_gg2 = setorder(PPHmean_gg2, cols = "type")
-epph.plt = ggplot(PPHmean_gg, aes(x = index, y = value, color = type,
-                                  linetype = type, shape = type)) +
+PPHmean_gg2$Design = factor(PPHmean_gg2$Design, levels = design_names)
+PPHmean_gg2 = setorder(PPHmean_gg2, cols = "Design")
+epph.plt = ggplot(PPHmean_gg, aes(x = index, y = value, color = Design,
+                                  linetype = Design, shape = Design)) +
   facet_wrap(~hypothesis) +
   geom_path() +
-  scale_linetype_manual(values=c(rep("dashed", 3), rep("solid", 2))) +
+  scale_linetype_manual(values=c(rep("dashed", 4), rep("solid", 2))) +
   geom_point(data = PPHmean_gg2, 
-             mapping = aes(x = index, y = value, color = type),
+             mapping = aes(x = index, y = value, color = Design),
              inherit.aes = FALSE) +
   theme_bw() +
-  ylim(0, 1)
+  ylim(0, 1) +
+  labs(x = "Stage Index", y = element_blank())
 plot(epph.plt)
 
 # manuscript plot
 ggsave(
-  filename = paste0("dim", dimT, "_epph.pdf"), 
+  filename = paste0(
+    "4dim", 
+    "_dim", dimT, 
+    "_noise", strsplit(as.character(sigmasq), split = "\\.")[[1]][2],
+    "_epph.pdf"), 
   plot = epph.plt, 
-  width = 4.5, height = 2, units = c("in")
+  width = 6.5, height = 2, units = c("in")
 )
 
 ################################################################################
 # plot the MSE of beta-hat (posterior mean) of the hypotheses
 ################################################################################
-source(paste(functions_dir, "/posterior_mean_mse.R", sep = ""))
+# source(paste(functions_dir, "/posterior_mean_mse.R", sep = ""))
+# 
+# if(dimT == 2){
+#   hyp_mu = mu0
+#   hyp_V = V0
+#   hyp_ind = indices0
+# } else{
+#   hyp_mu = mu1
+#   hyp_V = V1
+#   hyp_ind = indices1
+# }
+# mseBn_smmed = getMSEBeta(
+#   rbind(sm$x.in, sm$x.new), 
+#   Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
+# mseBn_rand = getMSEBeta(
+#   rbind(ra$x.in, ra$x.new), 
+#   Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
+# mseBn_dopt = getMSEBeta(
+#   rbind(dl$x.in, dl$x.new), 
+#   Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
+# mseBn_fact = getMSEBeta(
+#   rbind(fa$x.in, fa$x.new), 
+#   Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
+# 
+# # plot
+# b1 = c(mseBn_smmed[1], mseBn_rand[1], mseBn_dopt[1], mseBn_fact[1])
+# b2 = c(mseBn_smmed[2], mseBn_rand[2], mseBn_dopt[2], mseBn_fact[2])
+# ggdesigns = c("SeqMED", "Random", "Doptimal", "Factorial3")
+# ggdata = data.frame(Designs = factor(rep(ggdesigns, 2), 
+#                                      levels = ggdesigns[c(2, 1, 4, 3)]), 
+#                     MSE = c(b1, b2), beta = rep(c("B1", "B2"), each = length(b1)))
+# mse.plt = ggplot(ggdata, aes(x = Designs, y = MSE)) + 
+#   geom_bar(stat = "identity") +
+#   facet_wrap(vars(beta)) +
+#   theme_bw() + 
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+#         axis.text.x = element_text(angle = 45, vjust = 0.5)) +
+#   labs(y = NULL)
+# # mse.plt
 
-if(dimT == 2){
-  hyp_mu = mu0
-  hyp_V = V0
-  hyp_ind = indices0
-} else{
-  hyp_mu = mu1
-  hyp_V = V1
-  hyp_ind = indices1
-}
-mseBn_smmed = getMSEBeta(
-  rbind(sm$x.in, sm$x.new), 
-  Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
-mseBn_rand = getMSEBeta(
-  rbind(ra$x.in, ra$x.new), 
-  Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
-mseBn_dopt = getMSEBeta(
-  rbind(dl$x.in, dl$x.new), 
-  Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
-mseBn_fact = getMSEBeta(
-  rbind(fa$x.in, fa$x.new), 
-  Ntot, betaT, hyp_mu, hyp_V, sigmasq, NULL, hyp_ind)$MSE_postmean
-
-# plot
-b1 = c(mseBn_smmed[1], mseBn_rand[1], mseBn_dopt[1], mseBn_fact[1])
-b2 = c(mseBn_smmed[2], mseBn_rand[2], mseBn_dopt[2], mseBn_fact[2])
-ggdesigns = c("SeqMED", "Random", "Doptimal", "Factorial3")
-ggdata = data.frame(Designs = factor(rep(ggdesigns, 2), 
-                                     levels = ggdesigns[c(2, 1, 4, 3)]), 
-                    MSE = c(b1, b2), beta = rep(c("B1", "B2"), each = length(b1)))
-mse.plt = ggplot(ggdata, aes(x = Designs, y = MSE)) + 
-  geom_bar(stat = "identity") +
-  facet_wrap(vars(beta)) +
-  theme_bw() + 
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        axis.text.x = element_text(angle = 45, vjust = 0.5)) +
-  labs(y = NULL)
-mse.plt
-
-# manuscript plot
-ggsave(
-  filename = paste0("dim", dimT, "_mseb.pdf"), 
-  plot = mse.plt, 
-  width = 4.5, height = 2, units = c("in")
-)
+# # manuscript plot
+# ggsave(
+#   filename = paste0("dim", dimT, "_mseb.pdf"), 
+#   plot = mse.plt, 
+#   width = 4.5, height = 2, units = c("in")
+# )

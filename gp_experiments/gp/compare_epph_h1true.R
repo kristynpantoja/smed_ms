@@ -1,6 +1,6 @@
 for(scenario in c(1, 2)){
   ################################################################################
-  # last updated: 09/02/2021
+  # last updated: 09/26/2021
   # purpose: to test seqmedgp for scenario 1:
   #   squared exponential vs. matern,
   #   where the true function is matern
@@ -254,7 +254,7 @@ for(scenario in c(1, 2)){
   
   PPH_seq = data.frame(
     PPH0 = numeric(), PPH1 = numeric(), PPHT = numeric(), 
-    type = character(), sim = numeric())
+    Design = character(), sim = numeric())
   for(j in 1:numSims){
     # designs at sim b
     bh = boxhill_sims[[j]]
@@ -273,13 +273,13 @@ for(scenario in c(1, 2)){
     PPH_seq.r = getPPHseq(r, model0, model1, Nnew)
     PPH_seq.g = getPPHseq(g, model0, model1, Nnew, randomize.order = TRUE)
     # master data frame
-    PPH_seq.bh$type = "boxhill"
-    PPH_seq.qc$type = "qcap"
-    PPH_seq.lo$type = "seqmed" # "leaveout"
-    PPH_seq.qc2$type = "keepq2"
-    PPH_seq.kq$type = "keepq"
-    PPH_seq.r$type = "random"
-    PPH_seq.g$type = "grid"
+    PPH_seq.bh$Design = "BoxHill"
+    PPH_seq.qc$Design = "qcap"
+    PPH_seq.lo$Design = "SeqMED" # "leaveout"
+    PPH_seq.qc2$Design = "keepq2"
+    PPH_seq.kq$Design = "keepq"
+    PPH_seq.r$Design = "Random"
+    PPH_seq.g$Design = "Grid"
     PPH_seq.tmp = rbind(
       PPH_seq.bh, PPH_seq.lo, #PPH_seq.qc, PPH_seq.lo, PPH_seq.qc2, PPH_seq.kq, 
       PPH_seq.r, PPH_seq.g)
@@ -287,29 +287,30 @@ for(scenario in c(1, 2)){
     PPH_seq = rbind(PPH_seq, PPH_seq.tmp)
   }
   
-  PPH0mean_seq = aggregate(PPH_seq$PPH0, by = list(PPH_seq$index, PPH_seq$type), 
+  PPH0mean_seq = aggregate(PPH_seq$PPH0, by = list(PPH_seq$index, PPH_seq$Design), 
                            FUN = function(x) mean(x, na.rm = TRUE))
-  names(PPH0mean_seq) = c("index", "type", "value")
+  names(PPH0mean_seq) = c("index", "Design", "value")
   PPH0mean_seq$Hypothesis = "H0"
-  PPH1mean_seq = aggregate(PPH_seq$PPH1, by = list(PPH_seq$index, PPH_seq$type), 
+  PPH1mean_seq = aggregate(PPH_seq$PPH1, by = list(PPH_seq$index, PPH_seq$Design), 
                            FUN = function(x) mean(x, na.rm = TRUE))
-  names(PPH1mean_seq) = c("index", "type", "value")
+  names(PPH1mean_seq) = c("index", "Design", "value")
   PPH1mean_seq$Hypothesis = "H1"
   
   PPHmean_seq = rbind(PPH0mean_seq, PPH1mean_seq)
-  epph.plt = ggplot(PPHmean_seq, aes(x = index, y = value, color = type, 
-                                     linetype = type, shape = type)) + 
+  epph.plt = ggplot(PPHmean_seq, aes(x = index, y = value, color = Design, 
+                                     linetype = Design, shape = Design)) + 
     facet_wrap(~Hypothesis) + 
     geom_path() + 
     geom_point() +
     theme_bw() +
-    ylim(0, 1)
+    ylim(0, 1) +
+    labs(x = "Stage Index", y = element_blank())
   plot(epph.plt)
   
   # slide plot
   # ggsave(
-  #   filename = paste0("20210902_scen", scenario, "_epph.pdf"), 
-  #   plot = epph.plt, 
+  #   filename = paste0("20210902_scen", scenario, "_epph.pdf"),
+  #   plot = epph.plt,
   #   width = 6, height = 4, units = c("in")
   # )
   
@@ -317,7 +318,7 @@ for(scenario in c(1, 2)){
   ggsave(
     filename = paste0(scenario_name, "_epph.pdf"), 
     plot = epph.plt, 
-    width = 4.5, height = 2, units = c("in")
+    width = 6.5, height = 2, units = c("in")
   )
   
   print(paste("scenario", scenario, 

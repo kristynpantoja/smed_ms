@@ -9,6 +9,7 @@
 #   where the true dimensions are (1, 2, 3, 4)
 
 dimT = 3 # 3, 4
+sigmasq = 0.1 # 0.1, 0.3
 
 ################################################################################
 # Sources/Libraries
@@ -63,7 +64,6 @@ dimX = 4
 numCandidates = 5000
 x_seq = seq(from = xmin, to = xmax, length.out = floor((numCandidates)^(1 / 4)))
 candidates = as.matrix(expand.grid(x_seq, x_seq, x_seq, x_seq))
-sigmasq = 0.3 # 0.3
 
 # hypothesis settings
 mu_full = rep(0.5, 3)

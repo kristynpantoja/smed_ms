@@ -32,6 +32,9 @@ source(paste(functions_dir, "/variance_marginal_y.R", sep = ""))
 # for box-hill design
 source(paste(functions_dir, "/boxhill.R", sep = ""))
 
+# for D-optimal design
+library(AlgDesign)
+
 # set up parallelization
 rng.seed = 123 # 123, 345
 
@@ -112,11 +115,51 @@ boxhill_sims = readRDS(paste0(
 # non-sequential designs
 ################################################################################
 
+# use AlgDesign to obtain Doptimal designs #
+
+# consider linear model, y = b0 + b1 x
+candidates_named = data.frame(x = candidates)
+res_Fed_Doptlin = optFederov(
+  ~1+x, data = candidates_named, approximate = TRUE, criterion = "D")
+res_Fed_Doptlin$design
+
+# consider quadratic model, y = b0 + b1 x + b2 x^2
+res_Fed_Doptquad = optFederov(
+  ~1+x+I(x^2), data = candidates_named, approximate = TRUE, criterion = "D")
+res_Fed_Doptquad$design
+
+# define designs #
+
+# space-filling (grid)
 space_filling = seq(from = xmin, to = xmax, length.out = Nttl)
-dopt_linear = c(rep(1, floor(Nttl / 2)), rep(-1, Nttl - floor(Nttl / 2)))
-dopt_quadratic = c(rep(1, floor(Nttl / 3)), 
-                   rep(0, ceiling(Nttl / 3)), 
-                   rep(-1, Nttl - floor(Nttl / 3) - ceiling(Nttl / 3)))
+
+# Doptimal - linear
+num_supportpts_Doptlin = nrow(res_Fed_Doptlin$design)
+supportpt_assgnmt_Doptlin = cut(
+  sample(1:Nttl, size = Nttl, replace = FALSE), # shuffle
+  breaks = num_supportpts_Doptlin, labels = FALSE)
+dopt_linear = rep(NA, Nttl)
+for(i in 1:num_supportpts_Doptlin){
+  dopt_linear[supportpt_assgnmt_Doptlin == i] = 
+    res_Fed_Doptlin$design[i, "x"]
+}
+# # check:
+# res_Fed_Doptlin$design
+# table(dopt_linear) / Nttl
+
+# Doptimal - quadratic
+num_supportpts_Doptquad = nrow(res_Fed_Doptquad$design)
+supportpt_assgnmt_Doptquad = cut(
+  sample(1:Nttl, size = Nttl, replace = FALSE), # shuffle
+  breaks = num_supportpts_Doptquad, labels = FALSE)
+dopt_quadratic = rep(NA, Nttl)
+for(i in 1:num_supportpts_Doptquad){
+  dopt_quadratic[supportpt_assgnmt_Doptquad == i] = 
+    res_Fed_Doptquad$design[i, "x"]
+}
+# # check:
+# res_Fed_Doptquad$design
+# table(dopt_quadratic) / Nttl
 
 grid_sims = list()
 doptlin_sims = list()
@@ -404,6 +447,17 @@ PPHmean_gg = melt(PPHmean_gg, id.vars = c("Design", "index"),
                   variable.name = "hypothesis")
 design_names = rev(c("SeqMED", "BoxHill", "DOptLin.", "DOptQuadr.", "Grid"))
 PPHmean_gg$Design = factor(PPHmean_gg$Design, levels = design_names)
+if(scenario == 1){
+  PPHmean_gg$hypothesis = factor(
+    PPHmean_gg$hypothesis, 
+    levels = paste0("H", 0:(length(models) - 1), sep = ""), 
+    labels = paste0("Case ", scenario, ", H", 0:(length(models) - 1), sep = ""))
+} else if(scenario == 2){
+  PPHmean_gg$hypothesis = factor(
+    PPHmean_gg$hypothesis, 
+    levels = paste0("H", 0:(length(models) - 1), sep = ""), 
+    labels = paste0("Case ", scenario, ", H", c(0, 1, "T"), sep = ""))
+}
 PPHmean_gg = setorder(PPHmean_gg, cols = "Design")
 PPHmean_gg2 = PPHmean_gg[PPHmean_gg$index == Nttl, ]
 PPHmean_gg2$Design = factor(PPHmean_gg2$Design, levels = design_names)
@@ -417,12 +471,14 @@ epph.plt = ggplot(PPHmean_gg, aes(x = index, y = value, color = Design,
              mapping = aes(x = index, y = value, color = Design),
              inherit.aes = FALSE) +
   theme_bw() +
-  ylim(0, 1)
+  ylim(0, 1) + 
+  labs(x = "Stage Index", y = element_blank())
 plot(epph.plt)
 
 if(scenario == 1){
   epph_scen1 = epph.plt
 } else if(scenario == 2){
+  epph.plt = epph.plt + theme(legend.position = "none")
   epph_scen2 = epph.plt
 }
 if(!is.null(epph_scen1) & !is.null(epph_scen2)){
@@ -431,7 +487,7 @@ if(!is.null(epph_scen1) & !is.null(epph_scen2)){
   # ggsave(
   #   filename = paste0("lm_epphs.pdf"),
   #   plot = last_plot(),
-  #   width = 6.5, height = 4, units = c("in")
+  #   width = 6.5, height = 3.5, units = c("in")
   # )
 }
 

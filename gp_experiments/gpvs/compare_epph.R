@@ -2,7 +2,7 @@
 # last updated: 09/26/2021
 # purpose: to test SeqMEDgpvs()
 
-dimT = 1
+dimT = 2
 seq.type = 1
 lT = 0.01
 typeT = "squaredexponential"

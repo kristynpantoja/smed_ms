@@ -238,7 +238,8 @@ for(scenario in c(1, 2)){
     #           vjust = -0.65 * as.numeric(paste(text.gg$index)), size = 2) +
     xlim(c(xmin, xmax)) + 
     theme_bw() + 
-    labs(x = "x")
+    labs(x = "x") +
+    theme(legend.position = "none")
   if(typeT == "periodic"){
     des.plt = des.plt + geom_vline(
       xintercept = pT * (0:floor((xmax - xmin) / pT)), #color = "gray", 

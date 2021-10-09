@@ -161,14 +161,27 @@ for(i in 1:num_supportpts_Doptquad){
 # res_Fed_Doptquad$design
 # table(dopt_quadratic) / Nttl
 
+# half space-filling, half quadratic Doptimal
+supportpt_assgnmt_hybrid = cut(
+  sample(1:(Nttl / 2), size = Nttl / 2, replace = FALSE), # shuffle
+  breaks = num_supportpts_Doptquad, labels = FALSE)
+hybrid_grid_doptq = rep(NA, Nttl / 2)
+for(i in 1:num_supportpts_Doptquad){
+  hybrid_grid_doptq[supportpt_assgnmt_hybrid == i] = 
+    res_Fed_Doptquad$design[i, "x"]
+}
+hybrid_grid_doptq[(Nttl / 2 + 1):Nttl] = seq(
+  from = xmin, to = xmax, length.out = Nttl / 2)
+
 grid_sims = list()
 doptlin_sims = list()
 doptquad_sims = list()
+hybrid_sims = list()
 for(i in 1:numSims){
   grid_sims[[i]] = list(
     x = space_filling,
     y = sapply(space_filling, FUN = function(x) simulateY_fromfunction(
-    x = x, true.function = fT, error.var = sigmasq)))
+      x = x, true.function = fT, error.var = sigmasq)))
   doptlin_sims[[i]] = list(
     x = dopt_linear,
     y = sapply(dopt_linear, FUN = function(x) simulateY_fromfunction(
@@ -176,6 +189,10 @@ for(i in 1:numSims){
   doptquad_sims[[i]] = list(
     x = dopt_quadratic,
     y = sapply(dopt_quadratic, FUN = function(x) simulateY_fromfunction(
+      x = x, true.function = fT, error.var = sigmasq)))
+  hybrid_sims[[i]] = list(
+    x = hybrid_grid_doptq,
+    y = sapply(hybrid_grid_doptq, FUN = function(x) simulateY_fromfunction(
       x = x, true.function = fT, error.var = sigmasq)))
 }
 
@@ -403,11 +420,14 @@ for(j in 1:numSims){
     doptlin_sims[[j]], models, true.function, sigmasq)
   PPH_doptq = getPPH(
     doptquad_sims[[j]], models, true.function, sigmasq)
+  PPH_hybrid = getPPH(
+    hybrid_sims[[j]], models, true.function, sigmasq)
   # master data frame
   PPH_grid$Design = "Grid"
   PPH_doptl$Design = "DOptLin."
   PPH_doptq$Design = "DOptQuadr."
-  PPH.tmp = rbind(PPH_grid, PPH_doptl, PPH_doptq)
+  PPH_hybrid$Design = "Hybrid"
+  PPH.tmp = rbind(PPH_grid, PPH_doptl, PPH_doptq, PPH_hybrid)
   PPH.tmp$sim = j
   PPH_df = rbind(PPH_df, PPH.tmp)
 }
@@ -445,7 +465,7 @@ PPHmean_gg = rbind(PPHmean, PPHmean_seq)
 PPHmean_gg = melt(PPHmean_gg, id.vars = c("Design", "index"), 
                   measure.vars = paste0("H", 0:(length(models) - 1), sep = ""), 
                   variable.name = "hypothesis")
-design_names = rev(c("SeqMED", "BoxHill", "DOptLin.", "DOptQuadr.", "Grid"))
+design_names = rev(c("SeqMED", "BoxHill", "DOptLin.", "DOptQuadr.", "Grid", "Hybrid"))
 PPHmean_gg$Design = factor(PPHmean_gg$Design, levels = design_names)
 if(scenario == 1){
   PPHmean_gg$hypothesis = factor(
@@ -463,10 +483,10 @@ PPHmean_gg2 = PPHmean_gg[PPHmean_gg$index == Nttl, ]
 PPHmean_gg2$Design = factor(PPHmean_gg2$Design, levels = design_names)
 PPHmean_gg2 = setorder(PPHmean_gg2, cols = "Design")
 epph.plt = ggplot(PPHmean_gg, aes(x = index, y = value, color = Design,
-                                   linetype = Design, shape = Design)) +
+                                  linetype = Design, shape = Design)) +
   facet_wrap(~hypothesis) +
   geom_path() +
-    scale_linetype_manual(values=c(rep("dashed", 3), rep("solid", 2))) +
+  # scale_linetype_manual(values=c(rep("dashed", 4), rep("solid", 2))) +
   geom_point(data = PPHmean_gg2, 
              mapping = aes(x = index, y = value, color = Design),
              inherit.aes = FALSE) +
@@ -483,12 +503,12 @@ if(scenario == 1){
 }
 if(!is.null(epph_scen1) & !is.null(epph_scen2)){
   ggarrange(epph_scen1, epph_scen2, nrow = 2, ncol = 1)
-  # # manuscript plot
-  # ggsave(
-  #   filename = paste0("lm_epphs.pdf"),
-  #   plot = last_plot(),
-  #   width = 6.5, height = 3.5, units = c("in")
-  # )
+  # manuscript plot
+  ggsave(
+    filename = paste0("lm_epphs.pdf"),
+    plot = last_plot(),
+    width = 6.5, height = 3.5, units = c("in")
+  )
 }
 
 ################################################################################

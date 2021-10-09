@@ -9,7 +9,7 @@ rm(list=ls())
 #   dimensions (1, 2) vs dimensions (1, 2, 3)
 #   where the true dimensions are (1, 2, 3, 4)
 
-dimT = 3 # 3, 4
+dimT = 3 # 3
 sigmasq = 0.3 # 0.1, 0.3
 
 ################################################################################
@@ -479,6 +479,10 @@ PPHmean_gg = melt(PPHmean_gg, id.vars = c("Design", "index"),
                   variable.name = "hypothesis")
 design_names = rev(c("SeqMED", "DOptimal", "3Factorial", "2Factorial", "Random"))
 PPHmean_gg$Design = factor(PPHmean_gg$Design, levels = design_names)
+  PPHmean_gg$hypothesis = factor(
+    PPHmean_gg$hypothesis, 
+    levels = paste0("H", 0:(length(models) - 1), sep = ""), 
+    labels = paste0("H", c(0, 1, "T"), sep = ""))
 PPHmean_gg = setorder(PPHmean_gg, cols = "Design")
 PPHmean_gg2 = PPHmean_gg[PPHmean_gg$index == Nnew, ]
 PPHmean_gg2$Design = factor(PPHmean_gg2$Design, levels = design_names)

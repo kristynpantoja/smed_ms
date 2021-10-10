@@ -8,7 +8,7 @@
 #   linear vs. quadratic,
 #   where the true function is cubic
 
-scenario = 1 # 1, 2
+scenario = 2 # 1, 2
 
 ################################################################################
 # Sources/Libraries
@@ -93,6 +93,7 @@ if(scenario == 1){
   betaT = c(0, -0.75, 0, 1)
   fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2 + betaT[4] * x^3
 }
+curve(fT, from = xmin, to = xmax)
 
 ################################################################################
 # import box & hill and seqmed simulations

@@ -117,7 +117,7 @@ seqmed_sims = foreach(i = 1:numSims) %dopar% {
 
 saveRDS(seqmed_sims, file = paste0(
   output_dir,
-  "sm", "_scen", scenario, 
+  "/sm", "_scen", scenario, 
   "_sigmasq", sigmasq,
   "_Nttl", Nttl, 
   "_numSims", numSims, 

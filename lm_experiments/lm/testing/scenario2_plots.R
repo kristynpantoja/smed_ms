@@ -6,7 +6,7 @@
 
 scenario = 2
 
-beta_setting = 1 # 1, 2, 3
+beta_setting = 1 # 1, 2
 
 ################################################################################
 # Sources/Libraries
@@ -58,7 +58,7 @@ registerDoRNG(1995)
 
 # simulations settings
 numSims = 100 #100
-numSeq = 100 #100
+numSeq = 36 #100
 seqN = 1
 Nttl = numSeq * seqN
 xmin = -1
@@ -108,11 +108,13 @@ curve(fT, from = xmin, to = xmax)
 ################################################################################
 
 seqmed_sims = readRDS(file = paste0(
-  "sm", "_scen", scenario, 
+  output_dir,
+  "/sm", "_scen", scenario, 
   "_sigmasq", sigmasq,
   "_Nttl", Nttl, 
   "_numSims", numSims, 
-  "_beta", beta_setting
+  "_beta", beta_setting, 
+  ".rds"
 ))
 
 ################################################################################

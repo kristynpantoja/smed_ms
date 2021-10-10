@@ -6,7 +6,7 @@
 
 scenario = 2
 
-beta_setting = 1 # 1, 2
+beta_setting = 1 # 0, 1, 2
 
 ################################################################################
 # Sources/Libraries
@@ -58,7 +58,7 @@ registerDoRNG(1995)
 
 # simulations settings
 numSims = 100 #100
-numSeq = 36 #100
+numSeq = 100 #100, 36
 seqN = 1
 Nttl = numSeq * seqN
 xmin = -1
@@ -102,6 +102,16 @@ if(beta_setting == 0){
 }
 fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2 + betaT[4] * x^3
 curve(fT, from = xmin, to = xmax)
+ggsave(
+  filename = paste0(
+    "lm_", "_scen", scenario, 
+    "_beta", beta_setting, 
+    "_N", Nttl,
+    "_numSims", numSims,
+    "_curve", ".pdf"),
+  plot = last_plot(),
+  width = 6.5, height = 3.5, units = c("in")
+)
 
 ################################################################################
 # run simulations
@@ -232,7 +242,7 @@ plt1 = ggplot(ggdata) +
   stat_function(fun = fT) + 
   theme_bw() + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-ggarrange(plt0, plt1)
+# ggarrange(plt0, plt1)
 
 ################################################################################
 # plot the wasserstein distance when scenario == 1
@@ -281,8 +291,7 @@ if(scenario == 1){
       alpha = 0.2, inherit.aes = FALSE) +
     theme_bw() +
     theme(panel.grid.minor = element_blank())
-  pltw
-  ggarrange(plt0, plt1, pltw, nrow = 1, ncol = 3, widths = c(1, 1, 1.75))
+  # ggarrange(plt0, plt1, pltw, nrow = 1, ncol = 3, widths = c(1, 1, 1.75))
   
   # # manuscript plot
   # ggsave(
@@ -472,7 +481,16 @@ epph.plt = ggplot(PPHmean_gg, aes(x = index, y = value, color = Design,
   labs(x = "Stage Index", y = element_blank())
 plot(epph.plt)
 
-
+ggsave(
+  filename = paste0(
+    "lm_", "_scen", scenario, 
+    "_beta", beta_setting, 
+    "_N", Nttl,
+    "_numSims", numSims,
+    "_epphs", ".pdf"),
+  plot = last_plot(),
+  width = 6.5, height = 3.5, units = c("in")
+)
 
 
 

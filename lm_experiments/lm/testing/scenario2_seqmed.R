@@ -6,7 +6,7 @@
 
 scenario = 2
 
-beta_setting = 1 # 1, 2, 3
+beta_setting = 3 # 1, 2, 3
 
 ################################################################################
 # Sources/Libraries
@@ -116,11 +116,13 @@ seqmed_sims = foreach(i = 1:numSims) %dopar% {
 }
 
 saveRDS(seqmed_sims, file = paste0(
+  output_dir,
   "sm", "_scen", scenario, 
   "_sigmasq", sigmasq,
   "_Nttl", Nttl, 
   "_numSims", numSims, 
-  "_beta", beta_setting
+  "_beta", beta_setting,
+  ".rds"
 ))
 
 

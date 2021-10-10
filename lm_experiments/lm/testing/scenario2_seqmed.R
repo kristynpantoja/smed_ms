@@ -41,13 +41,6 @@ nworkers = detectCores()
 plan(multisession, workers = nworkers)
 
 library(mvtnorm)
-library(ggplot2)
-library(reshape2)
-library(ggpubr)
-gg_color_hue = function(n) {
-  hues = seq(15, 275, length = n + 1)
-  hcl(h = hues, l = 65, c = 100)[1:n]
-}
 
 library(doRNG)
 registerDoRNG(1995)

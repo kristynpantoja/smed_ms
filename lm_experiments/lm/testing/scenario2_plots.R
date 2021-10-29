@@ -6,7 +6,7 @@
 
 scenario = 2
 
-beta_setting = 1 # 0, 1, 2
+beta_setting = 3 # 0, 1, 2, 3
 
 ################################################################################
 # Sources/Libraries
@@ -58,7 +58,7 @@ registerDoRNG(1995)
 
 # simulations settings
 numSims = 100 #100
-numSeq = 100 #100, 36
+numSeq = 36 #100, 36
 seqN = 1
 Nttl = numSeq * seqN
 xmin = -1
@@ -95,13 +95,55 @@ prior_probs = rep(1 / 2, 2)
 ################################################################################
 if(beta_setting == 0){
   betaT = c(0, -0.75, 0, 1)
+  fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2 + betaT[4] * x^3
 } else if(beta_setting == 1){
   betaT = c(0, 0, 0, 1)
+  fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2 + betaT[4] * x^3
 } else if(beta_setting == 2){
   betaT = c(0, 0, 1, 1)
+  fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2 + betaT[4] * x^3
+} else if(beta_setting == 3){
+  betaT = c(0, 0, 1)
+  fx_outer = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2
+  discontinuity = 0.05
+  height = 1
+  fx_innerneg = function(x) height - ((fx_outer(discontinuity) - height) / discontinuity) * x
+  fx_innerpos = function(x) height + ((fx_outer(discontinuity) - height) / discontinuity) * x
+  fT = function(x){
+    fx = rep(NA, length(x))
+    for(i in 1:length(x)){
+      if(abs(x[i]) >= discontinuity){
+        fx[i] = fx_outer(x[i])
+      } else if(x[i] > -discontinuity & x[i] <= 0){
+        fx[i] = fx_innerneg(x[i])
+      } else{
+        fx[i] = fx_innerpos(x[i])
+      }
+    }
+    return(fx)
+  }
+} else if(beta_setting == 4){
+  betaT = c(0, 0, 1)
+  fx_outer = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2
+  discontinuity = 0.05
+  height = 1
+  fx_inner = function(x) height
+  fT = function(x){
+    fx = rep(NA, length(x))
+    for(i in 1:length(x)){
+      if(abs(x[i]) >= discontinuity){
+        fx[i] = fx_outer(x[i])
+      } else{
+        fx[i] = fx_inner(x[i])
+      }
+    }
+    return(fx)
+  }
 }
-fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2 + betaT[4] * x^3
-curve(fT, from = xmin, to = xmax)
+ggplot() + 
+  xlim(xmin, xmax) + 
+  geom_function(fun = fT) + 
+  theme_bw()
 ggsave(
   filename = paste0(
     "lm_", "_scen", scenario, 
@@ -114,7 +156,7 @@ ggsave(
 )
 
 ################################################################################
-# run simulations
+# import sequential designs
 ################################################################################
 
 seqmed_sims = readRDS(file = paste0(
@@ -310,15 +352,52 @@ if(scenario == 1){
 if(scenario == 1){
   models = list(model0, model1)
 } else if(scenario == 2){
-  desXT = function(x){
-    n = length(x)
-    return(cbind(rep(1, n), x, x^2, x^3))
+  if(beta_setting %in% 0:2){
+    desXT = function(x){
+      n = length(x)
+      return(cbind(rep(1, n), x, x^2, x^3))
+    }
+    modelT = list(
+      designMat = desXT, 
+      beta.mean = rep(0, 4), 
+      beta.var = diag(rep(sigmasq01, 4)), 4)
+    models = list(model0, model1, modelT)
+  } else if(beta_setting == 3){
+    xi1 = -discontinuity
+    xi2 = 0
+    xi3 = discontinuity
+    h1 = function(x) 1
+    h2 = function(x) x
+    h3 = function(x) x^2
+    h4 = function(x) ifelse(x - xi1 > 0, x - xi1, 0)
+    h5 = function(x) ifelse(x - xi2 > 0, x - xi2, 0)
+    h6 = function(x) ifelse(x - xi3 > 0, x - xi3, 0)
+    desXT = function(x){
+      cbind(h1(x), h2(x), h3(x), h4(x), h5(x), h6(x))
+    }
+    modelT = list(
+      designMat = desXT, 
+      beta.mean = rep(0, 6), 
+      beta.var = diag(rep(sigmasq01, 6)), 6)
+    models = list(model0, model1, modelT)
+  } else if(beta_setting == 4){
+    xi1 = -discontinuity
+    xi2 = discontinuity
+    h1 = function(x) 1
+    h2 = function(x) x
+    h3 = function(x) x^2
+    h4 = function(x) ifelse(x < xi1, 1, 0)
+    h5 = function(x) ifelse(x < xi2, 1, 0)
+    desXT = function(x){
+      cbind(h1(x), h2(x), h3(x), h4(x), h5(x))
+    }
+    modelT = list(
+      designMat = desXT, 
+      beta.mean = rep(0, 5), 
+      beta.var = diag(rep(sigmasq01, 5)), 5)
+    models = list(model0, model1, modelT)
   }
-  modelT = list(
-    designMat = desXT, 
-    beta.mean = rep(0, 4), 
-    beta.var = diag(rep(sigmasq01, 4)), 4)
-  models = list(model0, model1, modelT)
+  
 }
 
 getPPH = function(

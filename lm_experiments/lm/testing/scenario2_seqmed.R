@@ -58,7 +58,7 @@ registerDoRNG(1995)
 
 # simulations settings
 numSims = 100 #100
-numSeq = 36 #36, 100
+numSeq = 100 #36, 100
 seqN = 1
 Nttl = numSeq * seqN
 xmin = -1

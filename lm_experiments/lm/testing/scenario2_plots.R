@@ -6,7 +6,7 @@
 
 scenario = 2
 
-beta_setting = 3 # 0, 1, 2, 3
+beta_setting = 4 # 0, 1, 2, 3, 4
 
 ################################################################################
 # Sources/Libraries
@@ -58,7 +58,7 @@ registerDoRNG(1995)
 
 # simulations settings
 numSims = 100 #100
-numSeq = 36 #100, 36
+numSeq = 12 #100, 36
 seqN = 1
 Nttl = numSeq * seqN
 xmin = -1
@@ -144,16 +144,14 @@ ggplot() +
   xlim(xmin, xmax) + 
   geom_function(fun = fT) + 
   theme_bw()
-ggsave(
-  filename = paste0(
-    "lm_", "_scen", scenario, 
-    "_beta", beta_setting, 
-    "_N", Nttl,
-    "_numSims", numSims,
-    "_curve", ".pdf"),
-  plot = last_plot(),
-  width = 6.5, height = 3.5, units = c("in")
-)
+# ggsave(
+#   filename = paste0(
+#     "lm_", "_scen", scenario, 
+#     "_beta", beta_setting, 
+#     "_curve", ".pdf"),
+#   plot = last_plot(),
+#   width = 6.5, height = 3.5, units = c("in")
+# )
 
 ################################################################################
 # import sequential designs
@@ -348,6 +346,7 @@ if(scenario == 1){
 ################################################################################
 # plot the posterior probabilities of the hypotheses
 ################################################################################
+library(data.table)
 
 if(scenario == 1){
   models = list(model0, model1)
@@ -475,47 +474,124 @@ getPPHseq = function(
   return(PPH_mat)
 }
 
-#
+################################################################################
 
-# non-sequential designs
-PPH_df = data.frame()
-for(j in 1:numSims){
-  # sequence of PPHs for each design
-  PPH_grid = getPPH(
-    grid_sims[[j]], models, true.function, sigmasq)
-  PPH_doptl = getPPH(
-    doptlin_sims[[j]], models, true.function, sigmasq)
-  PPH_doptq = getPPH(
-    doptquad_sims[[j]], models, true.function, sigmasq)
-  PPH_hybrid = getPPH(
-    hybrid_sims[[j]], models, true.function, sigmasq)
-  # master data frame
-  PPH_grid$Design = "Grid"
-  PPH_doptl$Design = "DOptLin."
-  PPH_doptq$Design = "DOptQuadr."
-  PPH_hybrid$Design = "Hybrid"
-  PPH.tmp = rbind(PPH_grid, PPH_doptl, PPH_doptq, PPH_hybrid)
-  PPH.tmp$sim = j
-  PPH_df = rbind(PPH_df, PPH.tmp)
-}
-PPHmean = aggregate(
-  PPH_df[, names(PPH_df)[1:length(models)]], 
-  by = list(PPH_df[, "Design"]), FUN = function(x) mean(x, na.rm = TRUE))
-names(PPHmean)[1] = "Design"
-PPHmean$index = Nttl
-# but we want a line, so allow interpolation by setting PPHmean$index = 0 too
-PPHmean2 = PPHmean
-PPHmean2$index = 0
-PPHmean = rbind(PPHmean, PPHmean2)
+# # non-sequential designs
+# PPH_df = data.frame()
+# for(j in 1:numSims){
+#   # sequence of PPHs for each design
+#   PPH_grid = getPPH(
+#     grid_sims[[j]], models, fT, sigmasq)
+#   PPH_doptl = getPPH(
+#     doptlin_sims[[j]], models, fT, sigmasq)
+#   PPH_doptq = getPPH(
+#     doptquad_sims[[j]], models, fT, sigmasq)
+#   PPH_hybrid = getPPH(
+#     hybrid_sims[[j]], models, fT, sigmasq)
+#   # master data frame
+#   PPH_grid$Design = "Grid"
+#   PPH_doptl$Design = "DOptLin."
+#   PPH_doptq$Design = "DOptQuadr."
+#   PPH_hybrid$Design = "Hybrid"
+#   PPH.tmp = rbind(PPH_grid, PPH_doptl, PPH_doptq, PPH_hybrid)
+#   PPH.tmp$sim = j
+#   PPH_df = rbind(PPH_df, PPH.tmp)
+# }
+# PPHmean = aggregate(
+#   PPH_df[, names(PPH_df)[1:length(models)]], 
+#   by = list(PPH_df[, "Design"]), FUN = function(x) mean(x, na.rm = TRUE))
+# names(PPHmean)[1] = "Design"
+# PPHmean$index = Nttl
+# # but we want a line, so allow interpolation by setting PPHmean$index = 0 too
+# PPHmean2 = PPHmean
+# PPHmean2$index = 0
+# PPHmean = rbind(PPHmean, PPHmean2)
+# 
+# # sequential designs
+# PPH_seq = data.frame()
+# for(j in 1:numSims){
+#   # sequence of PPHs for each design
+#   PPH_seq.sm = getPPHseq(seqmed_sims[[j]], models, Nttl, fT, sigmasq) 
+#   # master data frame
+#   PPH_seq.sm$Design = "SeqMED"
+#   PPH_seq.tmp =PPH_seq.sm
+#   PPH_seq.tmp$sim = j
+#   PPH_seq = rbind(PPH_seq, PPH_seq.tmp)
+# }
+# 
+# PPHmean_seq = aggregate(
+#   PPH_seq[, names(PPH_seq)[1:length(models)]], 
+#   by = list(PPH_seq[, "Design"], PPH_seq[, "index"]), 
+#   FUN = function(x) mean(x, na.rm = TRUE))
+# names(PPHmean_seq)[c(1, 2)] = c("Design", "index")
+# 
+# PPHmean_gg = rbind(PPHmean, PPHmean_seq)
+# PPHmean_gg = melt(PPHmean_gg, id.vars = c("Design", "index"), 
+#                   measure.vars = paste0("H", 0:(length(models) - 1), sep = ""), 
+#                   variable.name = "hypothesis")
+# design_names = rev(c("SeqMED", "DOptLin.", "DOptQuadr.", "Grid", "Hybrid"))
+# PPHmean_gg$Design = factor(PPHmean_gg$Design, levels = design_names)
+# if(scenario == 1){
+#   PPHmean_gg$hypothesis = factor(
+#     PPHmean_gg$hypothesis, 
+#     levels = paste0("H", 0:(length(models) - 1), sep = ""), 
+#     labels = paste0("Case ", scenario, ", H", 0:(length(models) - 1), sep = ""))
+# } else if(scenario == 2){
+#   PPHmean_gg$hypothesis = factor(
+#     PPHmean_gg$hypothesis, 
+#     levels = paste0("H", 0:(length(models) - 1), sep = ""), 
+#     labels = paste0("Case ", scenario, ", H", c(0, 1, "T"), sep = ""))
+# }
+# PPHmean_gg = setorder(PPHmean_gg, cols = "Design")
+# PPHmean_gg2 = PPHmean_gg[PPHmean_gg$index == Nttl, ]
+# PPHmean_gg2$Design = factor(PPHmean_gg2$Design, levels = design_names)
+# PPHmean_gg2 = setorder(PPHmean_gg2, cols = "Design")
+# epph.plt = ggplot(PPHmean_gg, aes(x = index, y = value, color = Design,
+#                                   linetype = Design, shape = Design)) +
+#   facet_wrap(~hypothesis) +
+#   geom_path() +
+#   # scale_linetype_manual(values=c(rep("dashed", 4), rep("solid", 2))) +
+#   geom_point(data = PPHmean_gg2, 
+#              mapping = aes(x = index, y = value, color = Design),
+#              inherit.aes = FALSE) +
+#   theme_bw() +
+#   ylim(0, 1) + 
+#   labs(x = "Stage Index", y = element_blank())
+# plot(epph.plt)
+
+# ggsave(
+#   filename = paste0(
+#     "lm_", "_scen", scenario, 
+#     "_beta", beta_setting, 
+#     "_N", Nttl,
+#     "_numSims", numSims,
+#     "_epphs", ".pdf"),
+#   plot = last_plot(),
+#   width = 6.5, height = 3.5, units = c("in")
+# )
+
+################################################################################
 
 # sequential designs
 PPH_seq = data.frame()
 for(j in 1:numSims){
   # sequence of PPHs for each design
+  PPH_seq.g = getPPHseq(grid_sims[[j]], models, Nttl, fT, sigmasq, 
+                        initial.data = FALSE, randomize.order = TRUE) 
+  PPH_seq.dl = getPPHseq(doptlin_sims[[j]], models, Nttl, fT, sigmasq, 
+                         initial.data = FALSE, randomize.order = TRUE) 
+  PPH_seq.dq = getPPHseq(doptquad_sims[[j]], models, Nttl, fT, sigmasq, 
+                         initial.data = FALSE, randomize.order = TRUE) 
+  PPH_seq.h = getPPHseq(hybrid_sims[[j]], models, Nttl, fT, sigmasq, 
+                        initial.data = FALSE, randomize.order = TRUE) 
   PPH_seq.sm = getPPHseq(seqmed_sims[[j]], models, Nttl, fT, sigmasq) 
   # master data frame
+  PPH_seq.g$Design = "Grid"
+  PPH_seq.dl$Design = "DOptLin."
+  PPH_seq.dq$Design = "DOptQuadr."
+  PPH_seq.h$Design = "Hybrid"
   PPH_seq.sm$Design = "SeqMED"
-  PPH_seq.tmp =PPH_seq.sm
+  PPH_seq.tmp = rbind(PPH_seq.g, PPH_seq.dl, PPH_seq.dq, PPH_seq.h, PPH_seq.sm)
   PPH_seq.tmp$sim = j
   PPH_seq = rbind(PPH_seq, PPH_seq.tmp)
 }
@@ -526,7 +602,7 @@ PPHmean_seq = aggregate(
   FUN = function(x) mean(x, na.rm = TRUE))
 names(PPHmean_seq)[c(1, 2)] = c("Design", "index")
 
-PPHmean_gg = rbind(PPHmean, PPHmean_seq)
+PPHmean_gg = PPHmean_seq
 PPHmean_gg = melt(PPHmean_gg, id.vars = c("Design", "index"), 
                   measure.vars = paste0("H", 0:(length(models) - 1), sep = ""), 
                   variable.name = "hypothesis")
@@ -547,7 +623,7 @@ PPHmean_gg = setorder(PPHmean_gg, cols = "Design")
 PPHmean_gg2 = PPHmean_gg[PPHmean_gg$index == Nttl, ]
 PPHmean_gg2$Design = factor(PPHmean_gg2$Design, levels = design_names)
 PPHmean_gg2 = setorder(PPHmean_gg2, cols = "Design")
-epph.plt = ggplot(PPHmean_gg, aes(x = index, y = value, color = Design,
+epph.plt2 = ggplot(PPHmean_gg, aes(x = index, y = value, color = Design,
                                   linetype = Design, shape = Design)) +
   facet_wrap(~hypothesis) +
   geom_path() +
@@ -558,21 +634,18 @@ epph.plt = ggplot(PPHmean_gg, aes(x = index, y = value, color = Design,
   theme_bw() +
   ylim(0, 1) + 
   labs(x = "Stage Index", y = element_blank())
-plot(epph.plt)
+plot(epph.plt2)
 
-ggsave(
-  filename = paste0(
-    "lm_", "_scen", scenario, 
-    "_beta", beta_setting, 
-    "_N", Nttl,
-    "_numSims", numSims,
-    "_epphs", ".pdf"),
-  plot = last_plot(),
-  width = 6.5, height = 3.5, units = c("in")
-)
-
-
-
+# ggsave(
+#   filename = paste0(
+#     "lm_", "_scen", scenario, 
+#     "_beta", beta_setting, 
+#     "_N", Nttl,
+#     "_numSims", numSims,
+#     "_epphs", ".pdf"),
+#   plot = last_plot(),
+#   width = 6.5, height = 3.5, units = c("in")
+# )
 
 
 

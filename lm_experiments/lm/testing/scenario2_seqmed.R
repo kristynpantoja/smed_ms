@@ -6,7 +6,7 @@
 
 scenario = 2
 
-beta_setting = 4 # 0, 4
+beta_setting = 0 # 0, 4
 sigmasq = 0.025 # 0.1, 0.05
 discontinuity = 0.01
 height = 1

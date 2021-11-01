@@ -1,0 +1,460 @@
+
+R version 4.1.1 (2021-08-10) -- "Kick Things"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> ################################################################################
+> # last updated: 10/29/21
+> # purpose: to create a list of seqmed simulations for scenario 2:
+> #   linear vs. quadratic,
+> #   where the true function is cubic
+> 
+> scenario = 2
+> 
+> beta_setting = 0 # 0, 4
+> sigmasq = 0.025 # 0.1, 0.05
+> discontinuity = 0.01
+> height = 1
+> numSeq = 12 #100, 36, 12
+> numSims = 250 #100
+> 
+> ################################################################################
+> # Sources/Libraries
+> ################################################################################
+> output_dir = "lm_experiments/lm/testing"
+> functions_home = "functions"
+> 
+> # for seqmed design
+> source(paste(functions_home, "/SeqMED.R", sep = ""))
+> source(paste(functions_home, "/SeqMED_batch.R", sep = ""))
+> source(paste(functions_home, "/charge_function_q.R", sep = ""))
+> source(paste(functions_home, "/construct_design_matrix.R", sep = ""))
+> source(paste(functions_home, "/wasserstein_distance.R", sep = ""))
+> source(paste(functions_home, "/posterior_parameters.R", sep = ""))
+> source(paste(functions_home, "/simulate_y.R", sep = ""))
+> 
+> # for generating initial data
+> source(paste(functions_home, "/MMED.R", sep = ""))
+> source(paste(functions_home, "/variance_marginal_y.R", sep = ""))
+> 
+> # for box-hill deisign
+> source(paste(functions_home, "/boxhill.R", sep = ""))
+> 
+> # for D-optimal design
+> library(AlgDesign)
+> 
+> # set up parallelization
+> library(doFuture)
+Loading required package: foreach
+Loading required package: future
+> library(parallel)
+> registerDoFuture()
+> nworkers = detectCores()
+> plan(multisession, workers = nworkers)
+> 
+> library(mvtnorm)
+> 
+> library(doRNG)
+Loading required package: rngtools
+> registerDoRNG(1995)
+> 
+> ################################################################################
+> # simulation settings, shared for both scenarios (linear vs. quadratic)
+> ################################################################################
+> 
+> # simulations settings
+> # numSims = 100 #100
+> # numSeq = 12 #36, 100
+> seqN = 1
+> Nttl = numSeq * seqN
+> xmin = -1
+> xmax = 1
+> numCandidates = 10^3 + 1
+> candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
+> # sigmasq = 0.1 # 0.1
+> 
+> # shared settings
+> mu0 = c(0, 0)
+> mu1 = c(0, 0, 0)
+> sigmasq01 = 0.25
+> V0 = diag(rep(sigmasq01,length(mu0)))
+> V1 = diag(rep(sigmasq01,length(mu1)))
+> f0 = function(x) mu0[1] + mu0[2] * x
+> f1 = function(x) mu1[1] + mu1[2] * x + mu1[3] * x^2
+> desX0 = function(x){
++   n = length(x)
++   return(cbind(rep(1, n), x))
++ }
+> desX1 = function(x){
++   n = length(x)
++   return(cbind(rep(1, n), x, x^2))
++ }
+> model0 = list(designMat = desX0, beta.mean = mu0, beta.var = V0)
+> model1 = list(designMat = desX1, beta.mean = mu1, beta.var = V1)
+> 
+> # boxhill settings
+> prior_probs = rep(1 / 2, 2)
+> 
+> ################################################################################
+> # Scenario 2: True function is cubic
+> ################################################################################
+> if(beta_setting == 0){
++   betaT = c(0, -0.75, 0, 1)
++   fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2 + betaT[4] * x^3
++ } else if(beta_setting == 1){
++   betaT = c(0, 0, 0, 1)
++   fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2 + betaT[4] * x^3
++ } else if(beta_setting == 2){
++   betaT = c(0, 0, 1, 1)
++   fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2 + betaT[4] * x^3
++ } else if(beta_setting == 3){
++   betaT = c(0, 0, 1)
++   fx_outer = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2
++   # discontinuity = 0.01
++   # height = 1
++   fx_innerneg = function(x) height - ((fx_outer(discontinuity) - height) / discontinuity) * x
++   fx_innerpos = function(x) height + ((fx_outer(discontinuity) - height) / discontinuity) * x
++   fT = function(x){
++     fx = rep(NA, length(x))
++     for(i in 1:length(x)){
++       if(abs(x[i]) >= discontinuity){
++         fx[i] = fx_outer(x[i])
++       } else if(x[i] > -discontinuity & x[i] <= 0){
++         fx[i] = fx_innerneg(x[i])
++       } else{
++         fx[i] = fx_innerpos(x[i])
++       }
++     }
++     return(fx)
++   }
++ } else if(beta_setting == 4){
++   betaT = c(0, 0, 1)
++   fx_outer = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2
++   # discontinuity = 0.01
++   # height = 1
++   fx_inner = function(x) height
++   fT = function(x){
++     fx = rep(NA, length(x))
++     for(i in 1:length(x)){
++       if(abs(x[i]) >= discontinuity){
++         fx[i] = fx_outer(x[i])
++       } else{
++         fx[i] = fx_inner(x[i])
++       }
++     }
++     return(fx)
++   }
++ }
+> # curve(fT, from = xmin, to = xmax)
+> 
+> ################################################################################
+> # run simulations
+> ################################################################################
+> 
+> # generate seqmeds
+> seqmed_sims = foreach(i = 1:numSims) %dopar% {
++   print(paste0("starting simulation ", i, " out of ", numSims))
++   SeqMED(
++     y.in = NULL, x.in = NULL, true.function = fT,
++     model0 = model0, model1 = model1, 
++     error.var = sigmasq, xmin = xmin, xmax = xmax,
++     candidates = candidates, numSeq = numSeq, seqN = seqN)
++ }
+[1] "starting simulation 1 out of 250"
+[1] "starting simulation 2 out of 250"
+[1] "starting simulation 3 out of 250"
+[1] "starting simulation 4 out of 250"
+[1] "starting simulation 5 out of 250"
+[1] "starting simulation 6 out of 250"
+[1] "starting simulation 7 out of 250"
+[1] "starting simulation 8 out of 250"
+[1] "starting simulation 9 out of 250"
+[1] "starting simulation 10 out of 250"
+[1] "starting simulation 11 out of 250"
+[1] "starting simulation 12 out of 250"
+[1] "starting simulation 13 out of 250"
+[1] "starting simulation 14 out of 250"
+[1] "starting simulation 15 out of 250"
+[1] "starting simulation 16 out of 250"
+[1] "starting simulation 17 out of 250"
+[1] "starting simulation 18 out of 250"
+[1] "starting simulation 19 out of 250"
+[1] "starting simulation 20 out of 250"
+[1] "starting simulation 21 out of 250"
+[1] "starting simulation 22 out of 250"
+[1] "starting simulation 23 out of 250"
+[1] "starting simulation 24 out of 250"
+[1] "starting simulation 25 out of 250"
+[1] "starting simulation 26 out of 250"
+[1] "starting simulation 27 out of 250"
+[1] "starting simulation 28 out of 250"
+[1] "starting simulation 29 out of 250"
+[1] "starting simulation 30 out of 250"
+[1] "starting simulation 31 out of 250"
+[1] "starting simulation 32 out of 250"
+[1] "starting simulation 33 out of 250"
+[1] "starting simulation 34 out of 250"
+[1] "starting simulation 35 out of 250"
+[1] "starting simulation 36 out of 250"
+[1] "starting simulation 37 out of 250"
+[1] "starting simulation 38 out of 250"
+[1] "starting simulation 39 out of 250"
+[1] "starting simulation 40 out of 250"
+[1] "starting simulation 41 out of 250"
+[1] "starting simulation 42 out of 250"
+[1] "starting simulation 43 out of 250"
+[1] "starting simulation 44 out of 250"
+[1] "starting simulation 45 out of 250"
+[1] "starting simulation 46 out of 250"
+[1] "starting simulation 47 out of 250"
+[1] "starting simulation 48 out of 250"
+[1] "starting simulation 49 out of 250"
+[1] "starting simulation 50 out of 250"
+[1] "starting simulation 51 out of 250"
+[1] "starting simulation 52 out of 250"
+[1] "starting simulation 53 out of 250"
+[1] "starting simulation 54 out of 250"
+[1] "starting simulation 55 out of 250"
+[1] "starting simulation 56 out of 250"
+[1] "starting simulation 57 out of 250"
+[1] "starting simulation 58 out of 250"
+[1] "starting simulation 59 out of 250"
+[1] "starting simulation 60 out of 250"
+[1] "starting simulation 61 out of 250"
+[1] "starting simulation 62 out of 250"
+[1] "starting simulation 63 out of 250"
+[1] "starting simulation 64 out of 250"
+[1] "starting simulation 65 out of 250"
+[1] "starting simulation 66 out of 250"
+[1] "starting simulation 67 out of 250"
+[1] "starting simulation 68 out of 250"
+[1] "starting simulation 69 out of 250"
+[1] "starting simulation 70 out of 250"
+[1] "starting simulation 71 out of 250"
+[1] "starting simulation 72 out of 250"
+[1] "starting simulation 73 out of 250"
+[1] "starting simulation 74 out of 250"
+[1] "starting simulation 75 out of 250"
+[1] "starting simulation 76 out of 250"
+[1] "starting simulation 77 out of 250"
+[1] "starting simulation 78 out of 250"
+[1] "starting simulation 79 out of 250"
+[1] "starting simulation 80 out of 250"
+[1] "starting simulation 81 out of 250"
+[1] "starting simulation 82 out of 250"
+[1] "starting simulation 83 out of 250"
+[1] "starting simulation 84 out of 250"
+[1] "starting simulation 85 out of 250"
+[1] "starting simulation 86 out of 250"
+[1] "starting simulation 87 out of 250"
+[1] "starting simulation 88 out of 250"
+[1] "starting simulation 89 out of 250"
+[1] "starting simulation 90 out of 250"
+[1] "starting simulation 91 out of 250"
+[1] "starting simulation 92 out of 250"
+[1] "starting simulation 93 out of 250"
+[1] "starting simulation 94 out of 250"
+[1] "starting simulation 95 out of 250"
+[1] "starting simulation 96 out of 250"
+[1] "starting simulation 97 out of 250"
+[1] "starting simulation 98 out of 250"
+[1] "starting simulation 99 out of 250"
+[1] "starting simulation 100 out of 250"
+[1] "starting simulation 101 out of 250"
+[1] "starting simulation 102 out of 250"
+[1] "starting simulation 103 out of 250"
+[1] "starting simulation 104 out of 250"
+[1] "starting simulation 105 out of 250"
+[1] "starting simulation 106 out of 250"
+[1] "starting simulation 107 out of 250"
+[1] "starting simulation 108 out of 250"
+[1] "starting simulation 109 out of 250"
+[1] "starting simulation 110 out of 250"
+[1] "starting simulation 111 out of 250"
+[1] "starting simulation 112 out of 250"
+[1] "starting simulation 113 out of 250"
+[1] "starting simulation 114 out of 250"
+[1] "starting simulation 115 out of 250"
+[1] "starting simulation 116 out of 250"
+[1] "starting simulation 117 out of 250"
+[1] "starting simulation 118 out of 250"
+[1] "starting simulation 119 out of 250"
+[1] "starting simulation 120 out of 250"
+[1] "starting simulation 121 out of 250"
+[1] "starting simulation 122 out of 250"
+[1] "starting simulation 123 out of 250"
+[1] "starting simulation 124 out of 250"
+[1] "starting simulation 125 out of 250"
+[1] "starting simulation 126 out of 250"
+[1] "starting simulation 127 out of 250"
+[1] "starting simulation 128 out of 250"
+[1] "starting simulation 129 out of 250"
+[1] "starting simulation 130 out of 250"
+[1] "starting simulation 131 out of 250"
+[1] "starting simulation 132 out of 250"
+[1] "starting simulation 133 out of 250"
+[1] "starting simulation 134 out of 250"
+[1] "starting simulation 135 out of 250"
+[1] "starting simulation 136 out of 250"
+[1] "starting simulation 137 out of 250"
+[1] "starting simulation 138 out of 250"
+[1] "starting simulation 139 out of 250"
+[1] "starting simulation 140 out of 250"
+[1] "starting simulation 141 out of 250"
+[1] "starting simulation 142 out of 250"
+[1] "starting simulation 143 out of 250"
+[1] "starting simulation 144 out of 250"
+[1] "starting simulation 145 out of 250"
+[1] "starting simulation 146 out of 250"
+[1] "starting simulation 147 out of 250"
+[1] "starting simulation 148 out of 250"
+[1] "starting simulation 149 out of 250"
+[1] "starting simulation 150 out of 250"
+[1] "starting simulation 151 out of 250"
+[1] "starting simulation 152 out of 250"
+[1] "starting simulation 153 out of 250"
+[1] "starting simulation 154 out of 250"
+[1] "starting simulation 155 out of 250"
+[1] "starting simulation 156 out of 250"
+[1] "starting simulation 157 out of 250"
+[1] "starting simulation 158 out of 250"
+[1] "starting simulation 159 out of 250"
+[1] "starting simulation 160 out of 250"
+[1] "starting simulation 161 out of 250"
+[1] "starting simulation 162 out of 250"
+[1] "starting simulation 163 out of 250"
+[1] "starting simulation 164 out of 250"
+[1] "starting simulation 165 out of 250"
+[1] "starting simulation 166 out of 250"
+[1] "starting simulation 167 out of 250"
+[1] "starting simulation 168 out of 250"
+[1] "starting simulation 169 out of 250"
+[1] "starting simulation 170 out of 250"
+[1] "starting simulation 171 out of 250"
+[1] "starting simulation 172 out of 250"
+[1] "starting simulation 173 out of 250"
+[1] "starting simulation 174 out of 250"
+[1] "starting simulation 175 out of 250"
+[1] "starting simulation 176 out of 250"
+[1] "starting simulation 177 out of 250"
+[1] "starting simulation 178 out of 250"
+[1] "starting simulation 179 out of 250"
+[1] "starting simulation 180 out of 250"
+[1] "starting simulation 181 out of 250"
+[1] "starting simulation 182 out of 250"
+[1] "starting simulation 183 out of 250"
+[1] "starting simulation 184 out of 250"
+[1] "starting simulation 185 out of 250"
+[1] "starting simulation 186 out of 250"
+[1] "starting simulation 187 out of 250"
+[1] "starting simulation 188 out of 250"
+[1] "starting simulation 189 out of 250"
+[1] "starting simulation 190 out of 250"
+[1] "starting simulation 191 out of 250"
+[1] "starting simulation 192 out of 250"
+[1] "starting simulation 193 out of 250"
+[1] "starting simulation 194 out of 250"
+[1] "starting simulation 195 out of 250"
+[1] "starting simulation 196 out of 250"
+[1] "starting simulation 197 out of 250"
+[1] "starting simulation 198 out of 250"
+[1] "starting simulation 199 out of 250"
+[1] "starting simulation 200 out of 250"
+[1] "starting simulation 201 out of 250"
+[1] "starting simulation 202 out of 250"
+[1] "starting simulation 203 out of 250"
+[1] "starting simulation 204 out of 250"
+[1] "starting simulation 205 out of 250"
+[1] "starting simulation 206 out of 250"
+[1] "starting simulation 207 out of 250"
+[1] "starting simulation 208 out of 250"
+[1] "starting simulation 209 out of 250"
+[1] "starting simulation 210 out of 250"
+[1] "starting simulation 211 out of 250"
+[1] "starting simulation 212 out of 250"
+[1] "starting simulation 213 out of 250"
+[1] "starting simulation 214 out of 250"
+[1] "starting simulation 215 out of 250"
+[1] "starting simulation 216 out of 250"
+[1] "starting simulation 217 out of 250"
+[1] "starting simulation 218 out of 250"
+[1] "starting simulation 219 out of 250"
+[1] "starting simulation 220 out of 250"
+[1] "starting simulation 221 out of 250"
+[1] "starting simulation 222 out of 250"
+[1] "starting simulation 223 out of 250"
+[1] "starting simulation 224 out of 250"
+[1] "starting simulation 225 out of 250"
+[1] "starting simulation 226 out of 250"
+[1] "starting simulation 227 out of 250"
+[1] "starting simulation 228 out of 250"
+[1] "starting simulation 229 out of 250"
+[1] "starting simulation 230 out of 250"
+[1] "starting simulation 231 out of 250"
+[1] "starting simulation 232 out of 250"
+[1] "starting simulation 233 out of 250"
+[1] "starting simulation 234 out of 250"
+[1] "starting simulation 235 out of 250"
+[1] "starting simulation 236 out of 250"
+[1] "starting simulation 237 out of 250"
+[1] "starting simulation 238 out of 250"
+[1] "starting simulation 239 out of 250"
+[1] "starting simulation 240 out of 250"
+[1] "starting simulation 241 out of 250"
+[1] "starting simulation 242 out of 250"
+[1] "starting simulation 243 out of 250"
+[1] "starting simulation 244 out of 250"
+[1] "starting simulation 245 out of 250"
+[1] "starting simulation 246 out of 250"
+[1] "starting simulation 247 out of 250"
+[1] "starting simulation 248 out of 250"
+[1] "starting simulation 249 out of 250"
+[1] "starting simulation 250 out of 250"
+> 
+> if(beta_setting %in% c(0, 1, 2)){
++   saveRDS(seqmed_sims, file = paste0(
++     output_dir,
++     "/sm", "_scen", scenario, 
++     "_beta", beta_setting, 
++     "_N", Nttl, 
++     "_sigmasq", sigmasq,
++     "_numSims", numSims, 
++     ".rds"
++   ))
++ }
+> if(beta_setting %in% c(3,4)){
++   saveRDS(seqmed_sims, file = paste0(
++     output_dir,
++     "/sm", "_scen", scenario, 
++     "_beta", beta_setting, 
++     "_height", height, 
++     "_discontinuity", discontinuity,
++     "_N", Nttl, 
++     "_sigmasq", sigmasq,
++     "_numSims", numSims, 
++     ".rds"
++   ))
++ }
+> 
+> 
+> 
+> 
+> 
+> 
+> proc.time()
+   user  system elapsed 
+  7.256   0.571  67.711 

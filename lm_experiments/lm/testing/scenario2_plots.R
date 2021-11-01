@@ -148,14 +148,14 @@ ggplot() +
   xlim(xmin, xmax) + 
   geom_function(fun = fT) + 
   theme_bw()
-ggsave(
-  filename = paste0(
-    "lm_", "_scen", scenario,
-    "_beta", beta_setting,
-    "_curve", ".pdf"),
-  plot = last_plot(),
-  width = 6.5, height = 3.5, units = c("in")
-)
+# ggsave(
+#   filename = paste0(
+#     "lm_", "_scen", scenario,
+#     "_beta", beta_setting,
+#     "_curve", ".pdf"),
+#   plot = last_plot(),
+#   width = 6.5, height = 3.5, units = c("in")
+# )
 
 ################################################################################
 # import sequential designs

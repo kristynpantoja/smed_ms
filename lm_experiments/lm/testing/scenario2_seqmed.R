@@ -6,8 +6,8 @@
 
 scenario = 2
 
-beta_setting = 4 # 0, 4
-sigmasq = 0.05 # 0.1, 0.05
+beta_setting = 0 # 0, 4
+sigmasq = 0.025 # 0.1, 0.05
 discontinuity = 0.01
 height = 1
 numSeq = 12 #100, 36, 12
@@ -136,7 +136,7 @@ if(beta_setting == 0){
     return(fx)
   }
 }
-curve(fT, from = xmin, to = xmax)
+# curve(fT, from = xmin, to = xmax)
 
 ################################################################################
 # run simulations
@@ -145,11 +145,6 @@ curve(fT, from = xmin, to = xmax)
 # generate seqmeds
 seqmed_sims = foreach(i = 1:numSims) %dopar% {
   print(paste0("starting simulation ", i, " out of ", numSims))
-  # SeqMED(
-  #   D1 = NULL, y1 = NULL, true_beta = betaT, true_type = typeT, 
-  #   beta.mean0 = mu0, beta.mean1 = mu1, beta.var0 = V0, beta.var1 = V1, 
-  #   error.var = sigmasq, f0 = f0, f1 = f1, type = type01, xmin = xmin, xmax = xmax, 
-  #   candidates = candidates, numSeq = numSeq, seqN = seqN)
   SeqMED(
     y.in = NULL, x.in = NULL, true.function = fT,
     model0 = model0, model1 = model1, 

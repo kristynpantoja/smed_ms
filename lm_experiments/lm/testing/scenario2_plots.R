@@ -7,10 +7,11 @@
 scenario = 2
 
 beta_setting = 0 # 0, 4
-sigmasq = 0.1 # 0.1, 0.05
+sigmasq = 0.025 # 0.1, 0.05
 discontinuity = 0.01
 height = 1
 numSeq = 12 # 12
+numSims = 250 #100
 
 ################################################################################
 # Sources/Libraries
@@ -61,7 +62,7 @@ registerDoRNG(1995)
 ################################################################################
 
 # simulations settings
-numSims = 100 #100
+# numSims = 100 #100
 # numSeq = 12 #100, 36
 seqN = 1
 Nttl = numSeq * seqN

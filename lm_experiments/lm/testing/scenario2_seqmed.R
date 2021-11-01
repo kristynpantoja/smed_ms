@@ -6,7 +6,11 @@
 
 scenario = 2
 
-beta_setting = 4 # 0, 1, 2, 3, 4
+beta_setting = 0 # 0, 4
+sigmasq = 0.1 # 0.1, 0.05
+discontinuity = 0.01
+height = 1
+numSeq = 12 #100, 36, 12
 
 ################################################################################
 # Sources/Libraries
@@ -51,14 +55,14 @@ registerDoRNG(1995)
 
 # simulations settings
 numSims = 100 #100
-numSeq = 100 #36, 100
+# numSeq = 12 #36, 100
 seqN = 1
 Nttl = numSeq * seqN
 xmin = -1
 xmax = 1
 numCandidates = 10^3 + 1
 candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
-sigmasq = 0.1 # 0.1
+# sigmasq = 0.1 # 0.1
 
 # shared settings
 mu0 = c(0, 0)
@@ -97,8 +101,8 @@ if(beta_setting == 0){
 } else if(beta_setting == 3){
   betaT = c(0, 0, 1)
   fx_outer = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2
-  discontinuity = 0.01
-  height = 1
+  # discontinuity = 0.01
+  # height = 1
   fx_innerneg = function(x) height - ((fx_outer(discontinuity) - height) / discontinuity) * x
   fx_innerpos = function(x) height + ((fx_outer(discontinuity) - height) / discontinuity) * x
   fT = function(x){
@@ -117,8 +121,8 @@ if(beta_setting == 0){
 } else if(beta_setting == 4){
   betaT = c(0, 0, 1)
   fx_outer = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2
-  discontinuity = 0.01
-  height = 1
+  # discontinuity = 0.01
+  # height = 1
   fx_inner = function(x) height
   fT = function(x){
     fx = rep(NA, length(x))
@@ -153,17 +157,30 @@ seqmed_sims = foreach(i = 1:numSims) %dopar% {
     candidates = candidates, numSeq = numSeq, seqN = seqN)
 }
 
-saveRDS(seqmed_sims, file = paste0(
-  output_dir,
-  "/sm", "_scen", scenario, 
-  "_sigmasq", sigmasq,
-  "_Nttl", Nttl, 
-  "_numSims", numSims, 
-  "_beta", beta_setting,
-  ".rds"
-))
-
-
+if(beta_setting %in% c(0, 1, 2)){
+  saveRDS(seqmed_sims, file = paste0(
+    output_dir,
+    "/sm", "_scen", scenario, 
+    "_beta", beta_setting, 
+    "_N", Nttl, 
+    "_sigmasq", sigmasq,
+    "_numSims", numSims, 
+    ".rds"
+  ))
+}
+if(beta_setting %in% c(3,4)){
+  saveRDS(seqmed_sims, file = paste0(
+    output_dir,
+    "/sm", "_scen", scenario, 
+    "_beta", beta_setting, 
+    "_height", height, 
+    "_discontinuity", discontinuity,
+    "_N", Nttl, 
+    "_sigmasq", sigmasq,
+    "_numSims", numSims, 
+    ".rds"
+  ))
+}
 
 
 

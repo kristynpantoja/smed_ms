@@ -151,7 +151,7 @@ ggplot() +
   theme_bw()
 # ggsave(
 #   filename = paste0(
-#     "lm_", "_scen", scenario,
+#     "lm", "_scen", scenario,
 #     "_beta", beta_setting,
 #     "_curve", ".pdf"),
 #   plot = last_plot(),
@@ -581,7 +581,7 @@ plot(epph.plt)
 if(beta_setting == 0){
   ggsave(
     filename = paste0(
-      "lm_", "_scen", scenario,
+      "lm", "_scen", scenario,
       "_beta", beta_setting,
       "_N", Nttl,
       "_sigmasq", sigmasq,
@@ -594,7 +594,7 @@ if(beta_setting == 0){
 if(beta_setting == 4){
   ggsave(
     filename = paste0(
-      "lm_", "_scen", scenario,
+      "lm", "_scen", scenario,
       "_beta", beta_setting,
       "_height", height, 
       "_discontinuity", discontinuity,
@@ -676,7 +676,7 @@ plot(epph.plt2)
 if(beta_setting == 0){
   ggsave(
     filename = paste0(
-      "lm_", "_scen", scenario,
+      "lm", "_scen", scenario,
       "_beta", beta_setting,
       "_N", Nttl,
       "_sigmasq", sigmasq,
@@ -689,7 +689,7 @@ if(beta_setting == 0){
 if(beta_setting == 4){
   ggsave(
     filename = paste0(
-      "lm_", "_scen", scenario,
+      "lm", "_scen", scenario,
       "_beta", beta_setting,
       "_height", height, 
       "_discontinuity", discontinuity,

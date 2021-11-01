@@ -1,5 +1,5 @@
 ################################################################################
-# last updated: 08/18/21
+# last updated: 11/01/21
 # purpose: to create a list of boxhill simulations
 # scenario 1:
 #   linear vs. quadratic,

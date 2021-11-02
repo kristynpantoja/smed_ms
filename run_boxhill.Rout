@@ -27,7 +27,7 @@ Type 'q()' to quit R.
 > #   linear vs. quadratic,
 > #   where the true function is cubic
 > 
-> scenario = 1 # 1, 2
+> scenario = 2 # 1, 2
 > 
 > ################################################################################
 > # Sources/Libraries
@@ -85,7 +85,7 @@ The following object is masked from ‘package:Matrix’:
 > 
 > # simulations settings
 > numSims = 100
-> numSeq = 12 # 12, 100
+> numSeq = 100 # 12, 100
 > seqN = 1
 > Nttl = numSeq * seqN
 > xmin = -1
@@ -248,4 +248,4 @@ The following object is masked from ‘package:Matrix’:
 > 
 > proc.time()
    user  system elapsed 
-  4.303   0.834 100.488 
+ 33.463   1.569 690.920 

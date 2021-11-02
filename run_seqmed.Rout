@@ -27,7 +27,7 @@ Type 'q()' to quit R.
 > #   linear vs. quadratic,
 > #   where the true function is cubic
 > 
-> scenario = 1 # 1, 2
+> scenario = 2 # 1, 2
 > 
 > ################################################################################
 > # Sources/Libraries
@@ -71,7 +71,7 @@ Type 'q()' to quit R.
 > 
 > # simulations settings
 > numSims = 100
-> numSeq = 12 # 12, 100
+> numSeq = 100 # 12, 100
 > seqN = 1
 > Nttl = numSeq * seqN
 > xmin = -1
@@ -238,5 +238,5 @@ Type 'q()' to quit R.
 > 
 > 
 > proc.time()
-   user  system elapsed 
-  3.395   0.433  37.827 
+    user   system  elapsed 
+ 228.436    4.019 1979.377 

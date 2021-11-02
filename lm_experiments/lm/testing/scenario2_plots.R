@@ -7,7 +7,7 @@
 scenario = 2
 
 beta_setting = 4 # 0, 4
-sigmasq = 0.025 # 0.1, 0.05, 0.025
+sigmasq = 0.1 # 0.1, 0.05, 0.025
 discontinuity = 0.05
 height = 1
 numSeq = 12 # 12
@@ -226,13 +226,14 @@ for(i in 1:num_supportpts_Doptlin){
 
 # Doptimal - quadratic
 num_supportpts_Doptquad = nrow(res_Fed_Doptquad$design)
+supportpts_Doptquad = res_Fed_Doptquad$design[, "x"]
 supportpt_assgnmt_Doptquad = cut(
   sample(1:Nttl, size = Nttl, replace = FALSE), # shuffle
   breaks = num_supportpts_Doptquad, labels = FALSE)
 dopt_quadratic = rep(NA, Nttl)
 for(i in 1:num_supportpts_Doptquad){
   dopt_quadratic[supportpt_assgnmt_Doptquad == i] = 
-    res_Fed_Doptquad$design[i, "x"]
+    supportpts_Doptquad[i]
 }
 # # check:
 # res_Fed_Doptquad$design
@@ -245,10 +246,18 @@ supportpt_assgnmt_hybrid = cut(
 hybrid_grid_doptq = rep(NA, Nttl / 2)
 for(i in 1:num_supportpts_Doptquad){
   hybrid_grid_doptq[supportpt_assgnmt_hybrid == i] = 
-    res_Fed_Doptquad$design[i, "x"]
+    supportpts_Doptquad[i]
 }
-hybrid_grid_doptq[(Nttl / 2 + 1):Nttl] = seq(
-  from = xmin, to = xmax, length.out = Nttl / 2)
+# hybrid_grid_doptq[(Nttl / 2 + 1):Nttl] = seq(
+#   from = xmin, to = xmax, length.out = Nttl / 2)
+hybrid_grid_doptq[(Nttl / 2 + 1):Nttl] =c(
+  seq(
+    from = supportpts_Doptquad[1], to = supportpts_Doptquad[2],
+    length.out = (Nttl / 4) + 2)[-c(1, (Nttl / 4) + 2)],
+  seq(
+    from = supportpts_Doptquad[2], to = supportpts_Doptquad[3],
+    length.out = (Nttl / 4) + 2)[-c(1, (Nttl / 4) + 2)]
+)
 
 grid_sims = list()
 doptlin_sims = list()
@@ -597,7 +606,7 @@ if(beta_setting == 4){
     filename = paste0(
       "lm", "_scen", scenario,
       "_beta", beta_setting,
-      "_height", height, 
+      "_height", height,
       "_discontinuity", discontinuity,
       "_N", Nttl,
       "_sigmasq", sigmasq,
@@ -692,7 +701,7 @@ if(beta_setting == 4){
     filename = paste0(
       "lm", "_scen", scenario,
       "_beta", beta_setting,
-      "_height", height, 
+      "_height", height,
       "_discontinuity", discontinuity,
       "_N", Nttl,
       "_sigmasq", sigmasq,
@@ -740,7 +749,45 @@ posteriorT = getBetaPosterior(
 )
 posteriorT$mean
 predictiveT = modelT$designMat(candidates) %*% posteriorT$mean
+# plot(candidates, predictiveT, type = "l")
 
-plot(candidates, predictiveT, type = "l")
+# a proper plot
+fun_dat = data.frame(
+  x = candidates, 
+  True = fT(candidates), 
+  Predicted = as.numeric(modelT$designMat(candidates) %*% posteriorT$mean)
+)
+fun_dat_mlt = melt(
+  fun_dat, id.vars = "x", measure.vars = c("True", "Predicted"), 
+  variable.name = "Function", value.name = "y")
+ggplot(fun_dat_mlt, aes(x = x, y = y, color = Function)) +
+  geom_path()
 
-
+if(beta_setting == 0){
+  ggsave(
+    filename = paste0(
+      "lm", "_scen", scenario,
+      "_beta", beta_setting,
+      "_N", Nttl,
+      "_sigmasq", sigmasq,
+      "_numSims", numSims,
+      "_functions", ".pdf"),
+    plot = last_plot(),
+    width = 6.5, height = 3.5, units = c("in")
+  )
+}
+if(beta_setting == 4){
+  ggsave(
+    filename = paste0(
+      "lm", "_scen", scenario,
+      "_beta", beta_setting,
+      "_height", height,
+      "_discontinuity", discontinuity,
+      "_N", Nttl,
+      "_sigmasq", sigmasq,
+      "_numSims", numSims,
+      "_functions", ".pdf"),
+    plot = last_plot(),
+    width = 6.5, height = 3.5, units = c("in")
+  )
+}

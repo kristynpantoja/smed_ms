@@ -7,7 +7,7 @@
 scenario = 2
 
 beta_setting = 0 # 0, 4
-sigmasq = 0.025 # 0.1, 0.05
+sigmasq = 0.1 # 0.1, 0.05
 discontinuity = 0.05 # 0.01, 0.05
 height = 1
 numSeq = 12 #100, 36, 12

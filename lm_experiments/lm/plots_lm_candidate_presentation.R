@@ -168,32 +168,32 @@ for(i in 1:num_supportpts_Doptquad){
 # table(dopt_quadratic) / Nttl
 
 # half space-filling, half quadratic Doptimal, assumes Nttl is divisible by 2
-supportpt_assgnmt_hybrid = cut(
-  sample(1:(Nttl / 2), size = Nttl / 2, replace = FALSE), # shuffle
-  breaks = num_supportpts_Doptquad, labels = FALSE)
-hybrid_grid_doptq = rep(NA, Nttl / 2)
-for(i in 1:num_supportpts_Doptquad){
-  hybrid_grid_doptq[supportpt_assgnmt_hybrid == i] = 
-    supportpts_Doptquad[i]
-}
-hybrid_grid_doptq[(Nttl / 2 + 1):Nttl] = seq(
-  from = xmin, to = xmax, length.out = Nttl / 2)
+# supportpt_assgnmt_hybrid = cut(
+#   sample(1:(Nttl / 2), size = Nttl / 2, replace = FALSE), # shuffle
+#   breaks = num_supportpts_Doptquad, labels = FALSE)
+# hybrid_grid_doptq = rep(NA, Nttl / 2)
+# for(i in 1:num_supportpts_Doptquad){
+#   hybrid_grid_doptq[supportpt_assgnmt_hybrid == i] =
+#     supportpts_Doptquad[i]
+# }
 # hybrid_grid_doptq[(Nttl / 2 + 1):Nttl] = seq(
-#   from = xmin, to = xmax, length.out = (Nttl / 2) + 2)[-c(1, (Nttl / 2) + 2)]
-# hybrid_grid_doptq[(Nttl / 2 + 1):Nttl] =c(
-#   seq(
-#     from = supportpts_Doptquad[1], to = supportpts_Doptquad[2], 
-#     length.out = (Nttl / 4) + 2)[-c(1, (Nttl / 4) + 2)],
-#   seq(
-#     from = supportpts_Doptquad[2], to = supportpts_Doptquad[3], 
-#     length.out = (Nttl / 4) + 2)[-c(1, (Nttl / 4) + 2)]
-# )
+#   from = xmin, to = xmax, length.out = Nttl / 2)
+# # hybrid_grid_doptq[(Nttl / 2 + 1):Nttl] = seq(
+# #   from = xmin, to = xmax, length.out = (Nttl / 2) + 2)[-c(1, (Nttl / 2) + 2)]
+# # hybrid_grid_doptq[(Nttl / 2 + 1):Nttl] =c(
+# #   seq(
+# #     from = supportpts_Doptquad[1], to = supportpts_Doptquad[2], 
+# #     length.out = (Nttl / 4) + 2)[-c(1, (Nttl / 4) + 2)],
+# #   seq(
+# #     from = supportpts_Doptquad[2], to = supportpts_Doptquad[3], 
+# #     length.out = (Nttl / 4) + 2)[-c(1, (Nttl / 4) + 2)]
+# # )
 
 # set.seed(2)
 grid_sims = list()
 doptlin_sims = list()
 doptquad_sims = list()
-hybrid_sims = list()
+# hybrid_sims = list()
 for(i in 1:numSims){
   grid_sims[[i]] = list(
     x = space_filling,
@@ -207,10 +207,10 @@ for(i in 1:numSims){
     x = dopt_quadratic,
     y = sapply(dopt_quadratic, FUN = function(x) simulateY_fromfunction(
       x = x, true.function = fT, error.var = sigmasq)))
-  hybrid_sims[[i]] = list(
-    x = hybrid_grid_doptq,
-    y = sapply(hybrid_grid_doptq, FUN = function(x) simulateY_fromfunction(
-      x = x, true.function = fT, error.var = sigmasq)))
+  # hybrid_sims[[i]] = list(
+  #   x = hybrid_grid_doptq,
+  #   y = sapply(hybrid_grid_doptq, FUN = function(x) simulateY_fromfunction(
+  #     x = x, true.function = fT, error.var = sigmasq)))
 }
 
 
@@ -243,16 +243,16 @@ plt1 = ggplot(ggdata) +
   stat_function(fun = fT) + 
   theme_bw() + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-# ggarrange(plt0, plt1)
+ggarrange(plt0, plt1)
 
-# manuscript plot
-if(Nttl == 100){
-  ggsave(
-    filename = paste0("scen", scenario, "_seqmedexample.pdf"),
-    plot = last_plot(),
-    width = 4.5, height = 2, units = c("in")
-  )
-}
+# # plot
+# if(Nttl == 100){
+#   ggsave(
+#     filename = paste0("scen", scenario, "_seqmedexample.pdf"),
+#     plot = last_plot(),
+#     width = 8, height = 4, units = c("in")
+#   )
+# }
 
 # plot a boxhill
 bh = boxhill_sims[[sim.idx]]
@@ -269,11 +269,39 @@ plt3 = ggplot(ggdata2) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 # ggarrange(plt2, plt3)
 
-# side-by-sides of seqmed and bh
-# ggarrange(
-#   plt0, plt1, # seqmed plots
-#   plt2, plt3, # boxhill plots
-#   nrow = 2, ncol = 2)
+# plot all of them
+sim.idx=1
+sm_x = c(seqmed_sims[[sim.idx]]$x.in, seqmed_sims[[sim.idx]]$x.new)
+bh_x = c(boxhill_sims[[sim.idx]]$x.in, boxhill_sims[[sim.idx]]$x.new)
+grid_x = grid_sims[[sim.idx]]$x
+dl_x = doptlin_sims[[sim.idx]]$x
+dq_x = doptquad_sims[[sim.idx]]$x
+ggdata3 = rbind(
+  data.frame(x = sm_x, Design = "SeqMED"), 
+  data.frame(x = bh_x, Design = "BoxHill"), 
+  data.frame(x = grid_x, Design = "Grid"), 
+  data.frame(x = dl_x, Design = "DOptLin"), 
+  data.frame(x = dq_x, Design = "DOptQuad")
+)
+ggdata3$Design = factor(
+  ggdata3$Design, 
+  levels = c("SeqMED", "Grid", "BoxHill", "DOptLin", "DOptQuad"))
+plt4 = ggplot(ggdata3, aes(x = x)) +
+  facet_wrap(~Design) +
+  geom_histogram(binwidth = 0.12, closed = "right", 
+                 aes(x = x, y = after_stat(density))) + 
+  theme_bw() + #base_size = 20) + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
+plt4
+
+# # plot
+# if(Nttl == 100){
+#   ggsave(
+#     filename = paste0("scen", scenario, "_designs.pdf"),
+#     plot = last_plot(),
+#     width = 8, height = 4, units = c("in")
+#   )
+# }
 
 ################################################################################
 # plot the wasserstein distance when scenario == 1
@@ -323,16 +351,16 @@ if(scenario == 1){
     theme_bw() +
     theme(panel.grid.minor = element_blank())
   pltw
-  ggarrange(plt0, plt1, pltw, nrow = 1, ncol = 3, widths = c(1, 1, 1.75))
+  # ggarrange(plt0, plt1, pltw, nrow = 1, ncol = 3, widths = c(1, 1, 1.75))
   
-  # # manuscript plot
-  if(Nttl == 100){
-    ggsave(
-      filename = paste0("scen", scenario, "_seqmedexamplewasserstein.pdf"),
-      plot = last_plot(),
-      width = 6.5, height = 1.75, units = c("in")
-    )
-  }
+  # # plot
+  # if(Nttl == 100){
+  #   ggsave(
+  #     filename = paste0("scen", scenario, "_seqmedexamplewasserstein.pdf"),
+  #     plot = last_plot(),
+  #     width = 6, height = 4, units = c("in")
+  #   )
+  # }
 } else if(scenario == 2){
   # plot ...
 }
@@ -442,14 +470,14 @@ for(j in 1:numSims){
     doptlin_sims[[j]], models, fT, sigmasq)
   PPH_doptq = getPPH(
     doptquad_sims[[j]], models, fT, sigmasq)
-  PPH_hybrid = getPPH(
-    hybrid_sims[[j]], models, fT, sigmasq)
+  # PPH_hybrid = getPPH(
+  #   hybrid_sims[[j]], models, fT, sigmasq)
   # master data frame
   PPH_grid$Design = "Grid"
-  PPH_doptl$Design = "DOptLin."
-  PPH_doptq$Design = "DOptQuadr."
-  PPH_hybrid$Design = "Hybrid"
-  PPH.tmp = rbind(PPH_grid, PPH_doptl, PPH_doptq, PPH_hybrid)
+  PPH_doptl$Design = "DOptLin"
+  PPH_doptq$Design = "DOptQuadr"
+  # PPH_hybrid$Design = "Hybrid"
+  PPH.tmp = rbind(PPH_grid, PPH_doptl, PPH_doptq) #, PPH_hybrid)
   PPH.tmp$sim = j
   PPH_df = rbind(PPH_df, PPH.tmp)
 }
@@ -487,7 +515,7 @@ PPHmean_gg = rbind(PPHmean, PPHmean_seq)
 PPHmean_gg = melt(PPHmean_gg, id.vars = c("Design", "index"), 
                   measure.vars = paste0("H", 0:(length(models) - 1), sep = ""), 
                   variable.name = "hypothesis")
-design_names = rev(c("SeqMED", "BoxHill", "DOptLin.", "DOptQuadr.", "Grid", "Hybrid"))
+design_names = rev(c("SeqMED", "BoxHill", "DOptLin", "DOptQuadr", "Grid")) #, "Hybrid"))
 PPHmean_gg$Design = factor(PPHmean_gg$Design, levels = design_names)
 if(scenario == 1){
   PPHmean_gg$hypothesis = factor(
@@ -517,21 +545,13 @@ epph.plt = ggplot(PPHmean_gg, aes(x = index, y = value, color = Design,
   labs(x = "Stage Index", y = element_blank())
 plot(epph.plt)
 
-if(scenario == 1){
-  epph_scen1 = epph.plt
-} else if(scenario == 2){
-  epph.plt = epph.plt + theme(legend.position = "none")
-  epph_scen2 = epph.plt
-}
-if(!is.null(epph_scen1) & !is.null(epph_scen2)){
-  ggarrange(epph_scen1, epph_scen2, nrow = 2, ncol = 1)
-  # manuscript plot
-  ggsave(
-    filename = paste0("lm_epphs.pdf"),
-    plot = last_plot(),
-    width = 6.5, height = 3.5, units = c("in")
-  )
-}
+# plot
+ggsave(
+  filename = paste0("scen", scenario, "_epphs.pdf"),
+  plot = last_plot(),
+  width = 6, height = 4, units = c("in")
+)
+
 
 ################################################################################
 # plot the MSE of beta-hat (posterior mean) of the hypotheses
@@ -558,16 +578,30 @@ MSEbetahat_seqmed = getMSEBeta(
 MSEbetahat_bh = getMSEBeta(
   c(bh$x.in, bh$x.new), Nttl, betaT, muT, VT, sigmasq, typeT)$MSE_postmean
 
-b0 = c(MSEbetahat_doptlin[1], MSEbetahat_doptquad[1], MSEbetahat_space[1], 
-       MSEbetahat_seqmed[1], MSEbetahat_bh[1])
-b1 = c(MSEbetahat_doptlin[2], MSEbetahat_doptquad[2], MSEbetahat_space[2], 
-       MSEbetahat_seqmed[2], MSEbetahat_bh[2])
-b2 = c(MSEbetahat_doptlin[3], MSEbetahat_doptquad[3], MSEbetahat_space[3], 
-       MSEbetahat_seqmed[3], MSEbetahat_bh[3])
+if(scenario == 1){
+  b0 = c(MSEbetahat_doptlin[1], MSEbetahat_doptquad[1], MSEbetahat_space[1], 
+         MSEbetahat_seqmed[1], MSEbetahat_bh[1])
+  b1 = c(MSEbetahat_doptlin[2], MSEbetahat_doptquad[2], MSEbetahat_space[2], 
+         MSEbetahat_seqmed[2], MSEbetahat_bh[2])
+  b2 = c(MSEbetahat_doptlin[3], MSEbetahat_doptquad[3], MSEbetahat_space[3], 
+         MSEbetahat_seqmed[3], MSEbetahat_bh[3])
+  ggdata = data.frame(
+    Designs = rep(c("DOptLin", "DOptQuadr", "Grid", "SeqMED", "BoxHill"), 3), 
+    MSE = c(b0, b1, b2), beta = rep(c("B0", "B1", "B2"), each = length(b0)))
+} else if(scenario == 2){
+  b0 = c(MSEbetahat_doptlin[1], MSEbetahat_doptquad[1], MSEbetahat_space[1], 
+         MSEbetahat_seqmed[1], MSEbetahat_bh[1])
+  b1 = c(MSEbetahat_doptlin[2], MSEbetahat_doptquad[2], MSEbetahat_space[2], 
+         MSEbetahat_seqmed[2], MSEbetahat_bh[2])
+  b2 = c(MSEbetahat_doptlin[3], MSEbetahat_doptquad[3], MSEbetahat_space[3], 
+         MSEbetahat_seqmed[3], MSEbetahat_bh[3])
+  b3 = c(MSEbetahat_doptlin[4], MSEbetahat_doptquad[4], MSEbetahat_space[4], 
+         MSEbetahat_seqmed[4], MSEbetahat_bh[4])
+  ggdata = data.frame(
+    Designs = rep(c("DOptLin", "DOptQuadr", "Grid", "SeqMED", "BoxHill"), 4), 
+    MSE = c(b0, b1, b2, b3), beta = rep(c("B0", "B1", "B2", "B3"), each = length(b0)))
+}
 
-ggdata = data.frame(
-  Designs = rep(c("Dlinear", "Dquadratic", "SpaceFilling", "SeqMED", "BoxHill"), 3), 
-  MSE = c(b0, b1, b2), beta = rep(c("B0", "B1", "B2"), each = length(b0)))
 mseb.plt = ggplot(ggdata, aes(x = Designs, y = MSE)) + 
   geom_bar(stat = "identity") +
   facet_wrap(vars(beta)) +
@@ -576,6 +610,13 @@ mseb.plt = ggplot(ggdata, aes(x = Designs, y = MSE)) +
         axis.text.x = element_text(angle = 45, vjust = 0.5)) +
   labs(y = NULL)
 mseb.plt
+
+# plot
+ggsave(
+  filename = paste0("scen", scenario, "_mseb.pdf"),
+  plot = last_plot(),
+  width = 6, height = 4, units = c("in")
+)
 
 ################################################################################
 # plot the MSE of y-hat (posterior mean) of the hypotheses
@@ -607,11 +648,11 @@ if(scenario == 1){
 
 ggdata = data.table(
   x = x_seq2, 
-  Dlinear = yhatmse_doptlin$MSEyhat, 
-  Dquadratic = yhatmse_doptquad$MSEyhat, 
-  SpaceFilling = yhatmse_space$MSEyhat, 
+  DOptLin = yhatmse_doptlin$MSEyhat, 
+  DOptQuadr = yhatmse_doptquad$MSEyhat, 
+  Grid = yhatmse_space$MSEyhat, 
   SeqMED = yhatmse_seqmed$MSEyhat,
-  BH = yhatmse_bh$MSEyhat
+  BoxHill = yhatmse_bh$MSEyhat
 )
 ggdata = melt(ggdata, id = c("x"), value.name = "yhatmse", variable.name = "Design")
 msey.plt = ggplot(ggdata, aes(x = x, y = yhatmse, color = Design)) +
@@ -621,3 +662,10 @@ msey.plt = ggplot(ggdata, aes(x = x, y = yhatmse, color = Design)) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
   labs(y = "", x = "x")
 msey.plt
+
+# plot
+ggsave(
+  filename = paste0("scen", scenario, "_msey.pdf"),
+  plot = last_plot(),
+  width = 6, height = 4, units = c("in")
+)

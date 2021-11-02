@@ -8,7 +8,7 @@
 #   linear vs. quadratic,
 #   where the true function is cubic
 
-scenario = 2 # 1, 2
+scenario = 1 # 1, 2
 
 ################################################################################
 # Sources/Libraries
@@ -52,7 +52,7 @@ registerDoRNG(rng.seed)
 
 # simulations settings
 numSims = 100
-numSeq = 12 # 12, 100
+numSeq = 100 # 12, 100
 seqN = 1
 Nttl = numSeq * seqN
 xmin = -1

@@ -6,12 +6,12 @@
 
 scenario = 2
 
-beta_setting = 0 # 0, 4
-sigmasq = 0.025 # 0.1, 0.05
-discontinuity = 0.01
+beta_setting = 4 # 0, 4
+sigmasq = 0.025 # 0.1, 0.05, 0.025
+discontinuity = 0.05
 height = 1
 numSeq = 12 # 12
-numSims = 250 #100
+numSims = 250 #100, 250
 
 ################################################################################
 # Sources/Libraries
@@ -55,7 +55,7 @@ gg_color_hue = function(n) {
 }
 
 library(doRNG)
-registerDoRNG(1995)
+registerDoRNG(123) # 1995
 
 ################################################################################
 # simulation settings, shared for both scenarios (linear vs. quadratic)
@@ -145,10 +145,11 @@ if(beta_setting == 0){
     return(fx)
   }
 }
-ggplot() + 
-  xlim(xmin, xmax) + 
-  geom_function(fun = fT) + 
-  theme_bw()
+# ggplot() + 
+#   xlim(xmin, xmax) + 
+#   geom_function(fun = fT) + 
+#   theme_bw()
+
 # ggsave(
 #   filename = paste0(
 #     "lm", "_scen", scenario,

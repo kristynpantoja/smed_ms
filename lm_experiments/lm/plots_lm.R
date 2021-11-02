@@ -52,7 +52,7 @@ gg_color_hue = function(n) {
 ################################################################################
 
 # simulations settings
-numSims = 500
+numSims = 250
 numSeq = 12 # 12, 100
 seqN = 1
 Nttl = numSeq * seqN
@@ -93,7 +93,7 @@ if(scenario == 1){
   betaT = c(0, -0.75, 0, 1)
   fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2 + betaT[4] * x^3
 }
-curve(fT, from = xmin, to = xmax)
+# curve(fT, from = xmin, to = xmax)
 
 ################################################################################
 # import box & hill and seqmed simulations
@@ -154,30 +154,42 @@ for(i in 1:num_supportpts_Doptlin){
 
 # Doptimal - quadratic
 num_supportpts_Doptquad = nrow(res_Fed_Doptquad$design)
+supportpts_Doptquad = res_Fed_Doptquad$design[, "x"]
 supportpt_assgnmt_Doptquad = cut(
   sample(1:Nttl, size = Nttl, replace = FALSE), # shuffle
   breaks = num_supportpts_Doptquad, labels = FALSE)
 dopt_quadratic = rep(NA, Nttl)
 for(i in 1:num_supportpts_Doptquad){
   dopt_quadratic[supportpt_assgnmt_Doptquad == i] = 
-    res_Fed_Doptquad$design[i, "x"]
+    supportpts_Doptquad[i]
 }
 # # check:
 # res_Fed_Doptquad$design
 # table(dopt_quadratic) / Nttl
 
-# half space-filling, half quadratic Doptimal
+# half space-filling, half quadratic Doptimal, assumes Nttl is divisible by 2
 supportpt_assgnmt_hybrid = cut(
   sample(1:(Nttl / 2), size = Nttl / 2, replace = FALSE), # shuffle
   breaks = num_supportpts_Doptquad, labels = FALSE)
 hybrid_grid_doptq = rep(NA, Nttl / 2)
 for(i in 1:num_supportpts_Doptquad){
   hybrid_grid_doptq[supportpt_assgnmt_hybrid == i] = 
-    res_Fed_Doptquad$design[i, "x"]
+    supportpts_Doptquad[i]
 }
 hybrid_grid_doptq[(Nttl / 2 + 1):Nttl] = seq(
   from = xmin, to = xmax, length.out = Nttl / 2)
+# hybrid_grid_doptq[(Nttl / 2 + 1):Nttl] = seq(
+#   from = xmin, to = xmax, length.out = (Nttl / 2) + 2)[-c(1, (Nttl / 2) + 2)]
+# hybrid_grid_doptq[(Nttl / 2 + 1):Nttl] =c(
+#   seq(
+#     from = supportpts_Doptquad[1], to = supportpts_Doptquad[2], 
+#     length.out = (Nttl / 4) + 2)[-c(1, (Nttl / 4) + 2)],
+#   seq(
+#     from = supportpts_Doptquad[2], to = supportpts_Doptquad[3], 
+#     length.out = (Nttl / 4) + 2)[-c(1, (Nttl / 4) + 2)]
+# )
 
+# set.seed(2)
 grid_sims = list()
 doptlin_sims = list()
 doptquad_sims = list()
@@ -231,14 +243,16 @@ plt1 = ggplot(ggdata) +
   stat_function(fun = fT) + 
   theme_bw() + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-ggarrange(plt0, plt1)
+# ggarrange(plt0, plt1)
 
-# # manuscript plot
-# ggsave(
-#   filename = paste0("scen", scenario, "_seqmedexample.pdf"), 
-#   plot = last_plot(), 
-#   width = 4.5, height = 2, units = c("in")
-# )
+# manuscript plot
+if(Nttl == 100){
+  ggsave(
+    filename = paste0("scen", scenario, "_seqmedexample.pdf"),
+    plot = last_plot(),
+    width = 4.5, height = 2, units = c("in")
+  )
+}
 
 # plot a boxhill
 bh = boxhill_sims[[sim.idx]]
@@ -312,11 +326,13 @@ if(scenario == 1){
   ggarrange(plt0, plt1, pltw, nrow = 1, ncol = 3, widths = c(1, 1, 1.75))
   
   # # manuscript plot
-  # ggsave(
-  #   filename = paste0("scen", scenario, "_seqmedexamplewasserstein.pdf"),
-  #   plot = last_plot(),
-  #   width = 6.5, height = 1.75, units = c("in")
-  # )
+  if(Nttl == 100){
+    ggsave(
+      filename = paste0("scen", scenario, "_seqmedexamplewasserstein.pdf"),
+      plot = last_plot(),
+      width = 6.5, height = 1.75, units = c("in")
+    )
+  }
 } else if(scenario == 2){
   # plot ...
 }
@@ -421,13 +437,13 @@ PPH_df = data.frame()
 for(j in 1:numSims){
   # sequence of PPHs for each design
   PPH_grid = getPPH(
-    grid_sims[[j]], models, true.function, sigmasq)
+    grid_sims[[j]], models, fT, sigmasq)
   PPH_doptl = getPPH(
-    doptlin_sims[[j]], models, true.function, sigmasq)
+    doptlin_sims[[j]], models, fT, sigmasq)
   PPH_doptq = getPPH(
-    doptquad_sims[[j]], models, true.function, sigmasq)
+    doptquad_sims[[j]], models, fT, sigmasq)
   PPH_hybrid = getPPH(
-    hybrid_sims[[j]], models, true.function, sigmasq)
+    hybrid_sims[[j]], models, fT, sigmasq)
   # master data frame
   PPH_grid$Design = "Grid"
   PPH_doptl$Design = "DOptLin."

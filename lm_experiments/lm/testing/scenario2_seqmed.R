@@ -8,7 +8,7 @@ scenario = 2
 
 beta_setting = 0 # 0, 4
 sigmasq = 0.025 # 0.1, 0.05
-discontinuity = 0.01
+discontinuity = 0.05 # 0.01, 0.05
 height = 1
 numSeq = 12 #100, 36, 12
 numSims = 250 #100
@@ -48,7 +48,7 @@ plan(multisession, workers = nworkers)
 library(mvtnorm)
 
 library(doRNG)
-registerDoRNG(1995)
+registerDoRNG(123) # 1995
 
 ################################################################################
 # simulation settings, shared for both scenarios (linear vs. quadratic)

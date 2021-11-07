@@ -272,17 +272,17 @@ for(scenario in c(3, 4, 5, 6)){
     
     # slide plot
     # ggsave(
-    #   filename = paste0("20210815_scen", scenario, "_design.pdf"), 
-    #   plot = des.plt, 
+    #   filename = paste0("scen", scenario, "_", scenario_name, "_design.pdf"),
+    #   plot = des.plt,
     #   width = 6, height = 4, units = c("in")
     # )
     
     # manuscript plot
-    ggsave(
-      filename = paste0(scenario_name, "_design.pdf"), 
-      plot = des.plt, 
-      width = 4.5, height = 2, units = c("in")
-    )
+    # ggsave(
+    #   filename = paste0(scenario_name, "_design.pdf"), 
+    #   plot = des.plt, 
+    #   width = 4.5, height = 2, units = c("in")
+    # )
     
     print(paste("scenario", scenario, 
                 "################################################################"))

@@ -1,5 +1,5 @@
 ################################################################################
-# last updated: 09/23/21
+# last updated: 11/202/21
 # purpose: to create a list of seqmed simulations
 # scenario 1:
 #   linear vs. quadratic,
@@ -546,11 +546,11 @@ epph.plt = ggplot(PPHmean_gg, aes(x = index, y = value, color = Design,
 plot(epph.plt)
 
 # plot
-ggsave(
-  filename = paste0("scen", scenario, "_epphs.pdf"),
-  plot = last_plot(),
-  width = 6, height = 4, units = c("in")
-)
+# ggsave(
+#   filename = paste0("scen", scenario, "_epphs.pdf"),
+#   plot = last_plot(),
+#   width = 6, height = 4, units = c("in")
+# )
 
 
 ################################################################################
@@ -612,11 +612,11 @@ mseb.plt = ggplot(ggdata, aes(x = Designs, y = MSE)) +
 mseb.plt
 
 # plot
-ggsave(
-  filename = paste0("scen", scenario, "_mseb.pdf"),
-  plot = last_plot(),
-  width = 6, height = 4, units = c("in")
-)
+# ggsave(
+#   filename = paste0("scen", scenario, "_mseb.pdf"),
+#   plot = last_plot(),
+#   width = 6, height = 4, units = c("in")
+# )
 
 ################################################################################
 # plot the MSE of y-hat (posterior mean) of the hypotheses
@@ -664,8 +664,8 @@ msey.plt = ggplot(ggdata, aes(x = x, y = yhatmse, color = Design)) +
 msey.plt
 
 # plot
-ggsave(
-  filename = paste0("scen", scenario, "_msey.pdf"),
-  plot = last_plot(),
-  width = 6, height = 4, units = c("in")
-)
+# ggsave(
+#   filename = paste0("scen", scenario, "_msey.pdf"),
+#   plot = last_plot(),
+#   width = 6, height = 4, units = c("in")
+# )

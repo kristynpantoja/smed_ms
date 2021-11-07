@@ -319,17 +319,18 @@ epph.plt = ggplot(PPHmean_seq, aes(x = index, y = value, color = Design,
   labs(x = "Stage Index", y = element_blank())
 plot(epph.plt)
 
+# slides plot
 # ggsave(
-#   filename = paste0("20210815_dim", dimT, "_epph.pdf"), 
-#   plot = epph.plt, 
+#   filename = paste0("20210815_dim", dimT, "_epph.pdf"),
+#   plot = epph.plt,
 #   width = 6, height = 4, units = c("in")
 # )
 
 # manuscript plot
-ggsave(
-  filename = paste0("dim", dimT, "_epph.pdf"), 
-  plot = epph.plt, 
-  width = 6.5, height = 2, units = c("in")
-)
+# ggsave(
+#   filename = paste0("dim", dimT, "_epph.pdf"), 
+#   plot = epph.plt, 
+#   width = 6.5, height = 2, units = c("in")
+# )
 
 

@@ -11,7 +11,7 @@ sigmasq = 0.1 # 0.1, 0.05
 discontinuity = 0.05 # 0.01, 0.05
 height = 1
 numSeq = 12 #100, 36, 12
-numSims = 250 #100
+numSims = 100 #100
 
 ################################################################################
 # Sources/Libraries
@@ -136,8 +136,29 @@ if(beta_setting == 0){
     }
     return(fx)
   }
+} else if(beta_setting == 5){
+  betaT_left = c(0, 0, 1)
+  betaT_right = c(0, 0, 2)
+  fx_left_outer = function(x) betaT_left[1] + betaT_left[2] * x + betaT_left[3] * x^2
+  fx_right_outer = function(x) betaT_right[1] + betaT_right[2] * x + betaT_right[3] * x^2
+  # discontinuity = 0.01
+  # height = 1
+  fx_inner = function(x) height
+  fT = function(x){
+    fx = rep(NA, length(x))
+    for(i in 1:length(x)){
+      if(x[i] < -discontinuity){
+        fx[i] = fx_left_outer(x[i])
+      } else if(x[i] > discontinuity){
+        fx[i] = fx_right_outer(x[i])
+      } else{
+        fx[i] = fx_inner(x[i])
+      }
+    }
+    return(fx)
+  }
 }
-# curve(fT, from = xmin, to = xmax)
+curve(fT, from = xmin, to = xmax)
 
 ################################################################################
 # run simulations
@@ -164,7 +185,7 @@ if(beta_setting %in% c(0, 1, 2)){
     ".rds"
   ))
 }
-if(beta_setting %in% c(3,4)){
+if(beta_setting %in% c(3,4,5)){
   saveRDS(seqmed_sims, file = paste0(
     output_dir,
     "/sm", "_scen", scenario, 

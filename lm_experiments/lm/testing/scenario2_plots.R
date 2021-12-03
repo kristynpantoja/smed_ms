@@ -6,12 +6,12 @@
 
 scenario = 2
 
-beta_setting = 0 # 0, 4
+beta_setting = 5 # 0, 4, 5
 sigmasq = 0.1 # 0.1, 0.05, 0.025
 discontinuity = 0.05
 height = 1
 numSeq = 12 # 12
-numSims = 250 #100, 250
+numSims = 100 #100, 250
 
 ################################################################################
 # Sources/Libraries
@@ -144,10 +144,31 @@ if(beta_setting == 0){
     }
     return(fx)
   }
+} else if(beta_setting == 5){
+  betaT_left = c(0, 0, 1)
+  betaT_right = c(0, 0, 2)
+  fx_left_outer = function(x) betaT_left[1] + betaT_left[2] * x + betaT_left[3] * x^2
+  fx_right_outer = function(x) betaT_right[1] + betaT_right[2] * x + betaT_right[3] * x^2
+  # discontinuity = 0.01
+  # height = 1
+  fx_inner = function(x) height
+  fT = function(x){
+    fx = rep(NA, length(x))
+    for(i in 1:length(x)){
+      if(x[i] < -discontinuity){
+        fx[i] = fx_left_outer(x[i])
+      } else if(x[i] > discontinuity){
+        fx[i] = fx_right_outer(x[i])
+      } else{
+        fx[i] = fx_inner(x[i])
+      }
+    }
+    return(fx)
+  }
 }
-# ggplot() + 
-#   xlim(xmin, xmax) + 
-#   geom_function(fun = fT) + 
+# ggplot() +
+#   xlim(xmin, xmax) +
+#   geom_function(fun = fT) +
 #   theme_bw()
 
 # ggsave(
@@ -174,7 +195,7 @@ if(beta_setting == 0){
     ".rds"
   ))
 }
-if(beta_setting == 4){
+if(beta_setting %in% c(4,5)){
   seqmed_sims = readRDS(file = paste0(
     output_dir,
     "/sm", "_scen", scenario, 
@@ -409,7 +430,7 @@ if(scenario == 1){
       beta.mean = rep(0, 6), 
       beta.var = diag(rep(sigmasq01, 6)), 6)
     models = list(model0, model1, modelT)
-  } else if(beta_setting == 4){
+  } else if(beta_setting %in% c(4,5)){
     xi1 = -discontinuity
     xi2 = discontinuity
     h1 = function(x) 1
@@ -588,34 +609,34 @@ epph.plt = ggplot(PPHmean_gg, aes(x = index, y = value, color = Design,
   labs(x = "Stage Index", y = element_blank())
 plot(epph.plt)
 
-if(beta_setting == 0){
-  ggsave(
-    filename = paste0(
-      "lm", "_scen", scenario,
-      "_beta", beta_setting,
-      "_N", Nttl,
-      "_sigmasq", sigmasq,
-      "_numSims", numSims,
-      "_epphs", ".pdf"),
-    plot = last_plot(),
-    width = 6.5, height = 3.5, units = c("in")
-  )
-}
-if(beta_setting == 4){
-  ggsave(
-    filename = paste0(
-      "lm", "_scen", scenario,
-      "_beta", beta_setting,
-      "_height", height,
-      "_discontinuity", discontinuity,
-      "_N", Nttl,
-      "_sigmasq", sigmasq,
-      "_numSims", numSims,
-      "_epphs", ".pdf"),
-    plot = last_plot(),
-    width = 6.5, height = 3.5, units = c("in")
-  )
-}
+# if(beta_setting == 0){
+#   ggsave(
+#     filename = paste0(
+#       "lm", "_scen", scenario,
+#       "_beta", beta_setting,
+#       "_N", Nttl,
+#       "_sigmasq", sigmasq,
+#       "_numSims", numSims,
+#       "_epphs", ".pdf"),
+#     plot = last_plot(),
+#     width = 6.5, height = 3.5, units = c("in")
+#   )
+# }
+# if(beta_setting == 4){
+#   ggsave(
+#     filename = paste0(
+#       "lm", "_scen", scenario,
+#       "_beta", beta_setting,
+#       "_height", height,
+#       "_discontinuity", discontinuity,
+#       "_N", Nttl,
+#       "_sigmasq", sigmasq,
+#       "_numSims", numSims,
+#       "_epphs", ".pdf"),
+#     plot = last_plot(),
+#     width = 6.5, height = 3.5, units = c("in")
+#   )
+# }
 
 ################################################################################
 
@@ -683,34 +704,34 @@ epph.plt2 = ggplot(PPHmean_gg, aes(x = index, y = value, color = Design,
   labs(x = "Stage Index", y = element_blank())
 plot(epph.plt2)
 
-if(beta_setting == 0){
-  ggsave(
-    filename = paste0(
-      "lm", "_scen", scenario,
-      "_beta", beta_setting,
-      "_N", Nttl,
-      "_sigmasq", sigmasq,
-      "_numSims", numSims,
-      "_epphs_seq", ".pdf"),
-    plot = last_plot(),
-    width = 6.5, height = 3.5, units = c("in")
-  )
-}
-if(beta_setting == 4){
-  ggsave(
-    filename = paste0(
-      "lm", "_scen", scenario,
-      "_beta", beta_setting,
-      "_height", height,
-      "_discontinuity", discontinuity,
-      "_N", Nttl,
-      "_sigmasq", sigmasq,
-      "_numSims", numSims,
-      "_epphs_seq", ".pdf"),
-    plot = last_plot(),
-    width = 6.5, height = 3.5, units = c("in")
-  )
-}
+# if(beta_setting == 0){
+#   ggsave(
+#     filename = paste0(
+#       "lm", "_scen", scenario,
+#       "_beta", beta_setting,
+#       "_N", Nttl,
+#       "_sigmasq", sigmasq,
+#       "_numSims", numSims,
+#       "_epphs_seq", ".pdf"),
+#     plot = last_plot(),
+#     width = 6.5, height = 3.5, units = c("in")
+#   )
+# }
+# if(beta_setting == 4){
+#   ggsave(
+#     filename = paste0(
+#       "lm", "_scen", scenario,
+#       "_beta", beta_setting,
+#       "_height", height,
+#       "_discontinuity", discontinuity,
+#       "_N", Nttl,
+#       "_sigmasq", sigmasq,
+#       "_numSims", numSims,
+#       "_epphs_seq", ".pdf"),
+#     plot = last_plot(),
+#     width = 6.5, height = 3.5, units = c("in")
+#   )
+# }
 
 ################################################################################
 # plot the estimated true curve?
@@ -763,31 +784,31 @@ fun_dat_mlt = melt(
 ggplot(fun_dat_mlt, aes(x = x, y = y, color = Function)) +
   geom_path()
 
-if(beta_setting == 0){
-  ggsave(
-    filename = paste0(
-      "lm", "_scen", scenario,
-      "_beta", beta_setting,
-      "_N", Nttl,
-      "_sigmasq", sigmasq,
-      "_numSims", numSims,
-      "_functions", ".pdf"),
-    plot = last_plot(),
-    width = 6.5, height = 3.5, units = c("in")
-  )
-}
-if(beta_setting == 4){
-  ggsave(
-    filename = paste0(
-      "lm", "_scen", scenario,
-      "_beta", beta_setting,
-      "_height", height,
-      "_discontinuity", discontinuity,
-      "_N", Nttl,
-      "_sigmasq", sigmasq,
-      "_numSims", numSims,
-      "_functions", ".pdf"),
-    plot = last_plot(),
-    width = 6.5, height = 3.5, units = c("in")
-  )
-}
+# if(beta_setting == 0){
+#   ggsave(
+#     filename = paste0(
+#       "lm", "_scen", scenario,
+#       "_beta", beta_setting,
+#       "_N", Nttl,
+#       "_sigmasq", sigmasq,
+#       "_numSims", numSims,
+#       "_functions", ".pdf"),
+#     plot = last_plot(),
+#     width = 6.5, height = 3.5, units = c("in")
+#   )
+# }
+# if(beta_setting == 4){
+#   ggsave(
+#     filename = paste0(
+#       "lm", "_scen", scenario,
+#       "_beta", beta_setting,
+#       "_height", height,
+#       "_discontinuity", discontinuity,
+#       "_N", Nttl,
+#       "_sigmasq", sigmasq,
+#       "_numSims", numSims,
+#       "_functions", ".pdf"),
+#     plot = last_plot(),
+#     width = 6.5, height = 3.5, units = c("in")
+#   )
+# }

@@ -5,9 +5,9 @@
 #   where the true function is cubic
 
 scenario = 2
-
+alpha_setting = 4
 beta_setting = 4 # 0, 4
-sigmasq = 0.1 # 0.1, 0.05
+sigmasq = 0.05 # 0.1, 0.05, 0.025
 discontinuity = 0.05 # 0.01, 0.05
 height = 1
 numSeq = 12 #100, 36, 12
@@ -158,20 +158,34 @@ if(beta_setting == 0){
     return(fx)
   }
 }
-curve(fT, from = xmin, to = xmax)
+# curve(fT, from = xmin, to = xmax)
 
 ################################################################################
 # run simulations
 ################################################################################
 
 # generate seqmeds
+if(alpha_setting == 0){
+  alpha_seq = 1
+} else if(alpha_setting == 1){
+  alpha_seq = seq(from = 0, to = 1, length.out = seqN * numSeq)
+} else if(alpha_setting == 2){
+  alpha_seq = seq(from = 1, to = 0, length.out = seqN * numSeq)
+} else if(alpha_setting == 3){
+  alpha_seq = seq(from = 3, to = 0, length.out = seqN * numSeq)
+} else if(alpha_setting == 4){
+  alpha_seq = seq(from = 0, to = 5, length.out = seqN * numSeq)
+} else if(alpha_setting == 5){
+  alpha_seq = 0
+}
 seqmed_sims = foreach(i = 1:numSims) %dopar% {
   print(paste0("starting simulation ", i, " out of ", numSims))
   SeqMED(
     y.in = NULL, x.in = NULL, true.function = fT,
     model0 = model0, model1 = model1, 
     error.var = sigmasq, xmin = xmin, xmax = xmax,
-    candidates = candidates, numSeq = numSeq, seqN = seqN)
+    candidates = candidates, numSeq = numSeq, seqN = seqN, 
+    alpha_seq = alpha_seq)
 }
 
 if(beta_setting %in% c(0, 1, 2)){
@@ -181,11 +195,11 @@ if(beta_setting %in% c(0, 1, 2)){
     "_beta", beta_setting, 
     "_N", Nttl, 
     "_sigmasq", sigmasq,
+    "_alpha", alpha_setting, 
     "_numSims", numSims, 
     ".rds"
   ))
-}
-if(beta_setting %in% c(3,4,5)){
+} else if(beta_setting %in% c(3, 4, 5)){
   saveRDS(seqmed_sims, file = paste0(
     output_dir,
     "/sm", "_scen", scenario, 
@@ -194,6 +208,7 @@ if(beta_setting %in% c(3,4,5)){
     "_discontinuity", discontinuity,
     "_N", Nttl, 
     "_sigmasq", sigmasq,
+    "_alpha", alpha_setting, 
     "_numSims", numSims, 
     ".rds"
   ))

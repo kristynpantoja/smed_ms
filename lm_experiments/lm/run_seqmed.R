@@ -59,7 +59,8 @@ xmin = -1
 xmax = 1
 numCandidates = 10^3 + 1
 candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
-sigmasq = 0.1 # 0.025, 0.05, 0.1
+sigmasq = 0.05 # 0.025, 0.05, 0.1
+alpha = 1
 
 # shared settings
 type01 = c(2, 3)
@@ -112,6 +113,7 @@ saveRDS(seqmed_list, paste0(
   "_seqmed", 
   "_N", Nttl, 
   "_sigmasq", sigmasq,
+  "_alpha", alpha,
   "_numSims", numSims,
   "_seed", rng.seed,
   ".rds"))

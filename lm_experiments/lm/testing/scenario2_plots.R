@@ -6,8 +6,11 @@
 
 scenario = 2
 
-beta_setting = 5 # 0, 4, 5
-sigmasq = 0.1 # 0.1, 0.05, 0.025
+# 0 and 4 show the most difference...?
+alpha_setting = 5 # 0: alpha_seq = 1, 1: alpha_seq = 0->1, 2: alpha_seq = 1->0, 
+#   3: alpha_seq = 3->0, 4: alpha_seq = 0->3, 5: alpha_seq = 0
+beta_setting = 4 # 0, 4
+sigmasq = 0.05 # 0.1, 0.5, 0.025
 discontinuity = 0.05
 height = 1
 numSeq = 12 # 12
@@ -191,6 +194,7 @@ if(beta_setting == 0){
     "_beta", beta_setting, 
     "_N", Nttl, 
     "_sigmasq", sigmasq,
+    "_alpha", alpha_setting, 
     "_numSims", numSims, 
     ".rds"
   ))
@@ -204,6 +208,7 @@ if(beta_setting %in% c(4,5)){
     "_discontinuity", discontinuity,
     "_N", Nttl, 
     "_sigmasq", sigmasq,
+    "_alpha", alpha_setting, 
     "_numSims", numSims, 
     ".rds"
   ))
@@ -279,6 +284,7 @@ hybrid_grid_doptq[(Nttl / 2 + 1):Nttl] =c(
     from = supportpts_Doptquad[2], to = supportpts_Doptquad[3],
     length.out = (Nttl / 4) + 2)[-c(1, (Nttl / 4) + 2)]
 )
+hybrid_grid_doptq = rev(hybrid_grid_doptq) # spacefilling -> doptimal
 
 grid_sims = list()
 doptlin_sims = list()
@@ -325,7 +331,7 @@ sm = seqmed_sims[[sim.idx]]
 ggdata = data.frame(x = c(sm$x.in, sm$x.new), y = c(sm$y.in, sm$y.new))
 plt0 = ggplot(ggdata) + 
   geom_histogram(binwidth = 0.12, closed = "right", 
-                 aes(x = x, y = after_stat(density))) + 
+                 aes(x = x)) +#, y = after_stat(density))) + 
   theme_bw() + #base_size = 20) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 plt1 = ggplot(ggdata) + 
@@ -333,7 +339,22 @@ plt1 = ggplot(ggdata) +
   stat_function(fun = fT) + 
   theme_bw() + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-# ggarrange(plt0, plt1)
+ggarrange(plt0, plt1)
+
+# plot the hybrid
+hy = hybrid_sims[[sim.idx]]
+ggdata = data.frame(x = hy$x, y = hy$y)
+plt0.1 = ggplot(ggdata) + 
+  geom_histogram(binwidth = 0.12, closed = "right", 
+                 aes(x = x)) +#, y = after_stat(density))) + 
+  theme_bw() + #base_size = 20) + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+plt1.1 = ggplot(ggdata) + 
+  geom_point(aes(x, y), col = gg_color_hue(2)[1]) +
+  stat_function(fun = fT) + 
+  theme_bw() + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+# ggarrange(plt0.1, plt1.1)
 
 ################################################################################
 # plot the wasserstein distance when scenario == 1
@@ -362,7 +383,7 @@ if(scenario == 1){
     `True Quadr.` = fT_seq,
     `Wasserstein` = w_seq
   )
-  ggdata = data.table::melt(
+  ggdata = reshape2::melt(
     ggdata, id = c("x"), value.name = "y", variable.name = "Function")
   
   ggdata_ribbon = data.table::data.table(
@@ -480,13 +501,20 @@ getPPH = function(
 
 getPPHseq = function(
   design, models, n, true.function, error.var, initial.data = TRUE, 
-  randomize.order = FALSE, seed = NULL
+  randomize.order = FALSE, randomize.halves.order = FALSE, seed = NULL
 ){
   if(!is.null(seed)) set.seed(seed)
   if(initial.data){
     x.new = design$x.new
     if(randomize.order){
       new.order = sample(1:n, n, replace = FALSE)
+      x.new = x.new[new.order]
+    }
+    if(randomize.halves.order){
+      new.order = c(
+        sample(1:(n / 2), n / 2, replace = FALSE), 
+        sample(((n / 2) + 1):n, n / 2, replace = FALSE)
+      )
       x.new = x.new[new.order]
     }
     x = c(design$x.in, x.new)
@@ -496,6 +524,14 @@ getPPHseq = function(
     y = design$y
     if(randomize.order){
       new.order = sample(1:n, n, replace = FALSE)
+      x = x[new.order]
+      y = y[new.order]
+    }
+    if(randomize.halves.order){
+      new.order = c(
+        sample(1:(n / 2), n / 2, replace = FALSE), 
+        sample(((n / 2) + 1):n, n / 2, replace = FALSE)
+      )
       x = x[new.order]
       y = y[new.order]
     }
@@ -576,7 +612,7 @@ PPHmean_seq = aggregate(
 names(PPHmean_seq)[c(1, 2)] = c("Design", "index")
 
 PPHmean_gg = rbind(PPHmean, PPHmean_seq)
-PPHmean_gg = melt(PPHmean_gg, id.vars = c("Design", "index"),
+PPHmean_gg = reshape2::melt(PPHmean_gg, id.vars = c("Design", "index"),
                   measure.vars = paste0("H", 0:(length(models) - 1), sep = ""),
                   variable.name = "hypothesis")
 design_names = rev(c("SeqMED", "DOptLin.", "DOptQuadr.", "Grid", "Hybrid"))
@@ -616,6 +652,7 @@ plot(epph.plt)
 #       "_beta", beta_setting,
 #       "_N", Nttl,
 #       "_sigmasq", sigmasq,
+#       "_alpha", alpha_setting, 
 #       "_numSims", numSims,
 #       "_epphs", ".pdf"),
 #     plot = last_plot(),
@@ -631,6 +668,7 @@ plot(epph.plt)
 #       "_discontinuity", discontinuity,
 #       "_N", Nttl,
 #       "_sigmasq", sigmasq,
+#       "_alpha", alpha_setting, 
 #       "_numSims", numSims,
 #       "_epphs", ".pdf"),
 #     plot = last_plot(),
@@ -651,7 +689,7 @@ for(j in 1:numSims){
   PPH_seq.dq = getPPHseq(doptquad_sims[[j]], models, Nttl, fT, sigmasq, 
                          initial.data = FALSE, randomize.order = TRUE) 
   PPH_seq.h = getPPHseq(hybrid_sims[[j]], models, Nttl, fT, sigmasq, 
-                        initial.data = FALSE, randomize.order = TRUE) 
+                        initial.data = FALSE, randomize.halves.order = TRUE)
   PPH_seq.sm = getPPHseq(seqmed_sims[[j]], models, Nttl, fT, sigmasq) 
   # master data frame
   PPH_seq.g$Design = "Grid"
@@ -671,7 +709,7 @@ PPHmean_seq = aggregate(
 names(PPHmean_seq)[c(1, 2)] = c("Design", "index")
 
 PPHmean_gg = PPHmean_seq
-PPHmean_gg = melt(PPHmean_gg, id.vars = c("Design", "index"), 
+PPHmean_gg = reshape2::melt(PPHmean_gg, id.vars = c("Design", "index"), 
                   measure.vars = paste0("H", 0:(length(models) - 1), sep = ""), 
                   variable.name = "hypothesis")
 design_names = rev(c("SeqMED", "DOptLin.", "DOptQuadr.", "Grid", "Hybrid"))
@@ -711,6 +749,7 @@ plot(epph.plt2)
 #       "_beta", beta_setting,
 #       "_N", Nttl,
 #       "_sigmasq", sigmasq,
+#       "_alpha", alpha_setting, 
 #       "_numSims", numSims,
 #       "_epphs_seq", ".pdf"),
 #     plot = last_plot(),
@@ -726,6 +765,7 @@ plot(epph.plt2)
 #       "_discontinuity", discontinuity,
 #       "_N", Nttl,
 #       "_sigmasq", sigmasq,
+#       "_alpha", alpha_setting, 
 #       "_numSims", numSims,
 #       "_epphs_seq", ".pdf"),
 #     plot = last_plot(),
@@ -778,11 +818,12 @@ fun_dat = data.frame(
   True = fT(candidates), 
   Predicted = as.numeric(modelT$designMat(candidates) %*% posteriorT$mean)
 )
-fun_dat_mlt = melt(
+fun_dat_mlt = reshape2::melt(
   fun_dat, id.vars = "x", measure.vars = c("True", "Predicted"), 
   variable.name = "Function", value.name = "y")
-ggplot(fun_dat_mlt, aes(x = x, y = y, color = Function)) +
+plt_pred = ggplot(fun_dat_mlt, aes(x = x, y = y, color = Function)) +
   geom_path()
+# plt_pred
 
 # if(beta_setting == 0){
 #   ggsave(
@@ -791,6 +832,7 @@ ggplot(fun_dat_mlt, aes(x = x, y = y, color = Function)) +
 #       "_beta", beta_setting,
 #       "_N", Nttl,
 #       "_sigmasq", sigmasq,
+#       "_alpha", alpha_setting, 
 #       "_numSims", numSims,
 #       "_functions", ".pdf"),
 #     plot = last_plot(),
@@ -806,6 +848,7 @@ ggplot(fun_dat_mlt, aes(x = x, y = y, color = Function)) +
 #       "_discontinuity", discontinuity,
 #       "_N", Nttl,
 #       "_sigmasq", sigmasq,
+#       "_alpha", alpha_setting, 
 #       "_numSims", numSims,
 #       "_functions", ".pdf"),
 #     plot = last_plot(),

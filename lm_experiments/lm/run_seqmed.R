@@ -103,7 +103,7 @@ if(scenario == 1){
 ################################################################################
 
 alphas = c(0, 1, 2, 5, 10)
-for(i in 1:length(alphas)){
+for(l in 1:length(alphas)){
   # generate seqmeds
   registerDoRNG(rng.seed)
   seqmed_list = foreach(i = 1:numSims) %dopar% {
@@ -113,14 +113,14 @@ for(i in 1:length(alphas)){
       model0 = model0, model1 = model1, 
       error.var = sigmasq, xmin = xmin, xmax = xmax,
       candidates = candidates, numSeq = numSeq, seqN = seqN, 
-      alpha_seq = alphas[i])
+      alpha_seq = alphas[l])
   }
   saveRDS(seqmed_list, paste0(
     output_dir, "/scenario", scenario, 
     "_seqmed", 
     "_N", Nttl, 
     "_sigmasq", sigmasq,
-    "_alpha", alphas[i],
+    "_alpha", alphas[l],
     "_numSims", numSims,
     "_seed", rng.seed,
     ".rds"))

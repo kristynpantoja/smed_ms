@@ -5,11 +5,13 @@
 #   where the true function is cubic
 rm(list = ls())
 
-scenario = 2
+scenario = 1
+# scenario 2 ------------------------
 beta_setting = 4 # 0, 4, 5
-sigmasq = 0.05 # 0.1, 0.5, 0.025
+sigmasq = 0.2 # 0.1, 0.2
 discontinuity = 0.05 # 0.05, 0.9, 0.1
 height = 1
+# scenarios 1 & 2 -------------------
 numSeq = 12 # 12
 numSims = 100 #100, 250
 alpha = 10 # 0, 0.5, 1, 2, 3, 4
@@ -101,109 +103,136 @@ prior_probs = rep(1 / 2, 2)
 ################################################################################
 # Scenario 2: True function is cubic
 ################################################################################
-if(beta_setting == 0){
-  betaT = c(0, -0.75, 0, 1)
-  fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2 + betaT[4] * x^3
-} else if(beta_setting == 1){
-  betaT = c(0, 0, 0, 1)
-  fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2 + betaT[4] * x^3
-} else if(beta_setting == 2){
-  betaT = c(0, 0, 1, 1)
-  fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2 + betaT[4] * x^3
-} else if(beta_setting == 3){
-  betaT = c(0, 0, 1)
-  fx_outer = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2
-  # discontinuity = 0.01
-  # height = 1
-  fx_innerneg = function(x) height - ((fx_outer(discontinuity) - height) / discontinuity) * x
-  fx_innerpos = function(x) height + ((fx_outer(discontinuity) - height) / discontinuity) * x
-  fT = function(x){
-    fx = rep(NA, length(x))
-    for(i in 1:length(x)){
-      if(abs(x[i]) >= discontinuity){
-        fx[i] = fx_outer(x[i])
-      } else if(x[i] > -discontinuity & x[i] <= 0){
-        fx[i] = fx_innerneg(x[i])
-      } else{
-        fx[i] = fx_innerpos(x[i])
+if(scenario == 1){
+  betaT = c(0, 0, 1) # want quadratic coefficient to be much larger than linear
+  fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2
+  curve(fT, from = xmin, to = xmax)
+} else if(scenario == 2){
+  if(beta_setting == 0){
+    betaT = c(0, -0.75, 0, 1)
+    fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2 + betaT[4] * x^3
+  } else if(beta_setting == 1){
+    betaT = c(0, 0, 0, 1)
+    fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2 + betaT[4] * x^3
+  } else if(beta_setting == 2){
+    betaT = c(0, 0, 1, 1)
+    fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2 + betaT[4] * x^3
+  } else if(beta_setting == 3){
+    betaT = c(0, 0, 1)
+    fx_outer = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2
+    # discontinuity = 0.01
+    # height = 1
+    fx_innerneg = function(x) height - ((fx_outer(discontinuity) - height) / discontinuity) * x
+    fx_innerpos = function(x) height + ((fx_outer(discontinuity) - height) / discontinuity) * x
+    fT = function(x){
+      fx = rep(NA, length(x))
+      for(i in 1:length(x)){
+        if(abs(x[i]) >= discontinuity){
+          fx[i] = fx_outer(x[i])
+        } else if(x[i] > -discontinuity & x[i] <= 0){
+          fx[i] = fx_innerneg(x[i])
+        } else{
+          fx[i] = fx_innerpos(x[i])
+        }
       }
+      return(fx)
     }
-    return(fx)
-  }
-} else if(beta_setting == 4){
-  betaT = c(0, 0, 1)
-  fx_outer = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2
-  # discontinuity = 0.01
-  # height = 1
-  fx_inner = function(x) height
-  fT = function(x){
-    fx = rep(NA, length(x))
-    for(i in 1:length(x)){
-      if(abs(x[i]) >= discontinuity){
-        fx[i] = fx_outer(x[i])
-      } else{
-        fx[i] = fx_inner(x[i])
+  } else if(beta_setting == 4){
+    betaT = c(0, 0, 1)
+    fx_outer = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2
+    # discontinuity = 0.01
+    # height = 1
+    fx_inner = function(x) height
+    fT = function(x){
+      fx = rep(NA, length(x))
+      for(i in 1:length(x)){
+        if(abs(x[i]) >= discontinuity){
+          fx[i] = fx_outer(x[i])
+        } else{
+          fx[i] = fx_inner(x[i])
+        }
       }
+      return(fx)
     }
-    return(fx)
-  }
-} else if(beta_setting == 5){
-  betaT = c(0, 0, 1)
-  fx_outer = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2
-  # discontinuity = 0.01
-  # height = 1
-  fx_inner = function(x) height
-  fT = function(x){
-    fx = rep(NA, length(x))
-    for(i in 1:length(x)){
-      if(abs(x[i] - 0.5) >= discontinuity){
-        fx[i] = fx_outer(x[i])
-      } else{
-        fx[i] = fx_inner(x[i])
+  } else if(beta_setting == 5){
+    betaT = c(0, 0, 1)
+    fx_outer = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2
+    # discontinuity = 0.01
+    # height = 1
+    fx_inner = function(x) height
+    fT = function(x){
+      fx = rep(NA, length(x))
+      for(i in 1:length(x)){
+        if(abs(x[i] - 0.5) >= discontinuity){
+          fx[i] = fx_outer(x[i])
+        } else{
+          fx[i] = fx_inner(x[i])
+        }
       }
+      return(fx)
     }
-    return(fx)
   }
 }
+
 ggplot() +
   xlim(xmin, xmax) +
   geom_function(fun = fT) +
   theme_bw()
 
-# ggsave(
-#   filename = paste0(
-#     "lm", "_scen", scenario,
-#     "_beta", beta_setting,
-#     "_curve", ".pdf"),
-#   plot = last_plot(),
-#   width = 6.5, height = 3.5, units = c("in")
-# )
+# if(scenario == 1){
+#   ggsave(
+#     filename = paste0(
+#       "lm", "_scen", scenario,
+#       "_curve", ".pdf"),
+#     plot = last_plot(),
+#     width = 6.5, height = 3.5, units = c("in")
+#   )
+# } else if(scenario == 2){
+#   ggsave(
+#     filename = paste0(
+#       "lm", "_scen", scenario,
+#       "_beta", beta_setting,
+#       "_curve", ".pdf"),
+#     plot = last_plot(),
+#     width = 6.5, height = 3.5, units = c("in")
+#   )
+# }
 
 ################################################################################
 # import sequential designs
 ################################################################################
 
-if(beta_setting %in% c(0, 6)){
+if(scenario == 1){
   seqmed_file0 = paste0(
     output_dir,
     "/sm", "_scen", scenario, 
-    "_beta", beta_setting, 
     "_N", Nttl, 
     "_sigmasq", sigmasq,
     "_alpha", alpha
   )
-}
-if(beta_setting %in% c(4, 5)){
-  seqmed_file0 = paste0(
-    output_dir,
-    "/sm", "_scen", scenario, 
-    "_beta", beta_setting, 
-    "_height", height, 
-    "_discontinuity", discontinuity,
-    "_N", Nttl, 
-    "_sigmasq", sigmasq,
-    "_alpha", alpha
-  )
+} else if(scenario == 2){
+  if(beta_setting %in% c(0, 6)){
+    seqmed_file0 = paste0(
+      output_dir,
+      "/sm", "_scen", scenario, 
+      "_beta", beta_setting, 
+      "_N", Nttl, 
+      "_sigmasq", sigmasq,
+      "_alpha", alpha
+    )
+  }
+  if(beta_setting %in% c(4, 5)){
+    seqmed_file0 = paste0(
+      output_dir,
+      "/sm", "_scen", scenario, 
+      "_beta", beta_setting, 
+      "_height", height, 
+      "_discontinuity", discontinuity,
+      "_N", Nttl, 
+      "_sigmasq", sigmasq,
+      "_alpha", alpha
+    )
+  }
 }
 if(sequential_alpha){
   seqmed_file0 = paste0(seqmed_file0, "seq")
@@ -364,46 +393,46 @@ plt1.1 = ggplot(ggdata) +
 library(data.table)
 
 if(scenario == 1){
-  numseq = 1e2
-  x_seq = seq(from = xmin, to = xmax, length.out = numseq)
-  w_seq = sapply(x_seq, function(x) WNlm(
-    x, sm$postmean0, sm$postmean1,
-    diag(sm$postvar0), diag(sm$postvar1), model0, model1, sigmasq))
-  f1est = function(x) sm$postmean1[1, ] +
-    sm$postmean1[2, ] * x + sm$postmean1[3, ] * x^2
-  f2est = function(x) sm$postmean0[1, ] +
-    sm$postmean0[2, ] * x
-  f1est_seq = sapply(x_seq, f1est)
-  f2est_seq = sapply(x_seq, f2est)
-  fT_seq = sapply(x_seq, fT)
-  
-  ggdata = data.table::data.table(
-    x = x_seq,
-    `Est. Quadr.` = f1est_seq,
-    `Est. Line` = f2est_seq,
-    `True Quadr.` = fT_seq,
-    `Wasserstein` = w_seq
-  )
-  ggdata = reshape2::melt(
-    ggdata, id = c("x"), value.name = "y", variable.name = "Function")
-  
-  ggdata_ribbon = data.table::data.table(
-    x = x_seq,
-    ymin = apply(cbind(f1est_seq, f2est_seq), 1, min),
-    ymax = apply(cbind(f1est_seq, f2est_seq), 1, max)
-  )
-  pltw = ggplot(
-    ggdata, aes(x = x, y = y, color = Function, linetype = Function)) +
-    scale_linetype_manual(values = c(2, 2, 1, 1)) +
-    ylim(-1.1, 2.1) +
-    scale_color_manual(
-      values = c(gg_color_hue(4)[c(3, 4)], "black", gg_color_hue(4)[2])) +
-    geom_path() +
-    geom_ribbon(
-      data = ggdata_ribbon, mapping = aes(x = x, ymin = ymin, ymax = ymax), 
-      alpha = 0.2, inherit.aes = FALSE) +
-    theme_bw() +
-    theme(panel.grid.minor = element_blank())
+  # numseq = 1e2
+  # x_seq = seq(from = xmin, to = xmax, length.out = numseq)
+  # w_seq = sapply(x_seq, function(x) WNlm(
+  #   x, sm$postmean0, sm$postmean1,
+  #   diag(sm$postvar0), diag(sm$postvar1), model0, model1, sigmasq))
+  # f1est = function(x) sm$postmean1[1, ] +
+  #   sm$postmean1[2, ] * x + sm$postmean1[3, ] * x^2
+  # f2est = function(x) sm$postmean0[1, ] +
+  #   sm$postmean0[2, ] * x
+  # f1est_seq = sapply(x_seq, f1est)
+  # f2est_seq = sapply(x_seq, f2est)
+  # fT_seq = sapply(x_seq, fT)
+  # 
+  # ggdata = data.table::data.table(
+  #   x = x_seq,
+  #   `Est. Quadr.` = f1est_seq,
+  #   `Est. Line` = f2est_seq,
+  #   `True Quadr.` = fT_seq,
+  #   `Wasserstein` = w_seq
+  # )
+  # ggdata = reshape2::melt(
+  #   ggdata, id = c("x"), value.name = "y", variable.name = "Function")
+  # 
+  # ggdata_ribbon = data.table::data.table(
+  #   x = x_seq,
+  #   ymin = apply(cbind(f1est_seq, f2est_seq), 1, min),
+  #   ymax = apply(cbind(f1est_seq, f2est_seq), 1, max)
+  # )
+  # pltw = ggplot(
+  #   ggdata, aes(x = x, y = y, color = Function, linetype = Function)) +
+  #   scale_linetype_manual(values = c(2, 2, 1, 1)) +
+  #   ylim(-1.1, 2.1) +
+  #   scale_color_manual(
+  #     values = c(gg_color_hue(4)[c(3, 4)], "black", gg_color_hue(4)[2])) +
+  #   geom_path() +
+  #   geom_ribbon(
+  #     data = ggdata_ribbon, mapping = aes(x = x, ymin = ymin, ymax = ymax), 
+  #     alpha = 0.2, inherit.aes = FALSE) +
+  #   theme_bw() +
+  #   theme(panel.grid.minor = element_blank())
   # ggarrange(plt0, plt1, pltw, nrow = 1, ncol = 3, widths = c(1, 1, 1.75))
   
   # # manuscript plot
@@ -423,6 +452,7 @@ library(data.table)
 
 if(scenario == 1){
   models = list(model0, model1)
+  modelT = model1
 } else if(scenario == 2){
   if(beta_setting %in% 0:2){
     desXT = function(x){
@@ -562,6 +592,7 @@ getPPHseq = function(
 }
 
 ################################################################################
+# sequential & non-sequential designs' epph
 
 # non-sequential designs
 PPH_df = data.frame()
@@ -647,6 +678,7 @@ epph.plt = ggplot(PPHmean_gg, aes(x = index, y = value, color = Design,
 # plot(epph.plt)
 
 ################################################################################
+# all sequential epph
 
 # sequential designs
 PPH_seq = data.frame()
@@ -769,35 +801,46 @@ plt_pred = ggplot(fun_dat_mlt, aes(x = x, y = y, color = Function)) +
 ################################################################################
 
 # import the seqmeds
-if(!sequential_alpha & !hybrid_alpha & beta_setting == 4){
-  alphas = c(0, 0.5, 1, 2, 3, 4, 5, 10)
-} else {
-  alphas = c(0, 0.5, 1, 2, 3, 4, 5)
-}
+# if(!sequential_alpha & !hybrid_alpha & beta_setting == 4){
+#   alphas = c(0, 0.5, 1, 2, 3, 4, 5, 10)
+# } else {
+#   alphas = c(0, 0.5, 1, 5, 10)
+# }
+alphas = c(0, 1, 5, 10)
 
 seqmed_sims_alphas = list()
 for(i in 1:length(alphas)){
-  if(beta_setting %in% c(0, 6)){
+  if(scenario == 1){
     seqmed_file0 = paste0(
       output_dir,
       "/sm", "_scen", scenario, 
-      "_beta", beta_setting, 
       "_N", Nttl, 
       "_sigmasq", sigmasq,
       "_alpha", alphas[i]
     )
-  }
-  if(beta_setting %in% c(4,5)){
-    seqmed_file0 = paste0(
-      output_dir,
-      "/sm", "_scen", scenario, 
-      "_beta", beta_setting, 
-      "_height", height, 
-      "_discontinuity", discontinuity,
-      "_N", Nttl, 
-      "_sigmasq", sigmasq,
-      "_alpha", alphas[i]
-    )
+  } else if(scenario == 2){
+    if(beta_setting %in% c(0, 6)){
+      seqmed_file0 = paste0(
+        output_dir,
+        "/sm", "_scen", scenario, 
+        "_beta", beta_setting, 
+        "_N", Nttl, 
+        "_sigmasq", sigmasq,
+        "_alpha", alphas[i]
+      )
+    }
+    if(beta_setting %in% c(4,5)){
+      seqmed_file0 = paste0(
+        output_dir,
+        "/sm", "_scen", scenario, 
+        "_beta", beta_setting, 
+        "_height", height, 
+        "_discontinuity", discontinuity,
+        "_N", Nttl, 
+        "_sigmasq", sigmasq,
+        "_alpha", alphas[i]
+      )
+    }
   }
   if(sequential_alpha){
     seqmed_file0 = paste0(seqmed_file0, "seq")
@@ -810,116 +853,102 @@ for(i in 1:length(alphas)){
   seqmed_sims_alphas[[i]] = readRDS(file = seqmed_file)
 }
 
-PPH_seq_alpha = data.frame()
+################################################################################
+# sequential & non-sequential designs' epph
+
+# non-sequential designs
+PPH_df = data.frame()
 for(j in 1:numSims){
   # sequence of PPHs for each design
-  PPH_seq.g = getPPHseq(grid_sims[[j]], models, Nttl, fT, sigmasq, 
-                        initial.data = FALSE, randomize.order = TRUE) 
-  PPH_seq.dl = getPPHseq(doptlin_sims[[j]], models, Nttl, fT, sigmasq, 
-                         initial.data = FALSE, randomize.order = TRUE) 
-  PPH_seq.dq = getPPHseq(doptquad_sims[[j]], models, Nttl, fT, sigmasq, 
-                         initial.data = FALSE, randomize.order = TRUE) 
-  PPH_seq.h = getPPHseq(hybrid_sims[[j]], models, Nttl, fT, sigmasq, 
-                        initial.data = FALSE, randomize.halves.order = TRUE)
+  PPH_grid = getPPH(
+    grid_sims[[j]], models, fT, sigmasq)
+  PPH_doptl = getPPH(
+    doptlin_sims[[j]], models, fT, sigmasq)
+  PPH_doptq = getPPH(
+    doptquad_sims[[j]], models, fT, sigmasq)
+  # PPH_hybrid = getPPH(
+  #   hybrid_sims[[j]], models, fT, sigmasq)
+  # master data frame
+  PPH_grid$Design = "Grid"
+  PPH_doptl$Design = "DOptLin."
+  PPH_doptq$Design = "DOptQuadr."
+  # PPH_hybrid$Design = "Hybrid"
+  PPH.tmp = rbind(PPH_grid, PPH_doptl, PPH_doptq)#, PPH_hybrid)
+  PPH.tmp$sim = j
+  PPH_df = rbind(PPH_df, PPH.tmp)
+}
+PPHmean = aggregate(
+  PPH_df[, names(PPH_df)[1:length(models)]],
+  by = list(PPH_df[, "Design"]), FUN = function(x) mean(x, na.rm = TRUE))
+names(PPHmean)[1] = "Design"
+PPHmean$index = Nttl
+# but we want a line, so allow interpolation by setting PPHmean$index = 0 too
+PPHmean2 = PPHmean
+PPHmean2$index = 0
+PPHmean = rbind(PPHmean, PPHmean2)
+
+# sequential designs
+PPH_seq = data.frame()
+for(j in 1:numSims){
+  # sequence of PPHs for each design
   if(hybrid_alpha){
     PPH_seq.sm0 = getPPHseq(
       seqmed_sims_alphas[[1]][[j]], models, Nttl, fT, sigmasq, 
       randomize.halves.order = TRUE) 
-    PPH_seq.sm0.5 = getPPHseq(
+    PPH_seq.sm1 = getPPHseq(
       seqmed_sims_alphas[[2]][[j]], models, Nttl, fT, sigmasq, 
       randomize.halves.order = TRUE) 
-    PPH_seq.sm1 = getPPHseq(
+    PPH_seq.sm5 = getPPHseq(
       seqmed_sims_alphas[[3]][[j]], models, Nttl, fT, sigmasq, 
       randomize.halves.order = TRUE)  
-    PPH_seq.sm2 = getPPHseq(
+    PPH_seq.sm10 = getPPHseq(
       seqmed_sims_alphas[[4]][[j]], models, Nttl, fT, sigmasq, 
-      randomize.halves.order = TRUE) 
-    PPH_seq.sm3 = getPPHseq(
-      seqmed_sims_alphas[[5]][[j]], models, Nttl, fT, sigmasq, 
-      randomize.halves.order = TRUE)  
-    PPH_seq.sm4 = getPPHseq(
-      seqmed_sims_alphas[[6]][[j]], models, Nttl, fT, sigmasq, 
-      randomize.halves.order = TRUE) 
-    PPH_seq.sm5 = getPPHseq(
-      seqmed_sims_alphas[[7]][[j]], models, Nttl, fT, sigmasq, 
-      randomize.halves.order = TRUE) 
+      randomize.halves.order = TRUE)
   } else{
     PPH_seq.sm0 = getPPHseq(
       seqmed_sims_alphas[[1]][[j]], models, Nttl, fT, sigmasq) 
-    PPH_seq.sm0.5 = getPPHseq(
-      seqmed_sims_alphas[[2]][[j]], models, Nttl, fT, sigmasq) 
     PPH_seq.sm1 = getPPHseq(
-      seqmed_sims_alphas[[3]][[j]], models, Nttl, fT, sigmasq) 
-    PPH_seq.sm2 = getPPHseq(
-      seqmed_sims_alphas[[4]][[j]], models, Nttl, fT, sigmasq) 
-    PPH_seq.sm3 = getPPHseq(
-      seqmed_sims_alphas[[5]][[j]], models, Nttl, fT, sigmasq) 
-    PPH_seq.sm4 = getPPHseq(
-      seqmed_sims_alphas[[6]][[j]], models, Nttl, fT, sigmasq)
+      seqmed_sims_alphas[[2]][[j]], models, Nttl, fT, sigmasq) 
     PPH_seq.sm5 = getPPHseq(
-      seqmed_sims_alphas[[7]][[j]], models, Nttl, fT, sigmasq)
-    if(!sequential_alpha & !hybrid_alpha & beta_setting == 4){
-      PPH_seq.sm10 = getPPHseq(
-        seqmed_sims_alphas[[8]][[j]], models, Nttl, fT, sigmasq)
-    }
+      seqmed_sims_alphas[[3]][[j]], models, Nttl, fT, sigmasq) 
+    PPH_seq.sm10 = getPPHseq(
+      seqmed_sims_alphas[[4]][[j]], models, Nttl, fT, sigmasq) 
   }
   # master data frame
-  PPH_seq.g$Design = "Grid"
-  PPH_seq.dl$Design = "DOptLin."
-  PPH_seq.dq$Design = "DOptQuadr."
-  PPH_seq.h$Design = "Hybrid"
   PPH_seq.sm0$Design = "SeqMED 0"
-  PPH_seq.sm0.5$Design = "SeqMED 0.5"
   PPH_seq.sm1$Design = "SeqMED 1"
-  PPH_seq.sm2$Design = "SeqMED 2"
-  PPH_seq.sm3$Design = "SeqMED 3"
-  PPH_seq.sm4$Design = "SeqMED 4"
   PPH_seq.sm5$Design = "SeqMED 5"
-  if(!sequential_alpha & !hybrid_alpha & beta_setting == 4){
-    PPH_seq.sm10$Design = "SeqMED 10"
-  }
-  PPH_seq.tmp = rbind(
-    PPH_seq.g, PPH_seq.dl, PPH_seq.dq, PPH_seq.h, 
-    PPH_seq.sm0, PPH_seq.sm0.5, PPH_seq.sm1, PPH_seq.sm2, PPH_seq.sm3, 
-    PPH_seq.sm4, PPH_seq.sm5)
-  if(!sequential_alpha & !hybrid_alpha & beta_setting == 4){
-    PPH_seq.tmp = rbind(PPH_seq.tmp, PPH_seq.sm10)
-  }
+  PPH_seq.sm10$Design = "SeqMED 10"
+  PPH_seq.tmp = rbind(PPH_seq.sm0, PPH_seq.sm1, PPH_seq.sm5, PPH_seq.sm10)
   PPH_seq.tmp$sim = j
-  PPH_seq_alpha = rbind(PPH_seq_alpha, PPH_seq.tmp)
+  PPH_seq = rbind(PPH_seq, PPH_seq.tmp)
 }
 
 PPHmean_seq = aggregate(
-  PPH_seq_alpha[, names(PPH_seq_alpha)[1:length(models)]], 
-  by = list(PPH_seq_alpha[, "Design"], PPH_seq_alpha[, "index"]), 
+  PPH_seq[, names(PPH_seq)[1:length(models)]],
+  by = list(PPH_seq[, "Design"], PPH_seq[, "index"]),
   FUN = function(x) mean(x, na.rm = TRUE))
 names(PPHmean_seq)[c(1, 2)] = c("Design", "index")
 
-PPHmean_gg = PPHmean_seq
-PPHmean_gg = reshape2::melt(PPHmean_gg, id.vars = c("Design", "index"), 
-                            measure.vars = paste0("H", 0:(length(models) - 1), sep = ""), 
-                            variable.name = "hypothesis")
-if(!sequential_alpha & !hybrid_alpha & beta_setting == 4){
-  design_names = rev(c(
-    "SeqMED 10", "SeqMED 5", "SeqMED 4", "SeqMED 3", "SeqMED 2", "SeqMED 1", 
-    "SeqMED 0.5", "SeqMED 0",
-    "DOptLin.", "DOptQuadr.", "Grid", "Hybrid"))
-} else{
-  design_names = rev(c(
-    "SeqMED 5", "SeqMED 4", "SeqMED 3", "SeqMED 2", "SeqMED 1", "SeqMED 0.5", 
-    "SeqMED 0",
-    "DOptLin.", "DOptQuadr.", "Grid", "Hybrid"))
-}
+PPHmean_gg = rbind(PPHmean, PPHmean_seq)
+PPHmean_gg = reshape2::melt(
+  PPHmean_gg, id.vars = c("Design", "index"),
+  measure.vars = paste0("H", 0:(length(models) - 1), sep = ""),
+  variable.name = "hypothesis")
+# design_names = rev(c("SeqMED", "DOptLin.", "DOptQuadr.", "Grid", "Hybrid"))
+design_names = rev(c(
+  "SeqMED 10", "SeqMED 5", "SeqMED 1", "SeqMED 0",
+  "DOptLin.", "DOptQuadr.", "Grid"))#, "Hybrid"))
 PPHmean_gg$Design = factor(PPHmean_gg$Design, levels = design_names)
 if(scenario == 1){
   PPHmean_gg$hypothesis = factor(
-    PPHmean_gg$hypothesis, 
-    levels = paste0("H", 0:(length(models) - 1), sep = ""), 
+    PPHmean_gg$hypothesis,
+    levels = paste0("H", 0:(length(models) - 1), sep = ""),
     labels = paste0("Case ", scenario, ", H", 0:(length(models) - 1), sep = ""))
 } else if(scenario == 2){
   PPHmean_gg$hypothesis = factor(
-    PPHmean_gg$hypothesis, 
-    levels = paste0("H", 0:(length(models) - 1), sep = ""), 
+    PPHmean_gg$hypothesis,
+    levels = paste0("H", 0:(length(models) - 1), sep = ""),
     labels = paste0("Case ", scenario, ", H", c(0, 1, "T"), sep = ""))
 }
 PPHmean_gg = setorder(PPHmean_gg, cols = "Design")
@@ -927,17 +956,17 @@ PPHmean_gg2 = PPHmean_gg[PPHmean_gg$index == Nttl, ]
 PPHmean_gg2$Design = factor(PPHmean_gg2$Design, levels = design_names)
 PPHmean_gg2 = setorder(PPHmean_gg2, cols = "Design")
 epph.plt3 = ggplot(PPHmean_gg, aes(x = index, y = value, color = Design,
-                                   linetype = Design, shape = Design)) +
+                                  linetype = Design, shape = Design)) +
   facet_wrap(~hypothesis) +
   geom_path() +
   # scale_linetype_manual(values=c(rep("dashed", 4), rep("solid", 2))) +
-  geom_point(data = PPHmean_gg2, 
+  geom_point(data = PPHmean_gg2,
              mapping = aes(x = index, y = value, color = Design),
              inherit.aes = FALSE) +
   theme_bw() +
-  ylim(0, 1) + 
+  ylim(0, 1) +
   labs(x = "Stage Index", y = element_blank())
-plot(epph.plt3)
+epph.plt3
 
 # save plot
 plot_file0 = paste0("lm", "_scen", scenario, "_beta", beta_setting)
@@ -971,7 +1000,137 @@ ggsave(
   width = 6.5, height = 3.5, units = c("in")
 )
 
+
+# all sequential epph plot #####################################################
+
+PPH_seq_alpha = data.frame()
+for(j in 1:numSims){
+  # sequence of PPHs for each design
+  PPH_seq.g = getPPHseq(grid_sims[[j]], models, Nttl, fT, sigmasq, 
+                        initial.data = FALSE, randomize.order = TRUE) 
+  PPH_seq.dl = getPPHseq(doptlin_sims[[j]], models, Nttl, fT, sigmasq, 
+                         initial.data = FALSE, randomize.order = TRUE) 
+  PPH_seq.dq = getPPHseq(doptquad_sims[[j]], models, Nttl, fT, sigmasq, 
+                         initial.data = FALSE, randomize.order = TRUE) 
+  PPH_seq.h = getPPHseq(hybrid_sims[[j]], models, Nttl, fT, sigmasq, 
+                        initial.data = FALSE, randomize.halves.order = TRUE)
+  if(hybrid_alpha){
+    PPH_seq.sm0 = getPPHseq(
+      seqmed_sims_alphas[[1]][[j]], models, Nttl, fT, sigmasq, 
+      randomize.halves.order = TRUE) 
+    PPH_seq.sm1 = getPPHseq(
+      seqmed_sims_alphas[[2]][[j]], models, Nttl, fT, sigmasq, 
+      randomize.halves.order = TRUE) 
+    PPH_seq.sm5 = getPPHseq(
+      seqmed_sims_alphas[[3]][[j]], models, Nttl, fT, sigmasq, 
+      randomize.halves.order = TRUE)  
+    PPH_seq.sm10 = getPPHseq(
+      seqmed_sims_alphas[[4]][[j]], models, Nttl, fT, sigmasq, 
+      randomize.halves.order = TRUE)
+  } else{
+    PPH_seq.sm0 = getPPHseq(
+      seqmed_sims_alphas[[1]][[j]], models, Nttl, fT, sigmasq) 
+    PPH_seq.sm1 = getPPHseq(
+      seqmed_sims_alphas[[2]][[j]], models, Nttl, fT, sigmasq) 
+    PPH_seq.sm5 = getPPHseq(
+      seqmed_sims_alphas[[3]][[j]], models, Nttl, fT, sigmasq) 
+    PPH_seq.sm10 = getPPHseq(
+      seqmed_sims_alphas[[4]][[j]], models, Nttl, fT, sigmasq) 
+  }
+  # master data frame
+  PPH_seq.g$Design = "Grid"
+  PPH_seq.dl$Design = "DOptLin."
+  PPH_seq.dq$Design = "DOptQuadr."
+  PPH_seq.h$Design = "Hybrid"
+  PPH_seq.sm0$Design = "SeqMED 0"
+  PPH_seq.sm1$Design = "SeqMED 1"
+  PPH_seq.sm5$Design = "SeqMED 5"
+  PPH_seq.sm10$Design = "SeqMED 10"
+  PPH_seq.tmp = rbind(
+    PPH_seq.g, PPH_seq.dl, PPH_seq.dq, PPH_seq.h, 
+    PPH_seq.sm0, PPH_seq.sm1, PPH_seq.sm5, PPH_seq.sm10)
+  PPH_seq.tmp$sim = j
+  PPH_seq_alpha = rbind(PPH_seq_alpha, PPH_seq.tmp)
+}
+
+PPHmean_seq = aggregate(
+  PPH_seq_alpha[, names(PPH_seq_alpha)[1:length(models)]], 
+  by = list(PPH_seq_alpha[, "Design"], PPH_seq_alpha[, "index"]), 
+  FUN = function(x) mean(x, na.rm = TRUE))
+names(PPHmean_seq)[c(1, 2)] = c("Design", "index")
+
+PPHmean_gg = PPHmean_seq
+PPHmean_gg = reshape2::melt(
+  PPHmean_gg, id.vars = c("Design", "index"), 
+  measure.vars = paste0("H", 0:(length(models) - 1), sep = ""), 
+  variable.name = "hypothesis")
+design_names = rev(c(
+  "SeqMED 10", "SeqMED 5", "SeqMED 1", "SeqMED 0",
+  "DOptLin.", "DOptQuadr.", "Grid", "Hybrid"))
+PPHmean_gg$Design = factor(PPHmean_gg$Design, levels = design_names)
+if(scenario == 1){
+  PPHmean_gg$hypothesis = factor(
+    PPHmean_gg$hypothesis, 
+    levels = paste0("H", 0:(length(models) - 1), sep = ""), 
+    labels = paste0("Case ", scenario, ", H", 0:(length(models) - 1), sep = ""))
+} else if(scenario == 2){
+  PPHmean_gg$hypothesis = factor(
+    PPHmean_gg$hypothesis, 
+    levels = paste0("H", 0:(length(models) - 1), sep = ""), 
+    labels = paste0("Case ", scenario, ", H", c(0, 1, "T"), sep = ""))
+}
+PPHmean_gg = setorder(PPHmean_gg, cols = "Design")
+PPHmean_gg2 = PPHmean_gg[PPHmean_gg$index == Nttl, ]
+PPHmean_gg2$Design = factor(PPHmean_gg2$Design, levels = design_names)
+PPHmean_gg2 = setorder(PPHmean_gg2, cols = "Design")
+epph.plt4 = ggplot(PPHmean_gg, aes(x = index, y = value, color = Design,
+                                   linetype = Design)) +
+  facet_wrap(~hypothesis) +
+  geom_path() +
+  # scale_linetype_manual(values=c(rep("dashed", 4), rep("solid", 2))) +
+  geom_point(data = PPHmean_gg2, 
+             mapping = aes(x = index, y = value, color = Design), 
+             inherit.aes = FALSE) +
+  theme_bw() +
+  ylim(0, 1) + 
+  labs(x = "Stage Index", y = element_blank())
+plot(epph.plt4)
+
+# save plot
+plot_file0 = paste0("lm", "_scen", scenario, "_beta", beta_setting)
+if(beta_setting %in% c(0, 6)){
+  plot_file0 = paste0(
+    plot_file0,
+    "_N", Nttl, 
+    "_sigmasq", sigmasq,
+    "_alpha"
+  )
+} else if(beta_setting %in% c(4,5)){
+  plot_file0 = paste0(
+    plot_file0,
+    "_beta", beta_setting, 
+    "_height", height, 
+    "_discontinuity", discontinuity,
+    "_N", Nttl, 
+    "_sigmasq", sigmasq,
+    "_alpha"
+  )
+}
+if(sequential_alpha){
+  plot_file0 = paste0(plot_file0, "seq")
+} else if(hybrid_alpha){
+  plot_file0 = paste0(plot_file0, "hybrid")
+}
+plot_file = paste0(plot_file0, "_epphs_seq", ".pdf")
+ggsave(
+  filename = plot_file,
+  plot = last_plot(),
+  width = 6.5, height = 3.5, units = c("in")
+)
+
+################################################################################
 # plot the designs
+
 sim.idx = 1
 seqmed_designs_alphas = data.frame(alpha = c(), x = c(), y = c())
 for(i in 1:length(seqmed_sims_alphas)){
@@ -985,13 +1144,13 @@ for(i in 1:length(seqmed_sims_alphas)){
 }
 seqmed_designs_alphas$alpha = factor(seqmed_designs_alphas$alpha)
 
-plt_alphas = ggplot(seqmed_designs_alphas) + 
+plt_alphas2 = ggplot(seqmed_designs_alphas) + 
   facet_wrap(vars(alpha)) +
   geom_histogram(binwidth = 0.12, closed = "right", 
                  aes(x = x)) +#, y = after_stat(density))) + 
   theme_bw() + #base_size = 20) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-plt_alphas
+plt_alphas2
 
 # save plot
 plot_file0 = paste0("lm", "_scen", scenario, "_beta", beta_setting)
@@ -1024,3 +1183,4 @@ ggsave(
   plot = last_plot(),
   width = 6.5, height = 3.5, units = c("in")
 )
+

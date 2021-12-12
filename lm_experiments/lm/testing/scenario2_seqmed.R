@@ -3,15 +3,20 @@
 # purpose: to create a list of seqmed simulations for scenario 2:
 #   linear vs. quadratic,
 #   where the true function is cubic
+rm(list = ls())
 
 scenario = 2
-alpha_setting = 4
-beta_setting = 4 # 0, 4
-sigmasq = 0.05 # 0.1, 0.05, 0.025
-discontinuity = 0.05 # 0.01, 0.05
+beta_setting = 0 # 0, 4, 6
+sigmasq = 0.2 # 0.1, 0.05, 0.025
+discontinuity = 0.09 # 0.05, 0.1
 height = 1
 numSeq = 12 #100, 36, 12
 numSims = 100 #100
+alpha = 5
+sequential_alpha = FALSE
+hybrid_alpha = FALSE
+if(sequential_alpha) alpha_seq = seq(0, alpha, numSeq)
+if(hybrid_alpha) alpha_seq = c(rep(0, numSeq / 2), rep(alpha, numSeq / 2))
 
 ################################################################################
 # Sources/Libraries
@@ -137,70 +142,79 @@ if(beta_setting == 0){
     return(fx)
   }
 } else if(beta_setting == 5){
-  betaT_left = c(0, 0, 1)
-  betaT_right = c(0, 0, 2)
-  fx_left_outer = function(x) betaT_left[1] + betaT_left[2] * x + betaT_left[3] * x^2
-  fx_right_outer = function(x) betaT_right[1] + betaT_right[2] * x + betaT_right[3] * x^2
+  betaT = c(0, 0, 1)
+  fx_outer = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2
   # discontinuity = 0.01
   # height = 1
   fx_inner = function(x) height
   fT = function(x){
     fx = rep(NA, length(x))
     for(i in 1:length(x)){
-      if(x[i] < -discontinuity){
-        fx[i] = fx_left_outer(x[i])
-      } else if(x[i] > discontinuity){
-        fx[i] = fx_right_outer(x[i])
+      if(abs(x[i] - 0.5) >= discontinuity){
+        fx[i] = fx_outer(x[i])
       } else{
         fx[i] = fx_inner(x[i])
       }
     }
     return(fx)
   }
+} else if(beta_setting == 6){
+  betaT = c(0, 0.5, -1, -0.75, 1)
+  fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2 + betaT[4] * x^3 + betaT[5] * x^4
 }
-# curve(fT, from = xmin, to = xmax)
+curve(fT, from = xmin, to = xmax)
 
 ################################################################################
 # run simulations
 ################################################################################
 
 # generate seqmeds
-if(alpha_setting == 0){
-  alpha_seq = 1
-} else if(alpha_setting == 1){
-  alpha_seq = seq(from = 0, to = 1, length.out = seqN * numSeq)
-} else if(alpha_setting == 2){
-  alpha_seq = seq(from = 1, to = 0, length.out = seqN * numSeq)
-} else if(alpha_setting == 3){
-  alpha_seq = seq(from = 3, to = 0, length.out = seqN * numSeq)
-} else if(alpha_setting == 4){
-  alpha_seq = seq(from = 0, to = 5, length.out = seqN * numSeq)
-} else if(alpha_setting == 5){
-  alpha_seq = 0
-}
-seqmed_sims = foreach(i = 1:numSims) %dopar% {
-  print(paste0("starting simulation ", i, " out of ", numSims))
-  SeqMED(
-    y.in = NULL, x.in = NULL, true.function = fT,
-    model0 = model0, model1 = model1, 
-    error.var = sigmasq, xmin = xmin, xmax = xmax,
-    candidates = candidates, numSeq = numSeq, seqN = seqN, 
-    alpha_seq = alpha_seq)
+# if(alpha_setting == 0){
+#   alpha_seq = 1
+# } else if(alpha_setting == 1){
+#   alpha_seq = seq(from = 0, to = 1, length.out = seqN * numSeq)
+# } else if(alpha_setting == 2){
+#   alpha_seq = seq(from = 1, to = 0, length.out = seqN * numSeq)
+# } else if(alpha_setting == 3){
+#   alpha_seq = seq(from = 3, to = 0, length.out = seqN * numSeq)
+# } else if(alpha_setting == 4){
+#   alpha_seq = seq(from = 0, to = 5, length.out = seqN * numSeq)
+# } else if(alpha_setting == 5){
+#   alpha_seq = 0
+# }
+if(sequential_alpha | hybrid_alpha){
+  seqmed_sims = foreach(i = 1:numSims) %dopar% {
+    print(paste0("starting simulation ", i, " out of ", numSims))
+    SeqMED(
+      y.in = NULL, x.in = NULL, true.function = fT,
+      model0 = model0, model1 = model1, 
+      error.var = sigmasq, xmin = xmin, xmax = xmax,
+      candidates = candidates, numSeq = numSeq, seqN = seqN, 
+      alpha_seq = alpha_seq)
+  }
+} else{
+  seqmed_sims = foreach(i = 1:numSims) %dopar% {
+    print(paste0("starting simulation ", i, " out of ", numSims))
+    SeqMED(
+      y.in = NULL, x.in = NULL, true.function = fT,
+      model0 = model0, model1 = model1, 
+      error.var = sigmasq, xmin = xmin, xmax = xmax,
+      candidates = candidates, numSeq = numSeq, seqN = seqN, 
+      alpha_seq = alpha)
+  }
 }
 
-if(beta_setting %in% c(0, 1, 2)){
-  saveRDS(seqmed_sims, file = paste0(
+if(beta_setting %in% c(0, 1, 2, 6)){
+  seqmed_file0 = paste0(
     output_dir,
     "/sm", "_scen", scenario, 
     "_beta", beta_setting, 
     "_N", Nttl, 
     "_sigmasq", sigmasq,
-    "_alpha", alpha_setting, 
-    "_numSims", numSims, 
-    ".rds"
-  ))
+    "_alpha", alpha
+  )
 } else if(beta_setting %in% c(3, 4, 5)){
-  saveRDS(seqmed_sims, file = paste0(
+  seqmed_file0 = paste0(
     output_dir,
     "/sm", "_scen", scenario, 
     "_beta", beta_setting, 
@@ -208,11 +222,19 @@ if(beta_setting %in% c(0, 1, 2)){
     "_discontinuity", discontinuity,
     "_N", Nttl, 
     "_sigmasq", sigmasq,
-    "_alpha", alpha_setting, 
-    "_numSims", numSims, 
-    ".rds"
-  ))
+    "_alpha", alpha
+  )
 }
+if(sequential_alpha){
+  seqmed_file0 = paste0(seqmed_file0, "seq")
+} else if(hybrid_alpha){
+  seqmed_file0 = paste0(seqmed_file0, "hybrid")
+}
+seqmed_file = paste0(
+  seqmed_file0, "_numSims", numSims, 
+  ".rds")
+
+saveRDS(seqmed_sims, file = seqmed_file)
 
 
 

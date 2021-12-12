@@ -8,7 +8,7 @@
 #   linear vs. quadratic,
 #   where the true function is cubic
 
-scenario = 2 # 1, 2
+scenario = 1 # 1, 2
 
 ################################################################################
 # Sources/Libraries
@@ -52,15 +52,19 @@ registerDoRNG(rng.seed)
 
 # simulations settings
 numSims = 100
-numSeq = 100 # 12, 100
+numSeq = 12 # 12, 100
 seqN = 1
 Nttl = numSeq * seqN
 xmin = -1
 xmax = 1
 numCandidates = 10^3 + 1
 candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
-sigmasq = 0.05 # 0.025, 0.05, 0.1
-alpha = 1
+if(scenario == 1){
+  sigmasq = 0.2
+} else if(scenario == 2){
+  sigmasq = 0.2
+}
+# alpha = 0
 
 # shared settings
 type01 = c(2, 3)
@@ -98,24 +102,28 @@ if(scenario == 1){
 # run simulations
 ################################################################################
 
-# generate seqmeds
-registerDoRNG(rng.seed)
-seqmed_list = foreach(i = 1:numSims) %dopar% {
-  print(paste0("starting simulation ", i, " out of ", numSims))
-  SeqMED(
-    y.in = NULL, x.in = NULL, true.function = fT,
-    model0 = model0, model1 = model1, 
-    error.var = sigmasq, xmin = xmin, xmax = xmax,
-    candidates = candidates, numSeq = numSeq, seqN = seqN)
+alphas = c(0, 1, 2, 5, 10)
+for(i in 1:length(alphas)){
+  # generate seqmeds
+  registerDoRNG(rng.seed)
+  seqmed_list = foreach(i = 1:numSims) %dopar% {
+    print(paste0("starting simulation ", i, " out of ", numSims))
+    SeqMED(
+      y.in = NULL, x.in = NULL, true.function = fT,
+      model0 = model0, model1 = model1, 
+      error.var = sigmasq, xmin = xmin, xmax = xmax,
+      candidates = candidates, numSeq = numSeq, seqN = seqN, 
+      alpha_seq = alphas[i])
+  }
+  saveRDS(seqmed_list, paste0(
+    output_dir, "/scenario", scenario, 
+    "_seqmed", 
+    "_N", Nttl, 
+    "_sigmasq", sigmasq,
+    "_alpha", alphas[i],
+    "_numSims", numSims,
+    "_seed", rng.seed,
+    ".rds"))
 }
-saveRDS(seqmed_list, paste0(
-  output_dir, "/scenario", scenario, 
-  "_seqmed", 
-  "_N", Nttl, 
-  "_sigmasq", sigmasq,
-  "_alpha", alpha,
-  "_numSims", numSims,
-  "_seed", rng.seed,
-  ".rds"))
 
 

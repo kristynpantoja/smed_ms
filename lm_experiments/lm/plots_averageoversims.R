@@ -9,7 +9,7 @@
 #   where the true function is cubic
 rm(list = ls())
 
-scenario = 2 # 1, 2
+scenario = 1 # 1, 2
 
 ################################################################################
 # Sources/Libraries
@@ -53,7 +53,7 @@ gg_color_hue = function(n) {
 ################################################################################
 
 # simulations settings
-numSims = 500 # 100, 250, 500
+numSims = 500 # numSims = 500 & numSeq = 12 OR numSims = 100 & numSeq = 100
 numSeq = 12 # 12, 100
 seqN = 1
 Nttl = numSeq * seqN
@@ -62,7 +62,7 @@ xmax = 1
 numCandidates = 10^3 + 1
 candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
 if(scenario == 1){
-  sigmasq = 0.1
+  sigmasq = 0.1 # 0.1
 } else if(scenario == 2){
   sigmasq = 0.05
 }

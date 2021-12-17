@@ -9,7 +9,7 @@
 #   where the true function is cubic
 rm(list = ls())
 
-scenario = 1 # 1, 2
+scenario = 2 # 1, 2
 
 ################################################################################
 # Sources/Libraries
@@ -58,8 +58,8 @@ registerDoRNG(rng.seed)
 ################################################################################
 
 # simulations settings
-numSims = 500 # 500 sims with N = 12
-numSeq = 12 # 12, 100
+numSims = 100 # 500 sims with N = 12
+numSeq = 100 # 12, 100
 seqN = 1
 Nttl = numSeq * seqN
 xmin = -1
@@ -67,7 +67,7 @@ xmax = 1
 numCandidates = 10^3 + 1
 candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
 if(scenario == 1){
-  sigmasq = 0.2
+  sigmasq = 0.1
 } else if(scenario == 2){
   sigmasq = 0.05
 }

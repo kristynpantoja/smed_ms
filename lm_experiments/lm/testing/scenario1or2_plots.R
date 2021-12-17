@@ -7,7 +7,7 @@ rm(list = ls())
 
 scenario = 1
 # scenario 2 ------------------------
-beta_setting = 4 # 0, 4, 5
+beta_setting = 0 # 0, 4, 5
 sigmasq = 0.2 # 0.1, 0.2
 discontinuity = 0.05 # 0.05, 0.9, 0.1
 height = 1

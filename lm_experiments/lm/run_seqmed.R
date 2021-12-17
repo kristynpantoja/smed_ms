@@ -1,5 +1,5 @@
 ################################################################################
-# last updated: 11/01/21
+# last updated: 12/16/21
 # purpose: to create a list of seqmed simulations
 # scenario 1:
 #   linear vs. quadratic,
@@ -7,6 +7,7 @@
 # scenario 2:
 #   linear vs. quadratic,
 #   where the true function is cubic
+rm(list = ls())
 
 scenario = 2 # 1, 2
 
@@ -51,7 +52,7 @@ registerDoRNG(rng.seed)
 ################################################################################
 
 # simulations settings
-numSims = 100
+numSims = 1 # 500 sims with N = 12, 1 sim with N = 100
 numSeq = 100 # 12, 100
 seqN = 1
 Nttl = numSeq * seqN
@@ -59,7 +60,11 @@ xmin = -1
 xmax = 1
 numCandidates = 10^3 + 1
 candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
-sigmasq = 0.2 # 0.2, 0.3
+if(scenario == 1){
+  sigmasq = 0.2
+} else if(scenario == 2){
+  sigmasq = 0.05
+}
 
 # shared settings
 type01 = c(2, 3)

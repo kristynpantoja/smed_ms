@@ -9,7 +9,7 @@
 #   where the true function is cubic
 rm(list = ls())
 
-scenario = 1 # 1, 2
+scenario = 2 # 1, 2
 
 ################################################################################
 # Sources/Libraries
@@ -43,6 +43,7 @@ library(mvtnorm)
 library(ggplot2)
 library(reshape2)
 library(ggpubr)
+library(tidyverse)
 gg_color_hue = function(n) {
   hues = seq(15, 275, length = n + 1)
   hcl(h = hues, l = 65, c = 100)[1:n]
@@ -53,8 +54,8 @@ gg_color_hue = function(n) {
 ################################################################################
 
 # simulations settings
-numSims = 500 # numSims = 500 & numSeq = 12 OR numSims = 100 & numSeq = 100
-numSeq = 12 # 12, 100
+numSims = 100 # numSims = 500 & numSeq = 12 OR numSims = 100 & numSeq = 100
+numSeq = 100 # 12, 100
 seqN = 1
 Nttl = numSeq * seqN
 xmin = -1
@@ -239,6 +240,7 @@ for(j in 1:numSims){
 ################################################################################
 # plot the posterior probabilities of the hypotheses
 ################################################################################
+include_hybrid = TRUE
 
 if(scenario == 1){
   models = list(model0, model1)
@@ -404,7 +406,8 @@ PPHmean_gg = rbind(PPHmean, PPHmean_seq)
 PPHmean_gg = reshape2::melt(PPHmean_gg, id.vars = c("Design", "index"),
                             measure.vars = paste0("H", 0:(length(models) - 1), sep = ""),
                             variable.name = "hypothesis")
-design_names = rev(c("SeqMED", "BoxHill", "DOptLin.", "DOptQuadr.", "Grid", "Hybrid"))
+design_names = rev(c(
+  "SeqMED", "BoxHill", "DOptLin.", "DOptQuadr.", "Grid", "Hybrid"))
 PPHmean_gg$Design = factor(PPHmean_gg$Design, levels = design_names)
 if(scenario == 1){
   PPHmean_gg$hypothesis = factor(
@@ -421,35 +424,56 @@ PPHmean_gg = setorder(PPHmean_gg, cols = "Design")
 PPHmean_gg2 = PPHmean_gg[PPHmean_gg$index == Nttl, ]
 PPHmean_gg2$Design = factor(PPHmean_gg2$Design, levels = design_names)
 PPHmean_gg2 = setorder(PPHmean_gg2, cols = "Design")
-epph.plt = ggplot(PPHmean_gg, aes(x = index, y = value, color = Design,
-                                  linetype = Design, shape = Design)) +
-  facet_wrap(~hypothesis) +
-  geom_path() +
-  # scale_linetype_manual(values=c(rep("dashed", 4), rep("solid", 2))) +
-  geom_point(data = PPHmean_gg2,
-             mapping = aes(x = index, y = value, color = Design),
-             inherit.aes = FALSE) +
-  theme_bw() +
-  ylim(0, 1) +
-  labs(x = "Stage Index", y = element_blank())
-epph.plt
+if(include_hybrid){
+  epph.plt = ggplot(PPHmean_gg, aes(x = index, y = value, color = Design,
+                                    linetype = Design, shape = Design)) +
+    facet_wrap(~hypothesis) +
+    geom_path() +
+    scale_linetype_manual(values=c(rep("dashed", 4), rep("solid", 2))) +
+    geom_point(data = PPHmean_gg2,
+               mapping = aes(x = index, y = value, color = Design),
+               inherit.aes = FALSE) +
+    theme_bw() +
+    ylim(0, 1) +
+    labs(x = "Stage Index", y = element_blank())
+  epph.plt
+} else{
+  PPHmean_gg_nohybrid = PPHmean_gg %>% filter(Design != "Hybrid")
+  PPHmean_gg2_nohybrid = PPHmean_gg2 %>% filter(Design != "Hybrid")
+  epph.plt = ggplot(
+    PPHmean_gg_nohybrid, aes(x = index, y = value, color = Design,
+                             linetype = Design, shape = Design)) +
+    facet_wrap(~hypothesis) +
+    geom_path() +
+    scale_linetype_manual(values=c(rep("dashed", 4), rep("solid", 2))) +
+    geom_point(
+      data = PPHmean_gg2_nohybrid,
+      mapping = aes(x = index, y = value, color = Design),
+      inherit.aes = FALSE) +
+    theme_bw() +
+    ylim(0, 1) +
+    labs(x = "Stage Index", y = element_blank())
+  epph.plt
+}
 
 if(scenario == 1){
   epph_scen1 = epph.plt
 } else if(scenario == 2){
-  epph.plt = epph.plt + theme(legend.position = "none")
-  epph_scen2 = epph.plt
+  epph_scen2 = epph.plt + theme(legend.position = "none")
+  if(Nttl == 12){
+    epph_scen2 = epph_scen2 + scale_x_continuous(breaks = seq(0, 12, by = 3))
+  }
 }
 if(!is.null(epph_scen1) && !is.null(epph_scen2)){
-  ggarrange(epph_scen1, epph_scen2, nrow = 2, ncol = 1)
-  
+  ggarrange(epph_scen1, epph_scen2, nrow = 2, ncol = 1, widths = 0.9)
+
   # manuscript plot
   ggsave(
     filename = paste0(
-      "lm", "_scen", scenario,
+      "lm", "_scen", scenario, "_hybrid", include_hybrid,
       "_epphs", ".pdf"),
     plot = last_plot(),
-    width = 6.5, height = 3.5, units = c("in")
+    width = 6.5, height = 5.5, units = c("in")
   )
 }
 
@@ -495,14 +519,14 @@ for(j in 1:numSims){
     doptlin_sims[[j]], models, fT, sigmasq)
   PPH_doptq = getPPH(
     doptquad_sims[[j]], models, fT, sigmasq)
-  # PPH_hybrid = getPPH(
-  #   hybrid_sims[[j]], models, fT, sigmasq)
+  PPH_hybrid = getPPH(
+    hybrid_sims[[j]], models, fT, sigmasq)
   # master data frame
   PPH_grid$Design = "Grid"
   PPH_doptl$Design = "DOptLin."
   PPH_doptq$Design = "DOptQuadr."
-  # PPH_hybrid$Design = "Hybrid"
-  PPH.tmp = rbind(PPH_grid, PPH_doptl, PPH_doptq)#, PPH_hybrid)
+  PPH_hybrid$Design = "Hybrid"
+  PPH.tmp = rbind(PPH_grid, PPH_doptl, PPH_doptq, PPH_hybrid)
   PPH.tmp$sim = j
   PPH_df = rbind(PPH_df, PPH.tmp)
 }
@@ -557,130 +581,172 @@ PPHmean_gg = reshape2::melt(
 design_names = rev(c(
   "SeqMED 10", "SeqMED 5", "SeqMED 1", "SeqMED 0",
   "BoxHill",
-  "DOptLin.", "DOptQuadr.", "Grid"))#, "Hybrid"))
-PPHmean_gg$Design = factor(PPHmean_gg$Design, levels = design_names)
-if(scenario == 1){
-  PPHmean_gg$hypothesis = factor(
-    PPHmean_gg$hypothesis,
-    levels = paste0("H", 0:(length(models) - 1), sep = ""),
-    labels = paste0("Case ", scenario, ", H", 0:(length(models) - 1), sep = ""))
-} else if(scenario == 2){
-  PPHmean_gg$hypothesis = factor(
-    PPHmean_gg$hypothesis,
-    levels = paste0("H", 0:(length(models) - 1), sep = ""),
-    labels = paste0("Case ", scenario, ", H", c(0, 1, "T"), sep = ""))
-}
-PPHmean_gg = setorder(PPHmean_gg, cols = "Design")
-PPHmean_gg2 = PPHmean_gg[PPHmean_gg$index == Nttl, ]
-PPHmean_gg2$Design = factor(PPHmean_gg2$Design, levels = design_names)
-PPHmean_gg2 = setorder(PPHmean_gg2, cols = "Design")
-epph.plt3 = ggplot(PPHmean_gg, aes(x = index, y = value, color = Design,
-                                   linetype = Design)) +
-  facet_wrap(~hypothesis) +
-  geom_path() +
-  # scale_linetype_manual(values=c(rep("dashed", 4), rep("solid", 2))) +
-  geom_point(data = PPHmean_gg2,
-             mapping = aes(x = index, y = value, color = Design),
-             inherit.aes = FALSE) +
-  theme_bw() +
-  ylim(0, 1) +
-  labs(x = "Stage Index", y = element_blank())
-epph.plt3
-
-# manuscript plot
-if(numSims == 500){
-  ggsave(
-    filename = paste0(
-      "lm", "_scen", scenario,
-      "_epph_alphas", ".pdf"),
-    plot = last_plot(),
-    width = 6.5, height = 3.5, units = c("in")
-  )
-}
-
-# all sequential epph plot #####################################################
-
-PPH_seq_alpha = data.frame()
-for(j in 1:numSims){
-  # sequence of PPHs for each design
-  PPH_seq.g = getPPHseq(grid_sims[[j]], models, Nttl, fT, sigmasq, 
-                        initial.data = FALSE, randomize.order = TRUE) 
-  PPH_seq.dl = getPPHseq(doptlin_sims[[j]], models, Nttl, fT, sigmasq, 
-                         initial.data = FALSE, randomize.order = TRUE) 
-  PPH_seq.dq = getPPHseq(doptquad_sims[[j]], models, Nttl, fT, sigmasq, 
-                         initial.data = FALSE, randomize.order = TRUE) 
-  PPH_seq.h = getPPHseq(hybrid_sims[[j]], models, Nttl, fT, sigmasq, 
-                        initial.data = FALSE, randomize.halves.order = TRUE)
-    PPH_seq.sm0 = getPPHseq(
-      seqmed_sims_alphas[[1]][[j]], models, Nttl, fT, sigmasq) 
-    PPH_seq.sm1 = getPPHseq(
-      seqmed_sims_alphas[[2]][[j]], models, Nttl, fT, sigmasq) 
-    PPH_seq.sm5 = getPPHseq(
-      seqmed_sims_alphas[[3]][[j]], models, Nttl, fT, sigmasq) 
-    PPH_seq.sm10 = getPPHseq(
-      seqmed_sims_alphas[[4]][[j]], models, Nttl, fT, sigmasq) 
-    PPH_seq.bh = getPPHseq(
-      boxhill_sims[[j]], models, Nttl, fT, sigmasq) 
-  # master data frame
-  PPH_seq.g$Design = "Grid"
-  PPH_seq.dl$Design = "DOptLin."
-  PPH_seq.dq$Design = "DOptQuadr."
-  PPH_seq.h$Design = "Hybrid"
-  PPH_seq.sm0$Design = "SeqMED 0"
-  PPH_seq.sm1$Design = "SeqMED 1"
-  PPH_seq.sm5$Design = "SeqMED 5"
-  PPH_seq.sm10$Design = "SeqMED 10"
-  PPH_seq.bh$Design = "BoxHill"
-  PPH_seq.tmp = rbind(
-    PPH_seq.g, PPH_seq.dl, PPH_seq.dq, PPH_seq.h, 
-    PPH_seq.sm0, PPH_seq.sm1, PPH_seq.sm5, PPH_seq.sm10, PPH_seq.bh)
-  PPH_seq.tmp$sim = j
-  PPH_seq_alpha = rbind(PPH_seq_alpha, PPH_seq.tmp)
-}
-
-PPHmean_seq = aggregate(
-  PPH_seq_alpha[, names(PPH_seq_alpha)[1:length(models)]], 
-  by = list(PPH_seq_alpha[, "Design"], PPH_seq_alpha[, "index"]), 
-  FUN = function(x) mean(x, na.rm = TRUE))
-names(PPHmean_seq)[c(1, 2)] = c("Design", "index")
-
-PPHmean_gg = PPHmean_seq
-PPHmean_gg = reshape2::melt(
-  PPHmean_gg, id.vars = c("Design", "index"), 
-  measure.vars = paste0("H", 0:(length(models) - 1), sep = ""), 
-  variable.name = "hypothesis")
-design_names = rev(c(
-  "SeqMED 10", "SeqMED 5", "SeqMED 1", "SeqMED 0", 
-  "BoxHill",
   "DOptLin.", "DOptQuadr.", "Grid", "Hybrid"))
 PPHmean_gg$Design = factor(PPHmean_gg$Design, levels = design_names)
 if(scenario == 1){
   PPHmean_gg$hypothesis = factor(
-    PPHmean_gg$hypothesis, 
-    levels = paste0("H", 0:(length(models) - 1), sep = ""), 
+    PPHmean_gg$hypothesis,
+    levels = paste0("H", 0:(length(models) - 1), sep = ""),
     labels = paste0("Case ", scenario, ", H", 0:(length(models) - 1), sep = ""))
 } else if(scenario == 2){
   PPHmean_gg$hypothesis = factor(
-    PPHmean_gg$hypothesis, 
-    levels = paste0("H", 0:(length(models) - 1), sep = ""), 
+    PPHmean_gg$hypothesis,
+    levels = paste0("H", 0:(length(models) - 1), sep = ""),
     labels = paste0("Case ", scenario, ", H", c(0, 1, "T"), sep = ""))
 }
 PPHmean_gg = setorder(PPHmean_gg, cols = "Design")
 PPHmean_gg2 = PPHmean_gg[PPHmean_gg$index == Nttl, ]
 PPHmean_gg2$Design = factor(PPHmean_gg2$Design, levels = design_names)
 PPHmean_gg2 = setorder(PPHmean_gg2, cols = "Design")
-epph.plt4 = ggplot(PPHmean_gg, aes(x = index, y = value, color = Design,
-                                   linetype = Design)) +
-  facet_wrap(~hypothesis) +
-  geom_path() +
-  # scale_linetype_manual(values=c(rep("dashed", 4), rep("solid", 2))) +
-  geom_point(data = PPHmean_gg2, 
-             mapping = aes(x = index, y = value, color = Design), 
-             inherit.aes = FALSE) +
-  theme_bw() +
-  ylim(0, 1) + 
-  labs(x = "Stage Index", y = element_blank())
-epph.plt4
+if(include_hybrid){
+  epph.plt3 = ggplot(PPHmean_gg, aes(x = index, y = value, color = Design,
+                                     linetype = Design)) +
+    facet_wrap(~hypothesis) +
+    geom_path() +
+    scale_linetype_manual(values=c(rep("dashed", 4), rep("solid", 5))) +
+    geom_point(data = PPHmean_gg2,
+               mapping = aes(x = index, y = value, color = Design),
+               inherit.aes = FALSE) +
+    theme_bw() +
+    ylim(0, 1) +
+    labs(x = "Stage Index", y = element_blank())
+  if(Nttl == 12){
+    epph.plt3 = epph.plt3 + scale_x_continuous(breaks = seq(0, 12, by = 3))
+  }
+  epph.plt3
+} else{
+  PPHmean_gg_nohybrid = PPHmean_gg %>% filter(Design != "Hybrid")
+  PPHmean_gg2_nohybrid = PPHmean_gg2 %>% filter(Design != "Hybrid")
+  epph.plt3 = ggplot(
+    PPHmean_gg_nohybrid, aes(x = index, y = value, color = Design,
+                             linetype = Design)) +
+    facet_wrap(~hypothesis) +
+    geom_path() +
+    scale_linetype_manual(values=c(rep("dashed", 3), rep("solid", 5))) +
+    geom_point(
+      data = PPHmean_gg2_nohybrid,
+      mapping = aes(x = index, y = value, color = Design),
+      inherit.aes = FALSE) +
+    theme_bw() +
+    ylim(0, 1) +
+    labs(x = "Stage Index", y = element_blank())
+  if(Nttl == 12){
+    epph.plt3 = epph.plt3 + scale_x_continuous(breaks = seq(0, 12, by = 3))
+  }
+  epph.plt3
+}
+
+
+# manuscript plot
+ggsave(
+  filename = paste0(
+    "lm", "_scen", scenario, "_hybrid", include_hybrid,
+    "_epph_alphas", ".pdf"),
+  plot = last_plot(),
+  width = 6.5, height = 3.5, units = c("in")
+)
+
+if(scenario == 1){
+  epph_scen1 = epph.plt3
+} else if(scenario == 2){
+  epph_scen2 = epph.plt3 + theme(legend.position = "none")
+}
+if(!is.null(epph_scen1) && !is.null(epph_scen2)){
+  ggarrange(epph_scen1, epph_scen2, nrow = 2, ncol = 1)
+  
+  # manuscript plot
+  ggsave(
+    filename = paste0(
+      "lm", "_scen", scenario, "_hybrid", include_hybrid,
+      "_epphs_alphas", ".pdf"),
+    plot = last_plot(),
+    width = 6.5, height = 5.5, units = c("in")
+  )
+}
+
+# # all sequential epph plot #####################################################
+# 
+# PPH_seq_alpha = data.frame()
+# for(j in 1:numSims){
+#   # sequence of PPHs for each design
+#   PPH_seq.g = getPPHseq(grid_sims[[j]], models, Nttl, fT, sigmasq, 
+#                         initial.data = FALSE, randomize.order = TRUE) 
+#   PPH_seq.dl = getPPHseq(doptlin_sims[[j]], models, Nttl, fT, sigmasq, 
+#                          initial.data = FALSE, randomize.order = TRUE) 
+#   PPH_seq.dq = getPPHseq(doptquad_sims[[j]], models, Nttl, fT, sigmasq, 
+#                          initial.data = FALSE, randomize.order = TRUE) 
+#   PPH_seq.h = getPPHseq(hybrid_sims[[j]], models, Nttl, fT, sigmasq, 
+#                         initial.data = FALSE, randomize.halves.order = TRUE)
+#     PPH_seq.sm0 = getPPHseq(
+#       seqmed_sims_alphas[[1]][[j]], models, Nttl, fT, sigmasq) 
+#     PPH_seq.sm1 = getPPHseq(
+#       seqmed_sims_alphas[[2]][[j]], models, Nttl, fT, sigmasq) 
+#     PPH_seq.sm5 = getPPHseq(
+#       seqmed_sims_alphas[[3]][[j]], models, Nttl, fT, sigmasq) 
+#     PPH_seq.sm10 = getPPHseq(
+#       seqmed_sims_alphas[[4]][[j]], models, Nttl, fT, sigmasq) 
+#     PPH_seq.bh = getPPHseq(
+#       boxhill_sims[[j]], models, Nttl, fT, sigmasq) 
+#   # master data frame
+#   PPH_seq.g$Design = "Grid"
+#   PPH_seq.dl$Design = "DOptLin."
+#   PPH_seq.dq$Design = "DOptQuadr."
+#   PPH_seq.h$Design = "Hybrid"
+#   PPH_seq.sm0$Design = "SeqMED 0"
+#   PPH_seq.sm1$Design = "SeqMED 1"
+#   PPH_seq.sm5$Design = "SeqMED 5"
+#   PPH_seq.sm10$Design = "SeqMED 10"
+#   PPH_seq.bh$Design = "BoxHill"
+#   PPH_seq.tmp = rbind(
+#     PPH_seq.g, PPH_seq.dl, PPH_seq.dq, PPH_seq.h, 
+#     PPH_seq.sm0, PPH_seq.sm1, PPH_seq.sm5, PPH_seq.sm10, PPH_seq.bh)
+#   PPH_seq.tmp$sim = j
+#   PPH_seq_alpha = rbind(PPH_seq_alpha, PPH_seq.tmp)
+# }
+# 
+# PPHmean_seq = aggregate(
+#   PPH_seq_alpha[, names(PPH_seq_alpha)[1:length(models)]], 
+#   by = list(PPH_seq_alpha[, "Design"], PPH_seq_alpha[, "index"]), 
+#   FUN = function(x) mean(x, na.rm = TRUE))
+# names(PPHmean_seq)[c(1, 2)] = c("Design", "index")
+# 
+# PPHmean_gg = PPHmean_seq
+# PPHmean_gg = reshape2::melt(
+#   PPHmean_gg, id.vars = c("Design", "index"), 
+#   measure.vars = paste0("H", 0:(length(models) - 1), sep = ""), 
+#   variable.name = "hypothesis")
+# design_names = rev(c(
+#   "SeqMED 10", "SeqMED 5", "SeqMED 1", "SeqMED 0", 
+#   "BoxHill",
+#   "DOptLin.", "DOptQuadr.", "Grid", "Hybrid"))
+# PPHmean_gg$Design = factor(PPHmean_gg$Design, levels = design_names)
+# if(scenario == 1){
+#   PPHmean_gg$hypothesis = factor(
+#     PPHmean_gg$hypothesis, 
+#     levels = paste0("H", 0:(length(models) - 1), sep = ""), 
+#     labels = paste0("Case ", scenario, ", H", 0:(length(models) - 1), sep = ""))
+# } else if(scenario == 2){
+#   PPHmean_gg$hypothesis = factor(
+#     PPHmean_gg$hypothesis, 
+#     levels = paste0("H", 0:(length(models) - 1), sep = ""), 
+#     labels = paste0("Case ", scenario, ", H", c(0, 1, "T"), sep = ""))
+# }
+# PPHmean_gg = setorder(PPHmean_gg, cols = "Design")
+# PPHmean_gg2 = PPHmean_gg[PPHmean_gg$index == Nttl, ]
+# PPHmean_gg2$Design = factor(PPHmean_gg2$Design, levels = design_names)
+# PPHmean_gg2 = setorder(PPHmean_gg2, cols = "Design")
+# epph.plt4 = ggplot(PPHmean_gg, aes(x = index, y = value, color = Design,
+#                                    linetype = Design)) +
+#   facet_wrap(~hypothesis) +
+#   geom_path() +
+#   scale_linetype_manual(values=c(rep("dashed", 3), rep("solid", 5))) +
+#   geom_point(data = PPHmean_gg2, 
+#              mapping = aes(x = index, y = value, color = Design), 
+#              inherit.aes = FALSE) +
+#   theme_bw() +
+#   ylim(0, 1) + 
+#   labs(x = "Stage Index", y = element_blank())
+# epph.plt4
 
 
 

@@ -1,5 +1,5 @@
 ################################################################################
-# last updated: 10/29/21
+# last updated: 12/16/21
 # purpose: to create a list of seqmed simulations for scenario 2:
 #   linear vs. quadratic,
 #   where the true function is cubic
@@ -44,6 +44,8 @@ source(paste(functions_home, "/boxhill.R", sep = ""))
 library(AlgDesign)
 
 # set up parallelization
+library(foreach)
+library(future)
 library(doFuture)
 library(parallel)
 registerDoFuture()
@@ -59,6 +61,7 @@ gg_color_hue = function(n) {
   hcl(h = hues, l = 65, c = 100)[1:n]
 }
 
+library(rngtools)
 library(doRNG)
 registerDoRNG(123) # 1995
 
@@ -956,7 +959,7 @@ PPHmean_gg2 = PPHmean_gg[PPHmean_gg$index == Nttl, ]
 PPHmean_gg2$Design = factor(PPHmean_gg2$Design, levels = design_names)
 PPHmean_gg2 = setorder(PPHmean_gg2, cols = "Design")
 epph.plt3 = ggplot(PPHmean_gg, aes(x = index, y = value, color = Design,
-                                  linetype = Design, shape = Design)) +
+                                  linetype = Design)) +
   facet_wrap(~hypothesis) +
   geom_path() +
   # scale_linetype_manual(values=c(rep("dashed", 4), rep("solid", 2))) +

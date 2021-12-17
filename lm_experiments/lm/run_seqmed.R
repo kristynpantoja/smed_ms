@@ -52,19 +52,14 @@ registerDoRNG(rng.seed)
 
 # simulations settings
 numSims = 100
-numSeq = 12 # 12, 100
+numSeq = 100 # 12, 100
 seqN = 1
 Nttl = numSeq * seqN
 xmin = -1
 xmax = 1
 numCandidates = 10^3 + 1
 candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
-if(scenario == 1){
-  sigmasq = 0.2
-} else if(scenario == 2){
-  sigmasq = 0.2
-}
-# alpha = 0
+sigmasq = 0.2 # 0.2, 0.3
 
 # shared settings
 type01 = c(2, 3)

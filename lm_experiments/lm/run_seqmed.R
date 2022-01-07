@@ -61,9 +61,9 @@ xmax = 1
 numCandidates = 10^3 + 1
 candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
 if(scenario == 1){
-  sigmasq = 0.2 # 0.1, 0.2 when numSeq = 100
+  sigmasq = 0.4 # 0.1, 0.2 when numSeq = 100
 } else if(scenario == 2){
-  sigmasq = 0.1 # 0.05, 0.1 when numSeq = 100
+  sigmasq = 0.2 # 0.05, 0.1 when numSeq = 100
 }
 
 # shared settings
@@ -102,7 +102,7 @@ if(scenario == 1){
 # run simulations
 ################################################################################
 
-alphas = c(0, 1, 2, 5, 10)
+alphas = c(0, 1, 10, 100, 1000)
 for(l in 1:length(alphas)){
   # generate seqmeds
   registerDoRNG(rng.seed)

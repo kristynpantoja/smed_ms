@@ -9,7 +9,7 @@
 #   where the true function is cubic
 rm(list = ls())
 
-scenario = 2 # 1, 2
+scenario = 1 # 1, 2
 
 ################################################################################
 # Sources/Libraries
@@ -468,13 +468,13 @@ if(!is.null(epph_scen1) && !is.null(epph_scen2)){
   ggarrange(epph_scen1, epph_scen2, nrow = 2, ncol = 1, widths = 0.9)
 
   # manuscript plot
-  ggsave(
-    filename = paste0(
-      "lm", "_scen", scenario, "_hybrid", include_hybrid,
-      "_epphs", ".pdf"),
-    plot = last_plot(),
-    width = 6.5, height = 5.5, units = c("in")
-  )
+  # ggsave(
+  #   filename = paste0(
+  #     "lm", "_scen", scenario, "_hybrid", include_hybrid,
+  #     "_epphs", ".pdf"),
+  #   plot = last_plot(),
+  #   width = 6.5, height = 5.5, units = c("in")
+  # )
 }
 
 
@@ -489,7 +489,7 @@ if(!is.null(epph_scen1) && !is.null(epph_scen2)){
 # } else {
 #   alphas = c(0, 0.5, 1, 5, 10)
 # }
-alphas = c(0, 1, 5, 10)
+alphas = c(0, 1, 10, 100, 1000)
 
 seqmed_sims_alphas = list()
 for(i in 1:length(alphas)){

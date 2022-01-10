@@ -9,7 +9,7 @@
 #   where the true function is cubic
 rm(list = ls())
 
-scenario = 2 # 1, 2
+scenario = 1 # 1, 2
 
 ################################################################################
 # Sources/Libraries
@@ -53,7 +53,7 @@ gg_color_hue = function(n) {
 ################################################################################
 
 # simulations settings
-numSims = 1 # 1 simulation with 100 design points
+numSims = 100 # 1 simulation with 100 design points
 numSeq = 100 # 100 design points
 seqN = 1
 Nttl = numSeq * seqN
@@ -62,9 +62,9 @@ xmax = 1
 numCandidates = 10^3 + 1
 candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
 if(scenario == 1){
-  sigmasq = 0.1
+  sigmasq = 0.4 # 0.1, 0.4 when numSeq = 100
 } else if(scenario == 2){
-  sigmasq = 0.05
+  sigmasq = 0.2 # 0.05, 0.2 when numSeq = 100
 }
 alpha = 1
 
@@ -116,6 +116,7 @@ seqmed_sims = readRDS(paste0(
   "_seed", rng.seed,
   ".rds"
 ))
+# seqmed_sims = seqmed_sims0[[1]]
 boxhill_sims = readRDS(paste0(
   output_dir, "/scenario", scenario, 
   "_boxhill", 
@@ -124,6 +125,7 @@ boxhill_sims = readRDS(paste0(
   "_numSims", numSims,
   "_seed", rng.seed,
   ".rds"))
+# boxhill_sims = boxhill_sims0[[1]]
 
 ################################################################################
 # non-sequential designs
@@ -260,11 +262,11 @@ ggarrange(plt0, plt1)
 
 # manuscript plot
 if(Nttl == 100){
-  ggsave(
-    filename = paste0("scen", scenario, "_seqmedexample.pdf"),
-    plot = last_plot(),
-    width = 4.5, height = 2, units = c("in")
-  )
+  # ggsave(
+  #   filename = paste0("scen", scenario, "_seqmedexample.pdf"),
+  #   plot = last_plot(),
+  #   width = 4.5, height = 2, units = c("in")
+  # )
 }
 
 # # plot a boxhill
@@ -334,11 +336,11 @@ if(scenario == 1){
   
   # # manuscript plot
   if(Nttl == 100){
-    ggsave(
-      filename = paste0("scen", scenario, "_seqmedexamplewasserstein.pdf"),
-      plot = last_plot(),
-      width = 6.5, height = 1.75, units = c("in")
-    )
+    # ggsave(
+    #   filename = paste0("scen", scenario, "_seqmedexamplewasserstein.pdf"),
+    #   plot = last_plot(),
+    #   width = 6.5, height = 1.75, units = c("in")
+    # )
   }
 } else if(scenario == 2){
   # plot ...
@@ -445,7 +447,7 @@ msey.plt = ggplot(ggdata, aes(x = x, y = yhatmse, color = Design)) +
 # } else {
 #   alphas = c(0, 0.5, 1, 5, 10)
 # }
-alphas = c(0, 1, 5, 10)
+alphas = c(0, 1, 10, 100, 1000)
 
 seqmed_sims_alphas = list()
 for(i in 1:length(alphas)){

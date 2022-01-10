@@ -63,9 +63,9 @@ xmax = 1
 numCandidates = 10^3 + 1
 candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
 if(scenario == 1){
-  sigmasq = 0.2
+  sigmasq = 0.4 # 0.1, 0.4 when numSeq = 100
 } else if(scenario == 2){
-  sigmasq = 0.1
+  sigmasq = 0.2 # 0.05, 0.2 when numSeq = 100
 }
 alpha = 1
 

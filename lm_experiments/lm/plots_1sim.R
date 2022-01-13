@@ -62,9 +62,19 @@ xmax = 1
 numCandidates = 10^3 + 1
 candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
 if(scenario == 1){
-  sigmasq = 0.4 # 0.1, 0.4 when numSeq = 100
+  # numSeq = 100: sigmasq = 0.4; numSeq = 12: sigmasq = 0.1
+  if(numSeq == 100){
+    sigmasq = 0.35
+  } else if(numSeq == 12){
+    sigmasq = 0.06
+  }
 } else if(scenario == 2){
-  sigmasq = 0.2 # 0.05, 0.2 when numSeq = 100
+  # numSeq = 100: sigmasq = 0.2; numSeq = 12: sigmasq = 0.05
+  if(numSeq == 100){
+    sigmasq = 0.25
+  } else if(numSeq == 12){
+    sigmasq = 0.03
+  }
 }
 alpha = 1
 
@@ -447,7 +457,7 @@ msey.plt = ggplot(ggdata, aes(x = x, y = yhatmse, color = Design)) +
 # } else {
 #   alphas = c(0, 0.5, 1, 5, 10)
 # }
-alphas = c(0, 1, 10, 100, 1000)
+alphas = c(0, 1, 10, 25, 50, 75, 100, 1000)
 
 seqmed_sims_alphas = list()
 for(i in 1:length(alphas)){
@@ -489,10 +499,10 @@ plt_alphas2 = ggplot(seqmed_designs_alphas) +
 plt_alphas2
 
 # manuscript plot
-ggsave(
-  filename = paste0(
-    "lm", "_scen", scenario,
-    "_designs_alphas", ".pdf"),
-  plot = last_plot(),
-  width = 6.5, height = 3.5, units = c("in")
-)
+# ggsave(
+#   filename = paste0(
+#     "lm", "_scen", scenario,
+#     "_designs_alphas", ".pdf"),
+#   plot = last_plot(),
+#   width = 6.5, height = 3.5, units = c("in")
+# )

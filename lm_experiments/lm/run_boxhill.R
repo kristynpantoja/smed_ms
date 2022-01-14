@@ -59,7 +59,7 @@ registerDoRNG(rng.seed)
 
 # simulations settings
 numSims = 100 # 500 sims with N = 12
-numSeq = 12 # 12, 100
+numSeq = 100 # 12, 100
 seqN = 1
 Nttl = numSeq * seqN
 xmin = -1

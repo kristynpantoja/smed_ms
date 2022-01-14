@@ -9,7 +9,7 @@
 #   where the true function is cubic
 rm(list = ls())
 
-scenario = 2 # 1, 2
+scenario = 1 # 1, 2
 
 ################################################################################
 # Sources/Libraries
@@ -55,7 +55,7 @@ gg_color_hue = function(n) {
 
 # simulations settings
 numSims = 100 # numSims = 500 & numSeq = 12 OR numSims = 100 & numSeq = 100
-numSeq = 12 # 12, 100
+numSeq = 100 # 12, 100
 seqN = 1
 Nttl = numSeq * seqN
 xmin = -1
@@ -63,16 +63,14 @@ xmax = 1
 numCandidates = 10^3 + 1
 candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
 if(scenario == 1){
-  # numSeq = 100: sigmasq = 0.4; numSeq = 12: sigmasq = 0.1
   if(numSeq == 100){
-    sigmasq = 0.35
+    sigmasq = 0.28
   } else if(numSeq == 12){
     sigmasq = 0.04
   }
 } else if(scenario == 2){
-  # numSeq = 100: sigmasq = 0.2; numSeq = 12: sigmasq = 0.05
   if(numSeq == 100){
-    sigmasq = 0.25
+    sigmasq = 0.21
   } else if(numSeq == 12){
     sigmasq = 0.038
   }
@@ -466,26 +464,26 @@ if(include_hybrid){
   epph.plt
 }
 
-if(scenario == 1){
-  epph_scen1 = epph.plt
-} else if(scenario == 2){
-  epph_scen2 = epph.plt + theme(legend.position = "none")
-  if(Nttl == 12){
-    epph_scen2 = epph_scen2 + scale_x_continuous(breaks = seq(0, 12, by = 3))
-  }
-}
-if(!is.null(epph_scen1) && !is.null(epph_scen2)){
-  ggarrange(epph_scen1, epph_scen2, nrow = 2, ncol = 1, widths = 0.9)
-
-  # manuscript plot
-  # ggsave(
-  #   filename = paste0(
-  #     "lm", "_scen", scenario, "_hybrid", include_hybrid,
-  #     "_epphs", ".pdf"),
-  #   plot = last_plot(),
-  #   width = 6.5, height = 5.5, units = c("in")
-  # )
-}
+# if(scenario == 1){
+#   epph_scen1 = epph.plt
+# } else if(scenario == 2){
+#   epph_scen2 = epph.plt + theme(legend.position = "none")
+#   if(Nttl == 12){
+#     epph_scen2 = epph_scen2 + scale_x_continuous(breaks = seq(0, 12, by = 3))
+#   }
+# }
+# if(!is.null(epph_scen1) && !is.null(epph_scen2)){
+#   ggarrange(epph_scen1, epph_scen2, nrow = 2, ncol = 1, widths = 0.9)
+# 
+#   # manuscript plot
+#   # ggsave(
+#   #   filename = paste0(
+#   #     "lm", "_scen", scenario, "_hybrid", include_hybrid,
+#   #     "_epphs", ".pdf"),
+#   #   plot = last_plot(),
+#   #   width = 6.5, height = 5.5, units = c("in")
+#   # )
+# }
 
 
 

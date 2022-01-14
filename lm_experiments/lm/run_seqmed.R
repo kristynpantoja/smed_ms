@@ -61,16 +61,14 @@ xmax = 1
 numCandidates = 10^3 + 1
 candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
 if(scenario == 1){
-  # numSeq = 100: sigmasq = 0.4; numSeq = 12: sigmasq = 0.1
   if(numSeq == 100){
-    sigmasq = 0.35
+    sigmasq = 0.28
   } else if(numSeq == 12){
     sigmasq = 0.04
   }
 } else if(scenario == 2){
-  # numSeq = 100: sigmasq = 0.2; numSeq = 12: sigmasq = 0.05
   if(numSeq == 100){
-    sigmasq = 0.25
+    sigmasq = 0.21
   } else if(numSeq == 12){
     sigmasq = 0.038
   }
@@ -112,11 +110,7 @@ if(scenario == 1){
 # run simulations
 ################################################################################
 
-if(numSeq == 12){
-  alphas = c(0, 1, 10, 25, 50, 60, 100)
-} else if(numSeq == 100){
-  alphas = c(0, 1, 10, 25, 50, 75, 100)
-}
+alphas = c(0, 1, 10, 25, 50, 100)
 for(l in 1:length(alphas)){
   # generate seqmeds
   registerDoRNG(rng.seed)

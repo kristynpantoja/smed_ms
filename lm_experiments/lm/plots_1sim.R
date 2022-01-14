@@ -9,7 +9,7 @@
 #   where the true function is cubic
 rm(list = ls())
 
-scenario = 2 # 1, 2
+scenario = 1 # 1, 2
 
 ################################################################################
 # Sources/Libraries
@@ -54,7 +54,7 @@ gg_color_hue = function(n) {
 
 # simulations settings
 numSims = 100 # 1 simulation with 100 design points
-numSeq = 12 # 100 design points
+numSeq = 100 # 100 design points
 seqN = 1
 Nttl = numSeq * seqN
 xmin = -1
@@ -62,16 +62,14 @@ xmax = 1
 numCandidates = 10^3 + 1
 candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
 if(scenario == 1){
-  # numSeq = 100: sigmasq = 0.4; numSeq = 12: sigmasq = 0.1
   if(numSeq == 100){
-    sigmasq = 0.35
+    sigmasq = 0.28
   } else if(numSeq == 12){
     sigmasq = 0.04
   }
 } else if(scenario == 2){
-  # numSeq = 100: sigmasq = 0.2; numSeq = 12: sigmasq = 0.05
   if(numSeq == 100){
-    sigmasq = 0.25
+    sigmasq = 0.21
   } else if(numSeq == 12){
     sigmasq = 0.038
   }
@@ -459,7 +457,11 @@ msey.plt = ggplot(ggdata, aes(x = x, y = yhatmse, color = Design)) +
 # }
 
 # when N=12, alpha=50 leads to something like Box & Hill
-alphas = c(0, 1, 10, 25, 50, 60, 70, 100, 1000)
+if(numSeq == 12){
+  alphas = c(0, 1, 10, 25, 50, 60, 100)
+} else if(numSeq == 100){
+  alphas = c(0, 1, 10, 25, 50, 75, 100)
+}
 
 seqmed_sims_alphas = list()
 for(i in 1:length(alphas)){

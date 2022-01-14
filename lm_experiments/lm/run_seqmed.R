@@ -53,7 +53,7 @@ registerDoRNG(rng.seed)
 
 # simulations settings
 numSims = 100 # 500 sims with N = 12, 1 sim with N = 100
-numSeq = 100 # 12, 100
+numSeq = 12 # 12, 100
 seqN = 1
 Nttl = numSeq * seqN
 xmin = -1
@@ -65,14 +65,14 @@ if(scenario == 1){
   if(numSeq == 100){
     sigmasq = 0.35
   } else if(numSeq == 12){
-    sigmasq = 0.06
+    sigmasq = 0.04
   }
 } else if(scenario == 2){
   # numSeq = 100: sigmasq = 0.2; numSeq = 12: sigmasq = 0.05
   if(numSeq == 100){
     sigmasq = 0.25
   } else if(numSeq == 12){
-    sigmasq = 0.03
+    sigmasq = 0.038
   }
 }
 
@@ -112,8 +112,11 @@ if(scenario == 1){
 # run simulations
 ################################################################################
 
-alphas = c(0, 1, 10, 25, 50, 75, 100, 1000)
-# alphas = c(20, 50)
+if(numSeq == 12){
+  alphas = c(0, 1, 10, 25, 50, 60, 100)
+} else if(numSeq == 100){
+  alphas = c(0, 1, 10, 25, 50, 75, 100)
+}
 for(l in 1:length(alphas)){
   # generate seqmeds
   registerDoRNG(rng.seed)

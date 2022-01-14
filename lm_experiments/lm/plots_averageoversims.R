@@ -55,7 +55,7 @@ gg_color_hue = function(n) {
 
 # simulations settings
 numSims = 100 # numSims = 500 & numSeq = 12 OR numSims = 100 & numSeq = 100
-numSeq = 100 # 12, 100
+numSeq = 12 # 12, 100
 seqN = 1
 Nttl = numSeq * seqN
 xmin = -1
@@ -67,14 +67,14 @@ if(scenario == 1){
   if(numSeq == 100){
     sigmasq = 0.35
   } else if(numSeq == 12){
-    sigmasq = 0.06
+    sigmasq = 0.04
   }
 } else if(scenario == 2){
   # numSeq = 100: sigmasq = 0.2; numSeq = 12: sigmasq = 0.05
   if(numSeq == 100){
     sigmasq = 0.25
   } else if(numSeq == 12){
-    sigmasq = 0.03
+    sigmasq = 0.038
   }
 }
 alpha = 1
@@ -493,13 +493,11 @@ if(!is.null(epph_scen1) && !is.null(epph_scen2)){
 # all the alphas: 0, 0.5, 1, 2, 3, 4
 ################################################################################
 
-# import the seqmeds
-# if(!sequential_alpha & !hybrid_alpha & beta_setting == 4){
-#   alphas = c(0, 0.5, 1, 2, 3, 4, 5, 10)
-# } else {
-#   alphas = c(0, 0.5, 1, 5, 10)
-# }
-alphas = c(0, 1, 50, 100)
+if(numSeq == 12){
+  alphas = c(0, 1, 10, 25, 50, 60, 100)
+} else if(numSeq == 100){
+  alphas = c(0, 1, 10, 25, 50, 75, 100)
+}
 
 seqmed_sims_alphas = list()
 for(i in 1:length(alphas)){
@@ -553,25 +551,18 @@ PPHmean = rbind(PPHmean, PPHmean2)
 # sequential designs
 PPH_seq = data.frame()
 for(j in 1:numSims){
-  # sequence of PPHs for each design
-    PPH_seq.sm0 = getPPHseq(
-      seqmed_sims_alphas[[1]][[j]], models, Nttl, fT, sigmasq) 
-    PPH_seq.sm1 = getPPHseq(
-      seqmed_sims_alphas[[2]][[j]], models, Nttl, fT, sigmasq) 
-    PPH_seq.sm5 = getPPHseq(
-      seqmed_sims_alphas[[3]][[j]], models, Nttl, fT, sigmasq) 
-    PPH_seq.sm10 = getPPHseq(
-      seqmed_sims_alphas[[4]][[j]], models, Nttl, fT, sigmasq) 
-    PPH_seq.bh = getPPHseq(
-      boxhill_sims[[j]], models, Nttl, fT, sigmasq) 
-  # master data frame
-  PPH_seq.sm0$Design = "SeqMED 0"
-  PPH_seq.sm1$Design = "SeqMED 1"
-  PPH_seq.sm5$Design = "SeqMED 50"
-  PPH_seq.sm10$Design = "SeqMED 100"
+  PPH_seq.tmp = data.frame()
+  for(m in 1:length(alphas)){
+    # sequence of PPHs for each design
+    PPH_seq.sm.m = getPPHseq(
+      seqmed_sims_alphas[[m]][[j]], models, Nttl, fT, sigmasq)
+    # master data frame
+    PPH_seq.sm.m$Design = paste0("SeqMED ", alphas[m])
+    PPH_seq.tmp = rbind(PPH_seq.tmp, PPH_seq.sm.m)
+  }
+  PPH_seq.bh = getPPHseq(boxhill_sims[[j]], models, Nttl, fT, sigmasq)
   PPH_seq.bh$Design = "BoxHill"
-  PPH_seq.tmp = rbind(
-    PPH_seq.sm0, PPH_seq.sm1, PPH_seq.sm5, PPH_seq.sm10, PPH_seq.bh)
+  PPH_seq.tmp = rbind(PPH_seq.tmp, PPH_seq.bh)
   PPH_seq.tmp$sim = j
   PPH_seq = rbind(PPH_seq, PPH_seq.tmp)
 }
@@ -587,11 +578,13 @@ PPHmean_gg = reshape2::melt(
   PPHmean_gg, id.vars = c("Design", "index"),
   measure.vars = paste0("H", 0:(length(models) - 1), sep = ""),
   variable.name = "hypothesis")
-# design_names = rev(c("SeqMED", "DOptLin.", "DOptQuadr.", "Grid", "Hybrid"))
-design_names = rev(c(
-  "SeqMED 100", "SeqMED 50", "SeqMED 1", "SeqMED 0",
-  "BoxHill",
-  "DOptLin.", "DOptQuadr.", "Grid", "Hybrid"))
+# design_names = rev(c(
+#   "SeqMED 100", "SeqMED 50", "SeqMED 1", "SeqMED 0",
+#   "BoxHill",
+#   "DOptLin.", "DOptQuadr.", "Grid", "Hybrid"))
+design_names = c(
+  "Hybrid", "Grid", "DOptLin.", "DOptQuadr.", "BoxHill",
+  paste("SeqMED", alphas, sep = " "))
 PPHmean_gg$Design = factor(PPHmean_gg$Design, levels = design_names)
 if(scenario == 1){
   PPHmean_gg$hypothesis = factor(
@@ -613,7 +606,7 @@ if(include_hybrid){
                                      linetype = Design)) +
     facet_wrap(~hypothesis) +
     geom_path() +
-    scale_linetype_manual(values=c(rep("dashed", 4), rep("solid", 5))) +
+    scale_linetype_manual(values=c(rep("dashed", 4), rep("solid", length(alphas) + 1))) +
     geom_point(data = PPHmean_gg2,
                mapping = aes(x = index, y = value, color = Design),
                inherit.aes = FALSE) +
@@ -632,7 +625,7 @@ if(include_hybrid){
                              linetype = Design)) +
     facet_wrap(~hypothesis) +
     geom_path() +
-    scale_linetype_manual(values=c(rep("dashed", 3), rep("solid", 5))) +
+    scale_linetype_manual(values=c(rep("dashed", 3), rep("solid", length(alphas) + 1))) +
     geom_point(
       data = PPHmean_gg2_nohybrid,
       mapping = aes(x = index, y = value, color = Design),
@@ -656,23 +649,23 @@ if(include_hybrid){
 #   width = 6.5, height = 3.5, units = c("in")
 # )
 
-if(scenario == 1){
-  epph_scen1 = epph.plt3
-} else if(scenario == 2){
-  epph_scen2 = epph.plt3 + theme(legend.position = "none")
-}
-if(!is.null(epph_scen1) && !is.null(epph_scen2)){
-  ggarrange(epph_scen1, epph_scen2, nrow = 2, ncol = 1)
-  
-  # manuscript plot
-  ggsave(
-    filename = paste0(
-      "lm", "_scen", scenario, "_hybrid", include_hybrid,
-      "_epphs_alphas", ".pdf"),
-    plot = last_plot(),
-    width = 6.5, height = 5.5, units = c("in")
-  )
-}
+# if(scenario == 1){
+#   epph_scen1 = epph.plt3
+# } else if(scenario == 2){
+#   epph_scen2 = epph.plt3 + theme(legend.position = "none")
+# }
+# if(!is.null(epph_scen1) && !is.null(epph_scen2)){
+#   ggarrange(epph_scen1, epph_scen2, nrow = 2, ncol = 1)
+#   
+#   # manuscript plot
+#   ggsave(
+#     filename = paste0(
+#       "lm", "_scen", scenario, "_hybrid", include_hybrid,
+#       "_epphs_alphas", ".pdf"),
+#     plot = last_plot(),
+#     width = 6.5, height = 5.5, units = c("in")
+#   )
+# }
 
 # # all sequential epph plot #####################################################
 # 

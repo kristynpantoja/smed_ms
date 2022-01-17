@@ -1,6 +1,6 @@
 ################################################################################
 # last updated: 12/16/21
-# purpose: to create a list of boxhill simulations
+# purpose: to create a list of seqmed simulations
 # scenario 1:
 #   linear vs. quadratic,
 #   where the true function is quadratic
@@ -33,19 +33,13 @@ source(paste(functions_dir, "/variance_marginal_y.R", sep = ""))
 # for box-hill deisign
 source(paste(functions_dir, "/boxhill.R", sep = ""))
 
-library(expm)
-library(matrixStats)
-library(MASS)
-library(mvtnorm)
-library(knitr)
-
 # set up parallelization
 library(foreach)
 library(future)
 library(doFuture)
 library(parallel)
 registerDoFuture()
-nworkers = detectCores()
+nworkers = detectCores() / 2
 plan(multisession, workers = nworkers)
 
 library(rngtools)
@@ -58,12 +52,14 @@ registerDoRNG(rng.seed)
 ################################################################################
 
 # simulations settings
-numSims = 100 # 500 sims with N = 12
-numSeq = 100 # 12, 100
+numSims = 100 # 500 sims with N = 12, 1 sim with N = 100
+numSeq = 10 # 12, 100
 seqN = 1
-Nttl = numSeq * seqN
 xmin = -1
 xmax = 1
+D0 = c(xmin, mean(xmin, xmax), xmax)
+N0 = length(D0)
+Nttl = (numSeq - 1) * seqN + N0
 numCandidates = 10^3 + 1
 candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
 if(scenario == 1){
@@ -116,18 +112,29 @@ if(scenario == 1){
 # run simulations
 ################################################################################
 
-# generate boxhills
-registerDoRNG(rng.seed)
-bh_list = foreach(i = 1:numSims) %dorng% {
-  print(paste0("starting simulation ", i, " out of ", numSims))
-  BH_m2(NULL, NULL, prior_probs, model0, model1, Nttl, 
-        candidates, fT, sigmasq)
+alphas = c(0, 1, 10, 25, 50, 100)
+for(l in 1:length(alphas)){
+  # generate seqmeds
+  registerDoRNG(rng.seed)
+  seqmed_list = foreach(i = 1:numSims) %dopar% {
+    print(paste0("starting simulation ", i, " out of ", numSims))
+    SeqMED(
+      y.in = NULL, x.in = D0, true.function = fT,
+      model0 = model0, model1 = model1, 
+      error.var = sigmasq, xmin = xmin, xmax = xmax,
+      candidates = candidates, numSeq = numSeq, seqN = seqN, 
+      alpha_seq = alphas[l])
+  }
+  saveRDS(seqmed_list, paste0(
+    output_dir, "/scenario", scenario, 
+    "_seqmed", 
+    "_Dinit", N0, 
+    "_N", Nttl, 
+    "_sigmasq", sigmasq,
+    "_alpha", alphas[l],
+    "_numSims", numSims,
+    "_seed", rng.seed,
+    ".rds"))
 }
-saveRDS(bh_list, paste0(
-  output_dir, "/scenario", scenario, 
-  "_boxhill", 
-  "_N", Nttl, 
-  "_sigmasq", sigmasq,
-  "_numSims", numSims,
-  "_seed", rng.seed,
-  ".rds"))
+
+

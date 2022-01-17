@@ -9,7 +9,8 @@
 #   where the true function is cubic
 rm(list = ls())
 
-scenario = 1 # 1, 2
+scenario = 2 # 1, 2
+given_Dinit = TRUE
 
 ################################################################################
 # Sources/Libraries
@@ -55,7 +56,7 @@ gg_color_hue = function(n) {
 
 # simulations settings
 numSims = 100 # numSims = 500 & numSeq = 12 OR numSims = 100 & numSeq = 100
-numSeq = 100 # 12, 100
+numSeq = 12 # 12, 100
 seqN = 1
 Nttl = numSeq * seqN
 xmin = -1
@@ -63,15 +64,15 @@ xmax = 1
 numCandidates = 10^3 + 1
 candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
 if(scenario == 1){
-  if(numSeq == 100){
+  if(Nttl == 100){
     sigmasq = 0.28
-  } else if(numSeq == 12){
+  } else if(Nttl == 12){
     sigmasq = 0.04
   }
 } else if(scenario == 2){
-  if(numSeq == 100){
+  if(Nttl == 100){
     sigmasq = 0.21
-  } else if(numSeq == 12){
+  } else if(Nttl == 12){
     sigmasq = 0.038
   }
 }
@@ -114,10 +115,18 @@ if(scenario == 1){
 # import box & hill and seqmed simulations
 ################################################################################
 
+
+if(given_Dinit){
+  N0 = 3
+  Dinit_label = paste0("_Dinit", N0)
+}  else{
+  Dinit_label = ""
+}
 seqmed_sims = readRDS(paste0(
   output_dir,
   "/scenario", scenario, 
   "_seqmed",
+  Dinit_label, 
   "_N", Nttl, 
   "_sigmasq", sigmasq,
   "_alpha", alpha,
@@ -248,7 +257,7 @@ for(j in 1:numSims){
 ################################################################################
 # plot the posterior probabilities of the hypotheses
 ################################################################################
-include_hybrid = TRUE
+include_hybrid = FALSE
 
 if(scenario == 1){
   models = list(model0, model1)
@@ -433,11 +442,17 @@ PPHmean_gg2 = PPHmean_gg[PPHmean_gg$index == Nttl, ]
 PPHmean_gg2$Design = factor(PPHmean_gg2$Design, levels = design_names)
 PPHmean_gg2 = setorder(PPHmean_gg2, cols = "Design")
 if(include_hybrid){
+  num_fixed_designs = 4
+} else{
+  num_fixed_designs = 3
+}
+if(include_hybrid){
   epph.plt = ggplot(PPHmean_gg, aes(x = index, y = value, color = Design,
                                     linetype = Design, shape = Design)) +
     facet_wrap(~hypothesis) +
     geom_path() +
-    scale_linetype_manual(values=c(rep("dashed", 4), rep("solid", 2))) +
+    scale_linetype_manual(values=c(
+      rep("dashed", num_fixed_designs), rep("solid", 2))) +
     geom_point(data = PPHmean_gg2,
                mapping = aes(x = index, y = value, color = Design),
                inherit.aes = FALSE) +
@@ -453,7 +468,8 @@ if(include_hybrid){
                              linetype = Design, shape = Design)) +
     facet_wrap(~hypothesis) +
     geom_path() +
-    scale_linetype_manual(values=c(rep("dashed", 4), rep("solid", 2))) +
+    scale_linetype_manual(
+      values=c(rep("dashed", num_fixed_designs), rep("solid", 2))) +
     geom_point(
       data = PPHmean_gg2_nohybrid,
       mapping = aes(x = index, y = value, color = Design),
@@ -476,13 +492,13 @@ if(include_hybrid){
 #   ggarrange(epph_scen1, epph_scen2, nrow = 2, ncol = 1, widths = 0.9)
 # 
 #   # manuscript plot
-#   # ggsave(
-#   #   filename = paste0(
-#   #     "lm", "_scen", scenario, "_hybrid", include_hybrid,
-#   #     "_epphs", ".pdf"),
-#   #   plot = last_plot(),
-#   #   width = 6.5, height = 5.5, units = c("in")
-#   # )
+#   ggsave(
+#     filename = paste0(
+#       "lm", Dinit_label, "_hybrid", include_hybrid,
+#       "_epphs", ".pdf"),
+#     plot = last_plot(),
+#     width = 6.5, height = 5.5, units = c("in")
+#   )
 # }
 
 
@@ -491,11 +507,9 @@ if(include_hybrid){
 # all the alphas: 0, 0.5, 1, 2, 3, 4
 ################################################################################
 
-if(numSeq == 12){
-  alphas = c(0, 1, 10, 25, 50, 60, 100)
-} else if(numSeq == 100){
-  alphas = c(0, 1, 10, 25, 50, 75, 100)
-}
+alphas = c(0, 1, 10, 25, 50, 100)
+# alphas = c(0, 1, 10, 100)
+# alphas = c(0, 1, 10)
 
 seqmed_sims_alphas = list()
 for(i in 1:length(alphas)){
@@ -503,6 +517,7 @@ for(i in 1:length(alphas)){
     output_dir,
     "/scenario", scenario, 
     "_seqmed",
+    Dinit_label, 
     "_N", Nttl, 
     "_sigmasq", sigmasq,
     "_alpha", alphas[i],
@@ -511,6 +526,7 @@ for(i in 1:length(alphas)){
     ".rds"
   ))
 }
+
 
 ################################################################################
 # sequential & non-sequential designs' epph
@@ -604,7 +620,9 @@ if(include_hybrid){
                                      linetype = Design)) +
     facet_wrap(~hypothesis) +
     geom_path() +
-    scale_linetype_manual(values=c(rep("dashed", 4), rep("solid", length(alphas) + 1))) +
+    scale_linetype_manual(
+      values=c(
+        rep("dashed", num_fixed_designs), rep("solid", length(alphas) + 1))) +
     geom_point(data = PPHmean_gg2,
                mapping = aes(x = index, y = value, color = Design),
                inherit.aes = FALSE) +
@@ -623,7 +641,8 @@ if(include_hybrid){
                              linetype = Design)) +
     facet_wrap(~hypothesis) +
     geom_path() +
-    scale_linetype_manual(values=c(rep("dashed", 3), rep("solid", length(alphas) + 1))) +
+    scale_linetype_manual(values=c(
+      rep("dashed", num_fixed_designs), rep("solid", length(alphas) + 1))) +
     geom_point(
       data = PPHmean_gg2_nohybrid,
       mapping = aes(x = index, y = value, color = Design),
@@ -641,29 +660,29 @@ if(include_hybrid){
 # manuscript plot
 # ggsave(
 #   filename = paste0(
-#     "lm", "_scen", scenario, "_hybrid", include_hybrid,
+#     "lm", "_scen", scenario, Dinit_label, "_hybrid", include_hybrid,
 #     "_epph_alphas", ".pdf"),
 #   plot = last_plot(),
 #   width = 6.5, height = 3.5, units = c("in")
 # )
 
-# if(scenario == 1){
-#   epph_scen1 = epph.plt3
-# } else if(scenario == 2){
-#   epph_scen2 = epph.plt3 + theme(legend.position = "none")
-# }
-# if(!is.null(epph_scen1) && !is.null(epph_scen2)){
-#   ggarrange(epph_scen1, epph_scen2, nrow = 2, ncol = 1)
-#   
-#   # manuscript plot
-#   ggsave(
-#     filename = paste0(
-#       "lm", "_scen", scenario, "_hybrid", include_hybrid,
-#       "_epphs_alphas", ".pdf"),
-#     plot = last_plot(),
-#     width = 6.5, height = 5.5, units = c("in")
-#   )
-# }
+if(scenario == 1){
+  epph_scen1 = epph.plt3
+} else if(scenario == 2){
+  epph_scen2 = epph.plt3 + theme(legend.position = "none")
+}
+if(!is.null(epph_scen1) && !is.null(epph_scen2) && numSeq == 100){
+  ggarrange(epph_scen1, epph_scen2, nrow = 2, ncol = 1)
+
+  # manuscript plot
+  ggsave(
+    filename = paste0(
+      "lm", Dinit_label, "_hybrid", include_hybrid, 
+      "_epphs_alphas_", paste(alphas, collapse = "_"), ".pdf"),
+    plot = last_plot(),
+    width = 6.5, height = 5.5, units = c("in")
+  )
+}
 
 # # all sequential epph plot #####################################################
 # 

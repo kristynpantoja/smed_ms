@@ -9,7 +9,7 @@
 #   where the true function is cubic
 rm(list = ls())
 
-scenario = 1 # 1, 2
+scenario = 2 # 1, 2
 
 ################################################################################
 # Sources/Libraries
@@ -53,7 +53,7 @@ registerDoRNG(rng.seed)
 
 # simulations settings
 numSims = 100 # 500 sims with N = 12, 1 sim with N = 100
-numSeq = 100 # 12, 100
+numSeq = 12 # 12, 100
 seqN = 1
 Nttl = numSeq * seqN
 xmin = -1

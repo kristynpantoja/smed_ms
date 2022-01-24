@@ -9,7 +9,7 @@
 #   where the true function is cubic
 rm(list = ls())
 
-scenario = 2 # 1, 2
+scenario = 1 # 1, 2
 
 ################################################################################
 # Sources/Libraries
@@ -44,7 +44,7 @@ plan(multisession, workers = nworkers)
 
 library(rngtools)
 library(doRNG)
-rng.seed = 123 # 123, 345
+rng.seed = 2022 # 123
 registerDoRNG(rng.seed)
 
 ################################################################################
@@ -53,7 +53,7 @@ registerDoRNG(rng.seed)
 
 # simulations settings
 numSims = 100 # 500 sims with N = 12, 1 sim with N = 100
-numSeq = 12 # 12, 100
+numSeq = 100 # 12, 100
 seqN = 1
 Nttl = numSeq * seqN
 xmin = -1
@@ -110,7 +110,7 @@ if(scenario == 1){
 # run simulations
 ################################################################################
 
-alphas = c(0, 1, 10, 25, 50, 100)
+alphas = c(100)
 for(l in 1:length(alphas)){
   # generate seqmeds
   registerDoRNG(rng.seed)

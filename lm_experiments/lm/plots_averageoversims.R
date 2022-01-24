@@ -10,7 +10,7 @@
 rm(list = ls())
 
 scenario = 2 # 1, 2
-given_Dinit = TRUE
+given_Dinit = FALSE
 
 ################################################################################
 # Sources/Libraries
@@ -507,11 +507,12 @@ if(include_hybrid){
 # all the alphas: 0, 0.5, 1, 2, 3, 4
 ################################################################################
 
-alphas = c(0, 1, 10, 25, 50, 100)
+# alphas = c(0, 1, 10, 25, 50, 100)
 # alphas = c(0, 1, 10, 100)
-# alphas = c(0, 1, 10)
+alphas = c(0, 1, 10)
 
 seqmed_sims_alphas = list()
+min_alpha_used = matrix(NA, length(alphas), numSims)
 for(i in 1:length(alphas)){
   seqmed_sims_alphas[[i]] = readRDS(paste0(
     output_dir,
@@ -525,7 +526,10 @@ for(i in 1:length(alphas)){
     "_seed", rng.seed,
     ".rds"
   ))
+  min_alpha_used[i, ] = sapply(
+    seqmed_sims_alphas[[i]], function(sim) min(sim$alpha_seq))
 }
+avg_min_alpha_used = apply(min_alpha_used, 1, mean)
 
 
 ################################################################################
@@ -658,13 +662,13 @@ if(include_hybrid){
 
 
 # manuscript plot
-# ggsave(
-#   filename = paste0(
-#     "lm", "_scen", scenario, Dinit_label, "_hybrid", include_hybrid,
-#     "_epph_alphas", ".pdf"),
-#   plot = last_plot(),
-#   width = 6.5, height = 3.5, units = c("in")
-# )
+ggsave(
+  filename = paste0(
+    "lm", "_scen", scenario, Dinit_label, "_hybrid", include_hybrid,
+    "_epph_alphas_", paste(alphas, collapse = "_"), ".pdf"),
+  plot = last_plot(),
+  width = 6.5, height = 3.5, units = c("in")
+)
 
 if(scenario == 1){
   epph_scen1 = epph.plt3

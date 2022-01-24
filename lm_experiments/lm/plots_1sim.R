@@ -9,8 +9,8 @@
 #   where the true function is cubic
 rm(list = ls())
 
-scenario = 2 # 1, 2
-given_Dinit = TRUE
+scenario = 1 # 1, 2
+given_Dinit = FALSE
 
 ################################################################################
 # Sources/Libraries
@@ -55,7 +55,7 @@ gg_color_hue = function(n) {
 
 # simulations settings
 numSims = 100 # 1 simulation with 100 design points
-numSeq = 12 # 100 design points
+numSeq = 100 # 100 design points
 seqN = 1
 Nttl = numSeq * seqN
 xmin = -1
@@ -75,7 +75,7 @@ if(scenario == 1){
     sigmasq = 0.038
   }
 }
-alpha = 1
+alpha = 100
 
 # shared settings
 type01 = c(2, 3)
@@ -459,6 +459,7 @@ boxhill_sims = readRDS(paste0(
 alphas = c(0, 1, 10, 25, 50, 100)
 
 seqmed_sims_alphas = list()
+min_alpha_used = matrix(NA, length(alphas), numSims)
 for(i in 1:length(alphas)){
   seqmed_sims_alphas[[i]] = readRDS(paste0(
     output_dir,
@@ -472,8 +473,10 @@ for(i in 1:length(alphas)){
     "_seed", rng.seed,
     ".rds"
   ))
+  min_alpha_used[i, ] = sapply(
+    seqmed_sims_alphas[[i]], function(sim) min(sim$alpha_seq))
 }
-
+avg_min_alpha_used = apply(min_alpha_used, 1, mean)
 ################################################################################
 # plot the designs
 
@@ -483,6 +486,8 @@ for(i in 1:length(seqmed_sims_alphas)){
   sm.tmp = seqmed_sims_alphas[[i]][[sim.idx]]
   sm_design_alpha.tmp = data.frame(
     alpha = alphas[i],
+    avg_min_alpha_used = paste0(
+      min_alpha_used[i, sim.idx], " (mean = ", avg_min_alpha_used[i], ")"), 
     x = c(sm.tmp$x.in, sm.tmp$x.new), 
     y = c(sm.tmp$y.in, sm.tmp$y.new)
   )
@@ -491,7 +496,7 @@ for(i in 1:length(seqmed_sims_alphas)){
 seqmed_designs_alphas$alpha = factor(seqmed_designs_alphas$alpha)
 
 plt_alphas2 = ggplot(seqmed_designs_alphas) + 
-  facet_wrap(vars(alpha)) +
+  facet_wrap(vars(alpha, avg_min_alpha_used)) +
   geom_histogram(binwidth = 0.12, closed = "right", 
                  aes(x = x)) +#, y = after_stat(density))) + 
   theme_bw() + #base_size = 20) + 
@@ -501,7 +506,7 @@ plt_alphas2
 # manuscript plot
 ggsave(
   filename = paste0(
-    "lm", "_scen", scenario, Dinit_label, 
+    "lm", "_scen", scenario, Dinit_label,
     "_designs_alphas", ".pdf"),
   plot = last_plot(),
   width = 6.5, height = 3.5, units = c("in")

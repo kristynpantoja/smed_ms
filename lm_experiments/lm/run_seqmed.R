@@ -44,7 +44,7 @@ plan(multisession, workers = nworkers)
 
 library(rngtools)
 library(doRNG)
-rng.seed = 2022 # 123
+rng.seed = 123 # 123
 registerDoRNG(rng.seed)
 
 ################################################################################
@@ -52,7 +52,7 @@ registerDoRNG(rng.seed)
 ################################################################################
 
 # simulations settings
-numSims = 100 # 500 sims with N = 12, 1 sim with N = 100
+numSims = 500 #
 numSeq = 100 # 12, 100
 seqN = 1
 Nttl = numSeq * seqN
@@ -110,7 +110,7 @@ if(scenario == 1){
 # run simulations
 ################################################################################
 
-alphas = c(100)
+alphas = c(0, 1, 10, 25, 50, 100)
 for(l in 1:length(alphas)){
   # generate seqmeds
   registerDoRNG(rng.seed)

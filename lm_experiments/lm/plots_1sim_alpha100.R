@@ -44,7 +44,7 @@ plan(multisession, workers = nworkers)
 
 library(rngtools)
 library(doRNG)
-rng.seed = 123 # 123, 345
+rng.seed = 123 # 123, 2022
 registerDoRNG(rng.seed)
 
 ################################################################################
@@ -109,87 +109,38 @@ if(scenario == 1){
 ################################################################################
 # run seqmed
 ################################################################################
-seed = 2022 # 123, 2022, 1993
-set.seed(seed)
+seed = 111 
+# 123: SeqMED10 is better
+# 456: SeqMED100 is better
+# 789: SeqMED 100 is slightly better
+# 1947: SeqMED10 was better than everyone
+# 777: SeqMED 100
+# 555: SeqMED10 is better (even though SeqMED100 started off better) !
+# 111: SeqMED is better, then worse, then better !!!!!!!!!!!
 
 alpha = 100
-seqmed_sim = SeqMED(
+seqmed10_sim = SeqMED(
   y.in = NULL, x.in = NULL, true.function = fT,
   model0 = model0, model1 = model1,
   error.var = sigmasq, xmin = xmin, xmax = xmax,
   candidates = candidates, numSeq = numSeq, seqN = seqN,
-  alpha_seq = alpha)
-saveRDS(seqmed_sim, paste0(
-  output_dir, "/scenario", scenario,
-  "_seqmed",
-  "_N", Nttl,
-  "_sigmasq", sigmasq,
-  "_alpha", alpha,
-  "_1sim",
-  "_seed", rng.seed,
-  ".rds"))
-#
-seqmed_sim = readRDS(
-  file = paste0(
-    output_dir, "/scenario", scenario,
-    "_seqmed",
-    "_N", Nttl,
-    "_sigmasq", sigmasq,
-    "_alpha", alpha,
-    "_1sim",
-    "_seed", rng.seed,
-    ".rds"))
-seqmed_sims = list(seqmed_sim)
-#
-sim.idx = 1
-# seqmed_sims = readRDS(paste0(
-#   output_dir,
-#   "/scenario", scenario, 
-#   "_seqmed",
-#   "_N", Nttl, 
-#   "_sigmasq", sigmasq,
-#   "_alpha", alpha,
-#   "_numSims", 100,
-#   "_seed", rng.seed,
-#   ".rds"
-# ))
-# seqmed_sim = seqmed_sims[[sim.idx]]
-# seqmed_sims = list(seqmed_sim)
-boxhill_sims0 = readRDS(paste0(
-  output_dir, "/scenario", scenario, 
-  "_boxhill", 
-  "_N", Nttl, 
-  "_sigmasq", sigmasq,
-  "_numSims", 100,
-  "_seed", rng.seed,
-  ".rds"))
-boxhill_sim = boxhill_sims0[[sim.idx]]
-boxhill_sims = list(boxhill_sim)
+  alpha_seq = 10, seed = seed)
+seqmed100_sim = SeqMED(
+  y.in = NULL, x.in = NULL, true.function = fT,
+  model0 = model0, model1 = model1,
+  error.var = sigmasq, xmin = xmin, xmax = xmax,
+  candidates = candidates, numSeq = numSeq, seqN = seqN,
+  alpha_seq = 100, seed = seed)
+boxhill_sim = BH_m2(NULL, NULL, prior_probs, model0, model1, Nttl, 
+      candidates, fT, sigmasq, seed = seed)
 
-################################################################################
-################################################################################
-# PLOTS #
-################################################################################
-################################################################################
-# for D-optimal design
-library(AlgDesign)
-
-# for plots
-library(mvtnorm)
-library(ggplot2)
-library(reshape2)
-library(ggpubr)
-library(tidyverse)
-gg_color_hue = function(n) {
-  hues = seq(15, 275, length = n + 1)
-  hcl(h = hues, l = 65, c = 100)[1:n]
-}
-
-include_hybrid = FALSE
 ################################################################################
 # non-sequential designs
 ################################################################################
 set.seed(rng.seed)
+
+# for D-optimal design
+library(AlgDesign)
 
 # use AlgDesign to obtain Doptimal designs #
 
@@ -209,96 +160,105 @@ res_Fed_Doptquad$design
 # space-filling (grid)
 space_filling = seq(from = xmin, to = xmax, length.out = Nttl)
 
-grid_sims = list()
-doptlin_sims = list()
-doptquad_sims = list()
-hybrid_sims = list()
-set.seed(rng.seed)
-for(j in 1:numSims){
-  # Doptimal - linear
-  num_supportpts_Doptlin = nrow(res_Fed_Doptlin$design)
-  supportpt_assgnmt_Doptlin = cut(
-    sample(1:Nttl, size = Nttl, replace = FALSE), # shuffle
-    breaks = num_supportpts_Doptlin, labels = FALSE)
-  dopt_linear = rep(NA, Nttl)
-  for(i in 1:num_supportpts_Doptlin){
-    dopt_linear[supportpt_assgnmt_Doptlin == i] = 
-      res_Fed_Doptlin$design[i, "x"]
-  }
-  # # check:
-  # res_Fed_Doptlin$design
-  # table(dopt_linear) / Nttl
-  
-  # Doptimal - quadratic
-  num_supportpts_Doptquad = nrow(res_Fed_Doptquad$design)
-  supportpts_Doptquad = res_Fed_Doptquad$design[, "x"]
-  supportpt_assgnmt_Doptquad = cut(
-    sample(1:Nttl, size = Nttl, replace = FALSE), # shuffle
-    breaks = num_supportpts_Doptquad, labels = FALSE)
-  dopt_quadratic = rep(NA, Nttl)
-  for(i in 1:num_supportpts_Doptquad){
-    dopt_quadratic[supportpt_assgnmt_Doptquad == i] = 
-      supportpts_Doptquad[i]
-  }
-  # # check:
-  # res_Fed_Doptquad$design
-  # table(dopt_quadratic) / Nttl
-  
-  # half space-filling, half quadratic Doptimal, 
-  #   assumes Nttl is divisible by 2
-  supportpt_assgnmt_hybrid = cut(
-    sample(1:(Nttl / 2), size = Nttl / 2, replace = FALSE), # shuffle
-    breaks = num_supportpts_Doptquad, labels = FALSE)
-  hybrid_grid_doptq = rep(NA, Nttl / 2)
-  for(i in 1:num_supportpts_Doptquad){
-    hybrid_grid_doptq[supportpt_assgnmt_hybrid == i] = 
-      supportpts_Doptquad[i]
-  }
-  hybrid_grid_doptq[(Nttl / 2 + 1):Nttl] =c(
-    seq(
-      from = supportpts_Doptquad[1], to = supportpts_Doptquad[2],
-      length.out = (Nttl / 4) + 2)[-c(1, (Nttl / 4) + 2)],
-    seq(
-      from = supportpts_Doptquad[2], to = supportpts_Doptquad[3],
-      length.out = (Nttl / 4) + 2)[-c(1, (Nttl / 4) + 2)]
-  )
-  hybrid_grid_doptq = rev(hybrid_grid_doptq) # spacefilling -> doptimal
-  
-  # simulations #
-  
-  space_filling.tmp = sample(space_filling, replace = FALSE)
-  grid_sims[[j]] = list(
-    x = space_filling.tmp,
-    y = sapply(space_filling.tmp, FUN = function(x) simulateY_fromfunction(
-      x = x, true.function = fT, error.var = sigmasq)))
-  dopt_linear.tmp = sample(dopt_linear, replace = FALSE)
-  doptlin_sims[[j]] = list(
-    x = dopt_linear.tmp,
-    y = sapply(dopt_linear.tmp, FUN = function(x) simulateY_fromfunction(
-      x = x, true.function = fT, error.var = sigmasq)))
-  dopt_quadratic.tmp = sample(dopt_quadratic, replace = FALSE)
-  doptquad_sims[[j]] = list(
-    x = dopt_quadratic.tmp,
-    y = sapply(dopt_quadratic.tmp, FUN = function(x) simulateY_fromfunction(
-      x = x, true.function = fT, error.var = sigmasq)))
-  hybrid_grid_doptq.tmp = sample(hybrid_grid_doptq, replace = FALSE)
-  hybrid_sims[[j]] = list(
-    x = hybrid_grid_doptq.tmp,
-    y = sapply(hybrid_grid_doptq.tmp, FUN = function(x) simulateY_fromfunction(
-      x = x, true.function = fT, error.var = sigmasq)))
+# generate data
+# Doptimal - linear
+num_supportpts_Doptlin = nrow(res_Fed_Doptlin$design)
+supportpt_assgnmt_Doptlin = cut(
+  sample(1:Nttl, size = Nttl, replace = FALSE), # shuffle
+  breaks = num_supportpts_Doptlin, labels = FALSE)
+dopt_linear = rep(NA, Nttl)
+for(i in 1:num_supportpts_Doptlin){
+  dopt_linear[supportpt_assgnmt_Doptlin == i] = 
+    res_Fed_Doptlin$design[i, "x"]
+}
+# # check:
+# res_Fed_Doptlin$design
+# table(dopt_linear) / Nttl
+
+# Doptimal - quadratic
+num_supportpts_Doptquad = nrow(res_Fed_Doptquad$design)
+supportpts_Doptquad = res_Fed_Doptquad$design[, "x"]
+supportpt_assgnmt_Doptquad = cut(
+  sample(1:Nttl, size = Nttl, replace = FALSE), # shuffle
+  breaks = num_supportpts_Doptquad, labels = FALSE)
+dopt_quadratic = rep(NA, Nttl)
+for(i in 1:num_supportpts_Doptquad){
+  dopt_quadratic[supportpt_assgnmt_Doptquad == i] = 
+    supportpts_Doptquad[i]
+}
+# # check:
+# res_Fed_Doptquad$design
+# table(dopt_quadratic) / Nttl
+
+# half space-filling, half quadratic Doptimal, 
+#   assumes Nttl is divisible by 2
+supportpt_assgnmt_hybrid = cut(
+  sample(1:(Nttl / 2), size = Nttl / 2, replace = FALSE), # shuffle
+  breaks = num_supportpts_Doptquad, labels = FALSE)
+hybrid_grid_doptq = rep(NA, Nttl / 2)
+for(i in 1:num_supportpts_Doptquad){
+  hybrid_grid_doptq[supportpt_assgnmt_hybrid == i] = 
+    supportpts_Doptquad[i]
+}
+hybrid_grid_doptq[(Nttl / 2 + 1):Nttl] =c(
+  seq(
+    from = supportpts_Doptquad[1], to = supportpts_Doptquad[2],
+    length.out = (Nttl / 4) + 2)[-c(1, (Nttl / 4) + 2)],
+  seq(
+    from = supportpts_Doptquad[2], to = supportpts_Doptquad[3],
+    length.out = (Nttl / 4) + 2)[-c(1, (Nttl / 4) + 2)]
+)
+hybrid_grid_doptq = rev(hybrid_grid_doptq) # spacefilling -> doptimal
+# simulations #
+space_filling.tmp = sample(space_filling, replace = FALSE)
+grid_sim= list(
+  x = space_filling.tmp,
+  y = sapply(space_filling.tmp, FUN = function(x) simulateY_fromfunction(
+    x = x, true.function = fT, error.var = sigmasq)))
+dopt_linear.tmp = sample(dopt_linear, replace = FALSE)
+doptlin_sim = list(
+  x = dopt_linear.tmp,
+  y = sapply(dopt_linear.tmp, FUN = function(x) simulateY_fromfunction(
+    x = x, true.function = fT, error.var = sigmasq)))
+dopt_quadratic.tmp = sample(dopt_quadratic, replace = FALSE)
+doptquad_sim = list(
+  x = dopt_quadratic.tmp,
+  y = sapply(dopt_quadratic.tmp, FUN = function(x) simulateY_fromfunction(
+    x = x, true.function = fT, error.var = sigmasq)))
+hybrid_grid_doptq.tmp = sample(hybrid_grid_doptq, replace = FALSE)
+hybrid_sim = list(
+  x = hybrid_grid_doptq.tmp,
+  y = sapply(hybrid_grid_doptq.tmp, FUN = function(x) simulateY_fromfunction(
+    x = x, true.function = fT, error.var = sigmasq)))
+
+################################################################################
+################################################################################
+################################################################################
+################################################################################
+################################################################################
+# PLOTS #
+################################################################################
+################################################################################
+################################################################################
+################################################################################
+################################################################################
+
+# for plots
+library(mvtnorm)
+library(ggplot2)
+library(reshape2)
+library(ggpubr)
+library(tidyverse)
+gg_color_hue = function(n) {
+  hues = seq(15, 275, length = n + 1)
+  hcl(h = hues, l = 65, c = 100)[1:n]
 }
 
+include_hybrid = FALSE
 
 ################################################################################
-################################################################################
-################################################################################
-# plots!!!
-################################################################################
-################################################################################
-################################################################################
-
-# plot a seqmed
-sm = seqmed_sim
+# plot a seqmed with alpha = 10 or 100
+sm = seqmed10_sim # seqmed100_sim
 ggdata = data.frame(x = c(sm$x.in, sm$x.new), y = c(sm$y.in, sm$y.new))
 plt0 = ggplot(ggdata) +
   geom_histogram(binwidth = 0.12, closed = "right",
@@ -354,7 +314,7 @@ pltw = ggplot(
     alpha = 0.2, inherit.aes = FALSE) +
   theme_bw() +
   theme(panel.grid.minor = element_blank())
-# pltw
+pltw
 # ggarrange(plt0, plt1, pltw, nrow = 1, ncol = 3, widths = c(1, 1, 1.75))
 
 ################################################################################
@@ -362,6 +322,7 @@ pltw = ggplot(
 ################################################################################
 include_hybrid = FALSE
 
+# functions ####################################################################
 if(scenario == 1){
   models = list(model0, model1)
 } else if(scenario == 2){
@@ -472,26 +433,22 @@ getPPHseq = function(
 # sequential & non-sequential designs' epph for the given alpha value
 
 # non-sequential designs
-PPH_df = data.frame()
-for(j in 1:numSims){
-  # sequence of PPHs for each design
-  PPH_grid = getPPH(
-    grid_sims[[j]], models, fT, sigmasq)
-  PPH_doptl = getPPH(
-    doptlin_sims[[j]], models, fT, sigmasq)
-  PPH_doptq = getPPH(
-    doptquad_sims[[j]], models, fT, sigmasq)
-  PPH_hybrid = getPPH(
-    hybrid_sims[[j]], models, fT, sigmasq)
-  # master data frame
-  PPH_grid$Design = "Grid"
-  PPH_doptl$Design = "DOptLin."
-  PPH_doptq$Design = "DOptQuadr."
-  PPH_hybrid$Design = "Hybrid"
-  PPH.tmp = rbind(PPH_grid, PPH_doptl, PPH_doptq, PPH_hybrid)
-  PPH.tmp$sim = j
-  PPH_df = rbind(PPH_df, PPH.tmp)
-}
+# sequence of PPHs for each design
+PPH_grid = getPPH(
+  grid_sim, models, fT, sigmasq)
+PPH_doptl = getPPH(
+  doptlin_sim, models, fT, sigmasq)
+PPH_doptq = getPPH(
+  doptquad_sim, models, fT, sigmasq)
+PPH_hybrid = getPPH(
+  hybrid_sim, models, fT, sigmasq)
+# master data frame
+PPH_grid$Design = "Grid"
+PPH_doptl$Design = "DOptLin."
+PPH_doptq$Design = "DOptQuadr."
+PPH_hybrid$Design = "Hybrid"
+PPH_df = rbind(PPH_grid, PPH_doptl, PPH_doptq, PPH_hybrid)
+
 PPHmean = aggregate(
   PPH_df[, names(PPH_df)[1:length(models)]],
   by = list(PPH_df[, "Design"]), FUN = function(x) mean(x, na.rm = TRUE))
@@ -503,18 +460,15 @@ PPHmean2$index = 0
 PPHmean = rbind(PPHmean, PPHmean2)
 
 # sequential designs
-PPH_seq = data.frame()
-for(j in 1:numSims){
-  # sequence of PPHs for each design
-  PPH_seq.sm = getPPHseq(seqmed_sims[[j]], models, Nttl, fT, sigmasq)
-  PPH_seq.bh = getPPHseq(boxhill_sims[[j]], models, Nttl, fT, sigmasq)
-  # master data frame
-  PPH_seq.sm$Design = "SeqMED"
-  PPH_seq.bh$Design = "BoxHill"
-  PPH_seq.tmp = rbind(PPH_seq.sm, PPH_seq.bh)
-  PPH_seq.tmp$sim = j
-  PPH_seq = rbind(PPH_seq, PPH_seq.tmp)
-}
+# sequence of PPHs for each design
+PPH_seq.sm10 = getPPHseq(seqmed10_sim, models, Nttl, fT, sigmasq)
+PPH_seq.sm100 = getPPHseq(seqmed100_sim, models, Nttl, fT, sigmasq)
+PPH_seq.bh = getPPHseq(boxhill_sim, models, Nttl, fT, sigmasq)
+# master data frame
+PPH_seq.sm10$Design = "SeqMED 10"
+PPH_seq.sm100$Design = "SeqMED 100"
+PPH_seq.bh$Design = "BoxHill"
+PPH_seq = rbind(PPH_seq.sm10, PPH_seq.sm100, PPH_seq.bh)
 
 PPHmean_seq = aggregate(
   PPH_seq[, names(PPH_seq)[1:length(models)]],
@@ -526,8 +480,9 @@ PPHmean_gg = rbind(PPHmean, PPHmean_seq)
 PPHmean_gg = reshape2::melt(PPHmean_gg, id.vars = c("Design", "index"),
                             measure.vars = paste0("H", 0:(length(models) - 1), sep = ""),
                             variable.name = "hypothesis")
-design_names = rev(c(
-  "SeqMED", "BoxHill", "DOptLin.", "DOptQuadr.", "Grid", "Hybrid"))
+design_names = c(
+  "Hybrid", "Grid", "DOptLin.", "DOptQuadr.", "BoxHill",
+  "SeqMED 10", "SeqMED 100")
 PPHmean_gg$Design = factor(PPHmean_gg$Design, levels = design_names)
 if(scenario == 1){
   PPHmean_gg$hypothesis = factor(
@@ -540,10 +495,8 @@ if(scenario == 1){
     levels = paste0("H", 0:(length(models) - 1), sep = ""),
     labels = paste0("Case ", scenario, ", H", c(0, 1, "T"), sep = ""))
 }
-# PPHmean_gg = setorder(PPHmean_gg, cols = "Design")
 PPHmean_gg2 = PPHmean_gg[PPHmean_gg$index == Nttl, ]
 PPHmean_gg2$Design = factor(PPHmean_gg2$Design, levels = design_names)
-# PPHmean_gg2 = setorder(PPHmean_gg2, cols = "Design")
 if(include_hybrid){
   num_fixed_designs = 4
 } else{
@@ -555,7 +508,7 @@ if(include_hybrid){
     facet_wrap(~hypothesis) +
     geom_path() +
     scale_linetype_manual(values=c(
-      rep("dashed", num_fixed_designs), rep("solid", 2))) +
+      rep("dashed", num_fixed_designs), rep("solid", 3))) +
     geom_point(data = PPHmean_gg2,
                mapping = aes(x = index, y = value, color = Design),
                inherit.aes = FALSE) +
@@ -572,7 +525,7 @@ if(include_hybrid){
     facet_wrap(~hypothesis) +
     geom_path() +
     scale_linetype_manual(
-      values=c(rep("dashed", num_fixed_designs), rep("solid", 2))) +
+      values=c(rep("dashed", num_fixed_designs), rep("solid", 3))) +
     geom_point(
       data = PPHmean_gg2_nohybrid,
       mapping = aes(x = index, y = value, color = Design),

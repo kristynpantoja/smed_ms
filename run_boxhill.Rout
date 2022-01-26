@@ -1,0 +1,57 @@
+
+R version 4.1.2 (2021-11-01) -- "Bird Hippie"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> ################################################################################
+> # last updated: 12/16/21
+> # purpose: to create a list of boxhill simulations
+> # scenario 1:
+> #   linear vs. quadratic,
+> #   where the true function is quadratic
+> # scenario 2:
+> #   linear vs. quadratic,
+> #   where the true function is cubic
+> rm(list = ls())
+> 
+> scenario = 2 # 1, 2
+> 
+> ################################################################################
+> # Sources/Libraries
+> ################################################################################
+> output_dir = "lm_experiments/lm/outputs"
+> functions_dir = "functions"
+> 
+> # for seqmed design
+> source(paste(functions_dir, "/SeqMED.R", sep = ""))
+> source(paste(functions_dir, "/SeqMED_batch.R", sep = ""))
+> source(paste(functions_dir, "/charge_function_q.R", sep = ""))
+> source(paste(functions_dir, "/construct_design_matrix.R", sep = ""))
+> source(paste(functions_dir, "/wasserstein_distance.R", sep = ""))
+> source(paste(functions_dir, "/posterior_parameters.R", sep = ""))
+> source(paste(functions_dir, "/simulate_y.R", sep = ""))
+> 
+> # for generating initial data
+> source(paste(functions_dir, "/MMED.R", sep = ""))
+> source(paste(functions_dir, "/variance_marginal_y.R", sep = ""))
+> 
+> # for box-hill deisign
+> source(paste(functions_dir, "/boxhill.R", sep = ""))
+> 
+> library(expm)
+Error in library(expm) : there is no package called ‘expm’
+Execution halted

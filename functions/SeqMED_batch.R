@@ -12,14 +12,19 @@ objective_newq_seqmed = function(
   #                model0, model1, error.var, p, alpha) /
   #         sqrt((x_i - candidate)^2)
   #     )^k))
+  
   q_cand = q_seqmed(
-    candidate, postmean0, postmean1, postvar0, postvar1, model0, model1, 
-    error.var, p, alpha)
+    x = candidate, postmean0 = postmean0, postmean1 = postmean1, 
+    postvar0 = postvar0, postvar1 = postvar1, model0 = model0, model1 = model1, 
+    error.var = error.var, p = p, alpha = alpha)
   q_D = sapply(
     D, 
     function(x_i)
-      q_seqmed(x_i, postmean0, postmean1, postvar0, postvar1, 
-               model0, model1, error.var, p, alpha) / 
+      q_seqmed(
+        x = x_i, postmean0 = postmean0, postmean1 = postmean1, 
+        postvar0 = postvar0, postvar1 = postvar1, 
+        model0 = model0, model1 = model1, error.var = error.var, p = p, 
+        alpha = alpha) / 
       sqrt((x_i - candidate)^2)
   )
   result = q_cand^k * sum(q_D^k)
@@ -31,7 +36,7 @@ SeqMED_newq_batch = function(
   initD, y, model0, model1, error.var, 
   N2 = 11, numCandidates = 10^5, k = 4, 
   xmin = -1, xmax = 1, p = 1, alpha = 1, genCandidates = 1, candidates = NULL, 
-  keep_trying_alpha = keep_trying_alpha, batch.idx = 1
+  keep_trying_alpha = keep_trying_alpha, prints = FALSE, batch.idx = 1
 ){
   initN = length(initD)
   if(length(y) != initN) stop("length of y does not match length of initial input data, initD")
@@ -101,8 +106,17 @@ SeqMED_newq_batch = function(
         postvar0 = postvar0, postvar1 = postvar1, 
         model0 = model0, model1 = model1, error.var = error.var, 
         p = p, k = k, alpha = alpha))
+    if(prints){
+      if(any(f_min_candidates == Inf)){
+        print(paste0(
+          "SeqMED_newq_batch: objective function evaluates to Inf for ",
+          as.character(sum(f_min_candidates == Inf)), 
+          " candidates"
+        ))
+      }
+    }
     if(all(f_min_candidates == Inf)){
-      warning("SeqMED_newq_batch: objective function evaluates to Inf")
+      warning("SeqMED_newq_batch: objective function evaluates to Inf for all candidates")
       if(keep_trying_alpha){
         while(alpha > 0 & all(f_min_candidates == Inf)){
           alpha = alpha - 1
@@ -138,8 +152,17 @@ SeqMED_newq_batch = function(
           postvar0 = postvar0, postvar1 = postvar1, 
           model0 = model0, model1 = model1, error.var = error.var, 
           p = p, k = k, alpha = alpha))
+      if(prints){
+        if(any(f_min_candidates == Inf)){
+          print(paste0(
+            "SeqMED_newq_batch: objective function evaluates to Inf for ",
+            as.character(sum(f_min_candidates == Inf)), 
+            " candidates"
+          ))
+        }
+      }
       if(all(f_min_candidates == Inf)){
-        warning("SeqMED_newq_batch: objective function evaluates to Inf")
+        warning("SeqMED_newq_batch: objective function evaluates to Inf for all candidates")
         if(keep_trying_alpha){
           while(alpha > 0  & all(f_min_candidates == Inf)){
             alpha = alpha - 1
@@ -160,7 +183,9 @@ SeqMED_newq_batch = function(
       D[i] = x_opt_f
     }
   }
-  
+  if(prints){
+    print(paste0("alpha=", as.character(alpha)))
+  }
   return(
     list(
       "initD" = initD, "addD" = D, "updatedD" = c(initD, D), alpha = alpha

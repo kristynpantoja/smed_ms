@@ -76,7 +76,8 @@ SeqMED = function(
       error.var = error.var, N2 = seqN[t], numCandidates = numCandidates, 
       k = k, xmin = xmin, xmax = xmax, p = p, alpha = alpha_seq[t], 
       genCandidates = genCandidates, candidates = candidates, 
-      keep_trying_alpha = keep_trying_alpha, batch.idx = t - 1)
+      keep_trying_alpha = keep_trying_alpha, prints = prints, 
+      batch.idx = t - 1)
     if(keep_trying_alpha){
       alpha_seq[t:numSeq] = Dt$alpha
     }
@@ -98,10 +99,10 @@ SeqMED = function(
     postbeta1 = getBetaPosterior(
       y = y.cur, X = model1$designMat(x.cur), model1$beta.mean, model1$beta.var, 
       error.var)
-    postvar0[, 1] = diag(postbeta0$var)
-    postmean0[, 1] = postbeta0$mean
-    postvar1[, 1] = diag(postbeta1$var)
-    postmean1[, 1] = postbeta1$mean
+    postvar0[, t] = diag(postbeta0$var)
+    postmean0[, t] = postbeta0$mean
+    postvar1[, t] = diag(postbeta1$var)
+    postmean1[, t] = postbeta1$mean
     
     if(prints){
       print(paste("finished ", t, " out of ", numSeq, " steps", sep = ""))

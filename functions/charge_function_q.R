@@ -34,9 +34,12 @@ q_seqmed = function(
   p = 1, alpha = 1
 ){
   
-  W = WNlm(x, postmean0, postmean1, postvar0, postvar1, model0, model1, error.var)
+  W = WNlm(
+    x = x, postmean0 = postmean0, postmean1 = postmean1, 
+    postvar0 = postvar0, postvar1 = postvar1, 
+    model0 = model0, model1 = model1, error.var = error.var)
   q_exponent = alpha / (2 * p)
-  return(1.0 / (W)^q_exponent)
+  return(1.0 / W^q_exponent)
 }
 # q_seqmed_old = function(
 #   x, postmean0, postmean1, postvar0, postvar1, error.var, type, p = 1, alpha = 1

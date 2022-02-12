@@ -118,21 +118,34 @@ seed = 111
 # 555: SeqMED10 is better (even though SeqMED100 started off better) !
 # 111: SeqMED is better, then worse, then better !!!!!!!!!!!
 
-alpha = 100
-seqmed10_sim = SeqMED(
-  y.in = NULL, x.in = NULL, true.function = fT,
-  model0 = model0, model1 = model1,
-  error.var = sigmasq, xmin = xmin, xmax = xmax,
-  candidates = candidates, numSeq = numSeq, seqN = seqN,
-  alpha_seq = 10, seed = seed)
-seqmed100_sim = SeqMED(
-  y.in = NULL, x.in = NULL, true.function = fT,
-  model0 = model0, model1 = model1,
-  error.var = sigmasq, xmin = xmin, xmax = xmax,
-  candidates = candidates, numSeq = numSeq, seqN = seqN,
-  alpha_seq = 100, seed = seed)
-boxhill_sim = BH_m2(NULL, NULL, prior_probs, model0, model1, Nttl, 
-      candidates, fT, sigmasq, seed = seed)
+# seqmed10_sim = SeqMED(
+#   y.in = NULL, x.in = NULL, true.function = fT,
+#   model0 = model0, model1 = model1,
+#   error.var = sigmasq, xmin = xmin, xmax = xmax,
+#   candidates = candidates, numSeq = numSeq, seqN = seqN,
+#   alpha_seq = 10, prints = TRUE, seed = seed)
+# seqmed100_sim = SeqMED(
+#   y.in = NULL, x.in = NULL, true.function = fT,
+#   model0 = model0, model1 = model1,
+#   error.var = sigmasq, xmin = xmin, xmax = xmax,
+#   candidates = candidates, numSeq = numSeq, seqN = seqN,
+#   alpha_seq = 100, prints = TRUE, seed = seed)
+# boxhill_sim = BH_m2(NULL, NULL, prior_probs, model0, model1, Nttl,
+#       candidates, fT, sigmasq, seed = seed)
+# 
+# saveRDS(
+#   list(
+#     seqmed10_sim = seqmed10_sim,
+#     seqmed100_sim = seqmed100_sim,
+#     boxhill_sim = boxhill_sim
+#   ),
+#   paste0(output_dir, "/alpha10vsalpha100_1sim", ".rds")
+# )
+
+saved_sims = readRDS(paste0(output_dir, "/alpha10vsalpha100_1sim", ".rds"))
+seqmed10_sim = saved_sims$seqmed10_sim
+seqmed100_sim = saved_sims$seqmed100_sim
+boxhill_sim = saved_sims$boxhill_sim
 
 ################################################################################
 # non-sequential designs
@@ -241,7 +254,7 @@ hybrid_sim = list(
 ################################################################################
 ################################################################################
 ################################################################################
-################################################################################
+ ################################################################################
 
 # for plots
 library(mvtnorm)
@@ -305,7 +318,7 @@ ggdata_ribbon = data.table::data.table(
 pltw = ggplot(
   ggdata, aes(x = x, y = y, color = Function, linetype = Function)) +
   scale_linetype_manual(values = c(2, 2, 1, 1)) +
-  ylim(-1.1, 1.1) +
+  ylim(-1.9, 1.9) +
   scale_color_manual(
     values = c(gg_color_hue(4)[c(3, 4)], "black", gg_color_hue(4)[2])) +
   geom_path() +
@@ -315,7 +328,7 @@ pltw = ggplot(
   theme_bw() +
   theme(panel.grid.minor = element_blank())
 pltw
-# ggarrange(plt0, plt1, pltw, nrow = 1, ncol = 3, widths = c(1, 1, 1.75))
+ggarrange(plt0, plt1, pltw, nrow = 1, ncol = 3, widths = c(1, 1, 1.75))
 
 ################################################################################
 # plot the posterior probabilities of the hypotheses
@@ -340,6 +353,7 @@ if(scenario == 1){
 getPPH = function(
   design, models, true.function, error.var, initial.data = FALSE, seed = NULL
 ){
+  # format the data
   if(!is.null(seed)) set.seed(seed)
   if(initial.data){
     x = c(design$x.in, design$x.new)
@@ -370,6 +384,7 @@ getPPHseq = function(
   design, models, n, true.function, error.var, initial.data = TRUE, 
   randomize.order = FALSE, randomize.halves.order = FALSE, seed = NULL
 ){
+  # format the data and randomize if desired
   if(!is.null(seed)) set.seed(seed)
   if(initial.data){
     x.new = design$x.new
@@ -535,5 +550,152 @@ if(include_hybrid){
     labs(x = "Stage Index", y = element_blank())
   epph.plt
 }
+
+################################################################################
+################################################################################
+################################################################################
+################################################################################
+################################################################################
+# PLOTS -- one point at a time #
+################################################################################
+################################################################################
+################################################################################
+################################################################################
+################################################################################
+# uptoN = 11
+for(uptoN in 2:Nttl){
+  seqmed10_x = c(seqmed10_sim$x.in, seqmed10_sim$x.new)[1:uptoN]
+  seqmed10_y = c(seqmed10_sim$y.in, seqmed10_sim$y.new)[1:uptoN]
+  seqmed100_x = c(seqmed100_sim$x.in, seqmed100_sim$x.new)[1:uptoN]
+  seqmed100_y = c(seqmed100_sim$y.in, seqmed100_sim$y.new)[1:uptoN]
+  
+  # E[P(H | y, X) | D]
+  PPHmean_gg_uptoN = PPHmean_gg %>% filter(
+    Design %in% c("BoxHill", "SeqMED 10", "SeqMED 100")) %>%
+    filter(index %in% c(1:uptoN))
+  PPHmean_gg2_uptoN = PPHmean_gg2 %>% filter(
+    Design %in% c("BoxHill", "SeqMED 10", "SeqMED 100")) %>%
+    filter(index %in% c(1:uptoN))
+  epph.plt_uptoN = ggplot(
+    PPHmean_gg_uptoN, aes(x = index, y = value, color = Design,
+                          linetype = Design, shape = Design)) +
+    facet_wrap(~hypothesis) +
+    geom_path() +
+    geom_point(
+      data = PPHmean_gg2_uptoN,
+      mapping = aes(x = index, y = value, color = Design),
+      inherit.aes = FALSE) +
+    theme_bw() +
+    ylim(0, 1) +
+    labs(x = "Stage Index", y = element_blank()) + 
+    labs(title = paste0("N = ", uptoN))
+  
+  # Histogram
+  seqmed_designpts = rbind(
+    data.frame(
+      x = seqmed10_x, 
+      y = seqmed10_y, 
+      Design = "SeqMED 10", 
+      index = 1:uptoN, 
+      alpha = seqmed10_sim$alpha_seq[1:uptoN], 
+      specified_alpha = "10", 
+      point_color = c(rep("Prev. Pts", uptoN - 1), "Newest Pt")), 
+    data.frame(
+      x = seqmed100_x, 
+      y = seqmed100_y, 
+      Design = "SeqMED 100", 
+      index = 1:uptoN, 
+      alpha = seqmed100_sim$alpha_seq[1:uptoN], 
+      specified_alpha = "100",
+      point_color = c(rep("Prev. Pts", uptoN - 1), "Newest Pt"))
+  )
+  hist_designpts = ggplot(seqmed_designpts) +
+    geom_histogram(binwidth = 0.12, closed = "right",
+                   aes(x = x, y = after_stat(count / max(count)))) +
+    facet_wrap(vars(Design)) +
+    theme_bw() + 
+    geom_text(
+      data = seqmed_designpts %>% filter(index == uptoN), 
+      mapping = aes(x = x, y = 0, label = round(x, 5)), color = 4) +
+    geom_text(
+      data = seqmed_designpts %>% filter(index == uptoN), 
+      mapping = aes(x = 0, y = 1, label = paste0("alpha=", alpha)), color = 2) +
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  # ggarrange(epph.plt_uptoN, hist_designpts, nrow = 2)
+  
+  # Model Fits & Wasserstein Distance
+  numseq = 1e2
+  x_seq = seq(from = xmin, to = xmax, length.out = numseq)
+  w_seq = sapply(x_seq, function(x) WNlm(
+    x, sm$postmean0[, uptoN], sm$postmean1[, uptoN],
+    diag(sm$postvar0[, uptoN]), diag(sm$postvar1[, uptoN]), 
+    model0, model1, sigmasq))
+  f0est_seq = as.numeric(model0$designMat(x_seq) %*% sm$postmean0[, uptoN])
+  f1est_seq = as.numeric(model1$designMat(x_seq) %*% sm$postmean1[, uptoN])
+  fT_seq = sapply(x_seq, fT)
+  
+  ggdata = data.table::data.table(
+    x = x_seq,
+    `Est. Quadr.` = f1est_seq,
+    `Est. Line` = f0est_seq,
+    `True Quadr.` = fT_seq,
+    `Wasserstein` = w_seq
+  )
+  ggdata = data.table::melt(
+    ggdata, id = c("x"), value.name = "y", variable.name = "Function")
+  
+  ggdata_ribbon = data.table::data.table(
+    x = x_seq,
+    ymin = apply(cbind(f0est_seq, f1est_seq), 1, min),
+    ymax = apply(cbind(f0est_seq, f1est_seq), 1, max)
+  )
+  ggdata2 = rbind(
+    ggdata %>% mutate(specified_alpha = "10"), 
+    ggdata %>% mutate(specified_alpha = "100")
+  )
+  pltw = ggplot(
+    ggdata2, aes(x = x, y = y, color = Function, linetype = Function)) +
+    facet_wrap(vars(specified_alpha)) +
+    scale_linetype_manual(values = c(2, 2, 1, 1), guide = "none") +
+    # ylim(-1.9, 1.9) +
+    scale_color_manual(
+      values = c(gg_color_hue(4)[c(3, 4)], "red", "orange", "gray50", gg_color_hue(4)[2])) + #gg_color_hue(6)[c(3, 4)])) +
+    geom_path() +
+    geom_ribbon(
+      data = ggdata_ribbon, mapping = aes(x = x, ymin = ymin, ymax = ymax),
+      alpha = 0.2, inherit.aes = FALSE) +
+    # geom_text(
+    #   data = seqmed_designpts %>% filter(index == uptoN), 
+    #   mapping = aes(x = x, y = 0, label = round(x, 5)), color = 4, 
+    #   inherit.aes = FALSE) +
+    # geom_text(
+    #   data = seqmed_designpts %>% filter(index == uptoN), 
+    #   mapping = aes(x = 0, y = 1, label = paste0("alpha=", alpha)), color = 2, 
+    #   inherit.aes = FALSE) +
+    geom_point(
+      data = seqmed_designpts %>% mutate(point_color = factor(point_color)), 
+      mapping = aes(x = x, y = y, color = point_color), alpha = 0.5,
+      inherit.aes = FALSE) +
+    theme_bw() +
+    theme(panel.grid.minor = element_blank())
+  ggarrange(epph.plt_uptoN, pltw, nrow = 2)
+  
+  ggsave(
+    filename = paste0(
+      "lm", "_scen", scenario,
+      "_epph_fits_alpha10vs100_N", uptoN, ".pdf"),
+    plot = last_plot(),
+    width = 8, height = 6, units = c("in")
+  )
+}
+
+
+
+
+
+
+
+
+
 
 

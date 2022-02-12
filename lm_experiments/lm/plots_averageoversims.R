@@ -55,8 +55,8 @@ gg_color_hue = function(n) {
 ################################################################################
 
 # simulations settings
-numSims = 100 # numSims = 500 & numSeq = 12 OR numSims = 100 & numSeq = 100
-numSeq = 12 # 12, 100
+numSims = 500 # numSims = 500 & numSeq = 12 OR numSims = 100 & numSeq = 100
+numSeq = 100 # 12, 100
 seqN = 1
 Nttl = numSeq * seqN
 xmin = -1
@@ -508,8 +508,8 @@ if(include_hybrid){
 ################################################################################
 
 # alphas = c(0, 1, 10, 25, 50, 100)
-# alphas = c(0, 1, 10, 100)
-alphas = c(0, 1, 10)
+alphas = c(0, 1, 10, 100)
+# alphas = c(0, 1, 10)
 
 seqmed_sims_alphas = list()
 min_alpha_used = matrix(NA, length(alphas), numSims)

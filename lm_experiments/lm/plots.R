@@ -54,7 +54,7 @@ gg_color_hue = function(n) {
 
 # simulations settings
 numSims = 500 # 100, 250, 500
-numSeq = 12 # 12, 100
+numSeq = 100 # 12, 100
 seqN = 1
 Nttl = numSeq * seqN
 xmin = -1
@@ -163,7 +163,7 @@ for(j in 1:numSims){
     dopt_linear[supportpt_assgnmt_Doptlin == i] = 
       res_Fed_Doptlin$design[i, "x"]
   }
-  # # check:
+  # # # check:
   # res_Fed_Doptlin$design
   # table(dopt_linear) / Nttl
   
@@ -179,8 +179,8 @@ for(j in 1:numSims){
       supportpts_Doptquad[i]
   }
   # # check:
-  # res_Fed_Doptquad$design
-  # table(dopt_quadratic) / Nttl
+  res_Fed_Doptquad$design
+  table(dopt_quadratic) / Nttl
   
   # half space-filling, half quadratic Doptimal, 
   #   assumes Nttl is divisible by 2

@@ -6,9 +6,9 @@ SeqMED = function(
   y.in = NULL, x.in = NULL, model0, model1, error.var, 
   candidates, true.function, 
   xmin = -1, xmax = 1, 
-  numSeq = 5, seqN = 10, alpha_seq = 1, 
+  numSeq = 5, seqN = 1, alpha_seq = 1, 
   k = 4, p = 1, genCandidates = 1, keep_trying_alpha = TRUE,
-  prints = FALSE, seed = NULL
+  prints = FALSE, seed = NULL, save_objectives = FALSE
 ){
   if(!is.null(seed)) set.seed(seed)
   if(numSeq > 1 & length(seqN) == 1) seqN = rep(seqN, numSeq)
@@ -22,6 +22,10 @@ SeqMED = function(
     } else{
       stop("SeqMED: invalid genCandidates argument")
     }
+  }
+  if(save_objectives){
+    objectives_list = list()
+    objectives_list[[1]] = NULL
   }
   
   # check for preliminary data
@@ -77,6 +81,7 @@ SeqMED = function(
       k = k, xmin = xmin, xmax = xmax, p = p, alpha = alpha_seq[t], 
       genCandidates = genCandidates, candidates = candidates, 
       keep_trying_alpha = keep_trying_alpha, prints = prints, 
+      save_objectives = save_objectives,
       batch.idx = t - 1)
     if(keep_trying_alpha){
       alpha_seq[t:numSeq] = Dt$alpha
@@ -104,21 +109,28 @@ SeqMED = function(
     postvar1[, t] = diag(postbeta1$var)
     postmean1[, t] = postbeta1$mean
     
+    if(save_objectives){
+      objectives_list[[t]] = Dt$objectives
+    }
+    
     if(prints){
       print(paste("finished ", t, " out of ", numSeq, " steps", sep = ""))
     }
   }
-  return(
-    list(
-      x.in = x.in, 
-      y.in = y.in, 
-      x.new = x.new,
-      y.new = y.new,
-      postvar0 = postvar0, postmean0 = postmean0, 
-      postvar1 = postvar1, postmean1 = postmean1,
-      alpha_seq = alpha_seq
-    )
+  
+  result = list(
+    x.in = x.in, 
+    y.in = y.in, 
+    x.new = x.new,
+    y.new = y.new,
+    postvar0 = postvar0, postmean0 = postmean0, 
+    postvar1 = postvar1, postmean1 = postmean1,
+    alpha_seq = alpha_seq
   )
+  if(save_objectives){
+    result$objectives = objectives_list
+  }
+  return(result)
 }
 
 

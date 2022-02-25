@@ -170,42 +170,39 @@ boxhill_sims = readRDS(paste0(
 # set.seed(rng.seed)
 # for(j in 1:numSims){
 #   # Doptimal - linear
-#   num_supportpts_Doptlin = nrow(res_Fed_Doptlin$design)
-#   supportpt_assgnmt_Doptlin = cut(
-#     sample(1:Nttl, size = Nttl, replace = FALSE), # shuffle
-#     breaks = num_supportpts_Doptlin, labels = FALSE)
-#   dopt_linear = rep(NA, Nttl)
-#   for(i in 1:num_supportpts_Doptlin){
-#     dopt_linear[supportpt_assgnmt_Doptlin == i] = 
-#       res_Fed_Doptlin$design[i, "x"]
-#   }
+#   num_DoptL = nrow(res_Fed_Doptlin$design) # number of support points
+#   pts_DoptL = res_Fed_Doptlin$design[, "x"] # the actual support points
+#   numeachL = floor(Nttl / num_DoptL) # smallest number of times can recycle spt pts
+#   dopt_linear0 = c(sapply(pts_DoptL, function(x) rep(x, numeachL)))
+#   dopt_linear = sample(c(
+#     dopt_linear0, 
+#     sample(pts_DoptL, size = Nttl - numeachL * num_DoptL, replace = FALSE)
+#   ), size = Nttl, replace = FALSE)
 #   # # check:
 #   # res_Fed_Doptlin$design
 #   # table(dopt_linear) / Nttl
 #   
 #   # Doptimal - quadratic
-#   num_supportpts_Doptquad = nrow(res_Fed_Doptquad$design)
-#   supportpts_Doptquad = res_Fed_Doptquad$design[, "x"]
-#   supportpt_assgnmt_Doptquad = cut(
-#     sample(1:Nttl, size = Nttl, replace = FALSE), # shuffle
-#     breaks = num_supportpts_Doptquad, labels = FALSE)
-#   dopt_quadratic = rep(NA, Nttl)
-#   for(i in 1:num_supportpts_Doptquad){
-#     dopt_quadratic[supportpt_assgnmt_Doptquad == i] = 
-#       supportpts_Doptquad[i]
-#   }
+#   num_DoptQ = nrow(res_Fed_Doptquad$design) # number of support points
+#   pts_DoptQ = res_Fed_Doptquad$design[, "x"] # the actual support points
+#   numeachQ = floor(Nttl / num_DoptQ) # smallest number of times can recycle spt pts
+#   dopt_quadratic0 = c(sapply(pts_DoptQ, function(x) rep(x, numeachQ)))
+#   dopt_quadratic = sample(c(
+#     dopt_quadratic0, 
+#     sample(pts_DoptQ, size = Nttl - numeachQ * num_DoptQ, replace = FALSE)
+#   ), size = Nttl, replace = FALSE)
 #   # # check:
 #   # res_Fed_Doptquad$design
 #   # table(dopt_quadratic) / Nttl
-#   
-#   # half space-filling, half quadratic Doptimal, 
+# 
+#   # half space-filling, half quadratic Doptimal,
 #   #   assumes Nttl is divisible by 2
 #   supportpt_assgnmt_hybrid = cut(
 #     sample(1:(Nttl / 2), size = Nttl / 2, replace = FALSE), # shuffle
 #     breaks = num_supportpts_Doptquad, labels = FALSE)
 #   hybrid_grid_doptq = rep(NA, Nttl / 2)
 #   for(i in 1:num_supportpts_Doptquad){
-#     hybrid_grid_doptq[supportpt_assgnmt_hybrid == i] = 
+#     hybrid_grid_doptq[supportpt_assgnmt_hybrid == i] =
 #       supportpts_Doptquad[i]
 #   }
 #   hybrid_grid_doptq[(Nttl / 2 + 1):Nttl] =c(
@@ -217,9 +214,9 @@ boxhill_sims = readRDS(paste0(
 #       length.out = (Nttl / 4) + 2)[-c(1, (Nttl / 4) + 2)]
 #   )
 #   hybrid_grid_doptq = rev(hybrid_grid_doptq) # spacefilling -> doptimal
-#   
+# 
 #   # simulations #
-#   
+# 
 #   space_filling.tmp = sample(space_filling, replace = FALSE)
 #   grid_sims[[j]] = list(
 #     x = space_filling.tmp,

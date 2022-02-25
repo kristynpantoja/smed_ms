@@ -55,7 +55,7 @@ gg_color_hue = function(n) {
 ################################################################################
 
 # simulations settings
-numSims = 500 # numSims = 500 & numSeq = 12 OR numSims = 100 & numSeq = 100
+numSims = 100 # numSims = 500 & numSeq = 12 OR numSims = 100 & numSeq = 100
 numSeq = 100 # 12, 100
 seqN = 1
 Nttl = numSeq * seqN
@@ -152,7 +152,7 @@ boxhill_sims = readRDS(paste0(
 # consider linear model, y = b0 + b1 x
 candidates_named = data.frame(x = candidates)
 res_Fed_Doptlin = optFederov(
-  ~1+x, data = candidates_named, approximate = TRUE, criterion = "D")
+  ~1+I(x), data = candidates_named, approximate = TRUE, criterion = "D")
 res_Fed_Doptlin$design
 
 # consider quadratic model, y = b0 + b1 x + b2 x^2
@@ -172,53 +172,50 @@ hybrid_sims = list()
 set.seed(rng.seed)
 for(j in 1:numSims){
   # Doptimal - linear
-  num_supportpts_Doptlin = nrow(res_Fed_Doptlin$design)
-  supportpt_assgnmt_Doptlin = cut(
-    sample(1:Nttl, size = Nttl, replace = FALSE), # shuffle
-    breaks = num_supportpts_Doptlin, labels = FALSE)
-  dopt_linear = rep(NA, Nttl)
-  for(i in 1:num_supportpts_Doptlin){
-    dopt_linear[supportpt_assgnmt_Doptlin == i] = 
-      res_Fed_Doptlin$design[i, "x"]
-  }
+  num_DoptL = nrow(res_Fed_Doptlin$design) # number of support points
+  pts_DoptL = res_Fed_Doptlin$design[, "x"] # the actual support points
+  numeachL = floor(Nttl / num_DoptL) # smallest number of times can recycle spt pts
+  dopt_linear0 = c(sapply(pts_DoptL, function(x) rep(x, numeachL)))
+  dopt_linear = sample(c(
+    dopt_linear0, 
+    sample(pts_DoptL, size = Nttl - numeachL * num_DoptL, replace = FALSE)
+  ), size = Nttl, replace = FALSE)
   # # check:
   # res_Fed_Doptlin$design
   # table(dopt_linear) / Nttl
   
   # Doptimal - quadratic
-  num_supportpts_Doptquad = nrow(res_Fed_Doptquad$design)
-  supportpts_Doptquad = res_Fed_Doptquad$design[, "x"]
-  supportpt_assgnmt_Doptquad = cut(
-    sample(1:Nttl, size = Nttl, replace = FALSE), # shuffle
-    breaks = num_supportpts_Doptquad, labels = FALSE)
-  dopt_quadratic = rep(NA, Nttl)
-  for(i in 1:num_supportpts_Doptquad){
-    dopt_quadratic[supportpt_assgnmt_Doptquad == i] = 
-      supportpts_Doptquad[i]
-  }
+  num_DoptQ = nrow(res_Fed_Doptquad$design) # number of support points
+  pts_DoptQ = res_Fed_Doptquad$design[, "x"] # the actual support points
+  numeachQ = floor(Nttl / num_DoptQ) # smallest number of times can recycle spt pts
+  dopt_quadratic0 = c(sapply(pts_DoptQ, function(x) rep(x, numeachQ)))
+  dopt_quadratic = sample(c(
+    dopt_quadratic0, 
+    sample(pts_DoptQ, size = Nttl - numeachQ * num_DoptQ, replace = FALSE)
+  ), size = Nttl, replace = FALSE)
   # # check:
   # res_Fed_Doptquad$design
   # table(dopt_quadratic) / Nttl
   
-  # half space-filling, half quadratic Doptimal, 
-  #   assumes Nttl is divisible by 2
-  supportpt_assgnmt_hybrid = cut(
-    sample(1:(Nttl / 2), size = Nttl / 2, replace = FALSE), # shuffle
-    breaks = num_supportpts_Doptquad, labels = FALSE)
-  hybrid_grid_doptq = rep(NA, Nttl / 2)
-  for(i in 1:num_supportpts_Doptquad){
-    hybrid_grid_doptq[supportpt_assgnmt_hybrid == i] = 
-      supportpts_Doptquad[i]
-  }
-  hybrid_grid_doptq[(Nttl / 2 + 1):Nttl] =c(
-    seq(
-      from = supportpts_Doptquad[1], to = supportpts_Doptquad[2],
-      length.out = (Nttl / 4) + 2)[-c(1, (Nttl / 4) + 2)],
-    seq(
-      from = supportpts_Doptquad[2], to = supportpts_Doptquad[3],
-      length.out = (Nttl / 4) + 2)[-c(1, (Nttl / 4) + 2)]
-  )
-  hybrid_grid_doptq = rev(hybrid_grid_doptq) # spacefilling -> doptimal
+  # # half space-filling, half quadratic Doptimal, 
+  # #   assumes Nttl is divisible by 2
+  # supportpt_assgnmt_hybrid = cut(
+  #   sample(1:(Nttl / 2), size = Nttl / 2, replace = FALSE), # shuffle
+  #   breaks = num_supportpts_Doptquad, labels = FALSE)
+  # hybrid_grid_doptq = rep(NA, Nttl / 2)
+  # for(i in 1:num_supportpts_Doptquad){
+  #   hybrid_grid_doptq[supportpt_assgnmt_hybrid == i] = 
+  #     supportpts_Doptquad[i]
+  # }
+  # hybrid_grid_doptq[(Nttl / 2 + 1):Nttl] =c(
+  #   seq(
+  #     from = supportpts_Doptquad[1], to = supportpts_Doptquad[2],
+  #     length.out = (Nttl / 4) + 2)[-c(1, (Nttl / 4) + 2)],
+  #   seq(
+  #     from = supportpts_Doptquad[2], to = supportpts_Doptquad[3],
+  #     length.out = (Nttl / 4) + 2)[-c(1, (Nttl / 4) + 2)]
+  # )
+  # hybrid_grid_doptq = rev(hybrid_grid_doptq) # spacefilling -> doptimal
   
   # simulations #
   
@@ -237,11 +234,11 @@ for(j in 1:numSims){
     x = dopt_quadratic.tmp,
     y = sapply(dopt_quadratic.tmp, FUN = function(x) simulateY_fromfunction(
       x = x, true.function = fT, error.var = sigmasq)))
-  hybrid_grid_doptq.tmp = sample(hybrid_grid_doptq, replace = FALSE)
-  hybrid_sims[[j]] = list(
-    x = hybrid_grid_doptq.tmp,
-    y = sapply(hybrid_grid_doptq.tmp, FUN = function(x) simulateY_fromfunction(
-      x = x, true.function = fT, error.var = sigmasq)))
+  # hybrid_grid_doptq.tmp = sample(hybrid_grid_doptq, replace = FALSE)
+  # hybrid_sims[[j]] = list(
+  #   x = hybrid_grid_doptq.tmp,
+  #   y = sapply(hybrid_grid_doptq.tmp, FUN = function(x) simulateY_fromfunction(
+  #     x = x, true.function = fT, error.var = sigmasq)))
 }
 
 
@@ -378,14 +375,14 @@ for(j in 1:numSims){
     doptlin_sims[[j]], models, fT, sigmasq)
   PPH_doptq = getPPH(
     doptquad_sims[[j]], models, fT, sigmasq)
-  PPH_hybrid = getPPH(
-    hybrid_sims[[j]], models, fT, sigmasq)
+  # PPH_hybrid = getPPH(
+  #   hybrid_sims[[j]], models, fT, sigmasq)
   # master data frame
   PPH_grid$Design = "Grid"
   PPH_doptl$Design = "DOptLin."
   PPH_doptq$Design = "DOptQuadr."
-  PPH_hybrid$Design = "Hybrid"
-  PPH.tmp = rbind(PPH_grid, PPH_doptl, PPH_doptq, PPH_hybrid)
+  # PPH_hybrid$Design = "Hybrid"
+  PPH.tmp = rbind(PPH_grid, PPH_doptl, PPH_doptq) #, PPH_hybrid)
   PPH.tmp$sim = j
   PPH_df = rbind(PPH_df, PPH.tmp)
 }
@@ -420,11 +417,12 @@ PPHmean_seq = aggregate(
 names(PPHmean_seq)[c(1, 2)] = c("Design", "index")
 
 PPHmean_gg = rbind(PPHmean, PPHmean_seq)
-PPHmean_gg = reshape2::melt(PPHmean_gg, id.vars = c("Design", "index"),
-                            measure.vars = paste0("H", 0:(length(models) - 1), sep = ""),
-                            variable.name = "hypothesis")
+PPHmean_gg = reshape2::melt(
+  PPHmean_gg, id.vars = c("Design", "index"),
+  measure.vars = paste0("H", 0:(length(models) - 1), sep = ""),
+  variable.name = "hypothesis")
 design_names = rev(c(
-  "SeqMED", "BoxHill", "DOptLin.", "DOptQuadr.", "Grid", "Hybrid"))
+  "SeqMED", "BoxHill", "DOptLin.", "DOptQuadr.", "Grid")) #, "Hybrid"))
 PPHmean_gg$Design = factor(PPHmean_gg$Design, levels = design_names)
 if(scenario == 1){
   PPHmean_gg$hypothesis = factor(
@@ -441,26 +439,26 @@ PPHmean_gg = setorder(PPHmean_gg, cols = "Design")
 PPHmean_gg2 = PPHmean_gg[PPHmean_gg$index == Nttl, ]
 PPHmean_gg2$Design = factor(PPHmean_gg2$Design, levels = design_names)
 PPHmean_gg2 = setorder(PPHmean_gg2, cols = "Design")
-if(include_hybrid){
-  num_fixed_designs = 4
-} else{
+# if(include_hybrid){
+#   num_fixed_designs = 4
+# } else{
   num_fixed_designs = 3
-}
-if(include_hybrid){
-  epph.plt = ggplot(PPHmean_gg, aes(x = index, y = value, color = Design,
-                                    linetype = Design, shape = Design)) +
-    facet_wrap(~hypothesis) +
-    geom_path() +
-    scale_linetype_manual(values=c(
-      rep("dashed", num_fixed_designs), rep("solid", 2))) +
-    geom_point(data = PPHmean_gg2,
-               mapping = aes(x = index, y = value, color = Design),
-               inherit.aes = FALSE) +
-    theme_bw() +
-    ylim(0, 1) +
-    labs(x = "Stage Index", y = element_blank())
-  epph.plt
-} else{
+# }
+# if(include_hybrid){
+#   epph.plt = ggplot(PPHmean_gg, aes(x = index, y = value, color = Design,
+#                                     linetype = Design, shape = Design)) +
+#     facet_wrap(~hypothesis) +
+#     geom_path() +
+#     scale_linetype_manual(values=c(
+#       rep("dashed", num_fixed_designs), rep("solid", 2))) +
+#     geom_point(data = PPHmean_gg2,
+#                mapping = aes(x = index, y = value, color = Design),
+#                inherit.aes = FALSE) +
+#     theme_bw() +
+#     ylim(0, 1) +
+#     labs(x = "Stage Index", y = element_blank())
+#   epph.plt
+# } else{
   PPHmean_gg_nohybrid = PPHmean_gg %>% filter(Design != "Hybrid")
   PPHmean_gg2_nohybrid = PPHmean_gg2 %>% filter(Design != "Hybrid")
   epph.plt = ggplot(
@@ -478,7 +476,7 @@ if(include_hybrid){
     ylim(0, 1) +
     labs(x = "Stage Index", y = element_blank())
   epph.plt
-}
+# }
 
 # if(scenario == 1){
 #   epph_scen1 = epph.plt
@@ -504,12 +502,12 @@ if(include_hybrid){
 
 
 ################################################################################
-# all the alphas: 0, 0.5, 1, 2, 3, 4
+# all the alphas
 ################################################################################
 
 # alphas = c(0, 1, 10, 25, 50, 100)
-alphas = c(0, 1, 10, 100)
-# alphas = c(0, 1, 10)
+# alphas = c(0, 1, 10, 100)
+alphas = c(0, 1, 10)
 
 seqmed_sims_alphas = list()
 min_alpha_used = matrix(NA, length(alphas), numSims)
@@ -545,14 +543,14 @@ for(j in 1:numSims){
     doptlin_sims[[j]], models, fT, sigmasq)
   PPH_doptq = getPPH(
     doptquad_sims[[j]], models, fT, sigmasq)
-  PPH_hybrid = getPPH(
-    hybrid_sims[[j]], models, fT, sigmasq)
+  # PPH_hybrid = getPPH(
+  #   hybrid_sims[[j]], models, fT, sigmasq)
   # master data frame
   PPH_grid$Design = "Grid"
   PPH_doptl$Design = "DOptLin."
   PPH_doptq$Design = "DOptQuadr."
-  PPH_hybrid$Design = "Hybrid"
-  PPH.tmp = rbind(PPH_grid, PPH_doptl, PPH_doptq, PPH_hybrid)
+  # PPH_hybrid$Design = "Hybrid"
+  PPH.tmp = rbind(PPH_grid, PPH_doptl, PPH_doptq) #, PPH_hybrid)
   PPH.tmp$sim = j
   PPH_df = rbind(PPH_df, PPH.tmp)
 }
@@ -601,7 +599,8 @@ PPHmean_gg = reshape2::melt(
 #   "BoxHill",
 #   "DOptLin.", "DOptQuadr.", "Grid", "Hybrid"))
 design_names = c(
-  "Hybrid", "Grid", "DOptLin.", "DOptQuadr.", "BoxHill",
+  # "Hybrid", 
+  "Grid", "DOptLin.", "DOptQuadr.", "BoxHill",
   paste("SeqMED", alphas, sep = " "))
 PPHmean_gg$Design = factor(PPHmean_gg$Design, levels = design_names)
 if(scenario == 1){
@@ -619,36 +618,36 @@ PPHmean_gg = setorder(PPHmean_gg, cols = "Design")
 PPHmean_gg2 = PPHmean_gg[PPHmean_gg$index == Nttl, ]
 PPHmean_gg2$Design = factor(PPHmean_gg2$Design, levels = design_names)
 PPHmean_gg2 = setorder(PPHmean_gg2, cols = "Design")
-if(include_hybrid){
-  epph.plt3 = ggplot(PPHmean_gg, aes(x = index, y = value, color = Design,
-                                     linetype = Design)) +
-    facet_wrap(~hypothesis) +
-    geom_path() +
-    scale_linetype_manual(
-      values=c(
-        rep("dashed", num_fixed_designs), rep("solid", length(alphas) + 1))) +
-    geom_point(data = PPHmean_gg2,
-               mapping = aes(x = index, y = value, color = Design),
-               inherit.aes = FALSE) +
-    theme_bw() +
-    ylim(0, 1) +
-    labs(x = "Stage Index", y = element_blank())
-  if(Nttl == 12){
-    epph.plt3 = epph.plt3 + scale_x_continuous(breaks = seq(0, 12, by = 3))
-  }
-  epph.plt3
-} else{
-  PPHmean_gg_nohybrid = PPHmean_gg %>% filter(Design != "Hybrid")
-  PPHmean_gg2_nohybrid = PPHmean_gg2 %>% filter(Design != "Hybrid")
+# if(include_hybrid){
+#   epph.plt3 = ggplot(PPHmean_gg, aes(x = index, y = value, color = Design,
+#                                      linetype = Design)) +
+#     facet_wrap(~hypothesis) +
+#     geom_path() +
+#     scale_linetype_manual(
+#       values=c(
+#         rep("dashed", num_fixed_designs), rep("solid", length(alphas) + 1))) +
+#     geom_point(data = PPHmean_gg2,
+#                mapping = aes(x = index, y = value, color = Design),
+#                inherit.aes = FALSE) +
+#     theme_bw() +
+#     ylim(0, 1) +
+#     labs(x = "Stage Index", y = element_blank())
+#   if(Nttl == 12){
+#     epph.plt3 = epph.plt3 + scale_x_continuous(breaks = seq(0, 12, by = 3))
+#   }
+#   epph.plt3
+# } else{
+  # PPHmean_gg_nohybrid = PPHmean_gg %>% filter(Design != "Hybrid")
+  # PPHmean_gg2_nohybrid = PPHmean_gg2 %>% filter(Design != "Hybrid")
   epph.plt3 = ggplot(
-    PPHmean_gg_nohybrid, aes(x = index, y = value, color = Design,
+    PPHmean_gg, aes(x = index, y = value, color = Design,
                              linetype = Design)) +
     facet_wrap(~hypothesis) +
     geom_path() +
     scale_linetype_manual(values=c(
       rep("dashed", num_fixed_designs), rep("solid", length(alphas) + 1))) +
     geom_point(
-      data = PPHmean_gg2_nohybrid,
+      data = PPHmean_gg2,
       mapping = aes(x = index, y = value, color = Design),
       inherit.aes = FALSE) +
     theme_bw() +
@@ -658,17 +657,17 @@ if(include_hybrid){
     epph.plt3 = epph.plt3 + scale_x_continuous(breaks = seq(0, 12, by = 3))
   }
   epph.plt3
-}
+# }
 
 
-# manuscript plot
-ggsave(
-  filename = paste0(
-    "lm", "_scen", scenario, Dinit_label, "_hybrid", include_hybrid,
-    "_epph_alphas_", paste(alphas, collapse = "_"), ".pdf"),
-  plot = last_plot(),
-  width = 6.5, height = 3.5, units = c("in")
-)
+# # manuscript plot
+# ggsave(
+#   filename = paste0(
+#     "lm", "_scen", scenario, Dinit_label, "_hybrid", include_hybrid,
+#     "_epph_alphas_", paste(alphas, collapse = "_"), ".pdf"),
+#   plot = last_plot(),
+#   width = 6.5, height = 3.5, units = c("in")
+# )
 
 if(scenario == 1){
   epph_scen1 = epph.plt3

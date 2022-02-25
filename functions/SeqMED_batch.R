@@ -34,9 +34,10 @@ objective_newq_seqmed = function(
 # batch of seqN new points
 SeqMED_newq_batch = function(
   initD, y, model0, model1, error.var, 
-  N2 = 11, numCandidates = 10^5, k = 4, 
+  N2 = 1, numCandidates = 10^5, k = 4, 
   xmin = -1, xmax = 1, p = 1, alpha = 1, genCandidates = 1, candidates = NULL, 
-  keep_trying_alpha = keep_trying_alpha, prints = FALSE, batch.idx = 1
+  keep_trying_alpha = keep_trying_alpha, 
+  prints = FALSE, save_objectives = FALSE, batch.idx = 1
 ){
   initN = length(initD)
   if(length(y) != initN) stop("length of y does not match length of initial input data, initD")
@@ -92,6 +93,9 @@ SeqMED_newq_batch = function(
     which_opt_w = which.max(w_candidates)
     x_opt_w = candidates[which_opt_w]
     is_x_max_in_initD = any(sapply(initD, function(x) x == x_opt_w))
+    if(save_objectives){
+      objectives = w_candidates
+    }
   } else{
     is_x_max_in_initD = TRUE
   }
@@ -133,6 +137,9 @@ SeqMED_newq_batch = function(
           stop("SeqMED_newq_batch: All alpha > 0 result in the objective function evaluating to Inf")
         }
       }
+    }
+    if(save_objectives){
+      objectives = f_min_candidates
     }
     which_opt_f = which.min(f_min_candidates)
     x_opt_f = candidates[which_opt_f]
@@ -186,9 +193,11 @@ SeqMED_newq_batch = function(
   if(prints){
     print(paste0("alpha=", as.character(alpha)))
   }
-  return(
-    list(
-      "initD" = initD, "addD" = D, "updatedD" = c(initD, D), alpha = alpha
-    )
+  result = list(
+    initD = initD, addD = D, updatedD = c(initD, D), alpha = alpha
   )
+  if(save_objectives){
+    result$objectives = objectives
+  }
+  return(result)
 }

@@ -10,6 +10,7 @@
 rm(list = ls())
 
 scenario = 1 # 1, 2
+save_objectives = TRUE
 
 ################################################################################
 # Sources/Libraries
@@ -123,13 +124,15 @@ seed = 111
 #   model0 = model0, model1 = model1,
 #   error.var = sigmasq, xmin = xmin, xmax = xmax,
 #   candidates = candidates, numSeq = numSeq, seqN = seqN,
-#   alpha_seq = 10, prints = TRUE, seed = seed)
+#   alpha_seq = 10, prints = TRUE, save_objectives = save_objectives,
+#   seed = seed)
 # seqmed100_sim = SeqMED(
 #   y.in = NULL, x.in = NULL, true.function = fT,
 #   model0 = model0, model1 = model1,
 #   error.var = sigmasq, xmin = xmin, xmax = xmax,
 #   candidates = candidates, numSeq = numSeq, seqN = seqN,
-#   alpha_seq = 100, prints = TRUE, seed = seed)
+#   alpha_seq = 100, prints = TRUE, save_objectives = save_objectives,
+#   seed = seed)
 # boxhill_sim = BH_m2(NULL, NULL, prior_probs, model0, model1, Nttl,
 #       candidates, fT, sigmasq, seed = seed)
 # 
@@ -520,7 +523,7 @@ if(include_hybrid){
 if(include_hybrid){
   epph.plt = ggplot(PPHmean_gg, aes(x = index, y = value, color = Design,
                                     linetype = Design, shape = Design)) +
-    facet_wrap(~hypothesis) +
+    facet_wrap(vars(hypothesis)) +
     geom_path() +
     scale_linetype_manual(values=c(
       rep("dashed", num_fixed_designs), rep("solid", 3))) +
@@ -537,7 +540,7 @@ if(include_hybrid){
   epph.plt = ggplot(
     PPHmean_gg_nohybrid, aes(x = index, y = value, color = Design,
                              linetype = Design, shape = Design)) +
-    facet_wrap(~hypothesis) +
+    facet_wrap(vars(hypothesis)) +
     geom_path() +
     scale_linetype_manual(
       values=c(rep("dashed", num_fixed_designs), rep("solid", 3))) +
@@ -579,7 +582,7 @@ for(uptoN in 2:Nttl){
   epph.plt_uptoN = ggplot(
     PPHmean_gg_uptoN, aes(x = index, y = value, color = Design,
                           linetype = Design, shape = Design)) +
-    facet_wrap(~hypothesis) +
+    facet_wrap(vars(hypothesis)) +
     geom_path() +
     geom_point(
       data = PPHmean_gg2_uptoN,
@@ -653,39 +656,59 @@ for(uptoN in 2:Nttl){
     ggdata %>% mutate(specified_alpha = "10"), 
     ggdata %>% mutate(specified_alpha = "100")
   )
-  pltw = ggplot(
+  pltw_uptoN = ggplot(
     ggdata2, aes(x = x, y = y, color = Function, linetype = Function)) +
     facet_wrap(vars(specified_alpha)) +
     scale_linetype_manual(values = c(2, 2, 1, 1), guide = "none") +
     # ylim(-1.9, 1.9) +
     scale_color_manual(
-      values = c(gg_color_hue(4)[c(3, 4)], "red", "orange", "gray50", gg_color_hue(4)[2])) + #gg_color_hue(6)[c(3, 4)])) +
+      values = c(
+        gg_color_hue(4)[c(3, 4)], "red", "orange", "gray50", 
+        gg_color_hue(4)[2])) +
     geom_path() +
     geom_ribbon(
       data = ggdata_ribbon, mapping = aes(x = x, ymin = ymin, ymax = ymax),
       alpha = 0.2, inherit.aes = FALSE) +
-    # geom_text(
-    #   data = seqmed_designpts %>% filter(index == uptoN), 
-    #   mapping = aes(x = x, y = 0, label = round(x, 5)), color = 4, 
-    #   inherit.aes = FALSE) +
-    # geom_text(
-    #   data = seqmed_designpts %>% filter(index == uptoN), 
-    #   mapping = aes(x = 0, y = 1, label = paste0("alpha=", alpha)), color = 2, 
-    #   inherit.aes = FALSE) +
     geom_point(
       data = seqmed_designpts %>% mutate(point_color = factor(point_color)), 
       mapping = aes(x = x, y = y, color = point_color), alpha = 0.5,
       inherit.aes = FALSE) +
     theme_bw() +
     theme(panel.grid.minor = element_blank())
-  ggarrange(epph.plt_uptoN, pltw, nrow = 2)
+  if(save_objectives & 
+     !is.null(seqmed10_sim$objectives[[uptoN]]) & 
+     !is.null(seqmed100_sim$objectives[[uptoN]])){
+    seqmed10_obj = seqmed10_sim$objectives[[uptoN]]
+    seqmed100_obj = seqmed100_sim$objectives[[uptoN]]
+    obj_data = rbind(
+      data.frame(
+        Candidate = candidates, Objective = seqmed10_obj, 
+        specified_alpha = "10"), 
+      data.frame(
+        Candidate = candidates, Objective = seqmed100_obj, 
+        specified_alpha = "100")
+    )
+    obj_uptoN = ggplot(obj_data, aes(x = Candidate, y = log(Objective))) + 
+      facet_wrap(vars(specified_alpha), scales = "free_y") +
+      geom_path(color = "gray") +
+      geom_point(
+        data = obj_data %>% group_by(specified_alpha) %>% 
+          slice(which.min(Objective)) %>% ungroup(), 
+        mapping = aes(x = Candidate, y = log(Objective)), inherit.aes = FALSE, 
+        color = "red", alpha = 0.5) +
+      theme_bw() +
+      theme(panel.grid.minor = element_blank())
+    ggarrange(epph.plt_uptoN, pltw_uptoN, obj_uptoN, nrow = 3)
+  } else{
+    ggarrange(epph.plt_uptoN, pltw_uptoN, nrow = 2)
+  }
   
   ggsave(
     filename = paste0(
       "lm", "_scen", scenario,
-      "_epph_fits_alpha10vs100_N", uptoN, ".pdf"),
+      "_epph_fits_obj_alpha10vs100_N", uptoN, ".pdf"),
     plot = last_plot(),
-    width = 8, height = 6, units = c("in")
+    width = 8, height = 8, units = c("in")
   )
 }
 

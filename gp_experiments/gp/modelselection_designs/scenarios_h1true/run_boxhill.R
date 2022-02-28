@@ -1,5 +1,5 @@
 ################################################################################
-# last updated: 06/21/2021
+# last updated: 2/27/2022
 # purpose: to test seqmedgp for scenarios 1 or 2
 #   where H1 is true
 
@@ -56,10 +56,8 @@ gg_color_hue = function(n) {
 
 # simulations settings
 numSims = 100
-Nin = 1
-Nnew = 15
-Nttl = Nin + Nnew
-xmin = 0
+Nttl = 15
+xmin = -1
 xmax = 1
 numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
@@ -123,11 +121,6 @@ null_mean = simulated.data$null_mean
 y_seq_mat = simulated.data$function_values_mat
 
 ################################################################################
-# initial design
-x_input_idx = ceiling(numx / 2)
-x_input = x_seq[x_input_idx]
-
-################################################################################
 # generate boxhills
 
 # simulations!
@@ -136,10 +129,9 @@ boxhills = foreach(
   i = 1:numSims
 ) %dorng% {
   y_seq = y_seq_mat[ , i]
-  y_input = y_seq[x_input_idx]
   BHgp_m2(
-    y.in = y_input, x.in = x_input, x.in.idx =  x_input_idx, 
-    prior.probs = prior_probs, model0 = model0, model1 = model1, n = Nnew, 
+    y.in = NULL, x.in = NULL, x.in.idx =  NULL, 
+    prior.probs = prior_probs, model0 = model0, model1 = model1, n = Nttl, 
     candidates = x_seq, function.values = y_seq, seed = NULL)
 }
 

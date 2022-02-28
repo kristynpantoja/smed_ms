@@ -85,14 +85,17 @@ BHgp_m2 = function(
   
   # check preliminary data
   if(is.null(x.in) & !is.null(y.in)){ # x.in is null, y.in is not null
-    stop("BH_m2 : preliminary y.in is given, but not corresponding x.in")
-  } else if(is.null(y.in) & !is.null(x.in)){ # x.in is not null, y.in is null (get y.in)
+    stop("SeqMEDgp: preliminary y.in  is given, but not corresponding x.in")
+  } else if(is.null(x.in)){
+    n = n - 1
+    x.in.idx = ceiling(numx / 2)
+    x.in = candidates[x.in.idx]
+  }
+  if(is.null(y.in)){ # x is not null, y.in is null (get y.in)
     y.in = function.values[x.in.idx]
-  } else if(is.null(x.in) & is.null(y.in)){ # both x and y are null, then us BH method
-    stop("BHgp_m2: need input data, at least x.in!")
   } else{
     if(length(x.in) != length(y.in)){
-      stop("BH_m2 : length of preliminary x.in and y.in don't match!")
+      stop("SeqMEDgp: length of preliminary x.in and y.in don't match!")
     }
   }
   

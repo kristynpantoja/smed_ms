@@ -1,6 +1,6 @@
 for(scenario in c(1, 2, 4, 5)){
   ################################################################################
-  # last updated: 05/27/2021
+  # last updated: 2/27/2022
   # purpose: to test seqmedgp for scenarios 1 or 2
   #   where H1 is true
   
@@ -52,7 +52,7 @@ for(scenario in c(1, 2, 4, 5)){
   
   # simulations settings
   numSims = 100
-  xmin = 0
+  xmin = -1
   xmax = 1
   numx = 10^3 + 1
   x_seq = seq(from = xmin, to = xmax, length.out = numx)

@@ -3,7 +3,7 @@
 # purpose: to test seqmedgp for scenarios 3, 4, 5, or 6
 #   where both hypotheses are misspecified
 
-scenario = 6 # 3, 4, 5, 6
+scenario = 4 # 3, 4, 5, 6
 
 ################################################################################
 # Sources/Libraries
@@ -56,20 +56,16 @@ gg_color_hue = function(n) {
 
 # simulations settings
 numSims = 100
-Nin = 1
-Nnew = 15
-Nttl = Nin + Nnew
-xmin = 0
+numSeq = 15
+seqN = 1
+Nttl = numSeq * seqN
+Nttl = 15
+xmin = -1
 xmax = 1
 numx = 10^3 + 1
 x_seq = seq(from = xmin, to = xmax, length.out = numx)
 sigmasq_measuremt = 1e-10
 sigmasq_signal = 1
-
-# SeqMED settings
-buffer = 0
-obj_type = 5
-newq = TRUE
 
 ################################################################################
 # Scenario settings
@@ -158,32 +154,16 @@ x_input = x_seq[x_input_idx]
 ################################################################################
 # generate seqmeds 
 
-# for(k in 1:2){
-k = 1
-
-# k : sequential setting
-seq.type = k
-if(seq.type == 1){
-  numSeq = 15
-  seqN = 1
-} else if(seq.type == 2){
-  numSeq = 3
-  seqN = 5
-}
-
 # simulations!
 registerDoRNG(rng.seed)
 seqmeds = foreach(
   b = 1:numSims
 ) %dorng% {
   y_seq = y_seq_mat[ , b]
-  y_input = y_seq[x_input_idx]
   SeqMEDgp(
-    y.in = y_input, x.in = x_input, x.in.idx = x_input_idx, 
+    y.in = NULL, x.in = NULL, x.in.idx = NULL, 
     candidates = x_seq, function.values = y_seq, xmin = xmin, xmax = xmax,
-    model0 = model0, model1 = model1, 
-    numSeq = numSeq, seqN = seqN, buffer = buffer, 
-    objective.type = obj_type, newq = newq)
+    model0 = model0, model1 = model1, numSeq = numSeq, seqN = seqN)
 }
 
 filename_append.tmp = paste0(
@@ -195,8 +175,6 @@ saveRDS(seqmeds,
         file = paste0(
           output_dir,
           "/scenario", scenario, "_seqmed", 
-          "_leaveout", 
-          "_seq", seq.type,
           filename_append.tmp))
 # }
 

@@ -53,12 +53,10 @@ for(scenario in c(1, 2, 4, 5)){
   
   # simulations settings
   numSims = 100
-  Nin = 1
   numSeq = 15
   seqN = 1
-  Nnew = numSeq * seqN
-  Nttl = Nin + Nnew
-  xmin = 0
+  Nttl = numSeq * seqN
+  xmin = -1
   xmax = 1
   numx = 10^3 + 1
   x_seq = seq(from = xmin, to = xmax, length.out = numx)
@@ -123,24 +121,17 @@ for(scenario in c(1, 2, 4, 5)){
   y_seq_mat = simulated.data$function_values_mat
   
   ################################################################################
-  # initial design
-  x_input_idx = ceiling(numx / 2)
-  x_input = x_seq[x_input_idx]
-  
-  ################################################################################
   # space-filling design
-  
-  step_size = floor(length(x_seq) - 1) / (Nnew + 1)
+  x_input_idx = ceiling(numx / 2)
+  step_size = floor(length(x_seq) - 1) / Nttl
   x.new.idx = round(c(
-    x_input_idx - 1:ceiling(Nnew / 2) * step_size, 
-    x_input_idx + 1:floor(Nnew / 2) * step_size
+    x_input_idx - 1:ceiling((Nttl - 1) / 2) * step_size, 
+    x_input_idx + 1:floor((Nttl - 1) / 2) * step_size
   ))
-  x.new.idx = sort(x.new.idx)
+  x.new.idx = sort(c(x_input_idx, x.new.idx))
   # x.new.idx
   # plot(x = x.new.idx, y = rep(0, length(x.new.idx)), xlim = c(1, length(x_seq)))
   # points(x = x_input_idx, y = 0, col = 2)
-  
-  x.new = x_seq[x.new.idx]
   
   # simulations!
   registerDoRNG(rng.seed)
@@ -148,11 +139,12 @@ for(scenario in c(1, 2, 4, 5)){
     i = 1:numSims
   ) %dorng% {
     y_seq = y_seq_mat[ , i]
-    y_input = y_seq[x_input_idx]
-    # new points' y
-    y.new = y_seq[x.new.idx]
-    list(x.in = x_input, x.in.idx = x_input_idx, y.in = y_input, 
-         x.new = x.new, x.new.idx = x.new.idx, y.new = y.new, 
+    
+    x.new.idx.tmp = sample(x.new.idx, replace = FALSE)
+    x.new = x_seq[x.new.idx.tmp]
+    y.new = y_seq[x.new.idx.tmp]
+    list(x.in = x.new[1], x.in.idx = x.new.idx.tmp[1], y.in = y.new[1], 
+         x.new = x.new[-1], x.new.idx = x.new.idx.tmp[-1], y.new = y.new[-1], 
          function.values = y_seq)
   }
   

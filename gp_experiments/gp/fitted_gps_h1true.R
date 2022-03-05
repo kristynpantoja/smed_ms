@@ -188,12 +188,8 @@ plt = ggplot(data = ggdata.melted, aes(x = x, y =value, color = variable),
   theme_bw() + 
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
-  labs(y = "y", x = "x", fill = "Function", color = "Function")
-if(typeT == "periodic"){
-  plt = plt + geom_vline(
-    xintercept = pT * (0:floor((xmax - xmin) / pT)), #color = "gray", 
-    alpha = 0.125, linetype = 2)
-}
+  labs(y = "y", x = "x", fill = "Function", color = "Function") + 
+  xlim(-0.25, 0.25)
 plt
 
 # slide plot
@@ -209,5 +205,3 @@ ggsave(
   plot = plt,
   width = 6.5, height = 2, units = c("in")
 )
-
-# }

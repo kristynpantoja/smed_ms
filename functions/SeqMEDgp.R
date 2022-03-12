@@ -4,10 +4,11 @@
 
 SeqMEDgp = function(
   y.in = NULL, x.in = NULL, x.in.idx = NULL, candidates, function.values, 
-  xmin = -1, xmax = 1, k = 4, p = 1, 
+  xmin = -1, xmax = 1, k = NULL, p = 1, 
   n = NULL, numSeq = 5, seqN = 1, alpha.seq = 1, 
   model0 = NULL, model1 = NULL, prints = FALSE
 ){
+  if(is.null(k)) k = 4 * p
   if(!is.null(n)){
     numSeq = n
     seqN = 1

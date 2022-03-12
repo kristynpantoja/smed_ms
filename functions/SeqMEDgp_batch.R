@@ -9,8 +9,9 @@
 
 obj_newq_gp = function(
   candidate, D = NULL, Kinv0, Kinv1, initD, y, 
-  p = 1, k = 4, alpha = 1, model0, model1
+  p = 1, k = NULL, alpha = 1, model0, model1
 ){
+  if(is.null(k)) k = 4 * p
     # q(x), x in C
     q_cand = q_gp(candidate, Kinv0, Kinv1, initD, y, p, alpha, buffer = 0, 
                   model0, model1) # no need to leave anything out here, jsyk
@@ -37,10 +38,11 @@ obj_newq_gp = function(
 }
 
 SeqMEDgp_newq_batch = function(
-  initD, y, N2 = 1, numCandidates = NULL, k = 4, p = 1, 
+  initD, y, N2 = 1, numCandidates = NULL, k = NULL, p = 1, 
   xmin = -1, xmax = 1, alpha = NULL, candidates = NULL, 
   batch.idx = 1, model0, model1
 ){
+  if(is.null(k)) k = 4 * p
   initN = length(initD)
   if(length(y) != initN) stop("length of y does not match length of initial input data, initD")
   

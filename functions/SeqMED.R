@@ -7,9 +7,10 @@ SeqMED = function(
   candidates, true.function, 
   xmin = -1, xmax = 1, 
   numSeq = 5, seqN = 1, alpha_seq = 1, 
-  k = 4, p = 1, genCandidates = 1, keep_trying_alpha = TRUE,
+  k, p = 1, genCandidates = 1, keep_trying_alpha = TRUE,
   prints = FALSE, seed = NULL, save_objectives = FALSE
 ){
+  if(is.null(k)) k = 4 * p
   if(!is.null(seed)) set.seed(seed)
   if(numSeq > 1 & length(seqN) == 1) seqN = rep(seqN, numSeq)
   if(numSeq > 1 & is.null(alpha_seq)) alpha_seq = rep(1, numSeq)

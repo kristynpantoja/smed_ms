@@ -1,7 +1,8 @@
 # objective function
 objective_newq_seqmed = function(
   candidate, D, postmean0, postmean1, postvar0, postvar1, model0, model1, 
-  error.var, p = 1, k = 4, alpha = 1){
+  error.var, p = 1, k = NULL, alpha = 1){
+  if(is.null(k)) k = 4 * p
   # result0 = q_seqmed(
   #   candidate, postmean0, postmean1, postvar0, postvar1, model0, model1,
   #   error.var, p, alpha)^k *
@@ -34,11 +35,12 @@ objective_newq_seqmed = function(
 # batch of seqN new points
 SeqMED_newq_batch = function(
   initD, y, model0, model1, error.var, 
-  N2 = 1, numCandidates = 10^5, k = 4, 
+  N2 = 1, numCandidates = 10^5, k = NULL, 
   xmin = -1, xmax = 1, p = 1, alpha = 1, genCandidates = 1, candidates = NULL, 
   keep_trying_alpha = keep_trying_alpha, 
   prints = FALSE, save_objectives = FALSE, batch.idx = 1
 ){
+  if(is.null(k)) k = 4 * p
   initN = length(initD)
   if(length(y) != initN) stop("length of y does not match length of initial input data, initD")
   

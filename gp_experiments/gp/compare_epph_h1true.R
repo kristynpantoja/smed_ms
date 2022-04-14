@@ -233,10 +233,10 @@ for(j in 1:numSims){
   PPH_seq.r = getPPHseq(r, model0, model1, Nttl)
   PPH_seq.g = getPPHseq(g, model0, model1, Nttl, randomize.order = TRUE)
   # master data frame
-  PPH_seq.bh$Design = "(b) BoxHill"
-  PPH_seq.lo$Design = "(a) SeqMED" # "leaveout"
-  PPH_seq.r$Design = "(d) Random"
-  PPH_seq.g$Design = "(c) Grid"
+  PPH_seq.bh$Design = "(B) BoxHill"
+  PPH_seq.lo$Design = "(A) SeqMED" # "leaveout"
+  PPH_seq.r$Design = "(D) Random"
+  PPH_seq.g$Design = "(C) Grid"
   PPH_seq.tmp = rbind(
     PPH_seq.bh, PPH_seq.lo, #PPH_seq.qc, PPH_seq.lo, PPH_seq.qc2, PPH_seq.kq, 
     PPH_seq.r, PPH_seq.g)

@@ -16,7 +16,7 @@ WN = function(mu1, mu2, var1, var2, dim = 1){
                  )
       )
     } else{
-      stop("error in WassN : invalid dim")
+      stop("error in WN() : invalid dim")
     }
   }
   return(as.numeric(W))

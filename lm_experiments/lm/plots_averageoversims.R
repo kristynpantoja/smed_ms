@@ -10,7 +10,8 @@
 rm(list = ls())
 
 scenario = 1 # 1, 2
-given_Dinit = FALSE
+include_hybrid = FALSE
+include_Dsoptimal
 
 ################################################################################
 # Sources/Libraries
@@ -115,18 +116,10 @@ if(scenario == 1){
 # import box & hill and seqmed simulations
 ################################################################################
 
-
-if(given_Dinit){
-  N0 = 3
-  Dinit_label = paste0("_Dinit", N0)
-}  else{
-  Dinit_label = ""
-}
 seqmed_sims = readRDS(paste0(
   output_dir,
   "/scenario", scenario, 
   "_seqmed",
-  Dinit_label, 
   "_N", Nttl, 
   "_sigmasq", sigmasq,
   "_alpha", alpha,
@@ -160,6 +153,11 @@ res_Fed_Doptquad = optFederov(
   ~1+x+I(x^2), data = candidates_named, approximate = TRUE, criterion = "D")
 res_Fed_Doptquad$design
 
+# consider D-optimal design for b2
+res_Fed_Ds = list()
+res_Fed_Ds$design = res_Fed_Doptquad$design
+res_Fed_Ds$design[, "Proportion"] = c(0.25, 0.5, 0.25)
+
 # define designs #
 
 # space-filling (grid)
@@ -168,17 +166,22 @@ space_filling = seq(from = xmin, to = xmax, length.out = Nttl)
 grid_sims = list()
 doptlin_sims = list()
 doptquad_sims = list()
+doptequalinterest_sims = list()
 hybrid_sims = list()
 set.seed(rng.seed)
 for(j in 1:numSims){
   # Doptimal - linear
   num_DoptL = nrow(res_Fed_Doptlin$design) # number of support points
   pts_DoptL = res_Fed_Doptlin$design[, "x"] # the actual support points
-  numeachL = floor(Nttl / num_DoptL) # smallest number of times can recycle spt pts
-  dopt_linear0 = c(sapply(pts_DoptL, function(x) rep(x, numeachL)))
-  dopt_linear = sample(c(
+  wts_DoptL = res_Fed_Doptlin$design[, "Proportion"] # their weights
+  n_DoptL = floor(Nttl * wts_DoptL) # n for each support point
+  dopt_linear0 = c()
+  for(i in 1:num_DoptL){
+    dopt_linear0 = c(dopt_linear0, rep(pts_DoptL[i], n_DoptL[i]))
+  }
+  dopt_linear = sample(c( # shuffle
     dopt_linear0, 
-    sample(pts_DoptL, size = Nttl - numeachL * num_DoptL, replace = FALSE)
+    sample(pts_DoptL, size = Nttl - sum(n_DoptL), replace = FALSE)
   ), size = Nttl, replace = FALSE)
   # # check:
   # res_Fed_Doptlin$design
@@ -187,15 +190,36 @@ for(j in 1:numSims){
   # Doptimal - quadratic
   num_DoptQ = nrow(res_Fed_Doptquad$design) # number of support points
   pts_DoptQ = res_Fed_Doptquad$design[, "x"] # the actual support points
-  numeachQ = floor(Nttl / num_DoptQ) # smallest number of times can recycle spt pts
-  dopt_quadratic0 = c(sapply(pts_DoptQ, function(x) rep(x, numeachQ)))
-  dopt_quadratic = sample(c(
+  wts_DoptQ = res_Fed_Doptquad$design[, "Proportion"] # their weights
+  n_DoptQ = floor(Nttl * wts_DoptQ) # n for each support point
+  dopt_quadratic0 = c()
+  for(i in 1:num_DoptQ){
+    dopt_quadratic0 = c(dopt_quadratic0, rep(pts_DoptQ[i], n_DoptQ[i]))
+  }
+  dopt_quadratic = sample(c( # shuffle
     dopt_quadratic0, 
-    sample(pts_DoptQ, size = Nttl - numeachQ * num_DoptQ, replace = FALSE)
+    sample(pts_DoptQ, size = Nttl - sum(n_DoptQ), replace = FALSE)
   ), size = Nttl, replace = FALSE)
   # # check:
   # res_Fed_Doptquad$design
   # table(dopt_quadratic) / Nttl
+  
+  # Ds optimal - linear nested in quadratic
+  num_Ds = nrow(res_Fed_Ds$design) # number of support points
+  pts_Ds = res_Fed_Ds$design[, "x"] # the actual support points
+  wts_Ds = res_Fed_Ds$design[, "Proportion"] # their weights
+  n_Ds = floor(Nttl * wts_Ds) # n for each support point
+  dopt_equalinterest0 = c()
+  for(i in 1:num_Ds){
+    dopt_equalinterest0 = c(dopt_equalinterest0, rep(pts_Ds[i], n_Ds[i]))
+  }
+  dopt_equalinterest = sample(c( # shuffle
+    dopt_equalinterest0, 
+    sample(pts_Ds, size = Nttl - sum(n_Ds), replace = FALSE)
+  ), size = Nttl, replace = FALSE)
+  # # check:
+  # res_Fed_Ds$design
+  # table(dopt_equalinterest) / Nttl
   
   # # half space-filling, half quadratic Doptimal, 
   # #   assumes Nttl is divisible by 2
@@ -234,6 +258,11 @@ for(j in 1:numSims){
     x = dopt_quadratic.tmp,
     y = sapply(dopt_quadratic.tmp, FUN = function(x) simulateY_fromfunction(
       x = x, true.function = fT, error.var = sigmasq)))
+  dopt_equalinterest.tmp = sample(dopt_equalinterest, replace = FALSE)
+  doptequalinterest_sims[[j]] = list(
+    x = dopt_equalinterest.tmp,
+    y = sapply(dopt_equalinterest.tmp, FUN = function(x) simulateY_fromfunction(
+      x = x, true.function = fT, error.var = sigmasq)))
   # hybrid_grid_doptq.tmp = sample(hybrid_grid_doptq, replace = FALSE)
   # hybrid_sims[[j]] = list(
   #   x = hybrid_grid_doptq.tmp,
@@ -254,7 +283,6 @@ for(j in 1:numSims){
 ################################################################################
 # plot the posterior probabilities of the hypotheses
 ################################################################################
-include_hybrid = FALSE
 
 if(scenario == 1){
   models = list(model0, model1)
@@ -492,7 +520,7 @@ getPPHseq = function(
 #   # manuscript plot
 #   ggsave(
 #     filename = paste0(
-#       "lm", Dinit_label, "_hybrid", include_hybrid,
+#       "lm", "_hybrid", include_hybrid,
 #       "_epphs", ".pdf"),
 #     plot = last_plot(),
 #     width = 6.5, height = 5.5, units = c("in")
@@ -516,7 +544,6 @@ for(i in 1:length(alphas)){
     output_dir,
     "/scenario", scenario, 
     "_seqmed",
-    Dinit_label, 
     "_N", Nttl, 
     "_sigmasq", sigmasq,
     "_alpha", alphas[i],
@@ -543,14 +570,17 @@ for(j in 1:numSims){
     doptlin_sims[[j]], models, fT, sigmasq)
   PPH_doptq = getPPH(
     doptquad_sims[[j]], models, fT, sigmasq)
+  PPH_doptei = getPPH(
+    doptequalinterest_sims[[j]], models, fT, sigmasq)
   # PPH_hybrid = getPPH(
   #   hybrid_sims[[j]], models, fT, sigmasq)
   # master data frame
   PPH_grid$Design = paste0("(vii) ", "Grid")
   PPH_doptl$Design = paste0("(v) ", "DOptLin.")
   PPH_doptq$Design = paste0("(vi) ", "DOptQuadr.")
+  PPH_doptei$Design = paste0("(viii) ", "DOptEqInt.")
   # PPH_hybrid$Design = "Hybrid"
-  PPH.tmp = rbind(PPH_grid, PPH_doptl, PPH_doptq) #, PPH_hybrid)
+  PPH.tmp = rbind(PPH_grid, PPH_doptl, PPH_doptq, PPH_doptei) #, PPH_hybrid)
   PPH.tmp$sim = j
   PPH_df = rbind(PPH_df, PPH.tmp)
 }
@@ -632,34 +662,34 @@ PPHmean_gg2 = PPHmean_gg[PPHmean_gg$index == Nttl, ]
 #   }
 #   epph.plt3
 # } else{
-  # PPHmean_gg_nohybrid = PPHmean_gg %>% filter(Design != "Hybrid")
-  # PPHmean_gg2_nohybrid = PPHmean_gg2 %>% filter(Design != "Hybrid")
-num_fixed_designs = 3
-  epph.plt3 = ggplot(
-    PPHmean_gg, aes(x = index, y = value, color = Design,
-                             linetype = Design)) +
-    facet_wrap(~hypothesis) +
-    geom_path() +
-    scale_linetype_manual(values=c(
-      rep("solid", length(alphas) + 1), rep("dashed", num_fixed_designs))) +
-    geom_point(
-      data = PPHmean_gg2,
-      mapping = aes(x = index, y = value, color = Design),
-      inherit.aes = FALSE) +
-    theme_bw() +
-    ylim(0, 1) +
-    labs(x = "Index", y = element_blank())
-  if(Nttl == 12){
-    epph.plt3 = epph.plt3 + scale_x_continuous(breaks = seq(0, 12, by = 3))
-  }
-  epph.plt3
+# PPHmean_gg_nohybrid = PPHmean_gg %>% filter(Design != "Hybrid")
+# PPHmean_gg2_nohybrid = PPHmean_gg2 %>% filter(Design != "Hybrid")
+num_fixed_designs = 4
+epph.plt3 = ggplot(
+  PPHmean_gg, aes(x = index, y = value, color = Design,
+                  linetype = Design)) +
+  facet_wrap(~hypothesis) +
+  geom_path() +
+  scale_linetype_manual(values=c(
+    rep("solid", length(alphas) + 1), rep("dashed", num_fixed_designs))) +
+  geom_point(
+    data = PPHmean_gg2,
+    mapping = aes(x = index, y = value, color = Design),
+    inherit.aes = FALSE) +
+  theme_bw() +
+  ylim(0, 1) +
+  labs(x = "Index", y = element_blank())
+if(Nttl == 12){
+  epph.plt3 = epph.plt3 + scale_x_continuous(breaks = seq(0, 12, by = 3))
+}
+epph.plt3
 # }
 
 
 # # manuscript plot
 # ggsave(
 #   filename = paste0(
-#     "lm", "_scen", scenario, Dinit_label, "_hybrid", include_hybrid,
+#     "lm", "_scen", scenario, "_hybrid", include_hybrid,
 #     "_epph_alphas_", paste(alphas, collapse = "_"), ".pdf"),
 #   plot = last_plot(),
 #   width = 6.5, height = 3.5, units = c("in")
@@ -672,11 +702,11 @@ if(scenario == 1){
 }
 if(!is.null(epph_scen1) && !is.null(epph_scen2) && numSeq == 100){
   ggarrange(epph_scen1, epph_scen2, nrow = 2, ncol = 1)
-
+  
   # manuscript plot
   ggsave(
     filename = paste0(
-      "lm", Dinit_label, "_hybrid", include_hybrid, 
+      "lm", "_hybrid", include_hybrid, 
       "_epphs_alphas_", paste(alphas, collapse = "_"), ".pdf"),
     plot = last_plot(),
     width = 6.5, height = 5.5, units = c("in")

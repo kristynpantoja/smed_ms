@@ -253,7 +253,8 @@ PPH1mean_seq = aggregate(PPH_seq$PPH1, by = list(PPH_seq$index, PPH_seq$Design),
 names(PPH1mean_seq) = c("index", "Design", "value")
 PPH1mean_seq$Hypothesis = "H1"
 
-PPHmean_seq = rbind(PPH0mean_seq, PPH1mean_seq)
+PPHmean_seq = rbind(PPH0mean_seq, PPH1mean_seq) %>% 
+  filter(Hypothesis != "H0")
 epph.plt = ggplot(
   PPHmean_seq, aes(
     x = index, y = value, color = Design, linetype = Design, shape = Design)) + 
@@ -262,7 +263,7 @@ epph.plt = ggplot(
   geom_point() +
   theme_bw() +
   ylim(0, 1) +
-  labs(x = "Stage Index", y = element_blank()) + 
+  labs(x = element_blank(), y = element_blank()) + 
   scale_x_continuous(breaks = c(5, 10, 15))
 plot(epph.plt)
 
@@ -277,7 +278,7 @@ plot(epph.plt)
 ggsave(
   filename = paste0(scenario_name, "_epph.pdf"),
   plot = epph.plt,
-  width = 6.5, height = 2, units = c("in")
+  width = 4, height = 2, units = c("in")
 )
 
 # }

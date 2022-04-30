@@ -315,7 +315,7 @@ epph.plt = ggplot(PPHmean_seq, aes(x = index, y = value, color = Design,
   geom_point() +
   theme_bw() +
   ylim(0, 1) + 
-  labs(x = "Stage Index", y = element_blank()) +
+  labs(x = element_blank(), y = element_blank()) +
   scale_x_continuous(breaks = c(5, 10, 15))
 plot(epph.plt)
 

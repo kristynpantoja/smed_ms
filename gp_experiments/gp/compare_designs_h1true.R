@@ -171,11 +171,11 @@ idx = 1
 # design.names = c("boxhill", "qcap", "leaveout", "keepq2", "keepq")
 # design.levels = c("leaveout", "keepq", "keepq2", "qcap", "boxhill")
 designs = list(
-  "(b) BoxHill" = boxhill_sims[[idx]], 
-  "(c) Grid" = grid_sims[[idx]], 
-  "(d) Random" = random_sims[[idx]],
-  "(a) SeqMED" = leaveout_sims[[idx]])
-design.names = names(designs)
+  "(B) BoxHill" = boxhill_sims[[idx]], 
+  "(C) Grid" = grid_sims[[idx]], 
+  "(D) Random" = random_sims[[idx]],
+  "(A) SeqMED" = leaveout_sims[[idx]])
+design.names = sort(names(designs), decreasing = TRUE)
 
 x.mat = matrix(NA, nrow = Nttl, ncol = length(designs))
 for(i in 1:length(designs)){
@@ -197,7 +197,7 @@ des.plt = ggplot() +
   #           vjust = -0.65 * as.numeric(paste(text.gg$index)), size = 2) +
   xlim(c(xmin, xmax)) + 
   theme_bw() + 
-  labs(x = "x") +
+  labs(x = element_blank(), y = element_blank()) +
   theme(legend.position = "none")
 if(typeT == "periodic"){
   des.plt = des.plt + geom_vline(
@@ -217,7 +217,7 @@ plot(des.plt)
 ggsave(
   filename = paste0(scenario_name, "_design.pdf"),
   plot = des.plt,
-  width = 6.5, height = 1.75, units = c("in")
+  width = 4, height = 1.75, units = c("in")
 )
 
 # }

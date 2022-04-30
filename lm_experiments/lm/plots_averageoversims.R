@@ -9,9 +9,8 @@
 #   where the true function is cubic
 rm(list = ls())
 
-scenario = 1 # 1, 2
-include_hybrid = FALSE
-include_Dsoptimal
+scenario = 2 # 1, 2
+include_Dsoptimal = FALSE
 
 ################################################################################
 # Sources/Libraries
@@ -44,7 +43,7 @@ rng.seed = 123 # 123, 345
 library(mvtnorm)
 library(ggplot2)
 library(reshape2)
-library(ggpubr)
+# library(ggpubr)
 library(tidyverse)
 gg_color_hue = function(n) {
   hues = seq(15, 275, length = n + 1)
@@ -221,25 +220,6 @@ for(j in 1:numSims){
   # res_Fed_Ds$design
   # table(dopt_equalinterest) / Nttl
   
-  # # half space-filling, half quadratic Doptimal, 
-  # #   assumes Nttl is divisible by 2
-  # supportpt_assgnmt_hybrid = cut(
-  #   sample(1:(Nttl / 2), size = Nttl / 2, replace = FALSE), # shuffle
-  #   breaks = num_supportpts_Doptquad, labels = FALSE)
-  # hybrid_grid_doptq = rep(NA, Nttl / 2)
-  # for(i in 1:num_supportpts_Doptquad){
-  #   hybrid_grid_doptq[supportpt_assgnmt_hybrid == i] = 
-  #     supportpts_Doptquad[i]
-  # }
-  # hybrid_grid_doptq[(Nttl / 2 + 1):Nttl] =c(
-  #   seq(
-  #     from = supportpts_Doptquad[1], to = supportpts_Doptquad[2],
-  #     length.out = (Nttl / 4) + 2)[-c(1, (Nttl / 4) + 2)],
-  #   seq(
-  #     from = supportpts_Doptquad[2], to = supportpts_Doptquad[3],
-  #     length.out = (Nttl / 4) + 2)[-c(1, (Nttl / 4) + 2)]
-  # )
-  # hybrid_grid_doptq = rev(hybrid_grid_doptq) # spacefilling -> doptimal
   
   # simulations #
   
@@ -467,26 +447,7 @@ getPPHseq = function(
 # PPHmean_gg2 = PPHmean_gg[PPHmean_gg$index == Nttl, ]
 # PPHmean_gg2$Design = factor(PPHmean_gg2$Design, levels = design_names)
 # PPHmean_gg2 = setorder(PPHmean_gg2, cols = "Design")
-# # if(include_hybrid){
-# #   num_fixed_designs = 4
-# # } else{
 #   num_fixed_designs = 3
-# # }
-# # if(include_hybrid){
-# #   epph.plt = ggplot(PPHmean_gg, aes(x = index, y = value, color = Design,
-# #                                     linetype = Design, shape = Design)) +
-# #     facet_wrap(~hypothesis) +
-# #     geom_path() +
-# #     scale_linetype_manual(values=c(
-# #       rep("dashed", num_fixed_designs), rep("solid", 2))) +
-# #     geom_point(data = PPHmean_gg2,
-# #                mapping = aes(x = index, y = value, color = Design),
-# #                inherit.aes = FALSE) +
-# #     theme_bw() +
-# #     ylim(0, 1) +
-# #     labs(x = "Stage Index", y = element_blank())
-# #   epph.plt
-# # } else{
 #   PPHmean_gg_nohybrid = PPHmean_gg %>% filter(Design != "Hybrid")
 #   PPHmean_gg2_nohybrid = PPHmean_gg2 %>% filter(Design != "Hybrid")
 #   epph.plt = ggplot(
@@ -504,7 +465,6 @@ getPPHseq = function(
 #     ylim(0, 1) +
 #     labs(x = "Stage Index", y = element_blank())
 #   epph.plt
-# # }
 
 # if(scenario == 1){
 #   epph_scen1 = epph.plt
@@ -520,8 +480,7 @@ getPPHseq = function(
 #   # manuscript plot
 #   ggsave(
 #     filename = paste0(
-#       "lm", "_hybrid", include_hybrid,
-#       "_epphs", ".pdf"),
+#       "lm", "_epphs", ".pdf"),
 #     plot = last_plot(),
 #     width = 6.5, height = 5.5, units = c("in")
 #   )
@@ -643,28 +602,21 @@ if(scenario == 1){
 PPHmean_gg2 = PPHmean_gg[PPHmean_gg$index == Nttl, ]
 # PPHmean_gg2$Design = factor(PPHmean_gg2$Design, levels = design_names)
 # PPHmean_gg2 = setorder(PPHmean_gg2, cols = "Design")
-# if(include_hybrid){
-#   epph.plt3 = ggplot(PPHmean_gg, aes(x = index, y = value, color = Design,
-#                                      linetype = Design)) +
-#     facet_wrap(~hypothesis) +
-#     geom_path() +
-#     scale_linetype_manual(
-#       values=c(
-#         rep("dashed", num_fixed_designs), rep("solid", length(alphas) + 1))) +
-#     geom_point(data = PPHmean_gg2,
-#                mapping = aes(x = index, y = value, color = Design),
-#                inherit.aes = FALSE) +
-#     theme_bw() +
-#     ylim(0, 1) +
-#     labs(x = "Stage Index", y = element_blank())
-#   if(Nttl == 12){
-#     epph.plt3 = epph.plt3 + scale_x_continuous(breaks = seq(0, 12, by = 3))
-#   }
-#   epph.plt3
-# } else{
-# PPHmean_gg_nohybrid = PPHmean_gg %>% filter(Design != "Hybrid")
-# PPHmean_gg2_nohybrid = PPHmean_gg2 %>% filter(Design != "Hybrid")
-num_fixed_designs = 4
+if(include_Dsoptimal){
+  num_fixed_designs = 4
+} else{
+  num_fixed_designs = 3
+  PPHmean_gg = PPHmean_gg %>% 
+    filter(Design != paste0("(viii) ", "DOptEqInt."))
+  PPHmean_gg2 = PPHmean_gg2 %>% 
+    filter(Design != paste0("(viii) ", "DOptEqInt."))
+}
+if(scenario == 1){
+  PPHmean_gg = PPHmean_gg %>% 
+    filter(hypothesis != "Case 1, H0")
+  PPHmean_gg2 = PPHmean_gg2 %>% 
+    filter(hypothesis != "Case 1, H0")
+}
 epph.plt3 = ggplot(
   PPHmean_gg, aes(x = index, y = value, color = Design,
                   linetype = Design)) +
@@ -678,40 +630,53 @@ epph.plt3 = ggplot(
     inherit.aes = FALSE) +
   theme_bw() +
   ylim(0, 1) +
-  labs(x = "Index", y = element_blank())
+  labs(x = element_blank(), y = element_blank())
 if(Nttl == 12){
   epph.plt3 = epph.plt3 + scale_x_continuous(breaks = seq(0, 12, by = 3))
 }
 epph.plt3
-# }
-
+if(scenario == 1){
+  ggsave(
+    filename = paste0(
+      "scen1_lm_epphs_alphas_", paste(alphas, collapse = "_"), ".pdf"),
+    plot = epph.plt3,
+    width = 4, height = 2.5, units = c("in")
+  )
+} else if(scenario == 2){
+  epph.plt3 = epph.plt3+ theme(legend.position = "none")
+  ggsave(
+    filename = paste0(
+      "scen2_lm_epphs_alphas_", paste(alphas, collapse = "_"), ".pdf"),
+    plot = epph.plt3,
+    width = 5.5, height = 2.5, units = c("in")
+  )
+}
 
 # # manuscript plot
 # ggsave(
 #   filename = paste0(
-#     "lm", "_scen", scenario, "_hybrid", include_hybrid,
+#     "lm", "_scen", scenario, 
 #     "_epph_alphas_", paste(alphas, collapse = "_"), ".pdf"),
 #   plot = last_plot(),
 #   width = 6.5, height = 3.5, units = c("in")
 # )
 
-if(scenario == 1){
-  epph_scen1 = epph.plt3
-} else if(scenario == 2){
-  epph_scen2 = epph.plt3 + theme(legend.position = "none")
-}
-if(!is.null(epph_scen1) && !is.null(epph_scen2) && numSeq == 100){
-  ggarrange(epph_scen1, epph_scen2, nrow = 2, ncol = 1)
-  
-  # manuscript plot
-  ggsave(
-    filename = paste0(
-      "lm", "_hybrid", include_hybrid, 
-      "_epphs_alphas_", paste(alphas, collapse = "_"), ".pdf"),
-    plot = last_plot(),
-    width = 6.5, height = 5.5, units = c("in")
-  )
-}
+# if(scenario == 1){
+#   epph_scen1 = epph.plt3
+# } else if(scenario == 2){
+#   epph_scen2 = epph.plt3 + theme(legend.position = "none")
+# }
+# if(!is.null(epph_scen1) && !is.null(epph_scen2) && numSeq == 100){
+#   # ggarrange(epph_scen1, epph_scen2, nrow = 2, ncol = 1)
+#   
+#   # manuscript plot
+#   ggsave(
+#     filename = paste0(
+#       "lm", "_epphs_alphas_", paste(alphas, collapse = "_"), ".pdf"),
+#     plot = last_plot(),
+#     width = 6.5, height = 5.5, units = c("in")
+#   )
+# }
 
 # # all sequential epph plot #####################################################
 # 

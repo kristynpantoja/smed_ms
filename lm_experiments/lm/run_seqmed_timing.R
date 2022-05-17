@@ -1,5 +1,5 @@
 ################################################################################
-# last updated: 2/28/22
+# last updated: 12/16/21
 # purpose: to create a list of seqmed simulations
 # scenario 1:
 #   linear vs. quadratic,
@@ -10,7 +10,6 @@
 rm(list = ls())
 
 scenario = 1 # 1, 2
-given_Dinit = FALSE
 
 ################################################################################
 # Sources/Libraries
@@ -31,31 +30,33 @@ source(paste(functions_dir, "/simulate_y.R", sep = ""))
 source(paste(functions_dir, "/MMED.R", sep = ""))
 source(paste(functions_dir, "/variance_marginal_y.R", sep = ""))
 
-# for box-hill design
+# for box-hill deisign
 source(paste(functions_dir, "/boxhill.R", sep = ""))
 
-# for D-optimal design
-library(AlgDesign)
-
 # set up parallelization
-rng.seed = 123 # 123, 345
+# library(foreach)
+# library(future)
+# library(doFuture)
+# library(parallel)
+# registerDoFuture()
+# nworkers = detectCores() / 2
+# plan(multisession, workers = nworkers)
 
-library(mvtnorm)
-library(ggplot2)
-library(reshape2)
-library(ggpubr)
-gg_color_hue = function(n) {
-  hues = seq(15, 275, length = n + 1)
-  hcl(h = hues, l = 65, c = 100)[1:n]
-}
+# library(rngtools)
+# library(doRNG)
+rng.seed = 123 # 123
+# registerDoRNG(rng.seed)
+set.seed(123)
+
+library(microbenchmark)
 
 ################################################################################
 # simulation settings, shared for both scenarios (linear vs. quadratic)
 ################################################################################
 
 # simulations settings
-numSims = 100 # 1 simulation with 100 design points
-numSeq = 100 # 100 design points
+numSims = 500 #
+numSeq = 100 # 12, 100, 15 for timing
 seqN = 1
 Nttl = numSeq * seqN
 xmin = -1
@@ -63,19 +64,18 @@ xmax = 1
 numCandidates = 10^3 + 1
 candidates = seq(from = xmin, to = xmax, length.out = numCandidates)
 if(scenario == 1){
-  if(Nttl == 100){
+  if(numSeq == 100){
     sigmasq = 0.28
-  } else if(Nttl == 12){
+  } else if(numSeq == 12 | numSeq == 15){
     sigmasq = 0.04
   }
 } else if(scenario == 2){
-  if(Nttl == 100){
+  if(numSeq == 100){
     sigmasq = 0.21
-  } else if(Nttl == 12){
+  } else if(numSeq == 1 | numSeq == 152){
     sigmasq = 0.038
   }
 }
-alpha = 1
 
 # shared settings
 type01 = c(2, 3)
@@ -108,19 +108,35 @@ if(scenario == 1){
   betaT = c(0, -0.75, 0, 1)
   fT = function(x) betaT[1] + betaT[2] * x + betaT[3] * x^2 + betaT[4] * x^3
 }
-# curve(fT, from = xmin, to = xmax)
-W_fun = function(x, fT, error.var, beta.var){
-  rho = error.var / beta.var
-  fx = fT(x)
-  squareddiff_means = (fx * 
-                         ((1 + x^2) / (1 + x^2 + rho) - 
-                            (1 + x^2 + x^4) / (1 + x^2 + x^4 + rho)))^2
-  squareddiff_sds = error.var * (sqrt((1 + x^2) / (1 + x^2 + rho) + 1) -
-                                sqrt((1 + x^2 + x^4) / (1 + x^2 + x^4 + rho)))^2
-  return(squareddiff_means + squareddiff_sds)
-}
-W_fun_curve = function(x){
-  W_fun(x = x, fT = fT, error.var = sigmasq, beta.var = sigmasq01)
-}
-curve(W_fun_curve, from = xmin, to = xmax)
+
+################################################################################
+# run simulations
+################################################################################
+
+# generate seqmeds
+i = 1
+
+# start.time = Sys.time()
+# seqmed = SeqMED(
+#   y.in = NULL, x.in = NULL, true.function = fT,
+#   model0 = model0, model1 = model1, 
+#   error.var = sigmasq, xmin = xmin, xmax = xmax,
+#   candidates = candidates, numSeq = numSeq, seqN = seqN, 
+#   alpha_seq = 1)
+# end.time = Sys.time()
+# time.diff = difftime(end.time, start.time, units = "secs")
+# time.diff
+
+microbenchmark(
+  seqmed = SeqMED(
+    y.in = NULL, x.in = NULL, true.function = fT,
+    model0 = model0, model1 = model1, 
+    error.var = sigmasq, xmin = xmin, xmax = xmax,
+    candidates = candidates, numSeq = numSeq, seqN = seqN, 
+    alpha_seq = 1), 
+  times = 10
+)
+
+
+
 

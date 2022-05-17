@@ -7,7 +7,7 @@ SeqMED = function(
   candidates, true.function, 
   xmin = -1, xmax = 1, 
   numSeq = 5, seqN = 1, alpha_seq = 1, 
-  k, p = 1, genCandidates = 1, keep_trying_alpha = TRUE,
+  k = NULL, p = 1, genCandidates = 1, keep_trying_alpha = TRUE,
   prints = FALSE, seed = NULL, save_objectives = FALSE
 ){
   if(is.null(k)) k = 4 * p

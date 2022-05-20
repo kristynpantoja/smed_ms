@@ -10,7 +10,7 @@ rm(list=ls())
 #   where the true dimensions are (1, 2, 3, 4)
 
 dimT = 3 # 3
-sigmasq = 0.3 # 0.1, 0.3
+text_size = 12
 
 ################################################################################
 # Sources/Libraries
@@ -52,6 +52,8 @@ gg_color_hue = function(n) {
 ################################################################################
 # simulation settings, shared for both scenarios
 ################################################################################
+
+sigmasq = 0.3 # 0.1, 0.3
 
 # simulations settings
 numSims = 100
@@ -259,7 +261,7 @@ for(i in 1:ncol(marginals)) {
   marginals[, i] = design.tmp$x.new[ , i]
 }
 colnames(marginals) = paste("Variable", 1:dimX, sep = " ")
-marginals = as.data.table(marginals)
+marginals = data.table::as.data.table(marginals)
 marginals.tall = melt(marginals, measure.vars = 1:dimX)
 ggplot(marginals.tall, aes(x = value)) + 
   facet_wrap(vars(variable)) +
@@ -495,8 +497,9 @@ epph.plt = ggplot(PPHmean_gg, aes(x = index, y = value, color = Design,
                x = index, y = value, color = Design, shape = Design),
              size = 2, inherit.aes = FALSE) +
   theme_bw() +
+  theme(text = element_text(size = text_size)) +
   ylim(0, 1) +
-  labs(x = "Stage Index", y = element_blank())
+  labs(x = element_blank(), y = element_blank())
 plot(epph.plt)
 
 # manuscript plot
@@ -507,5 +510,5 @@ ggsave(
     "_noise", strsplit(as.character(sigmasq), split = "\\.")[[1]][2],
     "_epph.pdf"), 
   plot = epph.plt, 
-  width = 6.5, height = 2, units = c("in")
+  width = 6, height = 2.5, units = c("in")
 )

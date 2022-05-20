@@ -3,9 +3,7 @@
 # purpose: to test SeqMEDgpvs()
 
 dimT = 2
-seq.type = 1
-lT = 0.01
-typeT = "squaredexponential"
+text_size = 12
 
 ################################################################################
 # Sources/Libraries
@@ -45,6 +43,10 @@ gg_color_hue = function(n) {
 ################################################################################
 # simulation settings, shared for both scenarios
 ################################################################################
+
+seq.type = 1
+lT = 0.01
+typeT = "squaredexponential"
 
 # simulations settings
 numSims = 100
@@ -314,23 +316,17 @@ epph.plt = ggplot(PPHmean_seq, aes(x = index, y = value, color = Design,
   geom_path() + 
   geom_point() +
   theme_bw() +
+  theme(text = element_text(size = text_size)) +
   ylim(0, 1) + 
   scale_x_continuous(breaks = c(0, 3, 6, 9)) +
-  labs(x = "Stage Index", y = element_blank())
+  labs(x = element_blank(), y = element_blank())
 plot(epph.plt)
 
-# slides plot
-# ggsave(
-#   filename = paste0("20210815_dim", dimT, "_epph.pdf"),
-#   plot = epph.plt,
-#   width = 6, height = 4, units = c("in")
-# )
-
 # manuscript plot
-# ggsave(
-#   filename = paste0("dim", dimT, "_epph.pdf"), 
-#   plot = epph.plt, 
-#   width = 6.5, height = 2, units = c("in")
-# )
+ggsave(
+  filename = paste0("dim", dimT, "_epph.pdf"),
+  plot = epph.plt,
+  width = 6, height = 2.5, units = c("in")
+)
 
 

@@ -1,5 +1,7 @@
 # for(scenario in c(3, 4, 5, 6)){
 scenario = 4
+text_size = 12
+
 ################################################################################
 # last updated: 2/27/2022
 # purpose: to test seqmedgp for scenario 4:
@@ -314,23 +316,17 @@ epph.plt = ggplot(PPHmean_seq, aes(x = index, y = value, color = Design,
   geom_path() + 
   geom_point() +
   theme_bw() +
+  theme(text = element_text(size = text_size)) +
   ylim(0, 1) + 
   labs(x = element_blank(), y = element_blank()) +
   scale_x_continuous(breaks = c(5, 10, 15))
 plot(epph.plt)
 
-# slide plot
-# ggsave(
-#   filename = paste0("scen", scenario, "_", scenario_name, "_epph.pdf"),
-#   plot = epph.plt,
-#   width = 6, height = 4, units = c("in")
-# )
-
 # manuscript plot
 ggsave(
   filename = paste0(scenario_name, "_epph.pdf"),
   plot = epph.plt,
-  width = 6.5, height = 2, units = c("in")
+  width = 6, height = 2.5, units = c("in")
 )
 
 # }

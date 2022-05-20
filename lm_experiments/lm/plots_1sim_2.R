@@ -11,6 +11,7 @@ rm(list = ls())
 
 scenario = 2 # 1, 2
 scenario1_illustration = FALSE
+text_size = 12
 
 ################################################################################
 # Sources/Libraries
@@ -43,6 +44,7 @@ rng.seed = 123 # 123, 345
 library(mvtnorm)
 library(ggplot2)
 library(reshape2)
+library(dplyr)
 # library(ggpubr)
 gg_color_hue = function(n) {
   hues = seq(15, 275, length = n + 1)
@@ -262,27 +264,25 @@ sim.idx = 5
 
 # plot a seqmed
 sm = seqmed_sims[[sim.idx]]
-ggdata = data.frame(x = c(sm$x.in, sm$x.new), y = c(sm$y.in, sm$y.new))
-plt0 = ggplot(ggdata) +
+ggdata0 = data.frame(x = c(sm$x.in, sm$x.new), y = c(sm$y.in, sm$y.new))
+plt0 = ggplot(ggdata0) +
   geom_histogram(binwidth = 0.12, closed = "right",
                  aes(x = x, y = after_stat(density))) +
+  scale_x_continuous(breaks = c(-1, 0, 1)) +
   theme_bw() + #base_size = 20) +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-plt1 = ggplot(ggdata) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),  
+        text = element_text(size = text_size)) + 
+  labs(x = element_blank(), y = element_blank())
+plt1 = ggplot(ggdata0) +
   geom_point(aes(x, y), col = gg_color_hue(2)[1]) +
   stat_function(fun = fT) +
+  scale_x_continuous(breaks = c(-1, 0, 1)) +
   theme_bw() +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        text = element_text(size = text_size)) + 
+  labs(x = element_blank(), y = element_blank())
 plt0
 plt1
-# manuscript plot
-# if(Nttl == 100){
-#   ggsave(
-#     filename = paste0("scen", scenario, "_seqmedexample.pdf"),
-#     plot = last_plot(),
-#     width = 4.5, height = 2, units = c("in")
-#   )
-# }
 
 ################################################################################
 # plot the wasserstein distance when scenario == 1
@@ -290,10 +290,10 @@ plt1
 ################################################################################
 library(data.table)
 
-if(scenario == 1){
+if(scenario == 1 & scenario1_illustration){
   numseq = 1e2
   x_seq = seq(from = xmin, to = xmax, length.out = numseq)
-  if(scenario1_illustration){
+  # if(scenario1_illustration){
     w_seq = sapply(x_seq, function(x) WNlm(
       x, sm$postmean0, sm$postmean1,
       diag(sm$postvar0), diag(sm$postvar1), 
@@ -305,19 +305,19 @@ if(scenario == 1){
     f1est_seq = sapply(x_seq, f1est)
     f2est_seq = sapply(x_seq, f2est)
     fT_seq = sapply(x_seq, fT)
-  } else{
-    w_seq = sapply(x_seq, function(x) WNlm(
-      x, sm$postmean0, sm$postmean1,
-      diag(sm$postvar0), diag(sm$postvar1), 
-      model0, model1, sigmasq))
-    f1est = function(x) sm$postmean1[1, ] +
-      sm$postmean1[2, ] * x + sm$postmean1[3, ] * x^2
-    f2est = function(x) sm$postmean0[1, ] +
-      sm$postmean0[2, ] * x
-    f1est_seq = sapply(x_seq, f1est)
-    f2est_seq = sapply(x_seq, f2est)
-    fT_seq = sapply(x_seq, fT)
-  }
+  # } else{
+  #   w_seq = sapply(x_seq, function(x) WNlm(
+  #     x, sm$postmean0, sm$postmean1,
+  #     diag(sm$postvar0), diag(sm$postvar1), 
+  #     model0, model1, sigmasq))
+  #   f1est = function(x) sm$postmean1[1, ] +
+  #     sm$postmean1[2, ] * x + sm$postmean1[3, ] * x^2
+  #   f2est = function(x) sm$postmean0[1, ] +
+  #     sm$postmean0[2, ] * x
+  #   f1est_seq = sapply(x_seq, f1est)
+  #   f2est_seq = sapply(x_seq, f2est)
+  #   fT_seq = sapply(x_seq, fT)
+  # }
   
   ggdata = data.table::data.table(
     x = x_seq,
@@ -338,6 +338,7 @@ if(scenario == 1){
     ggdata, aes(x = x, y = y, color = Function, linetype = Function)) +
     scale_linetype_manual(values = c(2, 2, 1, 1)) +
     ylim(-1.9, 1.9) +
+    scale_x_continuous(breaks = c(-1, 0, 1)) +
     scale_color_manual(
       values = c(gg_color_hue(4)[c(3, 4)], "black", gg_color_hue(4)[2])) +
     geom_path() +
@@ -345,21 +346,29 @@ if(scenario == 1){
       data = ggdata_ribbon, mapping = aes(x = x, ymin = ymin, ymax = ymax),
       alpha = 0.2, inherit.aes = FALSE) +
     theme_bw() +
-    theme(panel.grid.minor = element_blank())
+    theme(panel.grid.minor = element_blank(),
+          text = element_text(size = text_size)) + 
+    labs(x = element_blank(), y = element_blank())
+    
   pltw
-  ggarrange(plt0, plt1, pltw, nrow = 1, ncol = 3, widths = c(1, 1, 1.75))
-
-  # # manuscript plot
-  if(Nttl == 100){
-    # ggsave(
-    #   filename = paste0("scen", scenario, "_seqmedexamplewasserstein.pdf"),
-    #   plot = last_plot(),
-    #   width = 6.5, height = 1.75, units = c("in")
-    # )
-  }
-} else if(scenario == 2){
-  # plot ...
-}
+  # ggarrange(plt0, plt1, pltw, nrow = 1, ncol = 3, widths = c(1, 1, 1.75))
+  
+  ggsave(
+    filename = paste0("scen", scenario, "_seqmedex_hist.pdf"),
+    plot = plt0,
+    width = 1.5, height = 2, units = c("in")
+  )
+  ggsave(
+    filename = paste0("scen", scenario, "_seqmedex_plot.pdf"),
+    plot = plt1,
+    width = 1.5, height = 2, units = c("in")
+  )
+  ggsave(
+    filename = paste0("scen", scenario, "_seqmedex_wass.pdf"),
+    plot = pltw,
+    width = 2.75, height = 2, units = c("in")
+  )
+} 
 
 ################################################################################
 # plot the MSE of beta-hat (posterior mean) of the hypotheses
@@ -422,7 +431,8 @@ if(scenario == 1){
     facet_wrap(vars(beta), scales = "free_y", ncol = 4) +
     theme_bw() +
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-          axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+          axis.text.x = element_text(angle = 90, vjust = 0.5),  
+          text = element_text(size = text_size)) +
     labs(y = NULL)
 }
 mseb.plt
@@ -431,7 +441,7 @@ mseb.plt
 ggsave(
   filename = paste0("scen", scenario, "_mseb_sim", sim.idx, ".pdf"),
   plot = mseb.plt,
-  width = 6.5, height = 2.5, units = c("in")
+  width = 6, height = 2.5, units = c("in")
 )
 
 ################################################################################
@@ -477,10 +487,12 @@ ggdata$Design = factor(
 ggdata2 = ggdata %>% filter(x %in% x_seq2[c(1, (1:10) * 1000)])
 msey.plt = ggplot(ggdata, aes(x = x, y = yhatmse, color = Design, linetype = Design)) +
   coord_cartesian(ylim = ylimarg, xlim = c(-1, 1)) +
+  scale_x_continuous(breaks = c(-1, 0, 1)) +
   geom_path() +
   theme_bw() +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  labs(y = "", x = "x") + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),  
+        text = element_text(size = text_size)) +
+  labs(y = element_blank(), x = element_blank()) + 
   geom_point(data = ggdata2, 
              aes(x = x, y = yhatmse, color = Design, shape = Design), 
              size = 2)
@@ -491,13 +503,13 @@ if(scenario == 1){
   ggsave(
     filename = paste0("scen", scenario, "_mseyhat_sim", sim.idx, ".pdf"),
     plot = msey_scen1,
-    width = 2.5, height = 2, units = c("in")
+    width = 2.2, height = 2.5, units = c("in")
   )
 } else if(scenario == 2){
   msey_scen2 = msey.plt 
   ggsave(
     filename = paste0("scen", scenario, "_mseyhat_sim", sim.idx, ".pdf"),
     plot = msey_scen2,
-    width = 4, height = 2, units = c("in")
+    width = 3.8, height = 2.5, units = c("in")
   )
 }

@@ -1,5 +1,7 @@
 # for(scenario in c(1, 2)){
 scenario = 1
+text_size = 12
+
 ################################################################################
 # last updated: 2/27/2022
 # purpose: to illustrate seqmed in scenarios 1 & 2 -- black&white-friendly
@@ -188,21 +190,16 @@ plt = ggplot(data = ggdata.melted,
   scale_y_continuous(limits = yrange) +
   theme_bw() + 
   theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank()) +
-  labs(y = "y", x = "x", fill = "Function", color = "Function", linetype = "Function") + 
+        panel.grid.minor = element_blank(), 
+        text = element_text(size = text_size)) +
+  labs(y = element_blank(), x = element_blank(), 
+       fill = "Function", color = "Function", linetype = "Function") + 
   xlim(-0.25, 0.25)
 plt
 
-# slide plot
-# ggsave(
-#   filename = paste0("scenario", scenario, "_", scenario_name, "_gp.pdf"),
-#   plot = plt,
-#   width = 6, height = 4, units = c("in")
-# )
-
 # manuscript plot
 ggsave(
-  filename = paste0(scenario_name,"_lambda", lT, "_Nttl", Nttl, "_gp.pdf"),
+  filename = paste0(scenario_name,"_lambda", lT, "_Nttl", Nttl, "_gp_zoom.pdf"),
   plot = plt,
-  width = 6.5, height = 2, units = c("in")
+  width = 6, height = 2.5, units = c("in")
 )

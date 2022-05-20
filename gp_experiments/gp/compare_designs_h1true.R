@@ -1,5 +1,7 @@
 # for(scenario in c(1, 2)){
 scenario = 1
+text_size = 12
+
 ################################################################################
 # last updated: 2/27/2022
 # purpose: to test seqmedgp for scenario 1:
@@ -198,7 +200,7 @@ des.plt = ggplot() +
   xlim(c(xmin, xmax)) + 
   theme_bw() + 
   labs(x = element_blank(), y = element_blank()) +
-  theme(legend.position = "none")
+  theme(legend.position = "none", text = element_text(size = text_size))
 if(typeT == "periodic"){
   des.plt = des.plt + geom_vline(
     xintercept = pT * (0:floor((xmax - xmin) / pT)), #color = "gray", 
@@ -217,7 +219,7 @@ plot(des.plt)
 ggsave(
   filename = paste0(scenario_name, "_design.pdf"),
   plot = des.plt,
-  width = 4, height = 1.75, units = c("in")
+  width = 5.5, height = 2, units = c("in")
 )
 
 # }

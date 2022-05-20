@@ -9,7 +9,11 @@
 #   where the true function is cubic
 rm(list = ls())
 
-scenario = 1 # 1, 2
+scenario = 2 # 1, 2
+text_size = 12
+slides_plot_scenario1 = FALSE
+slides_plot_scenario2 = TRUE
+
 include_Dsoptimal = FALSE
 
 ################################################################################
@@ -484,7 +488,7 @@ if(include_Dsoptimal){
   PPHmean_gg2 = PPHmean_gg2 %>% 
     filter(Design != paste0("(viii) ", "DOptEqInt."))
 }
-if(scenario == 1){
+if(scenario == 1 & !slides_plot_scenario1){
   PPHmean_gg = PPHmean_gg %>% 
     filter(hypothesis != "Case 1, H0")
   PPHmean_gg2 = PPHmean_gg2 %>% 
@@ -502,6 +506,7 @@ epph.plt3 = ggplot(
     mapping = aes(x = index, y = value, color = Design, shape = Design),
     size = 2, inherit.aes = FALSE) +
   theme_bw() +
+  theme(text = element_text(size = text_size)) + 
   ylim(0, 1) +
   labs(x = element_blank(), y = element_blank())
 if(Nttl == 12){
@@ -509,18 +514,35 @@ if(Nttl == 12){
 }
 epph.plt3
 if(scenario == 1){
-  ggsave(
-    filename = paste0(
-      "scen1_lm_epphs_alphas_", paste(alphas, collapse = "_"), ".pdf"),
-    plot = epph.plt3,
-    width = 4, height = 2.5, units = c("in")
-  )
+  if(slides_plot_scenario1){
+    ggsave(
+      filename = paste0(
+        "scen1_lm_epphs_alphas_", paste(alphas, collapse = "_"), "_slides.pdf"),
+      plot = epph.plt3,
+      width = 5.5, height = 2.5, units = c("in")
+    )
+  } else{
+    ggsave(
+      filename = paste0(
+        "scen1_lm_epphs_alphas_", paste(alphas, collapse = "_"), ".pdf"),
+      plot = epph.plt3,
+      width = 4, height = 2.5, units = c("in")
+    )
+  }
 } else if(scenario == 2){
-  epph.plt3 = epph.plt3+ theme(legend.position = "none")
-  ggsave(
-    filename = paste0(
-      "scen2_lm_epphs_alphas_", paste(alphas, collapse = "_"), ".pdf"),
-    plot = epph.plt3,
-    width = 5.5, height = 2.5, units = c("in")
-  )
+  if(slides_plot_scenario2){
+    ggsave(
+      filename = paste0(
+        "scen2_lm_epphs_alphas_", paste(alphas, collapse = "_"), "_slides.pdf"),
+      plot = epph.plt3,
+      width = 7, height = 2.5, units = c("in")
+    )
+  } else{
+    ggsave(
+      filename = paste0(
+        "scen2_lm_epphs_alphas_", paste(alphas, collapse = "_"), ".pdf"),
+      plot = epph.plt3 + theme(legend.position = "none"),
+      width = 5.5, height = 2.5, units = c("in")
+    )
+  }
 }

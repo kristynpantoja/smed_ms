@@ -1,7 +1,3 @@
-################################################################################
-# last updated: 05/27/2021
-# purpose: to test seqmedgp for scenarios 3, 4, 5, or 6
-#   where both hypotheses are misspecified
 
 scenario = 4 # 3, 4, 5, 6
 

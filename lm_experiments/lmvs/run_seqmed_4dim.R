@@ -1,6 +1,4 @@
-################################################################################
-# last updated: 09/23/21
-# purpose: to create a list of seqmed simulations
+
 # dimT = 3:
 #   dimensions (1, 2) vs dimensions (1, 2, 3)
 #   where the true dimensions are (1, 2, 4)

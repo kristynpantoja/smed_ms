@@ -1,6 +1,3 @@
-################################################################################
-# last updated: 2/27/2022
-# purpose: to see what seqmed gp produces as n gets super large
 
 scenario = 2 # 1, 2
 

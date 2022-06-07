@@ -47,26 +47,6 @@ BHDgp_m2 = function(
   return(bhd)
 }
 
-# BHDgp_m2_testing = function(
-#   y.in, x.in, post.probs, candidate, model.i, model.j){
-#   # posterior predictive distributions
-#   pred.i = getGPPredictive(
-#     x = candidate, x.input = x.in, y.input = y.in, type = model.i$type, 
-#     l = model.i$l, p = model.i$p, signal.var = model.i$signal.var,
-#     measurement.var = model.i$measurement.var)
-#   pred.j = getGPPredictive(
-#     x = candidate, x.input = x.in, y.input = y.in, type = model.j$type, 
-#     l = model.j$l, p = model.j$p, signal.var = model.j$signal.var,
-#     measurement.var = model.j$measurement.var)
-#   # evaluate criterion D
-#   KLij = KLN(pred.i$pred_mean, pred.i$pred_var, 
-#              pred.j$pred_mean, pred.j$pred_var, dim = 1)
-#   KLji = KLN(pred.j$pred_mean, pred.j$pred_var, 
-#              pred.i$pred_mean, pred.i$pred_var, dim = 1)
-#   bhd = prod(post.probs) * (KLij + KLji)
-#   return(list("bhd" = bhd, "KLij" = KLij, "KLji" = KLji))
-# }
-
 # obtain the next n design points (fully sequential)
 BHgp_m2 = function(
   y.in = NULL, # preliminary data response

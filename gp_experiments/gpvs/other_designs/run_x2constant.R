@@ -1,6 +1,3 @@
-################################################################################
-# last updated: 07/13/2021
-# purpose: to make grid design for all types of data
 
 dimT = 1
 lT = 0.01

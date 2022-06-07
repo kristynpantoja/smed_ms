@@ -1,5 +1,4 @@
-################################################################################
-# last updated: 12/16/21
+
 # purpose: to create a list of seqmed simulations
 # scenario 1:
 #   linear vs. quadratic,

@@ -3,16 +3,6 @@ objective_newq_seqmed = function(
   candidate, D, postmean0, postmean1, postvar0, postvar1, model0, model1, 
   error.var, p = 1, k = NULL, alpha = 1){
   if(is.null(k)) k = 4 * p
-  # result0 = q_seqmed(
-  #   candidate, postmean0, postmean1, postvar0, postvar1, model0, model1,
-  #   error.var, p, alpha)^k *
-  #   sum(sapply(
-  #     D,
-  #     function(x_i) (
-  #       q_seqmed(x_i, postmean0, postmean1, postvar0, postvar1,
-  #                model0, model1, error.var, p, alpha) /
-  #         sqrt((x_i - candidate)^2)
-  #     )^k))
   
   q_cand = q_seqmed(
     x = candidate, postmean0 = postmean0, postmean1 = postmean1, 

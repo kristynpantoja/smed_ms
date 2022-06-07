@@ -1,7 +1,3 @@
-################################################################################
-# last updated: 05/27/2021
-# purpose: to test seqmedgp for scenarios 1 or 2
-#   where H1 is true
 
 dimT = 2
 lT = 0.01

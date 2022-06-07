@@ -32,5 +32,3 @@ plotGP = function(
   
   return(plt)
 }
-
-

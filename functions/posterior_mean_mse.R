@@ -32,22 +32,3 @@ getMSEBeta = function(
     "biassq_term" = biassq_postmean, 
     "MSE_postmean" = as.vector(MSE_postmean)))
 }
-
-# getClosedEBn = function(
-#   D, N, beta.true, beta.mean, beta.var, error.var, type, 
-#   diagPrior = TRUE
-#   ){
-#   X = constructDesignX(D, N, type) # design matrix, depends on the model (type)
-#   # 1. calculate the variance of the posterior mean
-#   Sigma_B = postvar(D, N, error.var, beta.var, type, diagPrior)
-#   XtX = crossprod(X)
-#   var_postmean_term1 = (1/error.var) * Sigma_B %*% XtX %*% Sigma_B
-#   # grab the variance terms in the variance-covariance matrix
-#   var_postmean = diag(var_postmean_term1)
-#   # 2. calculate expectation of posterior mean
-#   expect_postmean = (1/error.var) * Sigma_B %*% XtX %*% matrix(beta.true) + 
-#     Sigma_B %*% solve(beta.var) %*% matrix(beta.mean)
-#   return(list(
-#     "EBn" = expect_postmean, 
-#     "VarBn" = var_postmean))
-# }

@@ -203,8 +203,6 @@ BH_m2 = function(
         candidates, 
         FUN = function(x) BHD_m2(y.cur, x.cur, post.probs.cur, x, model0, model1, 
                                  error.var))
-      # bhd_seq = BHD_m2(
-      #   y.cur, x.cur, post.probs.cur, candidates, model0, model1, error.var)
       if(!all(!is.nan(bhd_seq))){
         warning("Warning in BHDgp_m2() : There were NaNs in Box & Hill criterion 
               evaluation over the candidate set!!")

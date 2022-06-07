@@ -1,6 +1,3 @@
-# require("construct_design_matrix.R")
-# require("posterior_variance.R")
-
 getMSEYhat = function(
   pt, D, N, beta.true, true_type, beta.mean, beta.var, error.var, 
   prior_type, indices = NULL, diagPrior = TRUE
@@ -57,4 +54,3 @@ getMSEYhat_seq = function(
     "biassq_term" = mseyhat_biassq_seq
   ))
 }
-

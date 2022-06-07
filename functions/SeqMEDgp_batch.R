@@ -1,8 +1,3 @@
-
-# require("wasserstein_distance.R")
-# require("charge_function_q.R")
-# require("covariance_functions.R")
-
 #################################################
 ### SeqMED GP, one-at-a-time greedy algorithm ###
 #################################################
@@ -48,8 +43,6 @@ SeqMEDgp_newq_batch = function(
   
   # check if any points in initD give Wasserstein distance of 0 (in which case we don't want to use it since 1/0 in q)
   # turns out, that's not necessary
-  
-  # old_initD = initD
   
   # posterior predictive distribution Kinv's
   if(is.null(model0$measurement.var)){
@@ -125,6 +118,3 @@ SeqMEDgp_newq_batch = function(
     "indices" = D_ind
   ))
 }
-
-
-

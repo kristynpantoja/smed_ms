@@ -88,7 +88,6 @@ SeqMED = function(
       alpha_seq[t:numSeq] = Dt$alpha
     }
     
-    # yt = as.vector(simulateY(Dt$addD, seqN[t], true_beta, error.var, 1, true_type))
     yt = simulateY_fromfunction(
       x = Dt$addD, true.function = true.function, error.var = error.var)
     
@@ -133,6 +132,3 @@ SeqMED = function(
   }
   return(result)
 }
-
-
-

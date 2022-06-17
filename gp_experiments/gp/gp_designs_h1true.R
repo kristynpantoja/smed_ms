@@ -199,8 +199,8 @@ if(typeT == "periodic"){
     xintercept = pT * (0:floor((xmax - xmin) / pT)), #color = "gray", 
     alpha = 0.125, linetype = 2)
 }
-plot(des.plt)
 
+des.plt
 ggsave(
   filename = paste0(scenario_name, "_design.pdf"),
   plot = des.plt,

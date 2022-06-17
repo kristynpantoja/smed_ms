@@ -27,7 +27,6 @@ source(paste(functions_dir, "/boxhill_gp.R", sep = ""))
 source(paste(functions_dir, "/kl_divergence.R", sep = ""))
 
 library(mvtnorm)
-# rng.seed = 123
 
 library(ggplot2)
 library(reshape2)
@@ -53,7 +52,6 @@ x_seq = seq(from = xmin, to = xmax, length.out = numx)
 sigmasq_measuremt = 1e-10
 sigmasq_signal = 1
 
-# set.seed(12345)
 set.seed(1234)
 
 ################################################################################
@@ -199,6 +197,7 @@ plt = plt +
         legend.background = element_rect(fill = "transparent"), 
         legend.box.background = element_rect(
           fill = "transparent", color = "transparent"))
+plt
 ggsave(
   filename = paste0(scenario_name,"_lambda", lT, "_Nttl", Nttl, "_gp_zoom.pdf"),
   plot = plt,

@@ -43,7 +43,7 @@ library(future)
 library(doFuture)
 library(parallel)
 registerDoFuture()
-nworkers = detectCores()
+nworkers = detectCores() / 2
 plan(multisession, workers = nworkers)
 
 library(rngtools)

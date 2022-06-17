@@ -159,9 +159,23 @@ if(typeT == "periodic"){
 random_sims = readRDS(random_sims_file)
 grid_sims = readRDS(grid_sims_file)
 
+
+
 ################################################################################
-# make plots
 ################################################################################
+################################################################################
+# plots!!!
+################################################################################
+################################################################################
+################################################################################
+
+
+
+################################################################################
+# plot the posterior probabilities of the hypotheses
+################################################################################
+
+# useful functions #############################################################
 
 getPPHseq = function(design, model0, model1, n, randomize.order = FALSE){
   n.new = n - 1
@@ -214,6 +228,8 @@ getPPHseq = function(design, model0, model1, n, randomize.order = FALSE){
     PPH1 = PPH1_seq
   ))
 }
+
+# design model probs ###########################################################
 
 PPH_seq = data.frame(
   PPH0 = numeric(), PPH1 = numeric(), PPHT = numeric(), 
@@ -268,10 +284,60 @@ epph.plt = ggplot(
         legend.background = element_rect(fill = "transparent"), 
         legend.box.background = element_rect(
           fill = "transparent", color = NA))
-plot(epph.plt)
 
+epph.plt
 ggsave(
   filename = paste0(scenario_name, "_epph.pdf"),
   plot = epph.plt,
   width = 4, height = 2.5, units = c("in")
+)
+
+################################################################################
+# plot the designs
+################################################################################
+# all of the designs
+idx = 1
+designs = list(
+  "(B) BoxHill" = boxhill_sims[[idx]], 
+  "(C) Grid" = grid_sims[[idx]], 
+  "(D) Random" = random_sims[[idx]],
+  "(A) SeqMED" = leaveout_sims[[idx]])
+design.names = sort(names(designs), decreasing = TRUE)
+
+x.mat = matrix(NA, nrow = Nttl, ncol = length(designs))
+for(i in 1:length(designs)){
+  x.mat[, i] = c(designs[[i]]$x.in, designs[[i]]$x.new)
+}
+colnames(x.mat) = names(designs)
+data.gg = as.data.frame(x.mat)
+data.gg$index = as.character(1:Nttl)
+data.gg = reshape2::melt(data.gg, id.vars = "index", variable.name = "Design")
+data.gg$Design = factor(data.gg$Design, levels = design.names)
+
+text.gg = dplyr::filter(data.gg, index %in% as.character(1:Nttl))
+des.plt = ggplot() + 
+  geom_point(data = data.gg, 
+             mapping = aes(x = value, y = Design, color = Design), 
+             inherit.aes = FALSE, alpha = 0.25) + 
+  xlim(c(xmin, xmax)) + 
+  labs(x = element_blank(), y = element_blank()) +
+  theme_bw() + 
+  theme(legend.position = "none", text = element_text(size = text_size), 
+        panel.background = element_rect(fill = "transparent"), 
+        plot.background = element_rect(
+          fill = "transparent", color = NA), 
+        legend.background = element_rect(fill = "transparent"), 
+        legend.box.background = element_rect(
+          fill = "transparent", color = NA))
+if(typeT == "periodic"){
+  des.plt = des.plt + geom_vline(
+    xintercept = pT * (0:floor((xmax - xmin) / pT)), #color = "gray", 
+    alpha = 0.125, linetype = 2)
+}
+
+des.plt
+ggsave(
+  filename = paste0(scenario_name, "_design.pdf"),
+  plot = des.plt,
+  width = 5.5, height = 2, units = c("in")
 )
